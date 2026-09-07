@@ -10,7 +10,8 @@ import '../../../profil/presentation/screens/profil_screen.dart';
 
 // TODO(konfirmasi-HRIS ; fitur manage leave & team) — fitur ini BELUM ada di requirement
 // HOD/Admin cuma diminta View+Edit Saldo & Approve/Reject.
-// Kalau sudah dikonfirmasi TIDAK dipakai, hapus import ini dan semua blok
+// soalnya kalau di web itu ada fitur manage leave team.
+// kalau sudah dikonfirmasi TIDAK dipakai, hapus import ini dan semua blok
 // bertanda "SEMENTARA" di file ini, lalu folder lib/features/kelola_tim/ bisa dihapus.
 import '../../../kelola_tim/presentation/screens/kelola_tim_screen.dart';
 
