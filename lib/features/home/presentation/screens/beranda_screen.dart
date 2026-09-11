@@ -3,16 +3,10 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../shared/domain/role.dart';
-import '../../../pengajuan/presentation/screens/pengajuan_screen.dart';
+import '../../../pengajuan/presentation/pengajuan_screen.dart';
 import '../../../pengajuan/domain/leave_type.dart';
-import '../../../absensi/presentation/screens/absensi_screen.dart';
+import '../../../absensi/presentation/absensi_screen.dart';
 import '../../../profil/presentation/screens/profil_screen.dart';
-
-// TODO(konfirmasi-HRIS ; fitur manage leave & team) — fitur ini BELUM ada di requirement
-// HOD/Admin cuma diminta View+Edit Saldo & Approve/Reject.
-// soalnya kalau di web itu ada fitur manage leave team.
-// kalau sudah dikonfirmasi TIDAK dipakai, hapus import ini dan semua blok
-// bertanda "SEMENTARA" di file ini, lalu folder lib/features/kelola_tim/ bisa dihapus.
 import '../../../kelola_tim/presentation/screens/kelola_tim_screen.dart';
 
 class _QuotaCard {
@@ -73,7 +67,6 @@ class _BerandaScreenState extends State<BerandaScreen> {
     );
   }
 
-  // SEMENTARA — lihat komentar TODO(konfirmasi-HRIS) di bagian import.
   void _openKelolaTim() {
     Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => const KelolaTimScreen()),
@@ -100,7 +93,7 @@ class _BerandaScreenState extends State<BerandaScreen> {
     final services = <_ServiceItem>[
       _ServiceItem('📋', 'Cuti & Izin', _openPengajuan),
       _ServiceItem('💰', 'Slip Gaji', () {}),
-      _ServiceItem('📅', 'Absensi', _openAbsensi),
+      _ServiceItem('📅', 'Absensi', () {}),
       _ServiceItem('🗓️', 'Jadwal', () {}),
       _ServiceItem('👤', 'Profil', _openProfil),
       if (role == Role.hod)

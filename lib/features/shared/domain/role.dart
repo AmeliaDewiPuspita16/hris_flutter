@@ -1,18 +1,19 @@
-/// Padanan `type Role = 'non-executive' | 'executive' | 'hod' | 'admin'`
+/// type Role = 'non-executive' | 'executive' | 'hod' | 'admin' | 'HR'`
 enum Role { nonExecutive, executive, hod, admin }
 
 extension RoleX on Role {
-  /// Nama pegawai demo per role (sementara — nanti diganti data user asli).
   String get demoUserName {
     switch (this) {
       case Role.nonExecutive:
         return 'Amelia Dewi';
       case Role.executive:
-        return 'Sasqia';
+        return 'Anita';
       case Role.hod:
         return 'Dewi Puspita';
       case Role.admin:
         return 'Rini Astuti';
+      case Role.hr:
+        return 'Lastri';
     }
   }
 
@@ -28,7 +29,7 @@ extension RoleX on Role {
       case Role.hod:
         return 'Head of Department';
       case Role.admin:
-        return 'HR Admin';
+        return 'Admin Department';
     }
   }
 

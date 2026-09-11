@@ -22,7 +22,7 @@ class _LoginScreenState extends State<LoginScreen> {
   /// tombol login langsung navigasi ke Beranda tanpa validasi/API,
   void _goToBeranda() {
     Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const BerandaScreen(role: Role.hod)),
+      MaterialPageRoute(builder: (_) => const BerandaScreen(role: Role.nonExecutive)),
       (route) => false,
     );
   }

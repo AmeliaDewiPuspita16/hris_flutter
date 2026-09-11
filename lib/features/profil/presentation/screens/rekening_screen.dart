@@ -31,7 +31,7 @@ class RekeningScreen extends StatelessWidget {
                     height: 42,
                     alignment: Alignment.center,
                     decoration: const BoxDecoration(color: AppColors.primaryLight, shape: BoxShape.circle),
-                    child: const Icon(Icons.account_balance_outlined, color: AppColors.primaryMid),
+                    // child: const Icon(Icons.account_balance_outlined, color: AppColors.primaryMid),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
