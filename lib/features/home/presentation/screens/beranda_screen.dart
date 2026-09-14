@@ -10,6 +10,7 @@ import '../../../shared/domain/role.dart';
 import '../../domain/home_demo_data.dart';
 import '../../domain/service_shortcut.dart';
 import '../widgets/activity_section.dart';
+import '../widgets/clock_status_card.dart';
 import '../widgets/home_bottom_nav.dart';
 import '../widgets/home_top_header.dart';
 import '../widgets/layanan_section.dart';
@@ -164,6 +165,11 @@ class _BerandaScreenState extends State<BerandaScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               HomeTopHeader(role: _role),
+              ClockStatusCard(
+                status: HomeDemoData.todayAttendance,
+                date: DateTime.now(),
+                onActionTap: _openAbsensi,
+              ),
               PendingRequestCard(
                 count: 2,
                 description: 'Lembur · Perjalanan Dinas',

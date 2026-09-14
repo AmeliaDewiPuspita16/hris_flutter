@@ -4,6 +4,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../pengajuan/domain/leave_type.dart';
 import '../../shared/domain/role.dart';
 import 'activity_entry.dart';
+import 'attendance_status.dart';
 import 'quota_balance.dart';
 
 /// Data contoh untuk halaman Beranda.
@@ -12,6 +13,14 @@ import 'quota_balance.dart';
 /// widget-widget Beranda tidak perlu diubah.
 class HomeDemoData {
   HomeDemoData._();
+
+  static const todayAttendance = AttendanceStatus(
+    shiftLabel: 'Office Hours',
+    shiftTime: '08:00–17:00',
+    location: 'Plant 2 · Gate A',
+    clockInTime: '06:52',
+    workedDuration: '6h 08m worked',
+  );
 
   /// Kartu saldo. Dua kartu pertama punya kuota sehingga tampil berdampingan
   /// dengan progress bar; kartu ketiga tanpa kuota, jadi melebar penuh.
