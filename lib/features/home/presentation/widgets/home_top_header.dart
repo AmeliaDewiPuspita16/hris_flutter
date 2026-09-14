@@ -50,7 +50,7 @@ class HomeTopHeader extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Halo, ${role.firstName}',
+                  'Hi, ${role.firstName}',
                   style: AppTextStyles.h3,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,

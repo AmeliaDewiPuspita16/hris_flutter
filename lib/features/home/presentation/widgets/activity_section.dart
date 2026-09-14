@@ -18,7 +18,7 @@ class ActivitySection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text('Aktivitas Terbaru', style: AppTextStyles.sectionTitle),
+          const Text('Recent Activity', style: AppTextStyles.sectionTitle),
           const SizedBox(height: 12),
           for (final activity in activities)
             Padding(

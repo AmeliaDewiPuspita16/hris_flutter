@@ -68,35 +68,35 @@ class _BerandaScreenState extends State<BerandaScreen> {
   List<ServiceShortcut> _buildServices() => [
         ServiceShortcut(
           icon: Icons.event_available_outlined,
-          label: 'Cuti & Izin',
+          label: 'Leave',
           color: AppColors.primaryMid,
           background: AppColors.primaryLight,
           onTap: _openPengajuan,
         ),
         ServiceShortcut(
           icon: Icons.receipt_long_outlined,
-          label: 'Slip Gaji',
+          label: 'Payslip',
           color: AppColors.accent,
           background: AppColors.accentBg,
           onTap: () {},
         ),
         ServiceShortcut(
           icon: Icons.fingerprint,
-          label: 'Absensi',
+          label: 'Attendance',
           color: AppColors.present,
           background: AppColors.presentBg,
           onTap: _openAbsensi,
         ),
         ServiceShortcut(
           icon: Icons.calendar_month_outlined,
-          label: 'Jadwal',
+          label: 'Schedule',
           color: AppColors.teal,
           background: AppColors.tealBg,
           onTap: () {},
         ),
         ServiceShortcut(
           icon: Icons.badge_outlined,
-          label: 'Profil',
+          label: 'Profile',
           color: AppColors.violet,
           background: AppColors.violetBg,
           onTap: _openProfil,
@@ -104,7 +104,7 @@ class _BerandaScreenState extends State<BerandaScreen> {
         if (_role == Role.hod)
           ServiceShortcut(
             icon: Icons.task_alt,
-            label: 'Persetujuan',
+            label: 'Approvals',
             color: AppColors.primary,
             background: AppColors.primaryLight,
             onTap: _openApprovalTab,
@@ -113,7 +113,7 @@ class _BerandaScreenState extends State<BerandaScreen> {
           // SEMENTARA
           ServiceShortcut(
             icon: Icons.groups_outlined,
-            label: 'Kelola Tim',
+            label: 'Manage Team',
             color: AppColors.primaryMid,
             background: AppColors.primaryLight,
             onTap: _openKelolaTim,
@@ -172,7 +172,7 @@ class _BerandaScreenState extends State<BerandaScreen> {
               ),
               PendingRequestCard(
                 count: 2,
-                description: 'Lembur · Perjalanan Dinas',
+                description: 'Overtime · Business Trip',
                 onTap: _openPengajuan,
               ),
               SaldoSection(
@@ -185,8 +185,8 @@ class _BerandaScreenState extends State<BerandaScreen> {
                   icon: Icons.fact_check_outlined,
                   iconColor: AppColors.primary,
                   iconBackground: AppColors.primaryLight,
-                  title: '3 Pengajuan Perlu Ditinjau',
-                  subtitle: 'Persetujuan tim menunggu Anda',
+                  title: '3 Requests Need Review',
+                  subtitle: 'Team approvals are waiting for you',
                   onTap: _openApprovalTab,
                 ),
               if (_role == Role.admin)
@@ -195,8 +195,8 @@ class _BerandaScreenState extends State<BerandaScreen> {
                   icon: Icons.groups_outlined,
                   iconColor: AppColors.primaryMid,
                   iconBackground: AppColors.primaryLight,
-                  title: 'Kelola Tim Departemen',
-                  subtitle: '18 Pegawai · Update saldo cuti',
+                  title: 'Manage Department Team',
+                  subtitle: '18 employees · Update leave balance',
                   onTap: _openKelolaTim,
                 ),
               const ActivitySection(
