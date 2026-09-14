@@ -9,8 +9,15 @@ class AppColors {
   static const primaryLight = Color(0xFFE1F5EE); // tint hijau muda
 
   // Accent — emas
-  static const accent = Color(0xFFC9A24B);       
-  static const accentLight = Color(0xFFDFC078);  
+  static const accent = Color(0xFFC9A24B);
+  static const accentLight = Color(0xFFDFC078);
+  static const accentBg = Color(0xFFFBF4E4);     // tint emas
+
+  // Aksen tambahan untuk kartu saldo & ikon layanan
+  static const violet = Color(0xFF6B46C1);
+  static const violetBg = Color(0xFFFAF5FF);
+  static const teal = Color(0xFF2C7A7B);
+  static const tealBg = Color(0xFFE6FFFA);
 
   // Warna netral (abu/putih)
   static const bg = Color(0xFFF7F8F5);
