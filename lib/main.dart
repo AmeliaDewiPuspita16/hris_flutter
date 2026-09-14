@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'core/theme/app_colors.dart';
-import 'features/auth/presentation/screens/login_screen.dart';
+import 'features/splash/presentation/screens/splash_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -23,7 +23,7 @@ class MyApp extends StatelessWidget {
         ),
         fontFamily: 'Poppins',
       ),
-      home: const LoginScreen(),
+      home: const SplashScreen(),
     );
   }
 }

@@ -1,11 +1,22 @@
 import 'package:flutter/material.dart';
+
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/app_button.dart';
-import '../../../../core/widgets/app_text_field.dart';
 import '../../../home/presentation/screens/beranda_screen.dart';
 import '../../../shared/domain/role.dart';
+import '../controllers/login_form_controller.dart';
+import '../widgets/keep_signed_in_row.dart';
+import '../widgets/login_alt_button.dart';
+import '../widgets/login_field.dart';
+import '../widgets/login_footer.dart';
+import '../widgets/login_header.dart';
+import '../widgets/or_divider.dart';
 
+/// Halaman login BIIE Portal.
+///
+/// Layar ini hanya merangkai widget; state form-nya dipegang
+/// [LoginFormController] dan aturan validasinya ada di LoginCredentials.
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -14,13 +25,18 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _emailController = TextEditingController();
-  final _passController = TextEditingController();
-  bool _showPass = false;
-  String? _error;
+  final _form = LoginFormController();
 
-  /// tombol login langsung navigasi ke Beranda tanpa validasi/API,
-  void _goToBeranda() {
+  @override
+  void dispose() {
+    _form.dispose();
+    super.dispose();
+  }
+
+  /// Belum ada autentikasi — kalau input valid, langsung ke Beranda.
+  void _handleSignIn() {
+    if (!_form.submit()) return;
+
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (_) => const BerandaScreen(role: Role.admin)),
       (route) => false,
@@ -28,159 +44,90 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   @override
-  void dispose() {
-    _emailController.dispose();
-    _passController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.bg,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _Header(),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    AppTextField(
-                      label: 'Email Korporat',
-                      controller: _emailController,
-                      hint: 'nama@perusahaan.co.id',
-                      icon: Icons.mail_outline,
-                      keyboardType: TextInputType.emailAddress,
-                    ),
-                    const SizedBox(height: 16),
-                    AppTextField(
-                      label: 'Kata Sandi',
-                      controller: _passController,
-                      hint: 'Min. 8 karakter',
-                      obscureText: !_showPass,
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _showPass
-                              ? Icons.visibility_off_outlined
-                              : Icons.visibility_outlined,
-                          size: 18,
-                          color: AppColors.textMuted,
-                        ),
-                        onPressed: () => setState(() => _showPass = !_showPass),
-                      ),
-                    ),
-                    if (_error != null) ...[
-                      const SizedBox(height: 16),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                        decoration: BoxDecoration(
-                          color: AppColors.rejectedBg,
-                          border: Border.all(color: AppColors.rejected),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          _error!,
-                          style: const TextStyle(fontSize: 12, color: AppColors.rejected, fontWeight: FontWeight.w500),
-                        ),
-                      ),
-                    ],
-                    const SizedBox(height: 16),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: TextButton(
-                        onPressed: () {},
-                        style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: Size.zero),
-                        child: const Text(
-                          'Lupa Kata Sandi?',
-                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.primaryMid),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    AppButton(label: 'Masuk ke Akun', onPressed: _goToBeranda),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        const Expanded(child: Divider(color: AppColors.border)),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 12),
-                          child: Text('atau', style: AppTextStyles.caption),
-                        ),
-                        const Expanded(child: Divider(color: AppColors.border)),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    OutlinedButton.icon(
-                      onPressed: () {},
-                      icon: const Icon(Icons.g_mobiledata, size: 22, color: AppColors.textMid),
-                      label: const Text(
-                        'Masuk dengan Google',
-                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.textMid),
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 13),
-                        side: const BorderSide(color: AppColors.border, width: 1.5),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      ),
-                    ),
-                  ],
+      backgroundColor: AppColors.bgWarm,
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const LoginHeader(),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 28),
+              child: AnimatedBuilder(
+                animation: _form,
+                builder: (context, _) => _LoginForm(
+                  form: _form,
+                  onSignIn: _handleSignIn,
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
-class _Header extends StatelessWidget {
+class _LoginForm extends StatelessWidget {
+  const _LoginForm({required this.form, required this.onSignIn});
+
+  final LoginFormController form;
+  final VoidCallback onSignIn;
+
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(32, 24, 32, 48),
-      decoration: const BoxDecoration(gradient: AppColors.primaryGradient),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 38,
-                height: 38,
-                decoration: BoxDecoration(
-                  color: AppColors.presentMid,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(Icons.people_outline, color: Colors.white, size: 20),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        LoginField(
+          label: 'Email',
+          controller: form.emailController,
+          keyboardType: TextInputType.emailAddress,
+          textInputAction: TextInputAction.next,
+          errorText: form.emailError,
+        ),
+        const SizedBox(height: 12),
+        LoginField(
+          label: 'Password',
+          controller: form.passwordController,
+          obscureText: form.obscurePassword,
+          textInputAction: TextInputAction.done,
+          onSubmitted: (_) => onSignIn(),
+          errorText: form.passwordError,
+          trailing: TextButton(
+            onPressed: form.togglePasswordVisibility,
+            style: TextButton.styleFrom(
+              padding: EdgeInsets.zero,
+              minimumSize: Size.zero,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            child: Text(
+              form.obscurePassword ? 'Show' : 'Hide',
+              style: const TextStyle(
+                fontFamily: AppTextStyles.fontFamily,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: AppColors.primaryMid,
               ),
-              const SizedBox(width: 10),
-              const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'HRIS',
-                    style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w700, letterSpacing: 1.2),
-                  ),
-                  Text(
-                    'PT. Bintan Inti Industrial Estate',
-                    style: TextStyle(color: Colors.white70, fontSize: 10),
-                  ),
-                ],
-              ),
-            ],
+            ),
           ),
-          const SizedBox(height: 24),
-          const Text('Selamat Datang,', style: AppTextStyles.h1),
-          const SizedBox(height: 6),
-          const Text('Masuk ke portal HR Anda', style: TextStyle(color: Colors.white70, fontSize: 14)),
-        ],
-      ),
+        ),
+        const SizedBox(height: 16),
+        KeepSignedInRow(
+          value: form.keepSignedIn,
+          onChanged: form.toggleKeepSignedIn,
+          onForgotPressed: () {},
+        ),
+        const SizedBox(height: 20),
+        AppButton(label: 'Sign in', onPressed: onSignIn),
+        const SizedBox(height: 20),
+        const OrDivider(),
+        const SizedBox(height: 20),
+        LoginAltButton(label: 'Use Face ID', onPressed: () {}),
+        const SizedBox(height: 28),
+        const LoginFooter(),
+      ],
     );
   }
 }
