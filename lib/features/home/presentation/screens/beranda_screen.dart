@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_text_styles.dart';
-import '../../../../core/widgets/app_card.dart';
-import '../../../shared/domain/role.dart';
-import '../../../pengajuan/presentation/pengajuan_screen.dart';
-import '../../../pengajuan/domain/leave_type.dart';
 import '../../../absensi/presentation/absensi_screen.dart';
 import '../../../gaji/presentation/gaji_screen.dart';
 import '../../../profil/presentation/screens/profil_screen.dart';
@@ -53,11 +50,16 @@ class BerandaScreen extends StatefulWidget {
 }
 
 class _BerandaScreenState extends State<BerandaScreen> {
+  /// Indeks tab navigasi bawah. Tab 4 dipakai role HOD untuk Persetujuan.
+  static const _approvalTabIndex = 4;
+
   int _activeTab = 0;
+
+  Role get _role => widget.role;
 
   void _openPengajuan() {
     Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => PengajuanScreen(role: widget.role)),
+      MaterialPageRoute(builder: (_) => PengajuanScreen(role: _role)),
     );
   }
 
@@ -75,7 +77,7 @@ class _BerandaScreenState extends State<BerandaScreen> {
 
   void _openProfil() {
     Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => ProfilScreen(role: widget.role)),
+      MaterialPageRoute(builder: (_) => ProfilScreen(role: _role)),
     );
   }
 
@@ -142,8 +144,13 @@ class _BerandaScreenState extends State<BerandaScreen> {
     ];
 
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      // Beige hangat, sama dengan halaman Login — kartu putih jadi lebih
+      // menonjol dibanding di atas AppColors.bg yang nyaris seputih kartunya.
+      backgroundColor: AppColors.bgWarm,
+      // top: false — HomeTopHeader yang mengurus jarak aman atas sendiri
+      // supaya warna hijaunya tidak terpotong garis putih di atas.
       body: SafeArea(
+        top: false,
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
