@@ -1,5 +1,4 @@
-/// type Role = 'non-executive' | 'executive' | 'hod' | 'admin' | 'HR'`
-enum Role { nonExecutive, executive, hod, admin }
+enum Role { nonExecutive, executive, hod, admin, hrPublisher }
 
 extension RoleX on Role {
   String get demoUserName {
@@ -12,14 +11,13 @@ extension RoleX on Role {
         return 'Dewi Puspita';
       case Role.admin:
         return 'Rini Astuti';
-      case Role.hr:
-        return 'Lastri';
+      case Role.hrPublisher:
+        return 'Nanda Pratiwi';
     }
   }
 
   String get firstName => demoUserName.split(' ').first;
 
-  /// Jabatan demo per role — ditampilkan di header Beranda & Profil.
   String get demoUserTitle {
     switch (this) {
       case Role.nonExecutive:
@@ -30,6 +28,8 @@ extension RoleX on Role {
         return 'Head of Department';
       case Role.admin:
         return 'Admin Department';
+      case Role.hrPublisher:
+        return 'HR Publisher';
     }
   }
 
@@ -39,5 +39,22 @@ extension RoleX on Role {
     if (parts.length == 1) return parts.first.substring(0, 1).toUpperCase();
     return (parts.first.substring(0, 1) + parts.last.substring(0, 1))
         .toUpperCase();
+  }
+
+  /// Jam check-in demo (dummy) — hasil sync dari mesin
+  /// fingerprint kantor lewat HRIS web.
+  String get demoCheckIn {
+    switch (this) {
+      case Role.nonExecutive:
+        return '06:52';
+      case Role.executive:
+        return '07:59';
+      case Role.hod:
+        return '07:55';
+      case Role.admin:
+        return '07:50';
+      case Role.hrPublisher:
+        return '07:47';
+    }
   }
 }

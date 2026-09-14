@@ -6,6 +6,9 @@ import '../../../core/widgets/app_card.dart';
 import '../domain/attendance_entry.dart';
 
 /// Log Absensi — READ ONLY.
+/// Absen tetap dilakukan lewat mesin fingerprint di kantor, sistem itu
+/// sudah tersambung ke HRIS web. Layar ini cuma menampilkan hasil sync-nya,
+/// jadi TIDAK ada tombol check-in/check-out di mobile.
 class AbsensiScreen extends StatefulWidget {
   const AbsensiScreen({super.key});
 
@@ -14,12 +17,12 @@ class AbsensiScreen extends StatefulWidget {
 }
 
 class _AbsensiScreenState extends State<AbsensiScreen> {
-  // dummy 
+  // dummy — nanti diganti state bulan aktif dari query ke backend.
   static const _monthLabel = 'September 2026';
 
   static const _entries = AttendanceEntry.dummySeptember2026;
 
-  // dummy ringkasan bulan ini.
+  // dummy ringkasan bulan ini (nanti dihitung dari _entries / response API).
   static const _totalPresent = 20;
   static const _totalLate = 1;
   static const _totalOvertimeHrs = 18;
@@ -37,7 +40,7 @@ class _AbsensiScreenState extends State<AbsensiScreen> {
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
                 children: [
-                  const _SummaryCard(
+                  _SummaryCard(
                     present: _totalPresent,
                     late: _totalLate,
                     overtimeHrs: _totalOvertimeHrs,
@@ -45,7 +48,7 @@ class _AbsensiScreenState extends State<AbsensiScreen> {
                   const SizedBox(height: 16),
                   ..._entries.map(
                     (e) => Padding(
-                      padding: const EdgeInsets.only(bottom: 0.3),
+                      padding: const EdgeInsets.only(bottom: 10),
                       child: _AttendanceRow(entry: e),
                     ),
                   ),
@@ -88,6 +91,7 @@ class _AbsensiScreenState extends State<AbsensiScreen> {
             child: Row(
               children: [
                 InkWell(
+                  // dummy — nanti ganti bulan mundur, refetch data.
                   onTap: () {},
                   borderRadius: BorderRadius.circular(6),
                   child: const Padding(
@@ -106,6 +110,7 @@ class _AbsensiScreenState extends State<AbsensiScreen> {
                   ),
                 ),
                 InkWell(
+                  // dummy — nanti ganti bulan maju, refetch data.
                   onTap: () {},
                   borderRadius: BorderRadius.circular(6),
                   child: const Padding(
@@ -225,6 +230,7 @@ class _AttendanceRow extends StatelessWidget {
       case AttendanceStatus.liburHari:
         return (fg: AppColors.neutral, bg: AppColors.neutralBg, label: 'LIBUR');
       case AttendanceStatus.berlangsung:
+        // hari berjalan, belum ada hasil final — tanpa badge.
         return null;
     }
   }
@@ -311,7 +317,7 @@ class _SyncFootnote extends StatelessWidget {
           SizedBox(width: 6),
           Expanded(
             child: Text(
-              'Data tercatat otomatis dari mesin fingerprint kantor.',
+              'Data tercatat otomatis dari mesin fingerprint kantor dan tersinkron dari HRIS web. Absensi tidak dilakukan lewat aplikasi ini.',
               style: TextStyle(
                   fontSize: 10.5, color: AppColors.textMuted, height: 1.4),
             ),

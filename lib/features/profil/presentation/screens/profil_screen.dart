@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../auth/presentation/screens/login_screen.dart';
 import '../../../shared/domain/role.dart';
@@ -13,15 +12,16 @@ import 'tanggungan_screen.dart';
 
 class _CategoryItem {
   const _CategoryItem(this.icon, this.label, this.builder);
-  final String icon;
+  final IconData icon;
   final String label;
   final WidgetBuilder builder;
 }
 
-/// menu 5 kategori (Data Diri, Kontrak, Rekening, Alamat, Tanggungan) sesuai
-/// Requirement Tracking No.1.
 class ProfilScreen extends StatelessWidget {
-  const ProfilScreen({super.key, required this.role});
+  const ProfilScreen({
+    super.key, 
+    required this.role
+  });
 
   final Role role;
 
@@ -30,11 +30,11 @@ class ProfilScreen extends StatelessWidget {
     final p = EmployeeProfile.of(role);
 
     final categories = <_CategoryItem>[
-      _CategoryItem('🪪', 'Data Diri', (_) => DataDiriScreen(profile: p)),
-      _CategoryItem('📄', 'Kontrak Kerja', (_) => KontrakScreen(profile: p)),
-      _CategoryItem('🏦', 'Rekening Bank', (_) => RekeningScreen(profile: p)),
-      _CategoryItem('📍', 'Alamat', (_) => AlamatScreen(profile: p)),
-      _CategoryItem('👨‍👩‍👧', 'Tanggungan', (_) => TanggunganScreen(profile: p)),
+      _CategoryItem(Icons.badge_outlined, 'Data Diri', (_) => DataDiriScreen(profile: p)),
+      _CategoryItem(Icons.description_outlined, 'Kontrak Kerja', (_) => KontrakScreen(profile: p)),
+      _CategoryItem(Icons.account_balance_outlined, 'Rekening Bank', (_) => RekeningScreen(profile: p)),
+      _CategoryItem(Icons.location_on_outlined, 'Alamat', (_) => AlamatScreen(profile: p)),
+      _CategoryItem(Icons.family_restroom_outlined, 'Tanggungan', (_) => TanggunganScreen(profile: p)),
     ];
 
     return Scaffold(
@@ -75,7 +75,7 @@ class ProfilScreen extends StatelessWidget {
                                       height: 34,
                                       alignment: Alignment.center,
                                       decoration: const BoxDecoration(color: AppColors.neutralBg, shape: BoxShape.circle),
-                                      child: Text(c.icon, style: const TextStyle(fontSize: 16)),
+                                      child: Icon(c.icon, size: 17, color: AppColors.primary),
                                     ),
                                     const SizedBox(width: 12),
                                     Expanded(
@@ -116,9 +116,9 @@ class ProfilScreen extends StatelessWidget {
             height: 64,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: AppColors.presentMid,
+              color:  Colors.white.withValues(alpha: 0.18),
               shape: BoxShape.circle,
-              border: Border.all(color: Colors.white.withValues(alpha: 0.3), width: 3),
+              // border: Border.all(color: Colors.white.withValues(alpha: 0.3), width: 3),
             ),
             child: Text(p.initials, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: Colors.white)),
           ),

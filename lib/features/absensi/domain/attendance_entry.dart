@@ -1,5 +1,6 @@
-/// Status kehadiran per hari. 
-
+/// Status kehadiran per hari. Sumber datanya tetap dari mesin fingerprint
+/// di kantor (sinkron ke sistem HRIS web) — aplikasi ini HANYA menampilkan,
+/// tidak ada aksi absen dari mobile.
 enum AttendanceStatus {
   tepatWaktu,
   terlambat,
@@ -17,10 +18,10 @@ class AttendanceEntry {
     required this.status,
   });
 
-  /// Tanggal 2 digit, ex: "08".
+  /// Tanggal 2 digit, mis. "08".
   final String day;
 
-  /// Singkatan hari 3 huruf, ex: "SEN".
+  /// Singkatan hari 3 huruf, mis. "SEN".
   final String weekday;
 
   /// Baris utama: rentang jam kerja atau keterangan ("Hari libur", dst).
@@ -31,46 +32,46 @@ class AttendanceEntry {
 
   final AttendanceStatus status;
 
-  /// dummy 1 bulan 
+  /// dummy 1 bulan (nanti diganti hasil sinkron dari sistem fingerprint/HRIS web).
   static const dummySeptember2026 = [
     AttendanceEntry(
       day: '08',
-      weekday: 'MON',
-      primaryText: '06:52 — In Progress',
+      weekday: 'SEN',
+      primaryText: '06:52 — Berlangsung',
       secondaryText: 'Shift A · 07:00–16:00',
       status: AttendanceStatus.berlangsung,
     ),
     AttendanceEntry(
       day: '07',
-      weekday: 'SUN',
-      primaryText: 'Rest day',
+      weekday: 'MIN',
+      primaryText: 'Hari libur',
       secondaryText: '—',
       status: AttendanceStatus.liburHari,
     ),
     AttendanceEntry(
       day: '06',
-      weekday: 'SAT',
+      weekday: 'SAB',
       primaryText: '16:00 – 20:30',
-      secondaryText: 'Overtime · Approved',
+      secondaryText: 'Lembur · Disetujui',
       status: AttendanceStatus.lembur,
     ),
     AttendanceEntry(
       day: '05',
-      weekday: 'FRI',
+      weekday: 'JUM',
       primaryText: '07:14 – 16:03',
       secondaryText: 'Shift A · 07:00–16:00',
       status: AttendanceStatus.terlambat,
     ),
     AttendanceEntry(
       day: '04',
-      weekday: 'THU',
+      weekday: 'KAM',
       primaryText: '06:48 – 16:05',
       secondaryText: 'Shift A · 07:00–16:00',
       status: AttendanceStatus.tepatWaktu,
     ),
     AttendanceEntry(
       day: '03',
-      weekday: 'WED',
+      weekday: 'RAB',
       primaryText: '06:55 – 16:00',
       secondaryText: 'Shift A · 07:00–16:00',
       status: AttendanceStatus.tepatWaktu,

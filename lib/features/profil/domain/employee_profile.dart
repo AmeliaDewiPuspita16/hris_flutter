@@ -155,6 +155,27 @@ class EmployeeProfile {
       bankAccountName: 'Rini Astuti',
       dependents: [],
     ),
+    Role.hrPublisher: EmployeeProfile(
+      name: 'Nanda Pratiwi',
+      title: 'HR Publisher',
+      dept: 'Human Resources',
+      nip: '0000',
+      join: '14 Feb 2021',
+      phone: '+62 815-2233-1010',
+      email: 'nanda.pratiwi@nusantara.co.id',
+      address: 'Jl. Merdeka No. 12, Batam 29432',
+      employeeCategory: 'Non Executive',
+      birthPlace: 'Batam',
+      birthDate: '18-04-1994',
+      religion: 'Islam',
+      maritalStatus: 'Belum Kawin',
+      degree: 'S1',
+      contractNo: 'CT-2021-0031',
+      bankName: 'Mandiri',
+      bankAccountNo: '1330099887766',
+      bankAccountName: 'Nanda Pratiwi',
+      dependents: [],
+    ),
   };
 
   static EmployeeProfile of(Role role) => _map[role]!;
