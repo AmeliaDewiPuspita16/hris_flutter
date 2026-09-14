@@ -13,42 +13,38 @@ import 'quota_balance.dart';
 class HomeDemoData {
   HomeDemoData._();
 
-  /// Kartu saldo berbeda per role: lembur hanya untuk yang berhak,
-  /// selain itu ditampilkan cuti pengganti.
+  /// Kartu saldo. Dua kartu pertama punya kuota sehingga tampil berdampingan
+  /// dengan progress bar; kartu ketiga tanpa kuota, jadi melebar penuh.
+  ///
+  /// Kartu ketiga berbeda per role: yang berhak lembur melihat off in lieu,
+  /// selain itu cuti pengganti.
   static List<QuotaBalance> quotaBalancesFor(Role role) => [
         const QuotaBalance(
-          label: 'Cuti Tahunan',
-          value: 8,
+          label: 'Annual Leave',
+          value: 7.5,
           total: 12,
-          unit: 'Hari',
-          color: AppColors.primaryMid,
-          background: AppColors.primaryLight,
+          caption: '/ 12 days',
+        ),
+        const QuotaBalance(
+          label: 'Medical Check',
+          value: 2.4,
+          total: 5,
+          caption: 'of 5.0 M',
         ),
         if (LeaveTypeX.showPersonalLembur(role))
           const QuotaBalance(
-            label: 'Saldo Lembur',
-            value: 14.5,
-            unit: 'Jam',
-            color: AppColors.violet,
-            background: AppColors.violetBg,
+            label: 'Off in Lieu',
+            value: 2,
+            caption: 'days',
+            note: '1 day expires 30 Sep',
           )
         else
           const QuotaBalance(
-            label: 'Cuti Pengganti',
+            label: 'Replacement Leave',
             value: 3,
-            total: 5,
-            unit: 'Hari',
-            color: AppColors.teal,
-            background: AppColors.tealBg,
+            caption: 'days',
+            note: '1 day expires 31 Dec',
           ),
-        const QuotaBalance(
-          label: 'Cek Kesehatan',
-          value: 1,
-          total: 1,
-          unit: 'Kali',
-          color: AppColors.pending,
-          background: AppColors.pendingBg,
-        ),
       ];
 
   static const recentActivities = <ActivityEntry>[

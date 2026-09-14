@@ -152,7 +152,9 @@ class _BerandaScreenState extends State<BerandaScreen> {
 
   Widget _buildScaffold() {
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      // Beige hangat, sama dengan halaman Login — kartu putih jadi lebih
+      // menonjol dibanding di atas AppColors.bg yang nyaris seputih kartunya.
+      backgroundColor: AppColors.bgWarm,
       // top: false — HomeTopHeader yang mengurus jarak aman atas sendiri
       // supaya warna hijaunya tidak terpotong garis putih di atas.
       body: SafeArea(
