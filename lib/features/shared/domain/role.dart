@@ -12,8 +12,8 @@ extension RoleX on Role {
         return 'Dewi Puspita';
       case Role.admin:
         return 'Rini Astuti';
-      case Role.hr:
-        return 'Lastri';
+      // case Role:
+      //   return 'Lastri';
     }
   }
 
