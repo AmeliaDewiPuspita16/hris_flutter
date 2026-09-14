@@ -43,13 +43,13 @@ class HomeBottomNav extends StatelessWidget {
         const BottomNavigationBarItem(
           icon: Icon(Icons.check_circle_outline),
           activeIcon: Icon(Icons.check_circle),
-          label: 'Persetujuan',
+          label: 'Approvals',
         ),
       if (role == Role.admin)
         const BottomNavigationBarItem(
           icon: Icon(Icons.groups_outlined),
           activeIcon: Icon(Icons.groups),
-          label: 'Kelola Tim',
+          label: 'Manage Team',
         ),
     ];
 

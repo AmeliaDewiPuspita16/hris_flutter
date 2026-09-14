@@ -54,7 +54,7 @@ class PendingRequestCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'Pengajuan Menunggu',
+                    'Pending Requests',
                     style: TextStyle(
                       fontFamily: AppTextStyles.fontFamily,
                       fontSize: 13,
@@ -81,7 +81,7 @@ class PendingRequestCard extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'Lihat',
+                  'View',
                   style: TextStyle(
                     fontFamily: AppTextStyles.fontFamily,
                     color: AppColors.primaryMid,
