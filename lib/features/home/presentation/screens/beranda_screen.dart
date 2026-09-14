@@ -6,6 +6,7 @@ import '../../../shared/domain/role.dart';
 import '../../../pengajuan/presentation/pengajuan_screen.dart';
 import '../../../pengajuan/domain/leave_type.dart';
 import '../../../absensi/presentation/absensi_screen.dart';
+import '../../../gaji/presentation/gaji_screen.dart';
 import '../../../profil/presentation/screens/profil_screen.dart';
 import '../../../kelola_tim/presentation/screens/kelola_tim_screen.dart';
 
@@ -66,11 +67,11 @@ class _BerandaScreenState extends State<BerandaScreen> {
     );
   }
 
-  // void _paySlip() {
-  //   Navigator.of(context).push(
-  //     MaterialPageRoute(builder: (_) => const Payslip()),
-  //   );
-  // }
+  void _openPayslip() {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const PayslipScreen()),
+    );
+  }
 
   void _openProfil() {
     Navigator.of(context).push(
@@ -102,7 +103,7 @@ class _BerandaScreenState extends State<BerandaScreen> {
     final services = <_ServiceItem>[
       _ServiceItem(
           Icons.description_outlined, 'Leave & Permission', _openPengajuan),
-      _ServiceItem(Icons.receipt_long_outlined, 'Pay Slip', () {}),
+      _ServiceItem(Icons.receipt_long_outlined, 'Pay Slip', _openPayslip),
       _ServiceItem(Icons.access_time_outlined, 'Attendance', _openAbsensi),
       _ServiceItem(Icons.calendar_month_outlined, 'Schedule', () {}),
       _ServiceItem(Icons.person_outline, 'Profile', _openProfil),
@@ -197,10 +198,14 @@ class _BerandaScreenState extends State<BerandaScreen> {
             return;
           }
           if (i == 3) {
+            _openPayslip();
+            return;
+          }
+          if (i == 4) {
             _openProfil();
             return;
           }
-          if (i == 4 && role == Role.admin) {
+          if (i == 5 && role == Role.admin) {
             _openKelolaTim();
             return;
           }
