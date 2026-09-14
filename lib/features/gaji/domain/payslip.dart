@@ -52,12 +52,10 @@ class Payslip {
   /// Data dummy
   static const dummy2026 = [
     Payslip(
-      id: '2026-08',
-      periodLabel: 'Agustus 2026',
+      id: '2026-09',
+      periodLabel: 'September 2026',
       netPay: 8450000,
-      status: PayslipStatus.paid,
-      paidDate: '25 Agustus 2026',
-      bankInfo: 'BCA ••1234',
+      status: PayslipStatus.pending,
       earnings: [
         PayslipItem(label: 'Gaji Pokok', amount: 7500000),
         PayslipItem(label: 'Tunjangan Jabatan', amount: 800000),
@@ -69,11 +67,11 @@ class Payslip {
       ],
     ),
     Payslip(
-      id: '2026-07',
-      periodLabel: 'Juli 2026',
+      id: '2026-08',
+      periodLabel: 'Agustus 2026',
       netPay: 8120000,
       status: PayslipStatus.paid,
-      paidDate: '25 Juli 2026',
+      paidDate: '25 Agustus 2026',
       bankInfo: 'BCA ••1234',
       earnings: [
         PayslipItem(label: 'Gaji Pokok', amount: 7500000),
@@ -86,10 +84,12 @@ class Payslip {
       ],
     ),
     Payslip(
-      id: '2026-06',
-      periodLabel: 'Juni 2026',
+      id: '2026-07',
+      periodLabel: 'Juli 2026',
       netPay: 7980000,
-      status: PayslipStatus.pending,
+      status: PayslipStatus.paid,
+      paidDate: '25 Juli 2026',
+      bankInfo: 'BCA ••1234',
       earnings: [
         PayslipItem(label: 'Gaji Pokok', amount: 7500000),
         PayslipItem(label: 'Tunjangan Jabatan', amount: 800000),
