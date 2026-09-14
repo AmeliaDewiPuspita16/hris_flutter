@@ -49,7 +49,7 @@ class LoginHeader extends StatelessWidget {
           Text('BIIE Portal', style: AppTextStyles.h1.copyWith(fontSize: 28)),
           const SizedBox(height: 8),
           Text(
-            'Sign in with your employee number. '
+            'Sign in with your corporate email. '
             'Your view is set by your position.',
             style: TextStyle(
               fontFamily: AppTextStyles.fontFamily,

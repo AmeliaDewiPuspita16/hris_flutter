@@ -4,23 +4,23 @@
 /// bisa diuji tanpa perlu me-render widget.
 class LoginCredentials {
   const LoginCredentials({
-    required this.employeeNumber,
+    required this.email,
     required this.password,
   });
 
-  final String employeeNumber;
+  final String email;
   final String password;
 
-  static const minPasswordLength = 8;
+  static const minPasswordLength = 5;
 
-  /// NIK BIIE: dua digit tahun masuk, tanda hubung, empat digit urut.
-  /// Contoh: 20-4471.
-  static final _nikPattern = RegExp(r'^\d{2}-\d{4}$');
+  /// Pola email sederhana: ada bagian lokal, satu @, domain, dan minimal
+  /// satu titik di belakangnya. Validasi sebenarnya tetap milik server.
+  static final _emailPattern = RegExp(r'^[\w.+-]+@[\w-]+(\.[\w-]+)+$');
 
-  String? get employeeNumberError {
-    if (employeeNumber.isEmpty) return 'Nomor induk karyawan wajib diisi';
-    if (!_nikPattern.hasMatch(employeeNumber)) {
-      return 'Format NIK tidak sesuai, contoh: 20-4471';
+  String? get emailError {
+    if (email.isEmpty) return 'Email wajib diisi';
+    if (!_emailPattern.hasMatch(email)) {
+      return 'Format email tidak sesuai, contoh: nama@biie.co.id';
     }
     return null;
   }
@@ -33,5 +33,5 @@ class LoginCredentials {
     return null;
   }
 
-  bool get isValid => employeeNumberError == null && passwordError == null;
+  bool get isValid => emailError == null && passwordError == null;
 }

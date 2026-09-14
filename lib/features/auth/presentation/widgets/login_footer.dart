@@ -11,13 +11,13 @@ class LoginFooter extends StatelessWidget {
     return Column(
       children: [
         Text(
-          'Trouble signing in? Contact Admin Dept',
+          'Trouble signing in? Contact ITM Dept',
           textAlign: TextAlign.center,
           style: AppTextStyles.caption,
         ),
         const SizedBox(height: 2),
         Text(
-          'ext. 214 · hr@biie.co.id',
+          'copyright © 2026 PT Bintan Inti Industrial Estate',
           textAlign: TextAlign.center,
           style: AppTextStyles.caption,
         ),

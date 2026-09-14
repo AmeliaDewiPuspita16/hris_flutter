@@ -83,11 +83,11 @@ class _LoginForm extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         LoginField(
-          label: 'Employee Number (NIK)',
-          controller: form.employeeNumberController,
-          keyboardType: TextInputType.text,
+          label: 'Email',
+          controller: form.emailController,
+          keyboardType: TextInputType.emailAddress,
           textInputAction: TextInputAction.next,
-          errorText: form.employeeNumberError,
+          errorText: form.emailError,
         ),
         const SizedBox(height: 12),
         LoginField(

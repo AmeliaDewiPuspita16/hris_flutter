@@ -7,7 +7,7 @@ import '../../domain/login_credentials.dart';
 /// Memakai [ChangeNotifier] bawaan Flutter supaya tidak perlu menambah
 /// package state management ke project.
 class LoginFormController extends ChangeNotifier {
-  final employeeNumberController = TextEditingController();
+  final emailController = TextEditingController();
   final passwordController = TextEditingController();
 
   bool _obscurePassword = true;
@@ -18,14 +18,13 @@ class LoginFormController extends ChangeNotifier {
   bool get keepSignedIn => _keepSignedIn;
 
   LoginCredentials get credentials => LoginCredentials(
-        employeeNumber: employeeNumberController.text.trim(),
+        email: emailController.text.trim(),
         password: passwordController.text,
       );
 
   /// Error baru muncul setelah tombol Sign in ditekan, supaya form tidak
   /// langsung merah begitu halaman dibuka.
-  String? get employeeNumberError =>
-      _submitted ? credentials.employeeNumberError : null;
+  String? get emailError => _submitted ? credentials.emailError : null;
 
   String? get passwordError => _submitted ? credentials.passwordError : null;
 
@@ -48,7 +47,7 @@ class LoginFormController extends ChangeNotifier {
 
   @override
   void dispose() {
-    employeeNumberController.dispose();
+    emailController.dispose();
     passwordController.dispose();
     super.dispose();
   }
