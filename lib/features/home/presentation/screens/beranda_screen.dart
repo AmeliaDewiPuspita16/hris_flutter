@@ -11,6 +11,7 @@ import '../../../shared/domain/role.dart';
 import '../../domain/home_demo_data.dart';
 import '../../domain/service_shortcut.dart';
 import '../widgets/activity_section.dart';
+import '../widgets/announcement_section.dart';
 import '../widgets/clock_status_card.dart';
 import '../widgets/home_bottom_nav.dart';
 import '../widgets/home_top_header.dart';
@@ -208,6 +209,9 @@ class _BerandaScreenState extends State<BerandaScreen> {
                 onSeeAll: () => _openTab(_pengajuanTab),
               ),
               LayananSection(services: _buildServices()),
+              const AnnouncementSection(
+                announcements: HomeDemoData.announcements,
+              ),
               if (_role == Role.hod)
                 TeamBanner(
                   icon: Icons.fact_check_outlined,
