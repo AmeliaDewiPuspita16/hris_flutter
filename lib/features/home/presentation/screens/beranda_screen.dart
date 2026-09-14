@@ -26,7 +26,7 @@ import '../widgets/team_banner.dart';
 /// Halaman Beranda + shell navigasi utama.
 ///
 /// Home, Request (Pengajuan), Attendance (Absensi), dan Profile adalah
-/// 4 tab UTAMA yang sejajar di bottom nav 
+/// 4 tab UTAMA yang sejajar di bottom nav
 class BerandaScreen extends StatefulWidget {
   const BerandaScreen({super.key, required this.role});
 
@@ -93,13 +93,13 @@ class _BerandaScreenState extends State<BerandaScreen> {
           background: AppColors.primaryLight,
           onTap: () => _openTab(_pengajuanTab),
         ),
-        ServiceShortcut(
-          icon: Icons.receipt_long_outlined,
-          label: 'Payslip',
-          color: AppColors.accent,
-          background: AppColors.accentBg,
-          onTap: _openPayslip,
-        ),
+        // ServiceShortcut(
+        //   icon: Icons.receipt_long_outlined,
+        //   label: 'Payslip',
+        //   color: AppColors.accent,
+        //   background: AppColors.accentBg,
+        //   onTap: _openPayslip,
+        // ),
         ServiceShortcut(
           icon: Icons.fingerprint,
           label: 'Attendance',
@@ -158,14 +158,14 @@ class _BerandaScreenState extends State<BerandaScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Ikon status bar terang cuma dibutuhkan waktu tab Home aktif, karena
-    // cuma header Home yang gradiennya naik sampai ke balik status bar.
-    // Tab lain (Request/Attendance/Profile) latar depannya putih/terang,
-    // jadi ikon status bar harus gelap supaya kebaca.
-    final isHomeTab = _displayedTab == _homeTab;
+    // Home dan Profile sama-sama punya header hijau yang naik sampai ke balik
+    // status bar, jadi ikonnya harus terang. Request dan Attendance berlatar
+    // terang di area itu, jadi ikonnya harus gelap supaya tetap kebaca.
+    final hasDarkHeader =
+        _displayedTab == _homeTab || _displayedTab == _profilTab;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: isHomeTab
+      value: hasDarkHeader
           ? const SystemUiOverlayStyle(
               statusBarColor: Colors.transparent,
               statusBarIconBrightness: Brightness.light,
@@ -184,7 +184,7 @@ class _BerandaScreenState extends State<BerandaScreen> {
     return Scaffold(
       // Warna dasar ikut tab Home (dipakai saat transisi); tiap tab lain
       // membungkus kontennya sendiri dengan warna latarnya masing-masing.
-      backgroundColor: AppColors.bgWarm,
+      backgroundColor: AppColors.bg,
       body: IndexedStack(
         index: _displayedTab,
         children: [
@@ -204,7 +204,7 @@ class _BerandaScreenState extends State<BerandaScreen> {
 
   Widget _buildHomeTab() {
     return ColoredBox(
-      color: AppColors.bgWarm,
+      color: AppColors.bg,
       // top: false — HomeTopHeader yang mengurus jarak aman atas sendiri
       // supaya warna hijaunya tidak terpotong garis putih di atas.
       child: SafeArea(

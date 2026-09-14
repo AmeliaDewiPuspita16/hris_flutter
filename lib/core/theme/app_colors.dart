@@ -22,9 +22,9 @@ class AppColors {
   static const bannerAccent = Color(0xFFB7E4C7);
 
   // Warna netral (abu/putih)
-  static const bg = Color(0xFFF7F8F5);
-  static const bgWarm =
-      Color(0xFFF1F0EA); // beige hangat, kartu putih lebih menonjol
+  /// Latar seluruh halaman. Beige hangat — kartu putih di atasnya lebih
+  /// menonjol dibanding di atas putih keabuan.
+  static const bg = Color(0xFFF1F0EA);
   static const card = Color(0xFFFFFFFF);
   static const border = Color(0xFFE5E4DE);
 

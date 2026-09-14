@@ -39,13 +39,15 @@ class ProfilScreen extends StatelessWidget {
 
     return ColoredBox(
       color: AppColors.bg,
+      // top: false — hero hijaunya sengaja dibiarkan naik sampai ke balik
+      // status bar, jadi _buildHero yang menambahkan jarak amannya sendiri.
       child: SafeArea(
         top: false,
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _buildHero(p),
+              _buildHero(context, p),
               Transform.translate(
                 offset: const Offset(0, -28),
                 child: Padding(
@@ -105,10 +107,12 @@ class ProfilScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildHero(EmployeeProfile p) {
+  Widget _buildHero(BuildContext context, EmployeeProfile p) {
+    final topInset = MediaQuery.paddingOf(context).top;
+
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(20, 24, 20, 52),
+      padding: EdgeInsets.fromLTRB(20, topInset + 24, 20, 52),
       decoration: const BoxDecoration(gradient: AppColors.primaryGradient),
       child: Row(
         children: [
