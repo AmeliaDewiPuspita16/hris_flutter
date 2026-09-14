@@ -53,6 +53,7 @@ class _PengajuanScreenState extends State<PengajuanScreen> {
     return ColoredBox(
       color: AppColors.bg,
       child: SafeArea(
+        top: false,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [

@@ -40,6 +40,7 @@ class ProfilScreen extends StatelessWidget {
     return ColoredBox(
       color: AppColors.bg,
       child: SafeArea(
+        top: false,
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
