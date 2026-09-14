@@ -10,10 +10,19 @@ import '../../../shared/domain/role.dart';
 /// layar pemanggilnya tidak boleh membungkus bagian ini dengan SafeArea atas,
 /// dan jarak amannya ditambahkan manual di sini.
 class HomeTopHeader extends StatelessWidget {
-  const HomeTopHeader({super.key, required this.role, this.onNotificationTap});
+  const HomeTopHeader({
+    super.key,
+    required this.role,
+    this.onNotificationTap,
+    this.unreadCount = 0,
+  });
 
   final Role role;
   final VoidCallback? onNotificationTap;
+
+  /// Jumlah notifikasi belum dibaca — menentukan muncul tidaknya titik
+  /// penanda di lonceng.
+  final int unreadCount;
 
   @override
   Widget build(BuildContext context) {
@@ -69,7 +78,10 @@ class HomeTopHeader extends StatelessWidget {
               ],
             ),
           ),
-          _NotificationButton(onTap: onNotificationTap),
+          _NotificationButton(
+            onTap: onNotificationTap,
+            hasUnread: unreadCount > 0,
+          ),
         ],
       ),
     );
@@ -77,9 +89,10 @@ class HomeTopHeader extends StatelessWidget {
 }
 
 class _NotificationButton extends StatelessWidget {
-  const _NotificationButton({this.onTap});
+  const _NotificationButton({this.onTap, this.hasUnread = false});
 
   final VoidCallback? onTap;
+  final bool hasUnread;
 
   @override
   Widget build(BuildContext context) {
@@ -101,19 +114,20 @@ class _NotificationButton extends StatelessWidget {
               size: 20,
             ),
           ),
-          // Titik penanda ada notifikasi belum dibaca.
-          Positioned(
-            top: -2,
-            right: -2,
-            child: Container(
-              width: 8,
-              height: 8,
-              decoration: const BoxDecoration(
-                color: AppColors.accentLight,
-                shape: BoxShape.circle,
+          // Titik penanda — hanya muncul kalau memang ada yang belum dibaca.
+          if (hasUnread)
+            Positioned(
+              top: -2,
+              right: -2,
+              child: Container(
+                width: 8,
+                height: 8,
+                decoration: const BoxDecoration(
+                  color: AppColors.accentLight,
+                  shape: BoxShape.circle,
+                ),
               ),
             ),
-          ),
         ],
       ),
     );

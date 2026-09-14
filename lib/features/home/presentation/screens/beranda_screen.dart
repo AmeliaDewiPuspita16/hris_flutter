@@ -7,6 +7,9 @@ import '../../../kelola_tim/presentation/screens/kelola_tim_screen.dart';
 import '../../../pengajuan/presentation/pengajuan_screen.dart';
 import '../../../profil/presentation/screens/profil_screen.dart';
 import '../../../gaji/presentation/gaji_screen.dart';
+import '../../../notifikasi/domain/app_notification.dart';
+import '../../../notifikasi/domain/notification_demo_data.dart';
+import '../../../notifikasi/presentation/screens/notifikasi_screen.dart';
 import '../../../shared/domain/role.dart';
 import '../../domain/home_demo_data.dart';
 import '../../domain/service_shortcut.dart';
@@ -47,9 +50,26 @@ class _BerandaScreenState extends State<BerandaScreen> {
 
   int _activeTab = _homeTab;
 
+  /// Daftar notifikasi dipegang di sini, bukan di NotifikasiScreen, supaya
+  /// titik penanda di lonceng tetap benar setelah layar itu ditutup.
+  List<AppNotification> _notifications = NotificationDemoData.initial();
+
   Role get _role => widget.role;
 
+  int get _unreadCount => _notifications.where((n) => !n.isRead).length;
+
   void _openTab(int index) => setState(() => _activeTab = index);
+
+  void _openNotifications() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => NotifikasiScreen(
+          notifications: _notifications,
+          onChanged: (updated) => setState(() => _notifications = updated),
+        ),
+      ),
+    );
+  }
 
   void _openPayslip() {
     Navigator.of(context).push(
@@ -193,7 +213,11 @@ class _BerandaScreenState extends State<BerandaScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              HomeTopHeader(role: _role),
+              HomeTopHeader(
+                role: _role,
+                unreadCount: _unreadCount,
+                onNotificationTap: _openNotifications,
+              ),
               ClockStatusCard(
                 status: HomeDemoData.todayAttendance,
                 date: DateTime.now(),
