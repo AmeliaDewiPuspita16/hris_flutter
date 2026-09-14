@@ -37,9 +37,9 @@ class ProfilScreen extends StatelessWidget {
       _CategoryItem(Icons.family_restroom_outlined, 'Tanggungan', (_) => TanggunganScreen(profile: p)),
     ];
 
-    return Scaffold(
-      backgroundColor: AppColors.bg,
-      body: SafeArea(
+    return ColoredBox(
+      color: AppColors.bg,
+      child: SafeArea(
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,

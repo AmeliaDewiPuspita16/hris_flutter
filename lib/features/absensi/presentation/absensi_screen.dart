@@ -29,9 +29,9 @@ class _AbsensiScreenState extends State<AbsensiScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.bg,
-      body: SafeArea(
+    return ColoredBox(
+      color: AppColors.bg,
+      child: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -65,7 +65,7 @@ class _AbsensiScreenState extends State<AbsensiScreen> {
 
   Widget _buildHeader(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(12, 8, 12, 14),
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 14),
       decoration: const BoxDecoration(
         color: Colors.white,
         border: Border(bottom: BorderSide(color: AppColors.border)),
@@ -73,54 +73,42 @@ class _AbsensiScreenState extends State<AbsensiScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          const Padding(
+            padding: EdgeInsets.only(bottom: 6),
+            child: Text('Log Absensi', style: AppTextStyles.h2),
+          ),
           Row(
             children: [
-              IconButton(
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
-                icon: const Icon(Icons.arrow_back, color: AppColors.primary),
-                onPressed: () => Navigator.of(context).pop(),
+              InkWell(
+                // dummy — nanti ganti bulan mundur, refetch data.
+                onTap: () {},
+                borderRadius: BorderRadius.circular(6),
+                child: const Padding(
+                  padding: EdgeInsets.all(4),
+                  child: Icon(Icons.chevron_left,
+                      size: 18, color: AppColors.textMuted),
+                ),
               ),
-              const SizedBox(width: 8),
-              const Text('Log Absensi', style: AppTextStyles.h2),
+              Text(
+                _monthLabel.toUpperCase(),
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textMuted,
+                  letterSpacing: 0.4,
+                ),
+              ),
+              InkWell(
+                // dummy — nanti ganti bulan maju, refetch data.
+                onTap: () {},
+                borderRadius: BorderRadius.circular(6),
+                child: const Padding(
+                  padding: EdgeInsets.all(4),
+                  child: Icon(Icons.chevron_right,
+                      size: 18, color: AppColors.textMuted),
+                ),
+              ),
             ],
-          ),
-          const SizedBox(height: 6),
-          Padding(
-            padding: const EdgeInsets.only(left: 41),
-            child: Row(
-              children: [
-                InkWell(
-                  // dummy — nanti ganti bulan mundur, refetch data.
-                  onTap: () {},
-                  borderRadius: BorderRadius.circular(6),
-                  child: const Padding(
-                    padding: EdgeInsets.all(4),
-                    child: Icon(Icons.chevron_left,
-                        size: 18, color: AppColors.textMuted),
-                  ),
-                ),
-                Text(
-                  _monthLabel.toUpperCase(),
-                  style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textMuted,
-                    letterSpacing: 0.4,
-                  ),
-                ),
-                InkWell(
-                  // dummy — nanti ganti bulan maju, refetch data.
-                  onTap: () {},
-                  borderRadius: BorderRadius.circular(6),
-                  child: const Padding(
-                    padding: EdgeInsets.all(4),
-                    child: Icon(Icons.chevron_right,
-                        size: 18, color: AppColors.textMuted),
-                  ),
-                ),
-              ],
-            ),
           ),
         ],
       ),

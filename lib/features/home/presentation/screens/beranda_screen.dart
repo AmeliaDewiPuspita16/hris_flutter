@@ -19,10 +19,10 @@ import '../widgets/pending_request_card.dart';
 import '../widgets/saldo_section.dart';
 import '../widgets/team_banner.dart';
 
-/// Halaman Beranda. Isinya berbeda-beda menurut [role].
+/// Halaman Beranda + shell navigasi utama.
 ///
-/// Layar ini hanya merangkai section; tampilan tiap section ada di
-/// `presentation/widgets/` dan datanya di `domain/home_demo_data.dart`.
+/// Home, Request (Pengajuan), Attendance (Absensi), dan Profile adalah
+/// 4 tab UTAMA yang sejajar di bottom nav 
 class BerandaScreen extends StatefulWidget {
   const BerandaScreen({super.key, required this.role});
 
@@ -33,34 +33,26 @@ class BerandaScreen extends StatefulWidget {
 }
 
 class _BerandaScreenState extends State<BerandaScreen> {
+  static const _homeTab = 0;
+  static const _pengajuanTab = 1;
+  static const _absensiTab = 2;
+  static const _profilTab = 3;
+
   /// Indeks tab navigasi bawah. Tab 4 dipakai role HOD untuk Persetujuan.
+  ///
+  /// SEMENTARA: role HOD belum punya halaman Persetujuan sungguhan, jadi
+  /// tab ini cuma menyalakan highlight di bottom nav tanpa konten baru.
   static const _approvalTabIndex = 4;
 
-  int _activeTab = 0;
+  int _activeTab = _homeTab;
 
   Role get _role => widget.role;
 
-  void _openPengajuan() {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => PengajuanScreen(role: _role)),
-    );
-  }
-
-  void _openAbsensi() {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const AbsensiScreen()),
-    );
-  }
+  void _openTab(int index) => setState(() => _activeTab = index);
 
   void _openPayslip() {
     Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => const PayslipScreen()),
-    );
-  }
-
-  void _openProfil() {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => ProfilScreen(role: _role)),
     );
   }
 
@@ -78,7 +70,7 @@ class _BerandaScreenState extends State<BerandaScreen> {
           label: 'Leave',
           color: AppColors.primaryMid,
           background: AppColors.primaryLight,
-          onTap: _openPengajuan,
+          onTap: () => _openTab(_pengajuanTab),
         ),
         ServiceShortcut(
           icon: Icons.receipt_long_outlined,
@@ -92,7 +84,7 @@ class _BerandaScreenState extends State<BerandaScreen> {
           label: 'Attendance',
           color: AppColors.present,
           background: AppColors.presentBg,
-          onTap: _openAbsensi,
+          onTap: () => _openTab(_absensiTab),
         ),
         ServiceShortcut(
           icon: Icons.calendar_month_outlined,
@@ -106,7 +98,7 @@ class _BerandaScreenState extends State<BerandaScreen> {
           label: 'Profile',
           color: AppColors.violet,
           background: AppColors.violetBg,
-          onTap: _openProfil,
+          onTap: () => _openTab(_profilTab),
         ),
         if (_role == Role.hod)
           ServiceShortcut(
@@ -127,15 +119,10 @@ class _BerandaScreenState extends State<BerandaScreen> {
           ),
       ];
 
-  /// Tab selain Home membuka halaman lain, jadi indeks aktifnya tidak berubah.
+  /// Index 4 (Approvals/Manage Team) masih kasus khusus: Manage Team
+  /// (admin) tetap push halaman terpisah, Approvals (HOD) masih placeholder.
   void _handleTabChange(int index) {
     switch (index) {
-      case 1:
-        _openPengajuan();
-      case 2:
-        _openAbsensi();
-      case 3:
-        _openProfil();
       // SEMENTARA
       case _approvalTabIndex when _role == Role.admin:
         _openKelolaTim();
@@ -144,28 +131,62 @@ class _BerandaScreenState extends State<BerandaScreen> {
     }
   }
 
+  /// Index tab yang benar-benar ditampilkan di [IndexedStack]. Approvals
+  /// (index 4, HOD) masih placeholder dan jatuh balik ke tampilan Home.
+  int get _displayedTab => _activeTab > _profilTab ? _homeTab : _activeTab;
+
   @override
   Widget build(BuildContext context) {
+    // Ikon status bar terang cuma dibutuhkan waktu tab Home aktif, karena
+    // cuma header Home yang gradiennya naik sampai ke balik status bar.
+    // Tab lain (Request/Attendance/Profile) latar depannya putih/terang,
+    // jadi ikon status bar harus gelap supaya kebaca.
+    final isHomeTab = _displayedTab == _homeTab;
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      // Header hijau tua mengisi area status bar, jadi ikon jam/sinyal/baterai
-      // harus terang supaya tetap terbaca.
-      value: const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.light,
-        statusBarBrightness: Brightness.dark,
-      ),
+      value: isHomeTab
+          ? const SystemUiOverlayStyle(
+              statusBarColor: Colors.transparent,
+              statusBarIconBrightness: Brightness.light,
+              statusBarBrightness: Brightness.dark,
+            )
+          : const SystemUiOverlayStyle(
+              statusBarColor: Colors.transparent,
+              statusBarIconBrightness: Brightness.dark,
+              statusBarBrightness: Brightness.light,
+            ),
       child: _buildScaffold(),
     );
   }
 
   Widget _buildScaffold() {
     return Scaffold(
-      // Beige hangat, sama dengan halaman Login — kartu putih jadi lebih
-      // menonjol dibanding di atas AppColors.bg yang nyaris seputih kartunya.
+      // Warna dasar ikut tab Home (dipakai saat transisi); tiap tab lain
+      // membungkus kontennya sendiri dengan warna latarnya masing-masing.
       backgroundColor: AppColors.bgWarm,
+      body: IndexedStack(
+        index: _displayedTab,
+        children: [
+          _buildHomeTab(),
+          PengajuanScreen(role: _role),
+          const AbsensiScreen(),
+          ProfilScreen(role: _role),
+        ],
+      ),
+      bottomNavigationBar: HomeBottomNav(
+        role: _role,
+        activeIndex: _activeTab,
+        onChanged: _handleTabChange,
+      ),
+    );
+  }
+
+  Widget _buildHomeTab() {
+    return ColoredBox(
+      color: AppColors.bgWarm,
       // top: false — HomeTopHeader yang mengurus jarak aman atas sendiri
       // supaya warna hijaunya tidak terpotong garis putih di atas.
-      body: SafeArea(
+      child: SafeArea(
         top: false,
         child: SingleChildScrollView(
           child: Column(
@@ -175,16 +196,16 @@ class _BerandaScreenState extends State<BerandaScreen> {
               ClockStatusCard(
                 status: HomeDemoData.todayAttendance,
                 date: DateTime.now(),
-                onActionTap: _openAbsensi,
+                onActionTap: () => _openTab(_absensiTab),
               ),
               PendingRequestCard(
                 count: 2,
                 description: 'Overtime · Business Trip',
-                onTap: _openPengajuan,
+                onTap: () => _openTab(_pengajuanTab),
               ),
               SaldoSection(
                 balances: HomeDemoData.quotaBalancesFor(_role),
-                onSeeAll: _openPengajuan,
+                onSeeAll: () => _openTab(_pengajuanTab),
               ),
               LayananSection(services: _buildServices()),
               if (_role == Role.hod)
@@ -212,11 +233,6 @@ class _BerandaScreenState extends State<BerandaScreen> {
             ],
           ),
         ),
-      ),
-      bottomNavigationBar: HomeBottomNav(
-        role: _role,
-        activeIndex: _activeTab,
-        onChanged: _handleTabChange,
       ),
     );
   }

@@ -50,9 +50,9 @@ class _PengajuanScreenState extends State<PengajuanScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.bg,
-      body: SafeArea(
+    return ColoredBox(
+      color: AppColors.bg,
+      child: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
