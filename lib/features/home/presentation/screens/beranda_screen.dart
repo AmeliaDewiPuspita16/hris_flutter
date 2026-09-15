@@ -11,11 +11,13 @@ import '../../../notifikasi/domain/app_notification.dart';
 import '../../../notifikasi/domain/notification_demo_data.dart';
 import '../../../notifikasi/presentation/screens/notifikasi_screen.dart';
 import '../../../shared/domain/role.dart';
+import '../../domain/announcement.dart';
 import '../../domain/home_demo_data.dart';
 import '../../domain/service_shortcut.dart';
 import '../widgets/activity_section.dart';
 import '../widgets/announcement_section.dart';
 import '../widgets/clock_status_card.dart';
+import '../widgets/create_announcement_sheet.dart';
 import '../widgets/home_bottom_nav.dart';
 import '../widgets/home_top_header.dart';
 import '../widgets/layanan_section.dart';
@@ -54,6 +56,10 @@ class _BerandaScreenState extends State<BerandaScreen> {
   /// titik penanda di lonceng tetap benar setelah layar itu ditutup.
   List<AppNotification> _notifications = NotificationDemoData.initial();
 
+  /// Sama seperti notifikasi — dipegang di sini supaya pengumuman baru dari
+  /// HR Publisher langsung kelihatan begitu modal ditutup.
+  List<Announcement> _announcements = HomeDemoData.initialAnnouncements();
+
   Role get _role => widget.role;
 
   int get _unreadCount => _notifications.where((n) => !n.isRead).length;
@@ -81,6 +87,18 @@ class _BerandaScreenState extends State<BerandaScreen> {
     Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => const KelolaTimScreen()),
     );
+  }
+
+  Future<void> _openCreateAnnouncement() async {
+    final created = await showModalBottomSheet<Announcement>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => const CreateAnnouncementSheet(),
+    );
+
+    if (created == null || !mounted) return;
+    setState(() => _announcements = [created, ..._announcements]);
   }
 
   void _openApprovalTab() => setState(() => _activeTab = _approvalTabIndex);
@@ -233,8 +251,10 @@ class _BerandaScreenState extends State<BerandaScreen> {
                 onSeeAll: () => _openTab(_pengajuanTab),
               ),
               LayananSection(services: _buildServices()),
-              const AnnouncementSection(
-                announcements: HomeDemoData.announcements,
+              AnnouncementSection(
+                announcements: _announcements,
+                canCreate: _role == Role.hrPublisher,
+                onCreateTap: _openCreateAnnouncement,
               ),
               if (_role == Role.hod)
                 TeamBanner(

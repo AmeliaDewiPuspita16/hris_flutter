@@ -4,6 +4,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../domain/announcement.dart';
+import 'section_header.dart';
 
 /// Daftar pengumuman perusahaan.
 ///
@@ -15,46 +16,73 @@ class AnnouncementSection extends StatelessWidget {
     super.key,
     required this.announcements,
     this.onTapAnnouncement,
+    this.canCreate = false,
+    this.onCreateTap,
   });
 
   final List<Announcement> announcements;
   final ValueChanged<Announcement>? onTapAnnouncement;
 
+  /// Cuma HR Publisher yang boleh menambah pengumuman baru.
+  final bool canCreate;
+  final VoidCallback? onCreateTap;
+
   @override
   Widget build(BuildContext context) {
-    if (announcements.isEmpty) return const SizedBox.shrink();
+    // Publisher tetap lihat header + tombol "+ New" walau daftarnya masih
+    // kosong, supaya ada jalan masuk buat bikin pengumuman pertama.
+    if (announcements.isEmpty && !canCreate) return const SizedBox.shrink();
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text('Announcements', style: AppTextStyles.sectionTitle),
+          SectionHeader(
+            title: 'Announcements',
+            actionLabel: canCreate ? '+ New' : null,
+            onActionTap: canCreate ? onCreateTap : null,
+          ),
           const SizedBox(height: 12),
-          AppCard(
-            child: ClipRRect(
-              // Memotong efek sentuh tiap baris agar tidak melewati sudut kartu.
-              borderRadius: BorderRadius.circular(12),
-              child: Column(
-                children: [
-                  for (var i = 0; i < announcements.length; i++) ...[
-                    if (i > 0)
-                      const Divider(
-                        height: 1,
-                        thickness: 1,
-                        indent: 16,
-                        endIndent: 16,
-                        color: AppColors.border,
+          if (announcements.isEmpty)
+            AppCard(
+              padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+              child: const Center(
+                child: Text(
+                  'No announcements yet',
+                  style: TextStyle(
+                    fontFamily: AppTextStyles.fontFamily,
+                    fontSize: 12,
+                    color: AppColors.textMuted,
+                  ),
+                ),
+              ),
+            )
+          else
+            AppCard(
+              child: ClipRRect(
+                // Memotong efek sentuh tiap baris agar tidak melewati sudut kartu.
+                borderRadius: BorderRadius.circular(12),
+                child: Column(
+                  children: [
+                    for (var i = 0; i < announcements.length; i++) ...[
+                      if (i > 0)
+                        const Divider(
+                          height: 1,
+                          thickness: 1,
+                          indent: 16,
+                          endIndent: 16,
+                          color: AppColors.border,
+                        ),
+                      _AnnouncementTile(
+                        announcement: announcements[i],
+                        onTap: onTapAnnouncement,
                       ),
-                    _AnnouncementTile(
-                      announcement: announcements[i],
-                      onTap: onTapAnnouncement,
-                    ),
+                    ],
                   ],
-                ],
+                ),
               ),
             ),
-          ),
         ],
       ),
     );
