@@ -86,7 +86,6 @@ enum LeaveCategory {
   kewajibanNegara,
   menikah,
   menikahkanAnak,
-  oil,
   publicHoliday,
   permission,
   unpaidLeave,
@@ -131,9 +130,6 @@ extension LeaveCategoryX on LeaveCategory {
 
       case LeaveCategory.menikahkanAnak:
         return 'MRA';
-
-      case LeaveCategory.oil:
-        return 'OIL';
 
       case LeaveCategory.publicHoliday:
         return 'PH';
@@ -184,9 +180,6 @@ extension LeaveCategoryX on LeaveCategory {
       case LeaveCategory.menikahkanAnak:
         return 'Menikahkan Anak';
 
-      case LeaveCategory.oil:
-        return 'OIL (Off In Lieu)';
-
       case LeaveCategory.publicHoliday:
         return 'Public Holiday';
 
@@ -235,9 +228,6 @@ extension LeaveCategoryX on LeaveCategory {
 
       case LeaveCategory.menikahkanAnak:
         return Icons.family_restroom_outlined;
-
-      case LeaveCategory.oil:
-        return Icons.event_available_outlined;
 
       case LeaveCategory.publicHoliday:
         return Icons.calendar_month_outlined;
