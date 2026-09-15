@@ -50,11 +50,14 @@ class _PengajuanScreenState extends State<PengajuanScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Strip status bar memakai warna header (putih), bukan warna halaman —
+    // kalau tidak, ada garis beda warna tepat di atas header.
     return ColoredBox(
-      color: AppColors.bg,
+      color: AppColors.card,
       child: SafeArea(
-        top: false,
-        child: Column(
+        child: ColoredBox(
+          color: AppColors.bg,
+          child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             _buildHeader(),
@@ -82,6 +85,7 @@ class _PengajuanScreenState extends State<PengajuanScreen> {
               },
             ),
           ],
+          ),
         ),
       ),
     );

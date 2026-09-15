@@ -11,7 +11,7 @@ class LoginFooter extends StatelessWidget {
     return Column(
       children: [
         Text(
-          'Trouble signing in? Contact ITM Dept',
+          'Crafted with extra ❤️',
           textAlign: TextAlign.center,
           style: AppTextStyles.caption,
         ),

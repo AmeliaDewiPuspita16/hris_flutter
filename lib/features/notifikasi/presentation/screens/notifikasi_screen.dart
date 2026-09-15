@@ -80,7 +80,7 @@ class _NotifikasiScreenState extends State<NotifikasiScreen> {
     final rest = visible.where((n) => !n.needsAction).toList();
 
     return Scaffold(
-      backgroundColor: AppColors.bgWarm,
+      backgroundColor: AppColors.bg,
       appBar: BackHeader(
         title: 'Notifications',
         onBack: () => Navigator.of(context).pop(),

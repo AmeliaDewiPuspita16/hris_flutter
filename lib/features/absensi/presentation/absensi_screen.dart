@@ -29,36 +29,40 @@ class _AbsensiScreenState extends State<AbsensiScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Strip status bar memakai warna header (putih), bukan warna halaman —
+    // kalau tidak, ada garis beda warna tepat di atas header.
     return ColoredBox(
-      color: AppColors.bg,
+      color: AppColors.card,
       child: SafeArea(
-        top: false,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _buildHeader(context),
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-                children: [
-                  _SummaryCard(
-                    present: _totalPresent,
-                    late: _totalLate,
-                    overtimeHrs: _totalOvertimeHrs,
-                  ),
-                  const SizedBox(height: 16),
-                  ..._entries.map(
-                    (e) => Padding(
-                      padding: const EdgeInsets.only(bottom: 10),
-                      child: _AttendanceRow(entry: e),
+        child: ColoredBox(
+          color: AppColors.bg,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _buildHeader(context),
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+                  children: [
+                    _SummaryCard(
+                      present: _totalPresent,
+                      late: _totalLate,
+                      overtimeHrs: _totalOvertimeHrs,
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  const _SyncFootnote(),
-                ],
+                    const SizedBox(height: 16),
+                    ..._entries.map(
+                      (e) => Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: _AttendanceRow(entry: e),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    const _SyncFootnote(),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
