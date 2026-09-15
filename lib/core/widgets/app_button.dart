@@ -12,12 +12,17 @@ class AppButton extends StatelessWidget {
     this.onPressed,
     this.variant = AppButtonVariant.primary,
     this.enabled = true,
+    this.isLoading = false,
   });
 
   final String label;
   final VoidCallback? onPressed;
   final AppButtonVariant variant;
   final bool enabled;
+
+  /// Mengganti label dengan indikator dan menonaktifkan tombol selama
+  /// menunggu proses — misalnya saat login menunggu jawaban server.
+  final bool isLoading;
 
   ({Color bg, Color fg, Color? border}) _styleFor(AppButtonVariant v) {
     switch (v) {
@@ -39,7 +44,7 @@ class AppButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final s = _styleFor(variant);
-    final isDisabled = !enabled || onPressed == null;
+    final isDisabled = !enabled || isLoading || onPressed == null;
 
     return SizedBox(
       width: double.infinity,
@@ -57,7 +62,18 @@ class AppButton extends StatelessWidget {
             side: s.border != null ? BorderSide(color: s.border!, width: 1.5) : BorderSide.none,
           ),
         ),
-        child: Text(label, style: AppTextStyles.buttonText.copyWith(color: s.fg)),
+        child: isLoading
+            ? SizedBox(
+                height: 20,
+                width: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    s.fg.withValues(alpha: 0.7),
+                  ),
+                ),
+              )
+            : Text(label, style: AppTextStyles.buttonText.copyWith(color: s.fg)),
       ),
     );
   }

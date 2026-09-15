@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_card.dart';
-import '../../../auth/presentation/screens/login_screen.dart';
+import '../../../auth/presentation/bloc/auth/auth_bloc.dart';
+import '../../../auth/presentation/bloc/auth/auth_event.dart';
 import '../../../shared/domain/role.dart';
 import '../../domain/employee_profile.dart';
 import 'data_diri_screen.dart';
@@ -167,12 +169,11 @@ class ProfilScreen extends StatelessWidget {
 
   Widget _buildLogoutButton(BuildContext context) {
     return OutlinedButton(
-      onPressed: () {
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (_) => const LoginScreen()),
-          (route) => false,
-        );
-      },
+      // Cukup lapor ke AuthBloc — AuthGate yang memulangkan ke layar login,
+      // jadi jalurnya sama dengan sesi yang kedaluwarsa.
+      onPressed: () => context.read<AuthBloc>().add(
+            const AuthLogoutRequested(),
+          ),
       style: OutlinedButton.styleFrom(
         backgroundColor: AppColors.rejectedBg,
         side: const BorderSide(color: AppColors.rejected, width: 1.5),

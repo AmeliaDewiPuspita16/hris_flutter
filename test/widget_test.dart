@@ -1,30 +1,43 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
+import 'package:hris_mobile/features/auth/domain/auth_session.dart';
+import 'package:hris_mobile/features/auth/presentation/screens/login_screen.dart';
+import 'package:hris_mobile/features/home/presentation/screens/beranda_screen.dart';
+import 'package:hris_mobile/features/splash/presentation/screens/splash_screen.dart';
 import 'package:hris_mobile/main.dart';
 
+import 'fixtures/login_response.dart';
+import 'support/auth_harness.dart';
+
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets('aplikasi membuka layar splash lebih dulu', (tester) async {
+    await tester.pumpWidget(MyApp(authRepository: AuthHarness().repository));
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    expect(find.byType(SplashScreen), findsOneWidget);
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+    await tester.pump(SplashScreen.displayDuration);
+    await tester.pumpAndSettle();
+  });
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+  testWidgets('berlanjut ke login saat belum ada sesi tersimpan',
+      (tester) async {
+    await tester.pumpWidget(MyApp(authRepository: AuthHarness().repository));
+
+    await tester.pump(SplashScreen.displayDuration);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(LoginScreen), findsOneWidget);
+  });
+
+  testWidgets('langsung ke beranda saat sesi sebelumnya masih tersimpan',
+      (tester) async {
+    final harness = AuthHarness();
+    harness.storage.session = AuthSession.fromJson(loginResponseData());
+
+    await tester.pumpWidget(MyApp(authRepository: harness.repository));
+    await tester.pump(SplashScreen.displayDuration);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(BerandaScreen), findsOneWidget);
+    expect(find.byType(LoginScreen), findsNothing);
   });
 }

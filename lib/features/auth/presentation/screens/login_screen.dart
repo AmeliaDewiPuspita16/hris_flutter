@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/app_button.dart';
-import '../../../home/presentation/screens/beranda_screen.dart';
-import '../../../shared/domain/role.dart';
+import '../../data/auth_repository.dart';
+import '../bloc/auth/auth_bloc.dart';
+import '../bloc/auth/auth_event.dart';
+import '../bloc/login/login_bloc.dart';
+import '../bloc/login/login_event.dart';
+import '../bloc/login/login_state.dart';
 import '../controllers/login_form_controller.dart';
 import '../widgets/keep_signed_in_row.dart';
 import '../widgets/login_alt_button.dart';
@@ -15,16 +20,32 @@ import '../widgets/or_divider.dart';
 
 /// Halaman login BIIE Portal.
 ///
-/// Layar ini hanya merangkai widget; state form-nya dipegang
-/// [LoginFormController] dan aturan validasinya ada di LoginCredentials.
-class LoginScreen extends StatefulWidget {
+/// Menyediakan [LoginBloc] yang umurnya seumur layar ini saja; status sesi
+/// jangka panjang dipegang AuthBloc di atasnya.
+class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (context) => LoginBloc(
+        repository: context.read<AuthRepository>(),
+      ),
+      child: const _LoginView(),
+    );
+  }
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+/// Isi layar login: merangkai widget, memegang state form lewat
+/// [LoginFormController], dan meneruskan hasil login ke AuthBloc.
+class _LoginView extends StatefulWidget {
+  const _LoginView();
+
+  @override
+  State<_LoginView> createState() => _LoginViewState();
+}
+
+class _LoginViewState extends State<_LoginView> {
   final _form = LoginFormController();
 
   @override
@@ -33,36 +54,54 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  /// Belum ada autentikasi — kalau input valid, langsung ke Beranda.
   void _handleSignIn() {
     if (!_form.submit()) return;
 
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const BerandaScreen(role: Role.hrPublisher)),
-      (route) => false,
-    );
+    final credentials = _form.credentials;
+    context.read<LoginBloc>().add(
+          LoginSubmitted(
+            email: credentials.email,
+            password: credentials.password,
+          ),
+        );
+  }
+
+  /// Navigasi tidak dilakukan dari sini — AuthGate yang mengganti layar
+  /// begitu AuthBloc tahu sesinya sudah sah.
+  void _handleLoginState(BuildContext context, LoginState state) {
+    final session = state.session;
+    if (state.status == LoginStatus.success && session != null) {
+      context.read<AuthBloc>().add(AuthSessionGranted(session));
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.bg,
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const LoginHeader(),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 28),
-              child: AnimatedBuilder(
-                animation: _form,
-                builder: (context, _) => _LoginForm(
-                  form: _form,
-                  onSignIn: _handleSignIn,
+    return BlocListener<LoginBloc, LoginState>(
+      listener: _handleLoginState,
+      child: Scaffold(
+        backgroundColor: AppColors.bg,
+        body: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const LoginHeader(),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 28),
+                child: AnimatedBuilder(
+                  animation: _form,
+                  builder: (context, _) =>
+                      BlocBuilder<LoginBloc, LoginState>(
+                    builder: (context, state) => _LoginForm(
+                      form: _form,
+                      state: state,
+                      onSignIn: _handleSignIn,
+                    ),
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -70,9 +109,14 @@ class _LoginScreenState extends State<LoginScreen> {
 }
 
 class _LoginForm extends StatelessWidget {
-  const _LoginForm({required this.form, required this.onSignIn});
+  const _LoginForm({
+    required this.form,
+    required this.state,
+    required this.onSignIn,
+  });
 
   final LoginFormController form;
+  final LoginState state;
   final VoidCallback onSignIn;
 
   @override
@@ -119,8 +163,16 @@ class _LoginForm extends StatelessWidget {
           onChanged: form.toggleKeepSignedIn,
           onForgotPressed: () {},
         ),
+        if (state.errorMessage != null) ...[
+          const SizedBox(height: 16),
+          _ServerErrorMessage(message: state.errorMessage!),
+        ],
         const SizedBox(height: 20),
-        AppButton(label: 'Sign in', onPressed: onSignIn),
+        AppButton(
+          label: 'Sign in',
+          onPressed: onSignIn,
+          isLoading: state.isLoading,
+        ),
         const SizedBox(height: 20),
         const OrDivider(),
         const SizedBox(height: 20),
@@ -128,6 +180,49 @@ class _LoginForm extends StatelessWidget {
         const SizedBox(height: 28),
         const LoginFooter(),
       ],
+    );
+  }
+}
+
+/// Galat yang datang dari server — bukan milik satu field tertentu, jadi
+/// ditaruh tepat di atas tombol Sign in dan bukan sebagai SnackBar yang
+/// keburu hilang saat pengguna mengetik ulang.
+class _ServerErrorMessage extends StatelessWidget {
+  const _ServerErrorMessage({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppColors.rejectedBg,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppColors.rejected, width: 1),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(
+            Icons.error_outline,
+            size: 18,
+            color: AppColors.rejected,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              message,
+              style: const TextStyle(
+                fontFamily: AppTextStyles.fontFamily,
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: AppColors.rejected,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

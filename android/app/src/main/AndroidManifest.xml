@@ -1,4 +1,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Dibutuhkan untuk memanggil API BIIE Portal. Flutter hanya menambahkan
+         izin ini otomatis pada build debug & profile, jadi build release wajib
+         mencantumkannya di sini. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+
     <application
         android:label="hris_mobile"
         android:name="${applicationName}"

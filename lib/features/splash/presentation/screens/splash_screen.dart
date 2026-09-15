@@ -3,17 +3,15 @@ import 'package:flutter/services.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
-import '../../../auth/presentation/screens/login_screen.dart';
 
-/// Layar pembuka: logo muncul dengan fade + scale, lalu pindah ke Login.
+/// Layar pembuka: logo muncul dengan fade + scale.
 ///
-/// Belum ada pengecekan sesi di project ini, jadi tujuannya selalu
-/// LoginScreen. Kalau nanti sudah ada penyimpanan token, percabangan
-/// "sudah login / belum" cukup ditambahkan di [_navigateToLogin].
+/// Murni tampilan — layar ini tidak menavigasi ke mana pun. AuthGate yang
+/// menggantinya begitu status sesi diketahui dan [displayDuration] terlewati.
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
-  /// Lama splash ditahan sebelum berpindah halaman.
+  /// Lama splash ditahan sebelum AuthGate boleh berpindah halaman.
   static const displayDuration = Duration(seconds: 2);
 
   @override
@@ -59,16 +57,6 @@ class _SplashScreenState extends State<SplashScreen>
     );
 
     _controller.forward();
-    _navigateToLogin();
-  }
-
-  Future<void> _navigateToLogin() async {
-    await Future.delayed(SplashScreen.displayDuration);
-    if (!mounted) return;
-
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) => const LoginScreen()),
-    );
   }
 
   @override
