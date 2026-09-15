@@ -1,3 +1,4 @@
+import '../../../core/logging/app_logger.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_config.dart';
 import '../../../core/network/api_exception.dart';
@@ -63,10 +64,23 @@ class AuthRepository {
     return session;
   }
 
-  /// Menghapus sesi tersimpan dan melepas token dari [ApiClient].
+  /// Mencabut token di server, lalu menghapus sesi tersimpan dan melepas
+  /// token dari [ApiClient].
   ///
-  /// Murni lokal: BIIE Portal belum menyediakan endpoint logout.
+  /// Pembersihan lokal selalu dijalankan, bahkan ketika permintaan ke server
+  /// gagal: pengguna yang sedang offline atau token-nya sudah dicabut tetap
+  /// harus bisa keluar dari aplikasi.
   Future<void> logout() async {
+    if (_apiClient.authorizationHeader != null) {
+      try {
+        await _apiClient.post(ApiConfig.logout);
+      } on ApiException catch (e) {
+        AppLogger.info(
+          'Logout di server gagal (${e.message}) — sesi lokal tetap dihapus',
+        );
+      }
+    }
+
     await _storage.clear();
     _apiClient.setToken(null);
   }

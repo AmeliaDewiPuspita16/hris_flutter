@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../auth/domain/auth_user.dart';
 import '../../../shared/domain/role.dart';
 
 /// Panel hijau di atas: avatar inisial, sapaan, jabatan, dan lonceng notifikasi.
@@ -13,11 +14,17 @@ class HomeTopHeader extends StatelessWidget {
   const HomeTopHeader({
     super.key,
     required this.role,
+    this.user,
     this.onNotificationTap,
     this.unreadCount = 0,
   });
 
   final Role role;
+
+  /// Pengguna yang sedang masuk. Null berarti belum ada sesi — tampilan
+  /// jatuh kembali ke data demo milik [role].
+  final AuthUser? user;
+
   final VoidCallback? onNotificationTap;
 
   /// Jumlah notifikasi belum dibaca — menentukan muncul tidaknya titik
@@ -27,6 +34,12 @@ class HomeTopHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final topInset = MediaQuery.paddingOf(context).top;
+
+    // API tidak mengirim jabatan; `section` adalah keterangan unit kerja
+    // terdekat yang tersedia. Kalau itu pun kosong, pakai jabatan demo.
+    final initials = user?.initials ?? role.initials;
+    final greetingName = user?.firstName ?? role.firstName;
+    final subtitle = user?.section ?? role.demoUserTitle;
 
     return Container(
       width: double.infinity,
@@ -44,7 +57,7 @@ class HomeTopHeader extends StatelessWidget {
             radius: 22,
             backgroundColor: Colors.white.withValues(alpha: 0.18),
             child: Text(
-              role.initials,
+              initials,
               style: const TextStyle(
                 fontFamily: AppTextStyles.fontFamily,
                 color: Colors.white,
@@ -59,14 +72,14 @@ class HomeTopHeader extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Hi, ${role.firstName}',
+                  'Hi, $greetingName',
                   style: AppTextStyles.h3,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  role.demoUserTitle,
+                  subtitle,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(

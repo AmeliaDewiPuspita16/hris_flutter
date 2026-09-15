@@ -58,8 +58,11 @@ class _AuthGateState extends State<AuthGate> {
         return switch (state.status) {
           // SEMENTARA: role UI masih dipatok sampai pemetaan role dari API
           // (gmo, it media, daily-worker, ...) ke enum Role diputuskan.
-          AuthStatus.authenticated =>
-            const BerandaScreen(role: Role.hrPublisher),
+          // Data pengguna sendiri sudah memakai sesi sungguhan.
+          AuthStatus.authenticated => BerandaScreen(
+              role: Role.hrPublisher,
+              user: state.session?.user,
+            ),
           _ => const LoginScreen(),
         };
       },

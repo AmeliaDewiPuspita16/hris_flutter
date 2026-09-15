@@ -90,6 +90,21 @@ void main() {
     expect(find.byType(SplashScreen), findsNothing);
   });
 
+  testWidgets('meneruskan pengguna dari sesi ke Beranda', (tester) async {
+    final bloc = await pumpGate(
+      tester,
+      savedSession: AuthSession.fromJson(loginResponseData()),
+    );
+
+    bloc.add(const AuthStarted());
+    await tester.pump();
+    await tester.pump(splashDuration);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Hi, Ari'), findsOneWidget);
+    expect(find.text('IT Solution'), findsOneWidget);
+  });
+
   testWidgets('kembali ke login setelah sesi dibatalkan', (tester) async {
     final bloc = await pumpGate(
       tester,

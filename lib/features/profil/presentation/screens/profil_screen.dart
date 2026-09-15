@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_card.dart';
+import '../../../auth/domain/auth_user.dart';
 import '../../../auth/presentation/bloc/auth/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth/auth_event.dart';
 import '../../../shared/domain/role.dart';
@@ -21,11 +22,16 @@ class _CategoryItem {
 
 class ProfilScreen extends StatelessWidget {
   const ProfilScreen({
-    super.key, 
-    required this.role
+    super.key,
+    required this.role,
+    this.user,
   });
 
   final Role role;
+
+  /// Pengguna yang sedang masuk. Null berarti belum ada sesi — hero-nya
+  /// jatuh kembali ke data demo milik [role].
+  final AuthUser? user;
 
   @override
   Widget build(BuildContext context) {
@@ -127,18 +133,20 @@ class ProfilScreen extends StatelessWidget {
               shape: BoxShape.circle,
               // border: Border.all(color: Colors.white.withValues(alpha: 0.3), width: 3),
             ),
-            child: Text(p.initials, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: Colors.white)),
+            child: Text(user?.initials ?? p.initials, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: Colors.white)),
           ),
           const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(p.name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Colors.white)),
+                Text(user?.name ?? p.name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Colors.white)),
                 const SizedBox(height: 3),
-                Text(p.title, style: const TextStyle(fontSize: 12, color: Colors.white70)),
+                // API tidak punya field jabatan; `section` adalah keterangan
+                // unit kerja terdekat yang tersedia.
+                Text(user?.section ?? p.title, style: const TextStyle(fontSize: 12, color: Colors.white70)),
                 const SizedBox(height: 2),
-                Text('NIP: ${p.nip}', style: const TextStyle(fontSize: 11, color: Colors.white54)),
+                Text('NIP: ${user?.nik ?? p.nip}', style: const TextStyle(fontSize: 11, color: Colors.white54)),
               ],
             ),
           ),

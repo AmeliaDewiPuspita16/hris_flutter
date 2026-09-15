@@ -117,6 +117,73 @@ void main() {
     });
   });
 
+  group('AuthUser.firstName', () {
+    test('mengambil kata pertama dari nama', () {
+      final user = AuthUser.fromJson(loginResponseUser());
+
+      expect(user.firstName, 'Ari');
+    });
+
+    test('mengembalikan nama utuh saat hanya satu kata', () {
+      final user = AuthUser.fromJson({
+        'id': 1,
+        'name': 'Anita',
+        'email': 'anita@biie.co.id',
+      });
+
+      expect(user.firstName, 'Anita');
+    });
+
+    test('tahan terhadap spasi berlebih di awal nama', () {
+      final user = AuthUser.fromJson({
+        'id': 1,
+        'name': '  Ari  Putra ',
+        'email': 'a@biie.co.id',
+      });
+
+      expect(user.firstName, 'Ari');
+    });
+  });
+
+  group('AuthUser.initials', () {
+    test('mengambil huruf depan nama pertama dan terakhir', () {
+      final user = AuthUser.fromJson(loginResponseUser());
+
+      expect(user.initials, 'AP');
+    });
+
+    test('memakai satu huruf saat nama hanya satu kata', () {
+      final user = AuthUser.fromJson({
+        'id': 1,
+        'name': 'Anita',
+        'email': 'anita@biie.co.id',
+      });
+
+      expect(user.initials, 'A');
+    });
+
+    test('mengabaikan nama tengah', () {
+      final user = AuthUser.fromJson({
+        'id': 1,
+        'name': 'Dewi Ayu Puspita',
+        'email': 'dewi@biie.co.id',
+      });
+
+      expect(user.initials, 'DP');
+    });
+
+    test('memberi tanda tanya saat nama kosong', () {
+      final user = AuthUser.fromJson({
+        'id': 1,
+        'name': '',
+        'email': 'x@biie.co.id',
+      });
+
+      expect(user.initials, '?');
+      expect(user.firstName, '');
+    });
+  });
+
   group('AuthUser.hasRole', () {
     test('mengenali role yang dimiliki tanpa membedakan huruf besar-kecil',
         () {

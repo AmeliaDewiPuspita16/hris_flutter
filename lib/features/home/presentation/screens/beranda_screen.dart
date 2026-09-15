@@ -10,6 +10,7 @@ import '../../../gaji/presentation/gaji_screen.dart';
 import '../../../notifikasi/domain/app_notification.dart';
 import '../../../notifikasi/domain/notification_demo_data.dart';
 import '../../../notifikasi/presentation/screens/notifikasi_screen.dart';
+import '../../../auth/domain/auth_user.dart';
 import '../../../shared/domain/role.dart';
 import '../../domain/announcement.dart';
 import '../../domain/home_demo_data.dart';
@@ -30,9 +31,13 @@ import '../widgets/team_banner.dart';
 /// Home, Request (Pengajuan), Attendance (Absensi), dan Profile adalah
 /// 4 tab UTAMA yang sejajar di bottom nav
 class BerandaScreen extends StatefulWidget {
-  const BerandaScreen({super.key, required this.role});
+  const BerandaScreen({super.key, required this.role, this.user});
 
   final Role role;
+
+  /// Pengguna yang sedang masuk, diteruskan ke header Beranda dan Profil.
+  /// Null berarti belum ada sesi — keduanya jatuh ke data demo.
+  final AuthUser? user;
 
   @override
   State<BerandaScreen> createState() => _BerandaScreenState();
@@ -209,7 +214,7 @@ class _BerandaScreenState extends State<BerandaScreen> {
           _buildHomeTab(),
           PengajuanScreen(role: _role),
           const AbsensiScreen(),
-          ProfilScreen(role: _role),
+          ProfilScreen(role: _role, user: widget.user),
         ],
       ),
       bottomNavigationBar: HomeBottomNav(
@@ -233,6 +238,7 @@ class _BerandaScreenState extends State<BerandaScreen> {
             children: [
               HomeTopHeader(
                 role: _role,
+                user: widget.user,
                 unreadCount: _unreadCount,
                 onNotificationTap: _openNotifications,
               ),

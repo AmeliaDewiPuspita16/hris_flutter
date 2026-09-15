@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
+import 'package:hris_mobile/core/logging/app_logger.dart';
 import 'package:hris_mobile/core/network/api_client.dart';
 import 'package:hris_mobile/core/network/api_exception.dart';
 import 'package:hris_mobile/features/auth/data/auth_repository.dart';
@@ -10,6 +11,7 @@ import 'package:hris_mobile/features/auth/domain/auth_session.dart';
 
 import '../../../fixtures/login_response.dart';
 import '../../../support/fake_session_storage.dart';
+import '../../../support/log_recorder.dart';
 
 void main() {
   late FakeSessionStorage storage;
@@ -194,9 +196,19 @@ void main() {
   });
 
   group('AuthRepository.logout', () {
+    http.Response okLogout() => http.Response(
+          jsonEncode({
+            'code': 200,
+            'status': 'success',
+            'message': 'Token Revoked',
+            'data': true,
+          }),
+          200,
+        );
+
     test('menghapus sesi tersimpan dan melepas token', () async {
       storage.session = AuthSession.fromJson(loginResponseData());
-      final built = buildRepository((_) async => okLogin());
+      final built = buildRepository((_) async => okLogout());
       await built.repository.restoreSession();
 
       await built.repository.logout();
@@ -204,6 +216,85 @@ void main() {
       expect(storage.session, isNull);
       expect(storage.clearCount, 1);
       expect(built.apiClient.authorizationHeader, isNull);
+    });
+
+    test('memanggil endpoint logout dengan token yang sedang berlaku',
+        () async {
+      storage.session = AuthSession.fromJson(loginResponseData());
+      late http.Request sent;
+      final built = buildRepository((request) async {
+        sent = request;
+        return okLogout();
+      });
+      await built.repository.restoreSession();
+
+      await built.repository.logout();
+
+      expect(sent.method, 'POST');
+      expect(sent.url.path, '/api/logout');
+      expect(
+        sent.headers['Authorization'],
+        'Bearer ${AuthSession.fromJson(loginResponseData()).token}',
+      );
+    });
+
+    test('tetap membersihkan sesi saat server menolak permintaan logout',
+        () async {
+      storage.session = AuthSession.fromJson(loginResponseData());
+      final built = buildRepository(
+        (_) async => http.Response(
+          jsonEncode({'status': 'error', 'message': 'Unauthenticated'}),
+          401,
+        ),
+      );
+      await built.repository.restoreSession();
+
+      await built.repository.logout();
+
+      expect(storage.session, isNull);
+      expect(built.apiClient.authorizationHeader, isNull);
+    });
+
+    test('tetap membersihkan sesi saat perangkat sedang offline', () async {
+      storage.session = AuthSession.fromJson(loginResponseData());
+      final built = buildRepository(
+        (_) async => throw http.ClientException('Connection refused'),
+      );
+      await built.repository.restoreSession();
+
+      await built.repository.logout();
+
+      expect(storage.session, isNull);
+      expect(built.apiClient.authorizationHeader, isNull);
+    });
+
+    test('mencatat bahwa kegagalan logout di server sengaja diabaikan',
+        () async {
+      final recorder = LogRecorder()..install();
+      addTearDown(AppLogger.resetSink);
+
+      storage.session = AuthSession.fromJson(loginResponseData());
+      final built = buildRepository(
+        (_) async => throw http.ClientException('Connection refused'),
+      );
+      await built.repository.restoreSession();
+
+      await built.repository.logout();
+
+      expect(recorder.combined, contains('sesi lokal tetap dihapus'));
+    });
+
+    test('tidak memanggil server saat memang belum ada sesi', () async {
+      var requestCount = 0;
+      final built = buildRepository((_) async {
+        requestCount++;
+        return okLogout();
+      });
+
+      await built.repository.logout();
+
+      expect(requestCount, 0);
+      expect(storage.clearCount, 1);
     });
   });
 }

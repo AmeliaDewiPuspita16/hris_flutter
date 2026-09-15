@@ -83,6 +83,21 @@ class AuthUser {
     };
   }
 
+  /// Nama panggilan untuk sapaan di Beranda.
+  String get firstName => _nameParts.isEmpty ? '' : _nameParts.first;
+
+  /// Inisial untuk avatar bulat: huruf depan nama pertama dan terakhir.
+  String get initials {
+    final parts = _nameParts;
+    if (parts.isEmpty) return '?';
+    if (parts.length == 1) return parts.first[0].toUpperCase();
+    return (parts.first[0] + parts.last[0]).toUpperCase();
+  }
+
+  /// Nama dipecah per kata, tahan terhadap spasi berlebih dari server.
+  List<String> get _nameParts =>
+      name.trim().split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
+
   bool hasRole(String role) {
     final target = role.toLowerCase();
     return roles.any((r) => r.toLowerCase() == target);
