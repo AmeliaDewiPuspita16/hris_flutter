@@ -5,12 +5,6 @@ import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../domain/attendance_status.dart';
 
-/// Kartu absensi hari ini, tepat di bawah header.
-///
-/// Warnanya hijau tua **solid**, bukan gradient seperti header. Tepi bawah
-/// header justru hijau yang lebih terang, jadi warna solid yang lebih gelap
-/// ini membuat kartunya terbaca sebagai permukaan terpisah — bukan lanjutan
-/// header. Baris tanggal berlatar beige di atasnya menambah jeda itu.
 class ClockStatusCard extends StatelessWidget {
   const ClockStatusCard({
     super.key,

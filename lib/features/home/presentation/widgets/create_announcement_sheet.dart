@@ -9,9 +9,6 @@ import '../../domain/announcement.dart';
 
 /// Modal untuk HR Publisher membuat pengumuman baru.
 ///
-/// Sengaja dibikin sebagai bottom sheet, bukan halaman terpisah, biar nggak
-/// nambah satu route baru cuma untuk form singkat begini.
-///
 /// Cara pakai:
 /// ```dart
 /// final result = await showModalBottomSheet<Announcement>(
