@@ -4,8 +4,10 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_card.dart';
+import '../../../../core/widgets/app_date_field.dart';
+import '../../../../core/widgets/app_date_range_field.dart';
 import '../../../../core/widgets/app_dropdown.dart';
-import '../../../../core/widgets/app_text_field.dart';
+import '../../../../core/widgets/app_time_field.dart';
 
 import '../../../shared/domain/role.dart';
 import '../../domain/leave_type.dart';
@@ -45,22 +47,18 @@ class _AjukanTabState extends State<AjukanTab> {
   _DurationType _durationType =
       _DurationType.full;
 
-  final _startDateCtrl = TextEditingController();
-  final _endDateCtrl = TextEditingController();
-  final _dateCtrl = TextEditingController();
   final _reasonCtrl = TextEditingController();
-  final _startTimeCtrl = TextEditingController(text: '09:00');
-  final _endTimeCtrl = TextEditingController(text: '12:00');
+
+  DateTime? _startDate;
+  DateTime? _endDate;
+  DateTime? _date;
+  TimeOfDay? _startTime = const TimeOfDay(hour: 9, minute: 0);
+  TimeOfDay? _endTime = const TimeOfDay(hour: 12, minute: 0);
   String? _fileName;
 
   @override
   void dispose() {
-    _startDateCtrl.dispose();
-    _endDateCtrl.dispose();
-    _dateCtrl.dispose();
     _reasonCtrl.dispose();
-    _startTimeCtrl.dispose();
-    _endTimeCtrl.dispose();
 
     super.dispose();
   }
@@ -196,30 +194,17 @@ class _AjukanTabState extends State<AjukanTab> {
       case LeaveType.cutiTahunan:
       case LeaveType.cutiPengganti:
         return [
-          Row(
-            children: [
-              Expanded(
-                child: AppTextField(
-                  label: 'Tanggal Mulai',
-                  controller: _startDateCtrl,
-                  hint: 'DD/MM/YYYY',
-                  required: true,
-                  icon: Icons.calendar_today_outlined,
-                ),
-              ),
-
-              const SizedBox(width: 12),
-
-              Expanded(
-                child: AppTextField(
-                  label: 'Tanggal Selesai',
-                  controller: _endDateCtrl,
-                  hint: 'DD/MM/YYYY',
-                  required: true,
-                  icon: Icons.calendar_today_outlined,
-                ),
-              ),
-            ],
+          AppDateRangeField(
+            label: 'Rentang Tanggal',
+            startDate: _startDate,
+            endDate: _endDate,
+            required: true,
+            onChanged: (start, end) {
+              setState(() {
+                _startDate = start;
+                _endDate = end;
+              });
+            },
           ),
 
           const SizedBox(height: 16),
@@ -246,12 +231,11 @@ class _AjukanTabState extends State<AjukanTab> {
 
           const SizedBox(height: 16),
 
-          AppTextField(
+          AppDateField(
             label: 'Tanggal Izin',
-            controller: _dateCtrl,
-            hint: 'DD/MM/YYYY',
+            value: _date,
             required: true,
-            icon: Icons.calendar_today_outlined,
+            onChanged: (date) => setState(() => _date = date),
           ),
 
           const SizedBox(height: 16),
@@ -264,18 +248,20 @@ class _AjukanTabState extends State<AjukanTab> {
             Row(
               children: [
                 Expanded(
-                  child: AppTextField(
+                  child: AppTimeField(
                     label: 'Mulai',
-                    controller: _startTimeCtrl,
+                    value: _startTime,
+                    onChanged: (time) => setState(() => _startTime = time),
                   ),
                 ),
 
                 const SizedBox(width: 12),
 
                 Expanded(
-                  child: AppTextField(
+                  child: AppTimeField(
                     label: 'Selesai',
-                    controller: _endTimeCtrl,
+                    value: _endTime,
+                    onChanged: (time) => setState(() => _endTime = time),
                   ),
                 ),
               ],
@@ -289,12 +275,11 @@ class _AjukanTabState extends State<AjukanTab> {
 
       case LeaveType.lembur:
         return [
-          AppTextField(
+          AppDateField(
             label: 'Tanggal Lembur',
-            controller: _dateCtrl,
-            hint: 'DD/MM/YYYY',
+            value: _date,
             required: true,
-            icon: Icons.calendar_today_outlined,
+            onChanged: (date) => setState(() => _date = date),
           ),
 
           const SizedBox(height: 16),
@@ -302,18 +287,20 @@ class _AjukanTabState extends State<AjukanTab> {
           Row(
             children: [
               Expanded(
-                child: AppTextField(
+                child: AppTimeField(
                   label: 'Waktu Mulai',
-                  controller: _startTimeCtrl,
+                  value: _startTime,
+                  onChanged: (time) => setState(() => _startTime = time),
                 ),
               ),
 
               const SizedBox(width: 12),
 
               Expanded(
-                child: AppTextField(
+                child: AppTimeField(
                   label: 'Waktu Selesai',
-                  controller: _endTimeCtrl,
+                  value: _endTime,
+                  onChanged: (time) => setState(() => _endTime = time),
                 ),
               ),
             ],
@@ -355,12 +342,11 @@ class _AjukanTabState extends State<AjukanTab> {
 
           const SizedBox(height: 16),
 
-          AppTextField(
+          AppDateField(
             label: 'Tanggal Cek Kesehatan',
-            controller: _dateCtrl,
-            hint: 'DD/MM/YYYY',
+            value: _date,
             required: true,
-            icon: Icons.calendar_today_outlined,
+            onChanged: (date) => setState(() => _date = date),
           ),
 
           const SizedBox(height: 16),

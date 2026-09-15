@@ -12,6 +12,10 @@ dependencies:
   cupertino_icons: ^1.0.6
   google_fonts: ^8.2.1
   month_picker_dialog: ^6.7.3
+  table_calendar: ^3.1.2
+  intl: any
+  flutter_localizations:
+    sdk: flutter
 
 dev_dependencies:
   flutter_test:

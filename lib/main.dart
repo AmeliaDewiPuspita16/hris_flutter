@@ -1,8 +1,18 @@
 import 'package:flutter/material.dart';
-import 'core/theme/app_colors.dart';
-import 'features/splash/presentation/screens/splash_screen.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
-void main() {
+import 'core/theme/app_colors.dart';
+import 'features/auth/presentation/screens/login_screen.dart';
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Wajib dipanggil sebelum runApp() supaya package:intl (dipakai internal
+  // oleh Material DatePicker & month_picker_dialog) punya data locale
+  // Indonesia. Tanpa ini -> LocaleDataException.
+  await initializeDateFormatting('id_ID');
+
   runApp(const MyApp());
 }
 
@@ -14,6 +24,13 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'HRIS Mobile',
       debugShowCheckedModeBanner: false,
+      locale: const Locale('id'),
+      supportedLocales: const [Locale('id'), Locale('en')],
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
       theme: ThemeData(
         useMaterial3: true,
         scaffoldBackgroundColor: AppColors.bg,
@@ -23,7 +40,7 @@ class MyApp extends StatelessWidget {
         ),
         fontFamily: 'Poppins',
       ),
-      home: const SplashScreen(),
+      home: const LoginScreen(),
     );
   }
 }

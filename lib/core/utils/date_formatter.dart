@@ -1,8 +1,12 @@
-/// Pemformat tanggal seadanya.
+import 'package:intl/intl.dart';
+
+/// Pemformat tanggal.
 ///
-/// Project ini belum memakai package `intl`, jadi nama hari dan bulan ditulis
-/// manual. Begitu aplikasi perlu lebih dari satu bahasa, ganti kelas ini
-/// dengan `DateFormat` dari `intl`.
+/// Bagian Inggris (`fullDate`, `shortDate`, dst) masih pakai daftar
+/// nama hari/bulan manual peninggalan sebelum project pakai `intl`.
+/// Bagian ID (`shortDateID`, `monthYearID`, `shortDayID`) sudah pakai
+/// `DateFormat` dari package `intl` dengan locale `id_ID` — pastikan
+/// `initializeDateFormatting('id_ID')` sudah dipanggil di `main()`.
 class DateFormatter {
   DateFormatter._();
 
@@ -56,6 +60,21 @@ class DateFormatter {
   static String shortDate(DateTime date) {
     final month = _months[date.month - 1].substring(0, 3);
     return '${date.day} $month ${date.year}';
+  }
+
+  /// Contoh: "12 Okt 2026". Dipakai AppDateField & AppDateRangeField.
+  static String shortDateID(DateTime date) {
+    return DateFormat('d MMM yyyy', 'id_ID').format(date);
+  }
+
+  /// Contoh: "Oktober 2026". Dipakai untuk judul header kalender.
+  static String monthYearID(DateTime date) {
+    return DateFormat('MMMM yyyy', 'id_ID').format(date);
+  }
+
+  /// Contoh: "Sen". Dipakai untuk label hari di header kalender.
+  static String shortDayID(DateTime date) {
+    return DateFormat('EEE', 'id_ID').format(date);
   }
 
   /// Label pengelompokan daftar: "Today", "Yesterday", atau "Earlier".
