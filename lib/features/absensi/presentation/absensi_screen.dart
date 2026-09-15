@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:month_picker_dialog/month_picker_dialog.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
@@ -17,8 +18,16 @@ class AbsensiScreen extends StatefulWidget {
 }
 
 class _AbsensiScreenState extends State<AbsensiScreen> {
+  static const _bulanIndonesia = [
+    'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+    'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
+  ];
+
+  static final _firstSelectableMonth = DateTime(2023, 1);
+  static final _lastSelectableMonth = DateTime(DateTime.now().year + 1, 12);
+
   // dummy — nanti diganti state bulan aktif dari query ke backend.
-  static const _monthLabel = 'September 2026';
+  DateTime _selectedMonth = DateTime(2026, 9);
 
   static const _entries = AttendanceEntry.dummySeptember2026;
 
@@ -26,6 +35,66 @@ class _AbsensiScreenState extends State<AbsensiScreen> {
   static const _totalPresent = 20;
   static const _totalLate = 1;
   static const _totalOvertimeHrs = 18;
+
+  String get _monthLabel =>
+      '${_bulanIndonesia[_selectedMonth.month - 1]} ${_selectedMonth.year}';
+
+  void _shiftMonth(int delta) {
+    setState(() {
+      _selectedMonth = DateTime(_selectedMonth.year, _selectedMonth.month + delta);
+    });
+    // dummy — di sini nanti refetch _entries buat bulan barunya.
+  }
+
+  Future<void> _pickMonth(BuildContext context) async {
+    final picked = await showMonthPicker(
+      context: context,
+      initialDate: _selectedMonth,
+      firstDate: _firstSelectableMonth,
+      lastDate: _lastSelectableMonth,
+      monthPickerDialogSettings: const MonthPickerDialogSettings(
+        dialogSettings: PickerDialogSettings(
+          dialogRoundedCornersRadius: 16,
+          dialogBackgroundColor: AppColors.card,
+        ),
+        headerSettings: PickerHeaderSettings(
+          headerBackgroundColor: AppColors.primary,
+          headerIconsColor: Colors.white,
+          headerCurrentPageTextStyle: TextStyle(
+            color: Colors.white70,
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+          ),
+          headerSelectedIntervalTextStyle: TextStyle(
+            color: Colors.white,
+            fontSize: 20,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        dateButtonsSettings: PickerDateButtonsSettings(
+          selectedMonthBackgroundColor: AppColors.primary,
+          selectedMonthTextColor: Colors.white,
+          unselectedMonthsTextColor: AppColors.text,
+          currentMonthTextColor: AppColors.primary,
+        ),
+        actionBarSettings: PickerActionBarSettings(
+          confirmWidget: Text('Pilih', style: TextStyle(
+            color: AppColors.primary,
+            fontWeight: FontWeight.w700,
+          )),
+          cancelWidget: Text('Batal', style: TextStyle(
+            color: AppColors.textMuted,
+            fontWeight: FontWeight.w600,
+          )),
+        ),
+      ),
+    );
+
+    if (picked != null) {
+      setState(() => _selectedMonth = picked);
+      // dummy — di sini nanti refetch _entries buat bulan barunya.
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -85,8 +154,7 @@ class _AbsensiScreenState extends State<AbsensiScreen> {
           Row(
             children: [
               InkWell(
-                // dummy — nanti ganti bulan mundur, refetch data.
-                onTap: () {},
+                onTap: () => _shiftMonth(-1),
                 borderRadius: BorderRadius.circular(6),
                 child: const Padding(
                   padding: EdgeInsets.all(4),
@@ -94,18 +162,24 @@ class _AbsensiScreenState extends State<AbsensiScreen> {
                       size: 18, color: AppColors.textMuted),
                 ),
               ),
-              Text(
-                _monthLabel.toUpperCase(),
-                style: const TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textMuted,
-                  letterSpacing: 0.4,
+              InkWell(
+                onTap: () => _pickMonth(context),
+                borderRadius: BorderRadius.circular(4),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
+                  child: Text(
+                    _monthLabel.toUpperCase(),
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textMuted,
+                      letterSpacing: 0.4,
+                    ),
+                  ),
                 ),
               ),
               InkWell(
-                // dummy — nanti ganti bulan maju, refetch data.
-                onTap: () {},
+                onTap: () => _shiftMonth(1),
                 borderRadius: BorderRadius.circular(6),
                 child: const Padding(
                   padding: EdgeInsets.all(4),

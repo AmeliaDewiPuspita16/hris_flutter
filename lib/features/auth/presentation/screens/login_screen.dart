@@ -38,7 +38,7 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!_form.submit()) return;
 
     Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const BerandaScreen(role: Role.executive)),
+      MaterialPageRoute(builder: (_) => const BerandaScreen(role: Role.hrPublisher)),
       (route) => false,
     );
   }
