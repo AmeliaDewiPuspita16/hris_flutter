@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -91,6 +92,82 @@ void main() {
             .having((e) => e.kind, 'kind', ApiErrorKind.unauthorized),
       ),
     );
+  });
+
+  group('cache', () {
+    test('tidak memanggil server lagi pada permintaan kedua', () async {
+      var requestCount = 0;
+      final repository = repositoryThatResponds((_) async {
+        requestCount++;
+        return departmentResponse();
+      });
+
+      await repository.getActiveDepartments();
+      await repository.getActiveDepartments();
+
+      expect(requestCount, 1);
+    });
+
+    test('mengembalikan isi yang sama dari cache', () async {
+      final repository = repositoryThatResponds(
+        (_) async => departmentResponse(),
+      );
+
+      final first = await repository.getActiveDepartments();
+      final second = await repository.getActiveDepartments();
+
+      expect(second.map((d) => d.name), first.map((d) => d.name));
+    });
+
+    test('tidak menyimpan hasil saat permintaan pertama gagal', () async {
+      var requestCount = 0;
+      final repository = repositoryThatResponds((_) async {
+        requestCount++;
+        if (requestCount == 1) {
+          return http.Response(jsonEncode({'message': 'Server error'}), 500);
+        }
+        return departmentResponse();
+      });
+
+      await expectLater(
+        repository.getActiveDepartments(),
+        throwsA(isA<ApiException>()),
+      );
+      final departments = await repository.getActiveDepartments();
+
+      expect(requestCount, 2);
+      expect(departments, hasLength(5));
+    });
+
+    test('hanya mengirim satu request saat dua pemanggil meminta bersamaan',
+        () async {
+      var requestCount = 0;
+      final release = Completer<void>();
+      final repository = repositoryThatResponds((_) async {
+        requestCount++;
+        await release.future;
+        return departmentResponse();
+      });
+
+      final first = repository.getActiveDepartments();
+      final second = repository.getActiveDepartments();
+      release.complete();
+      await Future.wait([first, second]);
+
+      expect(requestCount, 1);
+    });
+
+    test('daftar yang dikembalikan tidak bisa diubah pemanggil', () async {
+      final repository = repositoryThatResponds(
+        (_) async => departmentResponse(),
+      );
+
+      final departments = await repository.getActiveDepartments();
+
+      // Kalau bisa diubah, satu pemanggil yang menyortir atau menghapus isi
+      // daftar akan merusak cache untuk semua pemanggil berikutnya.
+      expect(() => departments.clear(), throwsUnsupportedError);
+    });
   });
 
   test('tetap menolak amplop yang jelas menandai gagal', () async {
