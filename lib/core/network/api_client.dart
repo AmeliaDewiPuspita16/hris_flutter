@@ -60,7 +60,7 @@ class ApiClient {
         headers: _headers(authenticated: authenticated),
         body: jsonEncode(body ?? const <String, dynamic>{}),
       ),
-    ).then(_expectMap);
+    ).then((data) => _expectMap(data, 'POST', uri));
   }
 
   /// Mengirim GET dan mengembalikan isi `data` dari amplop respons, sebagai
@@ -80,7 +80,7 @@ class ApiClient {
         uri,
         headers: _headers(authenticated: authenticated),
       ),
-    ).then(_expectMap);
+    ).then((data) => _expectMap(data, 'GET', uri));
   }
 
   /// Mengirim GET dan mengembalikan isi `data` dari amplop respons, sebagai
@@ -101,7 +101,7 @@ class ApiClient {
         uri,
         headers: _headers(authenticated: authenticated),
       ),
-    ).then(_expectList);
+    ).then((data) => _expectList(data, 'GET', uri));
   }
 
   /// Badan request untuk keperluan log, dengan field rahasia disamarkan.
@@ -199,29 +199,70 @@ class ApiClient {
       );
     }
 
-    // HTTP 2xx, tapi badan respons masih bisa mengabarkan kegagalan.
-    if (envelope == null) throw const ApiException.server();
+    // HTTP 2xx, tapi badan respons masih bisa mengabarkan kegagalan. Isi
+    // badannya ikut dicatat: tanpa itu, kegagalan bentuk pada respons sukses
+    // hanya terlihat sebagai "gangguan server" tanpa petunjuk apa pun.
+    if (envelope == null) {
+      AppLogger.info(
+        'Badan respons bukan objek JSON: ${_truncate(response.body)}',
+      );
+      throw const ApiException.server();
+    }
 
-    if (envelope['status'] != 'success') {
+    // Tidak semua endpoint memakai amplop lengkap. `POST /api/login` mengirim
+    // {code, status, message, data}, sementara endpoint data referensi seperti
+    // `GET /api/data/department` hanya mengirim {data}. Karena itu `status`
+    // hanya diperiksa kalau memang dikirim — ketiadaannya bukan tanda gagal.
+    if (envelope.containsKey('status') && envelope['status'] != 'success') {
+      AppLogger.info(
+        'Amplop menandai gagal: ${_truncate(response.body)}',
+      );
       throw ApiException(
         ApiErrorKind.server,
         serverMessage ?? const ApiException.server().message,
       );
     }
 
+    if (!envelope.containsKey('data')) {
+      AppLogger.info(
+        'Amplop tidak memuat data: ${_truncate(response.body)}',
+      );
+      throw const ApiException.server();
+    }
+
     return envelope['data'];
   }
 
   /// Memastikan `data` berbentuk objek, untuk [post] dan [get].
-  Map<String, dynamic> _expectMap(dynamic data) {
-    if (data is! Map<String, dynamic>) throw const ApiException.server();
+  Map<String, dynamic> _expectMap(dynamic data, String method, Uri uri) {
+    if (data is! Map<String, dynamic>) {
+      _logShapeMismatch(method, uri, 'objek', data);
+      throw const ApiException.server();
+    }
     return data;
   }
 
   /// Memastikan `data` berbentuk list, untuk [getList].
-  List<dynamic> _expectList(dynamic data) {
-    if (data is! List) throw const ApiException.server();
+  List<dynamic> _expectList(dynamic data, String method, Uri uri) {
+    if (data is! List) {
+      _logShapeMismatch(method, uri, 'list', data);
+      throw const ApiException.server();
+    }
     return data;
+  }
+
+  /// Mencatat bentuk `data` yang sebenarnya datang saat tidak sesuai harapan.
+  /// Isinya ikut dicatat supaya struktur aslinya langsung terbaca.
+  void _logShapeMismatch(
+    String method,
+    Uri uri,
+    String expected,
+    dynamic data,
+  ) {
+    AppLogger.info(
+      '$method $uri -> data seharusnya $expected, '
+      'yang datang ${data.runtimeType}: ${_truncate(jsonEncode(data))}',
+    );
   }
 
   /// Mem-parsing badan respons sebagai objek JSON. Mengembalikan null bila
