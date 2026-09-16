@@ -24,7 +24,7 @@ class OnlineAppsDemoData {
         OnlineAppItem(
           icon: Icons.inventory_2_outlined,
           label: 'Inventory',
-          department: 'Logistics Dept',
+          department: 'HRGA Dept',
           color: AppColors.primary,
           background: AppColors.primaryLight,
           onTap: onInventory,
@@ -32,7 +32,7 @@ class OnlineAppsDemoData {
         OnlineAppItem(
           icon: Icons.speed_outlined,
           label: 'Meter Reading',
-          department: 'Utilities Dept',
+          department: 'EST Dept',
           color: AppColors.teal,
           background: AppColors.tealBg,
           onTap: onMeterReading,
@@ -40,7 +40,7 @@ class OnlineAppsDemoData {
         OnlineAppItem(
           icon: Icons.event_available_outlined,
           label: 'Reservation',
-          department: 'Admin Dept',
+          department: 'Bintan Inti Executive Village',
           color: AppColors.primaryMid,
           background: AppColors.primaryLight,
           onTap: onReservation,
@@ -56,7 +56,7 @@ class OnlineAppsDemoData {
         OnlineAppItem(
           icon: Icons.chat_bubble_outline,
           label: 'Tenant Feedback',
-          department: 'Relations Dept',
+          department: 'For Tenant Request',
           color: AppColors.violet,
           background: AppColors.violetBg,
           onTap: onTenantFeedback,
@@ -72,7 +72,7 @@ class OnlineAppsDemoData {
         OnlineAppItem(
           icon: Icons.health_and_safety_outlined,
           label: 'HSE Work Request',
-          department: 'Safety Dept',
+          department: 'HSE Work Permit Request',
           color: AppColors.rejected,
           background: AppColors.rejectedBg,
           onTap: onHseWorkRequest,
