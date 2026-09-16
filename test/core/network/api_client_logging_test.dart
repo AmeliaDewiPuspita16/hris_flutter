@@ -88,6 +88,77 @@ void main() {
     expect(recorder.combined, contains('Invalid credentials'));
   });
 
+  group('respons 2xx yang bentuknya tak terduga', () {
+    test('mencatat badan respons saat amplop tidak bisa dipahami', () async {
+      final client = clientThatResponds(
+        (_) async => http.Response('<html><body>Maintenance</body></html>', 200),
+      );
+
+      await expectLater(client.post(ApiConfig.login), throwsA(anything));
+
+      expect(recorder.combined, contains('Maintenance'));
+    });
+
+    test('mencatat bentuk data saat list diharapkan tapi objek yang datang',
+        () async {
+      final client = clientThatResponds(
+        (_) async => http.Response(
+          jsonEncode({
+            'code': 200,
+            'status': 'success',
+            'message': 'OK',
+            'data': {
+              'departments': [
+                {'id': 18, 'name': 'IT'},
+              ],
+            },
+          }),
+          200,
+        ),
+      );
+
+      await expectLater(
+        client.getList('/api/data/department'),
+        throwsA(anything),
+      );
+
+      // Isi data ikut tercatat supaya bentuk sebenarnya langsung kelihatan.
+      expect(recorder.combined, contains('departments'));
+    });
+
+    test('mencatat bentuk data saat objek diharapkan tapi list yang datang',
+        () async {
+      final client = clientThatResponds(
+        (_) async => http.Response(
+          jsonEncode({
+            'code': 200,
+            'status': 'success',
+            'message': 'OK',
+            'data': [1, 2, 3],
+          }),
+          200,
+        ),
+      );
+
+      await expectLater(client.get('/api/profile'), throwsA(anything));
+
+      expect(recorder.combined, contains('List'));
+    });
+
+    test('mencatat pesan server saat status bukan success', () async {
+      final client = clientThatResponds(
+        (_) async => http.Response(
+          jsonEncode({'code': 200, 'status': 'error', 'message': 'Akun nonaktif'}),
+          200,
+        ),
+      );
+
+      await expectLater(client.post(ApiConfig.login), throwsA(anything));
+
+      expect(recorder.combined, contains('Akun nonaktif'));
+    });
+  });
+
   test('mencatat kegagalan jaringan beserta penyebab aslinya', () async {
     final client = clientThatResponds(
       (_) async => throw http.ClientException('Connection refused'),
