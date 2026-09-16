@@ -60,10 +60,12 @@ class ApiClient {
         headers: _headers(authenticated: authenticated),
         body: jsonEncode(body ?? const <String, dynamic>{}),
       ),
-    );
+    ).then(_expectMap);
   }
 
-  /// Mengirim GET dan mengembalikan isi `data` dari amplop respons.
+  /// Mengirim GET dan mengembalikan isi `data` dari amplop respons, sebagai
+  /// objek. Untuk endpoint yang `data`-nya berupa list (mis. data referensi
+  /// seperti daftar departemen), pakai [getList].
   Future<Map<String, dynamic>> get(
     String path, {
     bool authenticated = true,
@@ -78,7 +80,28 @@ class ApiClient {
         uri,
         headers: _headers(authenticated: authenticated),
       ),
-    );
+    ).then(_expectMap);
+  }
+
+  /// Mengirim GET dan mengembalikan isi `data` dari amplop respons, sebagai
+  /// list — dipakai untuk endpoint data referensi seperti
+  /// `GET /api/data/department`, yang menaruh array langsung di `data`
+  /// (bukan di dalam objek pembungkus lagi).
+  Future<List<dynamic>> getList(
+    String path, {
+    bool authenticated = true,
+  }) {
+    final uri = _uriFor(path);
+    AppLogger.info('GET $uri');
+
+    return _send(
+      'GET',
+      uri,
+      () => _httpClient.get(
+        uri,
+        headers: _headers(authenticated: authenticated),
+      ),
+    ).then(_expectList);
   }
 
   /// Badan request untuk keperluan log, dengan field rahasia disamarkan.
@@ -109,7 +132,7 @@ class ApiClient {
 
   /// Menjalankan request lalu menerjemahkan setiap cara gagalnya menjadi
   /// [ApiException].
-  Future<Map<String, dynamic>> _send(
+  Future<dynamic> _send(
     String method,
     Uri uri,
     Future<http.Response> Function() request,
@@ -144,7 +167,11 @@ class ApiClient {
       body.length <= max ? body : '${body.substring(0, max)}…';
 
   /// Membuka amplop respons, atau melempar [ApiException] yang sesuai.
-  Map<String, dynamic> _unwrap(http.Response response) {
+  ///
+  /// Mengembalikan isi `data` apa adanya (bisa Map, bisa List) — pemanggil
+  /// ([_expectMap] / [_expectList]) yang menentukan bentuk mana yang
+  /// diharapkan untuk endpoint tersebut.
+  dynamic _unwrap(http.Response response) {
     final envelope = _decode(response.body);
     final serverMessage = _messageFrom(envelope);
     final status = response.statusCode;
@@ -182,9 +209,18 @@ class ApiClient {
       );
     }
 
-    final data = envelope['data'];
-    if (data is! Map<String, dynamic>) throw const ApiException.server();
+    return envelope['data'];
+  }
 
+  /// Memastikan `data` berbentuk objek, untuk [post] dan [get].
+  Map<String, dynamic> _expectMap(dynamic data) {
+    if (data is! Map<String, dynamic>) throw const ApiException.server();
+    return data;
+  }
+
+  /// Memastikan `data` berbentuk list, untuk [getList].
+  List<dynamic> _expectList(dynamic data) {
+    if (data is! List) throw const ApiException.server();
     return data;
   }
 

@@ -19,4 +19,8 @@ class ApiConfig {
 
   static const String login = '/api/login';
   static const String logout = '/api/logout';
+
+  /// Daftar departemen aktif — dipakai buat ngisi dropdown, misalnya di
+  /// form pengumuman. Server yang urus filter `is_active` dan urutannya.
+  static const String department = '/api/data/department';
 }

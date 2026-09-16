@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_dropdown.dart';
 import '../../../../core/widgets/app_text_field.dart';
+import '../../../shared/data/department_repository.dart';
+import '../../../shared/domain/department.dart';
 import '../../domain/announcement.dart';
 
 /// Modal untuk HR Publisher membuat pengumuman baru.
@@ -21,24 +25,79 @@ import '../../domain/announcement.dart';
 ///   setState(() => _announcements = [result, ..._announcements]);
 /// }
 /// ```
+///
+/// [repository] boleh diisi manual (misalnya di test); kalau tidak, sheet
+/// ini mengambilnya dari `RepositoryProvider` terdekat lewat context —
+/// instance yang sama dipakai AuthRepository, jadi otomatis ikut terkirim
+/// dengan Authorization header begitu user sudah login.
 class CreateAnnouncementSheet extends StatefulWidget {
-  const CreateAnnouncementSheet({super.key});
+  const CreateAnnouncementSheet({super.key, this.repository});
+
+  final DepartmentRepository? repository;
 
   @override
   State<CreateAnnouncementSheet> createState() => _CreateAnnouncementSheetState();
 }
 
-class _CreateAnnouncementSheetState extends State<CreateAnnouncementSheet> {
-  static const _tagOptions = [
-    (value: AnnouncementTag.hr, label: 'HR'),
-    (value: AnnouncementTag.ga, label: 'GA'),
-    (value: AnnouncementTag.it, label: 'IT'),
-  ];
+/// Warna badge untuk tiap departemen dipilih bergilir dari palet ini — API
+/// departemen tidak mengirim warna, jadi ini cuma untuk tampilan lokal.
+const _tagPalette = [
+  (color: AppColors.primary, background: AppColors.primaryLight),
+  (color: AppColors.accent, background: AppColors.accentBg),
+  (color: AppColors.violet, background: AppColors.violetBg),
+];
 
-  AnnouncementTag _tag = AnnouncementTag.hr;
+enum _LoadState { loading, error, loaded }
+
+class _CreateAnnouncementSheetState extends State<CreateAnnouncementSheet> {
+  late final DepartmentRepository _repository;
+
+  _LoadState _loadState = _LoadState.loading;
+  String? _loadError;
+  List<Department> _departments = const [];
+  Department? _department;
+
   final _titleCtrl = TextEditingController();
   final _bodyCtrl = TextEditingController();
   String? _titleError;
+
+  @override
+  void initState() {
+    super.initState();
+    _repository = widget.repository ?? context.read<DepartmentRepository>();
+    _loadDepartments();
+  }
+
+  Future<void> _loadDepartments() async {
+    setState(() => _loadState = _LoadState.loading);
+    try {
+      final departments = await _repository.getActiveDepartments();
+      if (!mounted) return;
+      setState(() {
+        _departments = departments;
+        _department = departments.isEmpty ? null : departments.first;
+        _loadState = _LoadState.loaded;
+      });
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _loadError = e.message;
+        _loadState = _LoadState.error;
+      });
+    }
+  }
+
+  /// Warna badge untuk departemen terpilih, dicocokkan lewat posisinya di
+  /// [_departments] supaya konsisten selama daftar itu tidak berubah.
+  AnnouncementTag _tagFor(Department department) {
+    final index = _departments.indexOf(department);
+    final palette = _tagPalette[index % _tagPalette.length];
+    return AnnouncementTag(
+      label: department.name,
+      color: palette.color,
+      background: palette.background,
+    );
+  }
 
   @override
   void dispose() {
@@ -48,6 +107,9 @@ class _CreateAnnouncementSheetState extends State<CreateAnnouncementSheet> {
   }
 
   void _submit() {
+    final department = _department;
+    if (department == null) return;
+
     final title = _titleCtrl.text.trim();
     if (title.isEmpty) {
       setState(() => _titleError = 'Title is required');
@@ -57,7 +119,7 @@ class _CreateAnnouncementSheetState extends State<CreateAnnouncementSheet> {
     final body = _bodyCtrl.text.trim();
     Navigator.of(context).pop(
       Announcement(
-        tag: _tag,
+        tag: _tagFor(department),
         time: 'Just now',
         title: title,
         body: body.isEmpty ? null : body,
@@ -111,13 +173,7 @@ class _CreateAnnouncementSheetState extends State<CreateAnnouncementSheet> {
                   ],
                 ),
                 const SizedBox(height: 18),
-                AppDropdown<AnnouncementTag>(
-                  label: 'Department',
-                  value: _tag,
-                  required: true,
-                  items: _tagOptions,
-                  onChanged: (v) => setState(() => _tag = v),
-                ),
+                _buildDepartmentField(),
                 const SizedBox(height: 16),
                 AppTextField(
                   label: 'Title',
@@ -166,7 +222,7 @@ class _CreateAnnouncementSheetState extends State<CreateAnnouncementSheet> {
                 AppButton(
                   label: 'Post Announcement',
                   variant: AppButtonVariant.green,
-                  onPressed: _submit,
+                  onPressed: _department == null ? null : _submit,
                 ),
               ],
             ),
@@ -174,5 +230,66 @@ class _CreateAnnouncementSheetState extends State<CreateAnnouncementSheet> {
         ),
       ),
     );
+  }
+
+  Widget _buildDepartmentField() {
+    switch (_loadState) {
+      case _LoadState.loading:
+        return const Padding(
+          padding: EdgeInsets.symmetric(vertical: 8),
+          child: Row(
+            children: [
+              SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+              SizedBox(width: 10),
+              Text('Loading departments...', style: AppTextStyles.body),
+            ],
+          ),
+        );
+
+      case _LoadState.error:
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              _loadError ?? 'Gagal memuat daftar departemen.',
+              style: const TextStyle(fontSize: 12, color: AppColors.rejected),
+            ),
+            const SizedBox(height: 6),
+            InkWell(
+              onTap: _loadDepartments,
+              child: const Text(
+                'Coba lagi',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        );
+
+      case _LoadState.loaded:
+        if (_departments.isEmpty || _department == null) {
+          return const Text(
+            'Belum ada departemen aktif.',
+            style: TextStyle(fontSize: 12, color: AppColors.textMuted),
+          );
+        }
+        return AppDropdown<Department>(
+          label: 'Department',
+          value: _department!,
+          required: true,
+          items: [
+            for (final department in _departments)
+              (value: department, label: department.name),
+          ],
+          onChanged: (v) => setState(() => _department = v),
+        );
+    }
   }
 }
