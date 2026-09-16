@@ -41,7 +41,7 @@ class LayananSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text('Services', style: AppTextStyles.sectionTitle),
+          const Text('Main Menu', style: AppTextStyles.sectionTitle),
           const SizedBox(height: 12),
           AppCard(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 18),

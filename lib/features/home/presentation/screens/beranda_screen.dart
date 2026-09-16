@@ -109,13 +109,13 @@ class _BerandaScreenState extends State<BerandaScreen> {
   void _openApprovalTab() => setState(() => _activeTab = _approvalTabIndex);
 
   List<ServiceShortcut> _buildServices() => [
-        ServiceShortcut(
-          icon: Icons.event_available_outlined,
-          label: 'Leave',
-          color: AppColors.primaryMid,
-          background: AppColors.primaryLight,
-          onTap: () => _openTab(_pengajuanTab),
-        ),
+        // ServiceShortcut(
+        //   icon: Icons.event_available_outlined,
+        //   label: 'Leave',
+        //   color: AppColors.primaryMid,
+        //   background: AppColors.primaryLight,
+        //   onTap: () => _openTab(_pengajuanTab),
+        // ),
         // ServiceShortcut(
         //   icon: Icons.receipt_long_outlined,
         //   label: 'Payslip',
@@ -123,44 +123,72 @@ class _BerandaScreenState extends State<BerandaScreen> {
         //   background: AppColors.accentBg,
         //   onTap: _openPayslip,
         // ),
+        // ServiceShortcut(
+        //   icon: Icons.fingerprint,
+        //   label: 'Attendance',
+        //   color: AppColors.present,
+        //   background: AppColors.presentBg,
+        //   onTap: () => _openTab(_absensiTab),
+        // ),
+        // ServiceShortcut(
+        //   icon: Icons.calendar_month_outlined,
+        //   label: 'Schedule',
+        //   color: AppColors.teal,
+        //   background: AppColors.tealBg,
+        //   onTap: () {},
+        // ),
+        // ServiceShortcut(
+        //   icon: Icons.badge_outlined,
+        //   label: 'Profile',
+        //   color: AppColors.violet,
+        //   background: AppColors.violetBg,
+        //   onTap: () => _openTab(_profilTab),
+        // ),
         ServiceShortcut(
-          icon: Icons.fingerprint,
-          label: 'Attendance',
-          color: AppColors.present,
-          background: AppColors.presentBg,
+          icon: Icons.description_outlined,
+          label: 'Record',
+          color: AppColors.primaryMid,
+          background: AppColors.primaryLight,
           onTap: () => _openTab(_absensiTab),
         ),
         ServiceShortcut(
-          icon: Icons.calendar_month_outlined,
-          label: 'Schedule',
-          color: AppColors.teal,
-          background: AppColors.tealBg,
-          onTap: () {},
+          icon: Icons.storage_outlined,
+          label: 'Data',
+          color: AppColors.accent,
+          background: AppColors.accentBg,
+          onTap: () => _openTab(_absensiTab),
         ),
         ServiceShortcut(
-          icon: Icons.badge_outlined,
-          label: 'Profile',
+          icon: Icons.apps_outlined,
+          label: 'Online Apps',
+          color: AppColors.teal,
+          background: AppColors.tealBg,
+          onTap: () => _openTab(_absensiTab),
+        ),
+        ServiceShortcut(
+          icon: Icons.dashboard_outlined,
+          label: 'Dashboard',
           color: AppColors.violet,
           background: AppColors.violetBg,
-          onTap: () => _openTab(_profilTab),
+          onTap: () => _openTab(_absensiTab),
         ),
-        if (_role == Role.hod)
-          ServiceShortcut(
-            icon: Icons.task_alt,
-            label: 'Approvals',
-            color: AppColors.primary,
-            background: AppColors.primaryLight,
-            onTap: _openApprovalTab,
-          ),
-        if (_role == Role.admin)
-          // SEMENTARA
-          ServiceShortcut(
-            icon: Icons.groups_outlined,
-            label: 'Manage Team',
-            color: AppColors.primaryMid,
-            background: AppColors.primaryLight,
-            onTap: _openKelolaTim,
-          ),
+        // if (_role == Role.hod)
+        //   ServiceShortcut(
+        //     icon: Icons.task_alt,
+        //     label: 'Approvals',
+        //     color: AppColors.primary,
+        //     background: AppColors.primaryLight,
+        //     onTap: _openApprovalTab,
+        //   ),
+        // if (_role == Role.admin)
+        //   // SEMENTARA
+        //   ServiceShortcut(
+        //     icon: Icons.groups_outlined,
+        //     label: 'Manage Team',
+        //     color: AppColors.primaryMid,
+        //     background: AppColors.primaryLight,
+        //     onTap: _openKelolaTim,
+        //   ),
       ];
 
   /// Index 4 (Approvals/Manage Team) masih kasus khusus: Manage Team
@@ -252,11 +280,11 @@ class _BerandaScreenState extends State<BerandaScreen> {
                 description: 'Overtime · Business Trip',
                 onTap: () => _openTab(_pengajuanTab),
               ),
+              LayananSection(services: _buildServices()),
               SaldoSection(
                 balances: HomeDemoData.quotaBalancesFor(_role),
                 onSeeAll: () => _openTab(_pengajuanTab),
               ),
-              LayananSection(services: _buildServices()),
               AnnouncementSection(
                 announcements: _announcements,
                 canCreate: _role == Role.hrPublisher,
