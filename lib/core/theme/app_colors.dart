@@ -64,4 +64,16 @@ class AppColors {
     end: Alignment.bottomRight,
     colors: [heroGreen, heroGreenMid],
   );
+
+  /// Gradasi latar halaman: tint hijau muda di atas memudar jadi beige.
+  ///
+  /// Dibuat tuntas di pertengahan layar supaya bagian bawah tetap netral —
+  /// bagian atas jadi menyambung dengan panel hijau di kepala halaman
+  /// alih-alih terpotong tegas.
+  static const pageGradient = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [primaryLight, bg],
+    stops: [0, 0.55],
+  );
 }

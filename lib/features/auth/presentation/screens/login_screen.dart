@@ -81,26 +81,57 @@ class _LoginViewState extends State<_LoginView> {
       listener: _handleLoginState,
       child: Scaffold(
         backgroundColor: AppColors.bg,
-        body: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const LoginHeader(),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 20, 20, 28),
-                child: AnimatedBuilder(
-                  animation: _form,
-                  builder: (context, _) =>
-                      BlocBuilder<LoginBloc, LoginState>(
-                    builder: (context, state) => _LoginForm(
-                      form: _form,
-                      state: state,
-                      onSignIn: _handleSignIn,
-                    ),
+        // LayoutBuilder dipakai karena Scaffold memberi body batasan yang
+        // longgar: tanpa tinggi eksplisit, latar ikut menyusut setinggi
+        // konten dan menyisakan blok polos di bawah halaman.
+        body: LayoutBuilder(
+          builder: (context, constraints) => Container(
+            height: constraints.maxHeight,
+            width: constraints.maxWidth,
+            decoration: const BoxDecoration(
+              gradient: AppColors.pageGradient,
+              image: DecorationImage(
+                image: AssetImage('assets/images/bg_login.png'),
+                fit: BoxFit.cover,
+                // Teksturnya cuma penghias. Pada kepekatan penuh, garis-
+                // garisnya menutupi teks di atasnya sampai sulit dibaca.
+                opacity: 0.1,
+              ),
+            ),
+            child: SingleChildScrollView(
+              child: ConstrainedBox(
+                // Kolom minimal setinggi layar supaya Spacer di bawah punya
+                // ruang untuk mendorong footer ke dasar halaman.
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: IntrinsicHeight(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const LoginHeader(),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
+                        child: AnimatedBuilder(
+                          animation: _form,
+                          builder: (context, _) =>
+                              BlocBuilder<LoginBloc, LoginState>(
+                            builder: (context, state) => _LoginForm(
+                              form: _form,
+                              state: state,
+                              onSignIn: _handleSignIn,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const Spacer(),
+                      const Padding(
+                        padding: EdgeInsets.fromLTRB(20, 16, 20, 24),
+                        child: LoginFooter(),
+                      ),
+                    ],
                   ),
                 ),
               ),
-            ],
+            ),
           ),
         ),
       ),
@@ -170,6 +201,7 @@ class _LoginForm extends StatelessWidget {
         const SizedBox(height: 20),
         AppButton(
           label: 'Sign in',
+          variant: AppButtonVariant.primaryGradient,
           onPressed: onSignIn,
           isLoading: state.isLoading,
         ),
@@ -177,8 +209,6 @@ class _LoginForm extends StatelessWidget {
         const OrDivider(),
         const SizedBox(height: 20),
         LoginAltButton(label: 'Use Face ID', onPressed: () {}),
-        const SizedBox(height: 28),
-        const LoginFooter(),
       ],
     );
   }

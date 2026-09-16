@@ -108,10 +108,11 @@ class _Brand extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
+        // Logonya hijau tua, sewarna dengan latar splash — karena itu tetap
+        // diletakkan di atas kartu putih supaya terbaca. Kartunya melebar
+        // mengikuti bentuk logo yang memanjang.
         Container(
-          width: 96,
-          height: 96,
-          alignment: Alignment.center,
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
           decoration: BoxDecoration(
             color: AppColors.card,
             borderRadius: BorderRadius.circular(24),
@@ -123,14 +124,11 @@ class _Brand extends StatelessWidget {
               ),
             ],
           ),
-          child: const Text(
-            'B',
-            style: TextStyle(
-              fontFamily: AppTextStyles.fontFamily,
-              fontSize: 44,
-              fontWeight: FontWeight.w800,
-              color: AppColors.primary,
-            ),
+          child: Image.asset(
+            'assets/images/bie.png',
+            width: 200,
+            fit: BoxFit.contain,
+            semanticLabel: 'Logo Bintan Industrial Estate',
           ),
         ),
         const SizedBox(height: 24),
