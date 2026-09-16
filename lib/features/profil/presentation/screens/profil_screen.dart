@@ -38,7 +38,7 @@ class ProfilScreen extends StatelessWidget {
     final p = EmployeeProfile.of(role);
 
     final categories = <_CategoryItem>[
-      _CategoryItem(Icons.badge_outlined, 'Data Diri', (_) => DataDiriScreen(profile: p)),
+      _CategoryItem(Icons.badge_outlined, 'Data Diri', (_) => DataDiriScreen(profile: p, user: user)),
       _CategoryItem(Icons.description_outlined, 'Kontrak Kerja', (_) => KontrakScreen(profile: p)),
       _CategoryItem(Icons.account_balance_outlined, 'Rekening Bank', (_) => RekeningScreen(profile: p)),
       _CategoryItem(Icons.location_on_outlined, 'Alamat', (_) => AlamatScreen(profile: p)),

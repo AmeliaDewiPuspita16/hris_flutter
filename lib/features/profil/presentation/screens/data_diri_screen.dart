@@ -3,14 +3,20 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/back_header.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/detail_field_tile.dart';
+import '../../../../core/utils/date_formatter.dart';
+import '../../../auth/domain/auth_user.dart';
 import '../../domain/employee_profile.dart';
 
 
 /// (Religion, Sex, Birth Place, Marital Status, Degree, Employee Category).
 class DataDiriScreen extends StatefulWidget {
-  const DataDiriScreen({super.key, required this.profile});
+  const DataDiriScreen({super.key, required this.profile, this.user});
 
   final EmployeeProfile profile;
+
+  /// Pengguna yang sedang masuk. Field yang dikirim API diambil dari sini;
+  /// sisanya tetap dari [profile] karena API belum menyediakannya.
+  final AuthUser? user;
 
   @override
   State<DataDiriScreen> createState() => _DataDiriScreenState();
@@ -18,8 +24,12 @@ class DataDiriScreen extends StatefulWidget {
 
 class _DataDiriScreenState extends State<DataDiriScreen> {
   String? _editingField;
-  late final _phoneCtrl = TextEditingController(text: widget.profile.phone);
-  late final _emailCtrl = TextEditingController(text: widget.profile.email);
+  late final _phoneCtrl = TextEditingController(
+    text: widget.user?.phone ?? widget.profile.phone,
+  );
+  late final _emailCtrl = TextEditingController(
+    text: widget.user?.email ?? widget.profile.email,
+  );
 
   @override
   void dispose() {
@@ -31,6 +41,15 @@ class _DataDiriScreenState extends State<DataDiriScreen> {
   @override
   Widget build(BuildContext context) {
     final p = widget.profile;
+    final user = widget.user;
+
+    // Hanya NIP dan tanggal lahir yang punya padanan di API. Kategori
+    // pegawai, tempat lahir, agama, status pernikahan, dan pendidikan belum
+    // dikirim server, jadi tetap dari data demo.
+    final nip = user?.nik ?? p.nip;
+    final birthDate =
+        DateFormatter.dayMonthYearFromIso(user?.dateOfBirth) ?? p.birthDate;
+
     return Scaffold(
       backgroundColor: AppColors.bg,
       appBar: BackHeader(title: 'Data Diri', onBack: () => Navigator.of(context).pop()),
@@ -68,10 +87,10 @@ class _DataDiriScreenState extends State<DataDiriScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Column(
                 children: [
-                  DetailFieldTile(label: 'NIP', value: p.nip),
+                  DetailFieldTile(label: 'NIP', value: nip),
                   DetailFieldTile(label: 'Kategori Pegawai', value: p.employeeCategory),
                   DetailFieldTile(label: 'Tempat Lahir', value: p.birthPlace),
-                  DetailFieldTile(label: 'Tanggal Lahir', value: p.birthDate),
+                  DetailFieldTile(label: 'Tanggal Lahir', value: birthDate),
                   DetailFieldTile(label: 'Agama', value: p.religion),
                   DetailFieldTile(label: 'Status Pernikahan', value: p.maritalStatus),
                   DetailFieldTile(label: 'Pendidikan Terakhir', value: p.degree, showDivider: false),

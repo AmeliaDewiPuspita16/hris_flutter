@@ -77,6 +77,27 @@ class DateFormatter {
     return DateFormat('EEE', 'id_ID').format(date);
   }
 
+  /// Mengubah tanggal ISO dari API ("1991-11-21") menjadi format yang
+  /// dipakai layar detail ("21-11-1991").
+  ///
+  /// Mengembalikan null bila [iso] kosong atau tidak bisa diurai, supaya
+  /// pemanggil bisa jatuh ke nilai lain.
+  static String? dayMonthYearFromIso(String? iso) {
+    if (iso == null || iso.isEmpty) return null;
+
+    final date = DateTime.tryParse(iso);
+    if (date == null) return null;
+
+    // DateTime menormalkan tanggal mustahil — "0000-00-00" yang biasa dikirim
+    // MySQL untuk tanggal kosong berubah jadi 30-11-0000, bukan gagal urai.
+    // Round-trip memastikan hasilnya benar-benar tanggal yang dimaksud.
+    if (DateFormat('yyyy-MM-dd').format(date) != iso.split('T').first) {
+      return null;
+    }
+
+    return DateFormat('dd-MM-yyyy').format(date);
+  }
+
   /// Label pengelompokan daftar: "Today", "Yesterday", atau "Earlier".
   ///
   /// Dihitung per tanggal kalender, bukan selisih jam — notifikasi pukul
