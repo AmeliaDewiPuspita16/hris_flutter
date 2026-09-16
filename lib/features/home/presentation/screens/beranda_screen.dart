@@ -149,28 +149,28 @@ class _BerandaScreenState extends State<BerandaScreen> {
           label: 'Record',
           color: AppColors.primaryMid,
           background: AppColors.primaryLight,
-          onTap: () => _openTab(_absensiTab),
+          onTap: () {},
         ),
         ServiceShortcut(
           icon: Icons.storage_outlined,
           label: 'Data',
           color: AppColors.accent,
           background: AppColors.accentBg,
-          onTap: () => _openTab(_absensiTab),
+          onTap: () {},
         ),
         ServiceShortcut(
           icon: Icons.apps_outlined,
           label: 'Online Apps',
           color: AppColors.teal,
           background: AppColors.tealBg,
-          onTap: () => _openTab(_absensiTab),
+          onTap: () {},
         ),
         ServiceShortcut(
           icon: Icons.dashboard_outlined,
           label: 'Dashboard',
           color: AppColors.violet,
           background: AppColors.violetBg,
-          onTap: () => _openTab(_absensiTab),
+          onTap: () {},
         ),
         // if (_role == Role.hod)
         //   ServiceShortcut(
