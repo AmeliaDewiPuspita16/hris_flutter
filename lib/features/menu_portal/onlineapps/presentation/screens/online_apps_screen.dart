@@ -7,6 +7,7 @@ import '../../domain/online_apps_demo_data.dart';
 import '../../domain/request_type.dart';
 import '../widgets/choose_request_type_sheet.dart';
 import '../widgets/online_app_tile.dart';
+import 'it_request_screen.dart';
 
 /// Halaman daftar Online Apps, dibuka dari salah satu 4 menu utama di
 /// Beranda ("Record", "Data", "Online Apps", "Dashboard").
@@ -39,7 +40,9 @@ class OnlineAppsScreen extends StatelessWidget {
 
     switch (type) {
       case RequestType.it:
-        _showComingSoon(context, 'Form IT Request');
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const ItRequestScreen()),
+        );
       case RequestType.est:
         _showComingSoon(context, 'Form EST Request');
     }
