@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../absensi/presentation/absensi_screen.dart';
 import '../../../kelola_tim/presentation/screens/kelola_tim_screen.dart';
+import '../../../menu_portal/onlineapps/presentation/screens/online_apps_screen.dart';
 import '../../../pengajuan/presentation/pengajuan_screen.dart';
 import '../../../profil/presentation/screens/profil_screen.dart';
 import '../../../gaji/presentation/gaji_screen.dart';
@@ -108,6 +109,14 @@ class _BerandaScreenState extends State<BerandaScreen> {
 
   void _openApprovalTab() => setState(() => _activeTab = _approvalTabIndex);
 
+  /// Menu utama "Online Apps" — dipush sebagai halaman baru, bukan tab,
+  /// jadi bottom nav Beranda tidak ikut tampil di sana.
+  void _openOnlineApps() {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const OnlineAppsScreen()),
+    );
+  }
+
   List<ServiceShortcut> _buildServices() => [
         // ServiceShortcut(
         //   icon: Icons.event_available_outlined,
@@ -149,28 +158,28 @@ class _BerandaScreenState extends State<BerandaScreen> {
           label: 'Record',
           color: AppColors.primaryMid,
           background: AppColors.primaryLight,
-          onTap: () => _openTab(_absensiTab),
+          onTap: () {},
         ),
         ServiceShortcut(
           icon: Icons.storage_outlined,
           label: 'Data',
           color: AppColors.accent,
           background: AppColors.accentBg,
-          onTap: () => _openTab(_absensiTab),
+          onTap: () {},
         ),
         ServiceShortcut(
           icon: Icons.apps_outlined,
           label: 'Online Apps',
           color: AppColors.teal,
           background: AppColors.tealBg,
-          onTap: () => _openTab(_absensiTab),
+          onTap: _openOnlineApps,
         ),
         ServiceShortcut(
           icon: Icons.dashboard_outlined,
           label: 'Dashboard',
           color: AppColors.violet,
           background: AppColors.violetBg,
-          onTap: () => _openTab(_absensiTab),
+          onTap: () {},
         ),
         // if (_role == Role.hod)
         //   ServiceShortcut(
