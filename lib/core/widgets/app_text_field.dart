@@ -14,6 +14,8 @@ class AppTextField extends StatelessWidget {
     this.suffixIcon,
     this.keyboardType,
     this.onChanged,
+    this.maxLines = 1,
+    this.minLines,
   });
 
   final String label;
@@ -25,6 +27,11 @@ class AppTextField extends StatelessWidget {
   final Widget? suffixIcon;
   final TextInputType? keyboardType;
   final ValueChanged<String>? onChanged;
+
+  /// Default 1 (perilaku lama). Isi lebih besar dari 1 (atau null bersama
+  /// [minLines]) untuk field multiline seperti Description.
+  final int? maxLines;
+  final int? minLines;
 
   @override
   Widget build(BuildContext context) {
@@ -46,6 +53,8 @@ class AppTextField extends StatelessWidget {
           obscureText: obscureText,
           keyboardType: keyboardType,
           onChanged: onChanged,
+          maxLines: obscureText ? 1 : maxLines,
+          minLines: obscureText ? 1 : minLines,
           style: AppTextStyles.body,
           decoration: InputDecoration(
             hintText: hint,
@@ -54,7 +63,10 @@ class AppTextField extends StatelessWidget {
             suffixIcon: suffixIcon,
             filled: true,
             fillColor: Colors.white,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 12,
+            ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
               borderSide: const BorderSide(color: AppColors.border, width: 1.5),

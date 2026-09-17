@@ -8,6 +8,7 @@ import '../../domain/it_request_item.dart';
 import '../widgets/it_request_card.dart';
 import '../widgets/it_request_feedback_banner.dart';
 import '../widgets/it_request_feedback_sheet.dart';
+import 'add_it_request_screen.dart';
 
 /// Halaman IT Request untuk staff biasa (bukan HOD IT / Admin IT).
 ///
@@ -57,10 +58,20 @@ class _ItRequestScreenState extends State<ItRequestScreen> {
     );
   }
 
-  void _addRequest() {
-    // Form pengajuan IT Request sendiri belum dibuat di iterasi ini.
+  Future<void> _addRequest() async {
+    final created = await Navigator.of(context).push<ItRequestItem>(
+      MaterialPageRoute(builder: (_) => const AddItRequestScreen()),
+    );
+
+    if (created == null || !mounted) return;
+
+    setState(() {
+      _myRequests = [created, ..._myRequests];
+    });
+
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Form pengajuan belum tersedia')),
+      const SnackBar(content: Text('Request berhasil diajukan')),
     );
   }
 
