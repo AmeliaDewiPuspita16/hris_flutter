@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../../../../core/theme/app_colors.dart';
-import '../../../../../core/theme/app_text_styles.dart';
+import '../../../../../../core/theme/app_colors.dart';
+import '../../../../../../core/theme/app_text_styles.dart';
 
 /// Grup checkbox singkat yang muncul di bawah opsi "What do you need?"
 /// bertipe checkbox — mis. Laptop/PC/Printer/Mouse — dan juga dipakai untuk
