@@ -287,7 +287,10 @@ class _BerandaScreenState extends State<BerandaScreen> {
               ),
               AnnouncementSection(
                 announcements: _announcements,
-                canCreate: _role == Role.hrPublisher,
+                // Izin hr-announcement-post: role hrga dan admin. Selama
+                // belum ada sesi (mis. saat pratinjau), jatuh ke role demo.
+                canCreate: widget.user?.canPublishAnnouncement ??
+                    (_role == Role.hrPublisher),
                 onCreateTap: _openCreateAnnouncement,
               ),
               if (_role == Role.hod)

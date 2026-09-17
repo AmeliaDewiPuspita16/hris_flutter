@@ -63,6 +63,45 @@ class ApiClient {
     ).then((data) => _expectMap(data, 'POST', uri));
   }
 
+  /// Mengirim `multipart/form-data` — dipakai endpoint yang menerima berkas,
+  /// mis. `POST /api/portal/hr_announcement` dengan `photos[]`.
+  ///
+  /// [files] memetakan nama field ke daftar path berkas, sehingga beberapa
+  /// berkas bisa dikirim di bawah satu nama field seperti `photos[]`.
+  Future<Map<String, dynamic>> postMultipart(
+    String path, {
+    Map<String, String>? fields,
+    Map<String, List<String>>? files,
+  }) {
+    final uri = _uriFor(path);
+    final fileCount =
+        files?.values.fold<int>(0, (sum, paths) => sum + paths.length) ?? 0;
+    AppLogger.info(
+      'POST $uri (multipart) ${_redactedBody(fields)} · $fileCount berkas',
+    );
+
+    return _send(
+      'POST',
+      uri,
+      () async {
+        final request = http.MultipartRequest('POST', uri)
+          ..headers.addAll(_headers(authenticated: true, json: false));
+
+        if (fields != null) request.fields.addAll(fields);
+
+        for (final entry in files?.entries ?? const <MapEntry<String, List<String>>>[]) {
+          for (final filePath in entry.value) {
+            request.files.add(
+              await http.MultipartFile.fromPath(entry.key, filePath),
+            );
+          }
+        }
+
+        return http.Response.fromStream(await _httpClient.send(request));
+      },
+    ).then((data) => _expectMap(data, 'POST', uri));
+  }
+
   /// Mengirim GET dan mengembalikan isi `data` dari amplop respons, sebagai
   /// objek. Untuk endpoint yang `data`-nya berupa list (mis. data referensi
   /// seperti daftar departemen), pakai [getList].
@@ -121,10 +160,15 @@ class ApiClient {
 
   Uri _uriFor(String path) => Uri.parse('${ApiConfig.baseUrl}$path');
 
-  Map<String, String> _headers({required bool authenticated}) {
+  /// [json] dimatikan untuk multipart: Content-Type di sana harus disusun
+  /// http sendiri karena memuat boundary.
+  Map<String, String> _headers({
+    required bool authenticated,
+    bool json = true,
+  }) {
     final header = _authorizationHeader;
     return {
-      'Content-Type': 'application/json',
+      if (json) 'Content-Type': 'application/json',
       'Accept': 'application/json',
       if (authenticated && header != null) 'Authorization': header,
     };

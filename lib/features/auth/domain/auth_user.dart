@@ -98,6 +98,14 @@ class AuthUser {
   List<String> get _nameParts =>
       name.trim().split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
 
+  /// Boleh menerbitkan pengumuman HR — izin `hr-announcement-post`, yang
+  /// menurut dokumentasi API dimiliki role `hrga` dan `admin`.
+  ///
+  /// Pemeriksaan di sini hanya untuk menyembunyikan tombol; server tetap
+  /// penentu terakhir dan akan membalas 403 bila tidak berhak.
+  bool get canPublishAnnouncement =>
+      hasRole('hrga') || hasRole('admin');
+
   bool hasRole(String role) {
     final target = role.toLowerCase();
     return roles.any((r) => r.toLowerCase() == target);

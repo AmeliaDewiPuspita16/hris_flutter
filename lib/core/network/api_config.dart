@@ -23,4 +23,9 @@ class ApiConfig {
   /// Daftar departemen aktif — dipakai buat ngisi dropdown, misalnya di
   /// form pengumuman. Server yang urus filter `is_active` dan urutannya.
   static const String department = '/api/data/department';
+
+  /// Menerbitkan pengumuman HR. Perlu izin `hr-announcement-post`, yang
+  /// dimiliki role `hrga` dan `admin`. Dikirim sebagai multipart karena
+  /// menerima lampiran `photos[]`.
+  static const String hrAnnouncement = '/api/portal/hr_announcement';
 }

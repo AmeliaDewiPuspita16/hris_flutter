@@ -10,6 +10,7 @@ import 'features/auth/data/session_storage.dart';
 import 'features/auth/presentation/bloc/auth/auth_bloc.dart';
 import 'features/auth/presentation/bloc/auth/auth_event.dart';
 import 'features/auth/presentation/widgets/auth_gate.dart';
+import 'features/home/data/announcement_repository.dart';
 import 'features/shared/data/department_repository.dart';
 
 Future<void> main() async {
@@ -33,6 +34,7 @@ Future<void> main() async {
         storage: SecureSessionStorage(),
       ),
       departmentRepository: DepartmentRepository(apiClient: apiClient),
+      announcementRepository: AnnouncementRepository(apiClient: apiClient),
     ),
   );
 }
@@ -42,11 +44,15 @@ class MyApp extends StatelessWidget {
     super.key,
     required this.authRepository,
     DepartmentRepository? departmentRepository,
-  }) : departmentRepository =
-            departmentRepository ?? DepartmentRepository(apiClient: ApiClient());
+    AnnouncementRepository? announcementRepository,
+  })  : departmentRepository = departmentRepository ??
+            DepartmentRepository(apiClient: ApiClient()),
+        announcementRepository = announcementRepository ??
+            AnnouncementRepository(apiClient: ApiClient());
 
   final AuthRepository authRepository;
   final DepartmentRepository departmentRepository;
+  final AnnouncementRepository announcementRepository;
 
   @override
   Widget build(BuildContext context) {
@@ -58,6 +64,7 @@ class MyApp extends StatelessWidget {
       providers: [
         RepositoryProvider.value(value: authRepository),
         RepositoryProvider.value(value: departmentRepository),
+        RepositoryProvider.value(value: announcementRepository),
       ],
       child: BlocProvider(
         create: (_) =>
