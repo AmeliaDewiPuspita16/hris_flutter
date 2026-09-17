@@ -77,11 +77,25 @@ class AnnouncementPhotoRef {
 
   final int id;
 
-  /// URL penuh dari server. Perhatikan: di lingkungan pengembangan server
-  /// mengirim host `127.0.0.1`, yang tidak bisa dijangkau dari perangkat.
+  /// URL penuh dari server, mis.
+  /// `https://biieportal.co.id/storage/hrga/announcements/…jpg`.
+  /// Pakai [displayUrl] saat menampilkannya.
   final String url;
 
   final String? fileName;
+
+  /// URL yang siap dimuat, atau string kosong bila tidak bisa dipakai.
+  ///
+  /// Pemanggil menyaring yang kosong supaya tidak ada kotak gambar kosong
+  /// menggantung di layar saat server mengirim URL cacat.
+  String get displayUrl {
+    if (url.isEmpty) return '';
+
+    final parsed = Uri.tryParse(url);
+    if (parsed == null || !parsed.hasScheme || parsed.host.isEmpty) return '';
+
+    return url;
+  }
 
   factory AnnouncementPhotoRef.fromJson(Map<String, dynamic> json) {
     final fileName = json['file_name'];

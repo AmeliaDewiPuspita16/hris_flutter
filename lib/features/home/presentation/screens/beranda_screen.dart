@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../data/announcement_repository.dart';
 import '../../../absensi/presentation/absensi_screen.dart';
 import '../../../kelola_tim/presentation/screens/kelola_tim_screen.dart';
 import '../../../menu_portal/onlineapps/presentation/screens/online_apps_screen.dart';
@@ -13,10 +16,11 @@ import '../../../notifikasi/domain/notification_demo_data.dart';
 import '../../../notifikasi/presentation/screens/notifikasi_screen.dart';
 import '../../../auth/domain/auth_user.dart';
 import '../../../shared/domain/role.dart';
-import '../../domain/announcement.dart';
+import '../../domain/published_announcement.dart';
 import '../../domain/home_demo_data.dart';
 import '../../domain/service_shortcut.dart';
 import '../widgets/activity_section.dart';
+import '../widgets/announcement_detail_sheet.dart';
 import '../widgets/announcement_section.dart';
 import '../widgets/clock_status_card.dart';
 import '../widgets/create_announcement_sheet.dart';
@@ -32,13 +36,22 @@ import '../widgets/team_banner.dart';
 /// Home, Request (Pengajuan), Attendance (Absensi), dan Profile adalah
 /// 4 tab UTAMA yang sejajar di bottom nav
 class BerandaScreen extends StatefulWidget {
-  const BerandaScreen({super.key, required this.role, this.user});
+  const BerandaScreen({
+    super.key,
+    required this.role,
+    this.user,
+    this.announcementRepository,
+  });
 
   final Role role;
 
   /// Pengguna yang sedang masuk, diteruskan ke header Beranda dan Profil.
   /// Null berarti belum ada sesi — keduanya jatuh ke data demo.
   final AuthUser? user;
+
+  /// Boleh diisi manual di test; kalau tidak, diambil dari
+  /// RepositoryProvider terdekat.
+  final AnnouncementRepository? announcementRepository;
 
   @override
   State<BerandaScreen> createState() => _BerandaScreenState();
@@ -62,13 +75,47 @@ class _BerandaScreenState extends State<BerandaScreen> {
   /// titik penanda di lonceng tetap benar setelah layar itu ditutup.
   List<AppNotification> _notifications = NotificationDemoData.initial();
 
-  /// Sama seperti notifikasi — dipegang di sini supaya pengumuman baru dari
-  /// HR Publisher langsung kelihatan begitu modal ditutup.
-  List<Announcement> _announcements = HomeDemoData.initialAnnouncements();
+  /// Pengumuman dari server. Dipegang di sini, bukan di AnnouncementSection,
+  /// supaya pengumuman yang baru diterbitkan langsung kelihatan begitu modal
+  /// ditutup tanpa perlu mengambil ulang seluruh daftar.
+  List<PublishedAnnouncement> _announcements = const [];
+  bool _loadingAnnouncements = true;
+  String? _announcementsError;
 
   Role get _role => widget.role;
 
   int get _unreadCount => _notifications.where((n) => !n.isRead).length;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAnnouncements();
+  }
+
+  Future<void> _loadAnnouncements() async {
+    setState(() {
+      _loadingAnnouncements = true;
+      _announcementsError = null;
+    });
+
+    try {
+      final published = await (widget.announcementRepository ??
+              context.read<AnnouncementRepository>())
+          .fetchAnnouncements();
+
+      if (!mounted) return;
+      setState(() {
+        _announcements = published;
+        _loadingAnnouncements = false;
+      });
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _announcementsError = e.message;
+        _loadingAnnouncements = false;
+      });
+    }
+  }
 
   void _openTab(int index) => setState(() => _activeTab = index);
 
@@ -96,7 +143,7 @@ class _BerandaScreenState extends State<BerandaScreen> {
   }
 
   Future<void> _openCreateAnnouncement() async {
-    final created = await showModalBottomSheet<Announcement>(
+    final created = await showModalBottomSheet<PublishedAnnouncement>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
@@ -296,6 +343,11 @@ class _BerandaScreenState extends State<BerandaScreen> {
               ),
               AnnouncementSection(
                 announcements: _announcements,
+                isLoading: _loadingAnnouncements,
+                errorMessage: _announcementsError,
+                onRetry: _loadAnnouncements,
+                onTapAnnouncement: (announcement) =>
+                    AnnouncementDetailSheet.show(context, announcement),
                 // Izin hr-announcement-post: role hrga dan admin. Selama
                 // belum ada sesi (mis. saat pratinjau), jatuh ke role demo.
                 canCreate: widget.user?.canPublishAnnouncement ??

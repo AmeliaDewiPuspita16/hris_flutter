@@ -8,7 +8,7 @@ import 'package:http/testing.dart';
 import 'package:hris_mobile/core/network/api_client.dart';
 import 'package:hris_mobile/core/network/api_exception.dart';
 import 'package:hris_mobile/core/widgets/app_button.dart';
-import 'package:hris_mobile/features/home/domain/announcement.dart';
+import 'package:hris_mobile/features/home/domain/published_announcement.dart';
 import 'package:hris_mobile/features/home/domain/announcement_photo.dart';
 import 'package:hris_mobile/features/home/presentation/widgets/create_announcement_sheet.dart';
 import 'package:hris_mobile/features/shared/data/department_repository.dart';
@@ -41,7 +41,7 @@ void main() {
         sizeBytes: 1024,
       );
 
-  Announcement? lastResult;
+  PublishedAnnouncement? lastResult;
 
   /// Membuka sheet lewat showModalBottomSheet supaya Navigator.pop membawa
   /// hasilnya persis seperti di Beranda.
@@ -57,7 +57,7 @@ void main() {
         home: Builder(
           builder: (context) => ElevatedButton(
             onPressed: () async {
-              lastResult = await showModalBottomSheet<Announcement>(
+              lastResult = await showModalBottomSheet<PublishedAnnouncement>(
                 context: context,
                 isScrollControlled: true,
                 backgroundColor: Colors.transparent,
@@ -175,7 +175,7 @@ void main() {
       // Judul yang dipakai berasal dari server, bukan dari isian form.
       expect(lastResult, isNotNull);
       expect(lastResult!.title, 'Payroll cut-off pindah ke tanggal 23');
-      expect(lastResult!.tag.label, 'HR & GA');
+      expect(lastResult!.department.name, 'HR & GA');
     });
   });
 

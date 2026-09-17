@@ -4,7 +4,6 @@ import '../../../core/theme/app_colors.dart';
 import '../../pengajuan/domain/leave_type.dart';
 import '../../shared/domain/role.dart';
 import 'activity_entry.dart';
-import 'announcement.dart';
 import 'attendance_status.dart';
 import 'quota_balance.dart';
 
@@ -57,32 +56,10 @@ class HomeDemoData {
           ),
       ];
 
-  /// Daftar awal pengumuman.
-  ///
-  /// Dibuat sebagai function (bukan const), sama seperti
-  /// [NotificationDemoData.initial], supaya BerandaScreen bisa memegang
-  /// salinannya sendiri sebagai state dan menambah pengumuman baru ke situ.
-  static List<Announcement> initialAnnouncements() => [
-        Announcement(
-          tag: AnnouncementTag.hr,
-          time: '2h ago',
-          title: 'Payroll cut-off moves to the 23rd this month',
-          body: 'Overtime claims must be approved by your HOD '
-              'before 23 Sep, 17:00.',
-        ),
-        Announcement(
-          tag: AnnouncementTag.ga,
-          time: 'Yesterday',
-          title: 'Annual medical check-up — booking now open',
-          body: 'Slots at the Plant 2 clinic are limited. '
-              'Register through the HR portal.',
-        ),
-        Announcement(
-          tag: AnnouncementTag.it,
-          time: '3 days ago',
-          title: 'Portal maintenance this Saturday, 22:00–02:00',
-        ),
-      ];
+  // Pengumuman tidak lagi punya data demo: daftarnya diambil dari
+  // GET /api/portal/hr_announcement. Menampilkan pengumuman HR palsu saat
+  // server gagal dijangkau lebih berbahaya daripada menampilkan keadaan
+  // kosong atau pesan galat.
 
   static const recentActivities = <ActivityEntry>[
     ActivityEntry(

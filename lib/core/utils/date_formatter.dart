@@ -77,6 +77,12 @@ class DateFormatter {
     return DateFormat('EEE', 'id_ID').format(date);
   }
 
+  /// Contoh: "16 Sep 2026, 10:30". Dipakai layar detail, di mana waktu pasti
+  /// lebih berguna daripada waktu relatif seperti "2h ago".
+  static String dateTimeID(DateTime date) {
+    return DateFormat("d MMM yyyy, HH:mm", 'id_ID').format(date);
+  }
+
   /// Mengubah tanggal ISO dari API ("1991-11-21") menjadi format yang
   /// dipakai layar detail ("21-11-1991").
   ///

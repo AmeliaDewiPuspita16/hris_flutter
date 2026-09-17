@@ -11,6 +11,7 @@ import 'package:hris_mobile/features/splash/presentation/screens/splash_screen.d
 
 import '../../../../fixtures/login_response.dart';
 import '../../../../support/auth_harness.dart';
+import '../../../../support/empty_announcement_repository.dart';
 import 'package:hris_mobile/features/auth/domain/auth_session.dart';
 
 void main() {
@@ -26,8 +27,13 @@ void main() {
 
     await tester.pumpWidget(
       MaterialApp(
-        home: RepositoryProvider.value(
-          value: harness.repository,
+        home: MultiRepositoryProvider(
+          providers: [
+            RepositoryProvider.value(value: harness.repository),
+            // BerandaScreen memuat pengumuman begitu tampil. Test ini menguji
+            // pemilihan layar, jadi daftarnya cukup dibuat selalu kosong.
+            RepositoryProvider.value(value: emptyAnnouncementRepository()),
+          ],
           child: BlocProvider.value(
             value: bloc,
             child: const AuthGate(minimumSplashDuration: splashDuration),

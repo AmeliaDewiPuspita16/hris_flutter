@@ -1,3 +1,4 @@
+import '../../../core/logging/app_logger.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_config.dart';
 import '../../../core/network/api_exception.dart';
@@ -10,6 +11,30 @@ class AnnouncementRepository {
       : _apiClient = apiClient;
 
   final ApiClient _apiClient;
+
+  /// Daftar pengumuman, terbaru lebih dulu sesuai urutan dari server.
+  ///
+  /// Melempar [ApiException] bila gagal.
+  Future<List<PublishedAnnouncement>> fetchAnnouncements({
+    int page = 1,
+    int perPage = 20,
+  }) async {
+    final data = await _apiClient.getList(
+      '${ApiConfig.hrAnnouncement}?page=$page&per_page=$perPage',
+    );
+
+    final announcements = <PublishedAnnouncement>[];
+    for (final item in data.whereType<Map<String, dynamic>>()) {
+      try {
+        announcements.add(PublishedAnnouncement.fromJson(item));
+      } on FormatException catch (e) {
+        // Satu baris rusak di server tidak boleh membuat seluruh daftar
+        // pengumuman hilang dari layar — lewati saja, tapi catat.
+        AppLogger.info('Melewati pengumuman yang tidak bisa dibaca: $e');
+      }
+    }
+    return announcements;
+  }
 
   /// Menerbitkan pengumuman, beserta lampiran foto bila ada.
   ///

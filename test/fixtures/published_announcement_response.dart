@@ -16,12 +16,12 @@ Map<String, dynamic> publishAnnouncementData() => {
       'photos': [
         {
           'id': 1,
-          'url': 'http://127.0.0.1:8000/storage/announcements/s7CY.jpg',
+          'url': 'https://biieportal.co.id/storage/hrga/announcements/s7CY.jpg',
           'file_name': 'poster1.jpg',
         },
         {
           'id': 2,
-          'url': 'http://127.0.0.1:8000/storage/announcements/YJ6o.png',
+          'url': 'https://biieportal.co.id/storage/hrga/announcements/YJ6o.png',
           'file_name': 'poster2.png',
         },
       ],

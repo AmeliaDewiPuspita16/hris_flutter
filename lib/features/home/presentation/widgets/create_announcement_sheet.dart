@@ -8,16 +8,13 @@ import '../../../../core/logging/app_logger.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
-import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_dropdown.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import '../../../shared/data/department_repository.dart';
 import '../../../shared/domain/department.dart';
 import '../../data/announcement_repository.dart';
-import '../../domain/announcement.dart';
 import '../../domain/announcement_photo.dart';
-import '../../domain/published_announcement.dart';
 
 /// Membuka galeri dan mengembalikan foto yang dipilih.
 ///
@@ -29,7 +26,7 @@ typedef PhotoPicker = Future<List<AnnouncementPhoto>> Function();
 ///
 /// Cara pakai:
 /// ```dart
-/// final result = await showModalBottomSheet<Announcement>(
+/// final result = await showModalBottomSheet<PublishedAnnouncement>(
 ///   context: context,
 ///   isScrollControlled: true,
 ///   backgroundColor: Colors.transparent,
@@ -61,14 +58,6 @@ class CreateAnnouncementSheet extends StatefulWidget {
   @override
   State<CreateAnnouncementSheet> createState() => _CreateAnnouncementSheetState();
 }
-
-/// Warna badge untuk tiap departemen dipilih bergilir dari palet ini — API
-/// departemen tidak mengirim warna, jadi ini cuma untuk tampilan lokal.
-const _tagPalette = [
-  (color: AppColors.primary, background: AppColors.primaryLight),
-  (color: AppColors.accent, background: AppColors.accentBg),
-  (color: AppColors.violet, background: AppColors.violetBg),
-];
 
 enum _LoadState { loading, error, loaded }
 
@@ -177,18 +166,6 @@ class _CreateAnnouncementSheetState extends State<CreateAnnouncementSheet> {
     }
   }
 
-  /// Warna badge untuk departemen terpilih, dicocokkan lewat posisinya di
-  /// [_departments] supaya konsisten selama daftar itu tidak berubah.
-  AnnouncementTag _tagFor(Department department) {
-    final index = _departments.indexOf(department);
-    final palette = _tagPalette[index % _tagPalette.length];
-    return AnnouncementTag(
-      label: department.name,
-      color: palette.color,
-      background: palette.background,
-    );
-  }
-
   @override
   void dispose() {
     _titleCtrl.dispose();
@@ -220,7 +197,7 @@ class _CreateAnnouncementSheetState extends State<CreateAnnouncementSheet> {
       );
 
       if (!mounted) return;
-      Navigator.of(context).pop(_toListItem(published));
+      Navigator.of(context).pop(published);
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() {
@@ -237,18 +214,6 @@ class _CreateAnnouncementSheetState extends State<CreateAnnouncementSheet> {
         _submitting = false;
       });
     }
-  }
-
-  /// Mengubah pengumuman dari server jadi kartu untuk daftar di Beranda.
-  /// Judul, isi, dan waktunya diambil dari server, bukan dari isian form —
-  /// server yang jadi sumber kebenaran setelah tersimpan.
-  Announcement _toListItem(PublishedAnnouncement published) {
-    return Announcement(
-      tag: _tagFor(published.department),
-      time: DateFormatter.relative(published.createdAt),
-      title: published.title,
-      body: published.body,
-    );
   }
 
   @override

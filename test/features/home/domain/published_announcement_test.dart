@@ -38,7 +38,7 @@ void main() {
       expect(announcement.photos, hasLength(2));
       expect(
         announcement.photos.first.url,
-        'http://127.0.0.1:8000/storage/announcements/s7CY.jpg',
+        'https://biieportal.co.id/storage/hrga/announcements/s7CY.jpg',
       );
       expect(announcement.photos.first.fileName, 'poster1.jpg');
       expect(announcement.photos.last.id, 2);

@@ -27,11 +27,21 @@ class RecordingAnnouncementRepository implements AnnouncementRepository {
   /// Hanya panggilan pertama yang gagal — untuk menguji "coba lagi".
   final bool failOnlyFirstCall;
 
+  /// Daftar yang dikembalikan [fetchAnnouncements].
+  List<PublishedAnnouncement> existing = const [];
+
   int calls = 0;
   int? lastDepartmentId;
   String? lastTitle;
   String? lastBody;
   List<AnnouncementPhoto> lastPhotos = const [];
+
+  @override
+  Future<List<PublishedAnnouncement>> fetchAnnouncements({
+    int page = 1,
+    int perPage = 20,
+  }) async =>
+      existing;
 
   @override
   Future<PublishedAnnouncement> publish({
