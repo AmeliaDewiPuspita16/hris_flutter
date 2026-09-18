@@ -1,5 +1,7 @@
-/// model Payslip, PayslipItem, PayslipStatus, 
-/// plus dummy data 3 bulan dan helper formatRupiah().
+/// model Payslip, PayslipItem, PayslipStatus, plus dummy data 3 bulan.
+///
+/// formatRupiah() sekarang ada di `core/utils/currency_formatter.dart`.
+library;
 
 // Status pembayaran slip gaji per periode.
 enum PayslipStatus {
@@ -100,18 +102,4 @@ class Payslip {
       ],
     ),
   ];
-}
-
-String formatRupiah(int amount) {
-  final sign = amount < 0 ? '-' : '';
-  final digits = amount.abs().toString();
-
-  final buffer = StringBuffer();
-  for (var i = 0; i < digits.length; i++) {
-    final posFromRight = digits.length - i;
-    buffer.write(digits[i]);
-    if (posFromRight > 1 && posFromRight % 3 == 1) buffer.write('.');
-  }
-
-  return '${sign}Rp $buffer';
 }
