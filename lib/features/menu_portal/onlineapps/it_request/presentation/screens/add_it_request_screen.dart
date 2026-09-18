@@ -42,7 +42,7 @@ class AddItRequestScreen extends StatefulWidget {
 }
 
 class _AddItRequestScreenState extends State<AddItRequestScreen> {
-  RequestCategory? _category;
+  RequestCategory? _category = RequestCategory.it;
   SupportType? _supportType;
   String? _selectedNeedId;
 
@@ -148,14 +148,26 @@ class _AddItRequestScreenState extends State<AddItRequestScreen> {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
         children: [
-          const FieldLabelRow(label: 'Request type'),
-          RequestCategorySelector(value: _category, onChanged: _onCategoryChanged),
-          const SizedBox(height: 18),
-
-          const FieldLabelRow(label: 'Support type'),
-          SupportTypeSelector(
-            value: _supportType,
-            onChanged: (v) => setState(() => _supportType = v),
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.border),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const FieldLabelRow(label: 'Request type', required: true),
+                RequestCategorySelector(value: _category, onChanged: _onCategoryChanged),
+                const SizedBox(height: 16),
+                const FieldLabelRow(label: 'Support type', required: true),
+                SupportTypeSelector(
+                  value: _supportType,
+                  onChanged: (v) => setState(() => _supportType = v),
+                ),
+              ],
+            ),
           ),
 
           if (_category != null) ...[
@@ -174,8 +186,8 @@ class _AddItRequestScreenState extends State<AddItRequestScreen> {
             const FieldLabelRow(label: 'Description', required: true),
             TextField(
               controller: _descriptionController,
-              maxLines: 4,
-              minLines: 4,
+              minLines: 1,
+              maxLines: null,
               style: AppTextStyles.body,
               decoration: InputDecoration(
                 hintText: 'Describe your request in detail',
@@ -239,10 +251,26 @@ class _AddItRequestScreenState extends State<AddItRequestScreen> {
         return null;
 
       case NeedFieldKind.checkboxGroup:
-        return NeedChoiceChips(
-          labels: option.checkboxLabels,
-          selected: _checkboxSelections[option.id] ?? const {},
-          onChanged: (v) => setState(() => _checkboxSelections[option.id] = v),
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Text(
+            //   'Select All That Apply',
+            //   style: AppTextStyles.caption.copyWith(
+            //     fontSize: 11,
+            //     fontWeight: FontWeight.w700,
+            //     letterSpacing: 0.4,
+            //     color: AppColors.textMuted,
+            //   ),
+            // ),
+            // const SizedBox(height: 8),
+            NeedChoiceChips(
+              labels: option.checkboxLabels,
+              selected: _checkboxSelections[option.id] ?? const {},
+              onChanged: (v) => setState(() => _checkboxSelections[option.id] = v),
+            ),
+          ],
         );
 
       case NeedFieldKind.textField:

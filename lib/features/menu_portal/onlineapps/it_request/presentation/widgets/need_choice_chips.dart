@@ -51,22 +51,35 @@ class _Chip extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+      borderRadius: BorderRadius.circular(18),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: active ? AppColors.primaryLight : Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: active ? AppColors.primary : AppColors.border),
+          color: active ? AppColors.primary : Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: active ? AppColors.primary : AppColors.border,
+            width: 1.2,
+            ),
         ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontFamily: AppTextStyles.fontFamily,
-            fontSize: 10.5,
-            fontWeight: FontWeight.w600,
-            color: active ? AppColors.primaryMid : AppColors.textMid,
-          ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min, 
+          children: [
+            // if (active) ...[
+            //   const Icon(Icons.check, size: 13, color: Colors.white),
+            //   const SizedBox(width: 6),
+            // ],
+            Text(
+              label,
+              style: TextStyle(
+                fontFamily: AppTextStyles.fontFamily,
+                fontSize: 11.5,
+                fontWeight: FontWeight.w600,
+                color: active ? Colors.white : AppColors.textMid,
+              ),
+            ),
+          ],
         ),
       ),
     );

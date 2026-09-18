@@ -13,6 +13,14 @@ import 'need_choice_chips.dart';
 /// Menyimpan controller-nya sendiri (mirip pola `ItRequestFeedbackSheet`)
 /// dan melaporkan tiap perubahan ke pemanggil lewat [onChanged], supaya
 /// nilai [data] tetap jadi satu-satunya sumber kebenaran di layar induk.
+///
+/// Dropdown Executive type & Department sengaja langsung diisi nilai
+/// default (bukan menampilkan "-- Select --") begitu sub-form ini
+/// terbuka — supaya terasa lebih siap pakai, bukan formulir kosong yang
+/// kaku. Default itu langsung dikirim ke [onChanged] lewat
+/// [WidgetsBinding.addPostFrameCallback] saat sub-form pertama kali
+/// terbuka, supaya validasi "wajib isi" di layar induk tidak keliru
+/// menganggap field ini belum diisi padahal sudah kelihatan terisi.
 class NewEmployeeSubform extends StatefulWidget {
   const NewEmployeeSubform({
     super.key,
@@ -32,6 +40,20 @@ class _NewEmployeeSubformState extends State<NewEmployeeSubform> {
   late final _preferredNameCtrl = TextEditingController(text: widget.data.preferredName);
   late final _employeeNumberCtrl = TextEditingController(text: widget.data.employeeNumber);
   late final _sectionCtrl = TextEditingController(text: widget.data.section);
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.data.executiveType == null || widget.data.department == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _emit((d) => d.copyWith(
+              executiveType: d.executiveType ?? ExecutiveType.values.first,
+              department: d.department ?? Department.values.first,
+            ));
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -74,23 +96,21 @@ class _NewEmployeeSubformState extends State<NewEmployeeSubform> {
           onChanged: (v) => _emit((d) => d.copyWith(employeeNumber: v)),
         ),
         const SizedBox(height: 12),
-        AppDropdown<ExecutiveType?>(
+        AppDropdown<ExecutiveType>(
           label: 'Executive / Non-Executive',
           required: true,
-          value: widget.data.executiveType,
+          value: widget.data.executiveType ?? ExecutiveType.values.first,
           items: [
-            (value: null, label: '-- Select --'),
             for (final type in ExecutiveType.values) (value: type, label: type.label),
           ],
           onChanged: (v) => _emit((d) => d.copyWith(executiveType: v)),
         ),
         const SizedBox(height: 12),
-        AppDropdown<Department?>(
+        AppDropdown<Department>(
           label: 'Department',
           required: true,
-          value: widget.data.department,
+          value: widget.data.department ?? Department.values.first,
           items: [
-            (value: null, label: '-- Select --'),
             for (final dept in Department.values) (value: dept, label: dept.label),
           ],
           onChanged: (v) => _emit((d) => d.copyWith(department: v)),
