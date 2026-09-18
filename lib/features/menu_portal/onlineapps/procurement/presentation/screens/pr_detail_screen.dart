@@ -164,7 +164,7 @@ class PrDetailScreen extends StatelessWidget {
                       formatRupiah(requisition.estimatedTotal),
                       style: const TextStyle(
                         fontFamily: AppTextStyles.fontFamily,
-                        fontSize: 14,
+                        fontSize: 16,
                         fontWeight: FontWeight.w800,
                         color: AppColors.primary,
                       ),

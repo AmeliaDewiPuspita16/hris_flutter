@@ -108,20 +108,59 @@ void main() {
     expect(find.text('operational Restaurant'), findsOneWidget);
   });
 
-  testWidgets('tiap item menyebut jenis, qty, satuan, dan harga satuan',
+  testWidgets('tiap item menyebut jenis dan perhitungan qty kali harga satuan',
       (tester) async {
     await pumpScreen(tester, requisition());
 
     expect(find.text("Tisu evo napkin luncheon 100's"), findsOneWidget);
     expect(find.text('Goods'), findsOneWidget);
-    expect(find.text('5 BOX'), findsOneWidget);
-    expect(find.text('Rp 453.000'), findsOneWidget);
+    expect(find.text('5 BOX × Rp 453.000'), findsOneWidget);
   });
 
-  testWidgets('GL Account yang kosong ditulis sebagai "—"', (tester) async {
+  testWidgets('subtotal tiap item ditampilkan', (tester) async {
+    await pumpScreen(
+      tester,
+      requisition(
+        items: const [
+          PrLineItem(
+            description: 'Filter hidrolik forklift',
+            kind: PrItemKind.goods,
+            qty: 2,
+            unit: 'PCS',
+            estPrice: 385000,
+          ),
+        ],
+      ),
+    );
+
+    expect(find.text('Rp 770.000'), findsWidgets);
+  });
+
+  testWidgets('GL Account ditampilkan bila item punya nomornya', (tester) async {
+    await pumpScreen(
+      tester,
+      requisition(
+        items: const [
+          PrLineItem(
+            description: 'Jasa service berkala forklift',
+            kind: PrItemKind.service,
+            glAccount: '6210-0031',
+            qty: 1,
+            unit: 'JOB',
+            estPrice: 4750000,
+          ),
+        ],
+      ),
+    );
+
+    expect(find.text('GL 6210-0031'), findsOneWidget);
+  });
+
+  testWidgets('baris GL Account dilewati bila item tidak punya nomornya',
+      (tester) async {
     await pumpScreen(tester, requisition());
 
-    expect(find.text('—'), findsOneWidget);
+    expect(find.textContaining('GL '), findsNothing);
   });
 
   testWidgets('menampilkan lampiran beserta ukurannya', (tester) async {
