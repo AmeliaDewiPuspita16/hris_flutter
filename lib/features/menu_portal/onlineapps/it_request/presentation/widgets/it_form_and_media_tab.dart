@@ -4,6 +4,7 @@ import '../../../../../../core/theme/app_colors.dart';
 import '../../../../../../core/theme/app_text_styles.dart';
 import '../../domain/it_request_demo_data.dart';
 import '../../domain/it_request_item.dart';
+import '../screens/add_it_request_screen.dart';
 import 'it_request_card.dart';
 import 'it_request_feedback_banner.dart';
 import 'it_request_feedback_sheet.dart';
@@ -52,10 +53,18 @@ class _ItFormAndMediaTabState extends State<ItFormAndMediaTab> {
     );
   }
 
-  void _addRequest() {
-    // Form pengajuan IT Request sendiri belum dibuat di iterasi ini.
+  Future<void> _addRequest() async {
+    final newItem = await Navigator.of(context).push<ItRequestItem>(
+      MaterialPageRoute(builder: (_) => const AddItRequestScreen()),
+    );
+
+    if (newItem == null || !mounted) return;
+
+    setState(() => _myRequests = [newItem, ..._myRequests]);
+
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Form pengajuan belum tersedia')),
+      const SnackBar(content: Text('Request submitted')),
     );
   }
 
@@ -82,7 +91,7 @@ class _ItFormAndMediaTabState extends State<ItFormAndMediaTab> {
             child: ElevatedButton.icon(
               onPressed: _addRequest,
               icon: const Icon(Icons.add, size: 18),
-              label: Text('Ajukan Request', style: AppTextStyles.buttonText),
+              label: Text('Add Request', style: AppTextStyles.buttonText),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,

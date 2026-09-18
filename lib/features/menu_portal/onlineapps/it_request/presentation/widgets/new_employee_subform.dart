@@ -4,7 +4,7 @@ import '../../../../../../core/theme/app_text_styles.dart';
 import '../../../../../../core/widgets/app_dropdown.dart';
 import '../../../../../../core/widgets/app_text_field.dart';
 import '../../domain/new_employee_data.dart';
-import 'need_checkbox_group.dart';
+import 'need_choice_chips.dart';
 
 /// Sub-form yang muncul saat opsi "New employee account creation" dipilih
 /// di "What do you need?" — satu-satunya opsi dengan field sendiri (bukan
@@ -105,7 +105,7 @@ class _NewEmployeeSubformState extends State<NewEmployeeSubform> {
         const SizedBox(height: 12),
         const Text('Equipment / Access needed (optional)', style: AppTextStyles.label),
         const SizedBox(height: 8),
-        NeedCheckboxGroup(
+        NeedChoiceChips(
           labels: NewEmployeeEquipment.all,
           selected: widget.data.equipmentNeeded,
           onChanged: (v) => _emit((d) => d.copyWith(equipmentNeeded: v)),

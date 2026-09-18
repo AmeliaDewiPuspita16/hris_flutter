@@ -3,11 +3,6 @@ import 'package:flutter/material.dart';
 import '../../../../../../core/theme/app_colors.dart';
 import '../../../../../../core/theme/app_text_styles.dart';
 import '../../../../../../core/utils/date_formatter.dart';
-import '../../../../../../core/widgets/app_attachment_field.dart';
-import '../../../../../../core/widgets/app_button.dart';
-import '../../../../../../core/widgets/app_card.dart';
-import '../../../../../../core/widgets/app_dropdown.dart';
-import '../../../../../../core/widgets/app_text_field.dart';
 import '../../../../../../core/widgets/back_header.dart';
 import '../../domain/it_request_item.dart';
 import '../../domain/it_request_status.dart';
@@ -15,11 +10,15 @@ import '../../domain/need_option.dart';
 import '../../domain/new_employee_data.dart';
 import '../../domain/request_category.dart';
 import '../../domain/support_type.dart';
-import '../widgets/need_checkbox_group.dart';
-import '../widgets/need_option_tile.dart';
+import '../widgets/attachment_row_field.dart';
+import '../widgets/field_label_row.dart';
+import '../widgets/need_choice_chips.dart';
+import '../widgets/need_option_group.dart';
 import '../widgets/new_employee_subform.dart';
+import '../widgets/request_category_selector.dart';
+import '../widgets/support_type_selector.dart';
 
-/// Layar "+ Ajukan Request" (Add Request) — dibuka dari [ItRequestScreen].
+/// Layar "+ Add Request" — dibuka dari [ItFormAndMediaTab].
 ///
 /// Sengaja dibuat sebagai halaman penuh, bukan bottom sheet, karena
 /// field-nya dinamis dan bisa jadi cukup panjang (terutama sub-form "New
@@ -30,6 +29,11 @@ import '../widgets/new_employee_subform.dart';
 /// disubmit, atau null kalau ditutup tanpa submit. Belum terhubung ke API —
 /// sesuai pola fitur ini sekarang (lihat [ItRequestDemoData]), item baru
 /// murni disusun dari isian form di sini.
+///
+/// Versi ini mengganti tampilan dropdown/checkbox bawaan web dengan kartu,
+/// segmented control, dan grup opsi yang cuma memberi jarak pada baris yang
+/// sedang dipilih — lihat [RequestCategorySelector], [SupportTypeSelector],
+/// dan [NeedOptionGroup].
 class AddItRequestScreen extends StatefulWidget {
   const AddItRequestScreen({super.key});
 
@@ -71,7 +75,7 @@ class _AddItRequestScreenState extends State<AddItRequestScreen> {
   TextEditingController _specifyController(String optionId) =>
       _specifyControllers.putIfAbsent(optionId, () => TextEditingController());
 
-  void _onCategoryChanged(RequestCategory? category) {
+  void _onCategoryChanged(RequestCategory category) {
     setState(() {
       _category = category;
       // Daftar "What do you need?" total berbeda antara IT & Media, jadi
@@ -87,21 +91,21 @@ class _AddItRequestScreenState extends State<AddItRequestScreen> {
   }
 
   String? _validate() {
-    if (_category == null) return 'Pilih Type request dulu ya.';
-    if (_supportType == null) return 'Pilih Support type dulu ya.';
+    if (_category == null) return 'Please select a request type.';
+    if (_supportType == null) return 'Please select a support type.';
 
     final option = _selectedOption;
-    if (option == null) return 'Pilih salah satu di "What do you need?" dulu ya.';
+    if (option == null) return 'Please choose one option under "What do you need".';
 
     switch (option.fieldKind) {
       case NeedFieldKind.textField:
         if (_specifyController(option.id).text.trim().isEmpty) {
-          return 'Isi kolom "${option.textHint}" dulu ya.';
+          return 'Please fill in "${option.textHint}".';
         }
       case NeedFieldKind.newEmployeeForm:
         if (!_newEmployeeData.isComplete) {
-          return 'Lengkapi dulu data karyawan baru (nama, nomor karyawan, '
-              'tipe, dan department).';
+          return 'Please complete the new employee details (name, employee '
+              'number, type, and department).';
         }
       case NeedFieldKind.none:
       case NeedFieldKind.checkboxGroup:
@@ -109,7 +113,7 @@ class _AddItRequestScreenState extends State<AddItRequestScreen> {
     }
 
     if (_descriptionController.text.trim().isEmpty) {
-      return 'Isi Description dulu ya.';
+      return 'Please fill in the description.';
     }
 
     return null;
@@ -138,100 +142,93 @@ class _AddItRequestScreenState extends State<AddItRequestScreen> {
     return Scaffold(
       backgroundColor: AppColors.bg,
       appBar: BackHeader(
-        title: 'Ajukan Request',
+        title: 'New Request',
         onBack: () => Navigator.of(context).pop(),
       ),
-      body: SingleChildScrollView(
+      body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            AppCard(
-              padding: const EdgeInsets.all(18),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _sectionLabel('REQUEST CATEGORY'),
-                  const SizedBox(height: 14),
-                  const Divider(height: 1, color: AppColors.border),
-                  const SizedBox(height: 16),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: AppDropdown<RequestCategory?>(
-                          label: 'Type request',
-                          required: true,
-                          value: _category,
-                          items: [
-                            (value: null, label: '-- Select --'),
-                            for (final c in RequestCategory.values) (value: c, label: c.label),
-                          ],
-                          onChanged: _onCategoryChanged,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: AppDropdown<SupportType?>(
-                          label: 'Support type',
-                          required: true,
-                          value: _supportType,
-                          items: [
-                            (value: null, label: '-- Select --'),
-                            for (final s in SupportType.values) (value: s, label: s.label),
-                          ],
-                          onChanged: (v) => setState(() => _supportType = v),
-                        ),
-                      ),
-                    ],
-                  ),
-                  if (_category != null) ...[
-                    const SizedBox(height: 22),
-                    _sectionLabel('WHAT DO YOU NEED?', required: true),
-                    const SizedBox(height: 10),
-                    for (var i = 0; i < _needOptions.length; i++) ...[
-                      if (i > 0) const SizedBox(height: 10),
-                      NeedOptionTile(
-                        option: _needOptions[i],
-                        selected: _selectedNeedId == _needOptions[i].id,
-                        onSelect: () => setState(() => _selectedNeedId = _needOptions[i].id),
-                        expandedChild: _buildExpandedField(_needOptions[i]),
-                      ),
-                    ],
-                  ],
-                  if (_selectedOption != null) ...[
-                    const SizedBox(height: 22),
-                    AppTextField(
-                      label: 'Description',
-                      controller: _descriptionController,
-                      hint: 'Describe your request / repair / return in detail',
-                      required: true,
-                      maxLines: 5,
-                      minLines: 4,
-                    ),
-                    const SizedBox(height: 22),
-                    AppAttachmentField(
-                      label: 'Attachment (optional)',
-                      fileName: _attachmentFileName,
-                      onTap: () {
-                        setState(() {
-                          _attachmentFileName =
-                              _attachmentFileName == null ? 'lampiran.jpg' : null;
-                        });
-                      },
-                    ),
-                  ],
-                ],
+        children: [
+          const FieldLabelRow(label: 'Request type', required: true),
+          RequestCategorySelector(value: _category, onChanged: _onCategoryChanged),
+          const SizedBox(height: 18),
+
+          const FieldLabelRow(label: 'Support type', required: true),
+          SupportTypeSelector(
+            value: _supportType,
+            onChanged: (v) => setState(() => _supportType = v),
+          ),
+
+          if (_category != null) ...[
+            const SizedBox(height: 18),
+            const FieldLabelRow(label: 'What do you need', required: true),
+            NeedOptionGroup(
+              options: _needOptions,
+              selectedId: _selectedNeedId,
+              onSelect: (id) => setState(() => _selectedNeedId = id),
+              expandedChildBuilder: _buildExpandedField,
+            ),
+          ],
+
+          if (_selectedOption != null) ...[
+            const SizedBox(height: 18),
+            const FieldLabelRow(label: 'Description', required: true),
+            TextField(
+              controller: _descriptionController,
+              maxLines: 4,
+              minLines: 4,
+              style: AppTextStyles.body,
+              decoration: InputDecoration(
+                hintText: 'Describe your request in detail',
+                hintStyle: AppTextStyles.body.copyWith(color: AppColors.textMuted),
+                filled: true,
+                fillColor: Colors.white,
+                contentPadding: const EdgeInsets.all(12),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: const BorderSide(color: AppColors.border, width: 1.5),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: const BorderSide(color: AppColors.border, width: 1.5),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: const BorderSide(color: AppColors.primaryMid, width: 1.5),
+                ),
               ),
             ),
             const SizedBox(height: 18),
-            AppButton(
-              label: 'Submit',
-              variant: AppButtonVariant.primary,
-              onPressed: _submit,
+
+            const FieldLabelRow(label: 'Attachment'),
+            AttachmentRowField(
+              fileName: _attachmentFileName,
+              onTap: () {
+                setState(() {
+                  _attachmentFileName =
+                      _attachmentFileName == null ? 'attachment.jpg' : null;
+                });
+              },
+            ),
+
+            const SizedBox(height: 22),
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: ElevatedButton(
+                onPressed: _submit,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+                child: Text(
+                  'Submit request',
+                  style: AppTextStyles.buttonText.copyWith(color: Colors.white),
+                ),
+              ),
             ),
           ],
-        ),
+        ],
       ),
     );
   }
@@ -242,7 +239,7 @@ class _AddItRequestScreenState extends State<AddItRequestScreen> {
         return null;
 
       case NeedFieldKind.checkboxGroup:
-        return NeedCheckboxGroup(
+        return NeedChoiceChips(
           labels: option.checkboxLabels,
           selected: _checkboxSelections[option.id] ?? const {},
           onChanged: (v) => setState(() => _checkboxSelections[option.id] = v),
@@ -279,21 +276,5 @@ class _AddItRequestScreenState extends State<AddItRequestScreen> {
           onChanged: (v) => setState(() => _newEmployeeData = v),
         );
     }
-  }
-
-  Widget _sectionLabel(String text, {bool required = false}) {
-    return RichText(
-      text: TextSpan(
-        style: AppTextStyles.sectionTitle.copyWith(
-          fontSize: 11,
-          letterSpacing: 0.3,
-          color: AppColors.textMuted,
-        ),
-        children: [
-          TextSpan(text: text),
-          if (required) const TextSpan(text: ' *', style: TextStyle(color: AppColors.rejected)),
-        ],
-      ),
-    );
   }
 }

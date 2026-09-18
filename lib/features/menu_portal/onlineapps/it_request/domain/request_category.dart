@@ -11,6 +11,12 @@ enum RequestCategory {
 
   String get label => switch (this) {
         RequestCategory.it => 'IT',
-        RequestCategory.media => 'MEDIA',
+        RequestCategory.media => 'Media',
+      };
+
+  /// Subtitle singkat yang tampil di kartu pilihan Request type.
+  String get description => switch (this) {
+        RequestCategory.it => 'Systems, accounts, hardware',
+        RequestCategory.media => 'Design, documentation, content',
       };
 }
