@@ -148,11 +148,11 @@ class _AddItRequestScreenState extends State<AddItRequestScreen> {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
         children: [
-          const FieldLabelRow(label: 'Request type', required: true),
+          const FieldLabelRow(label: 'Request type'),
           RequestCategorySelector(value: _category, onChanged: _onCategoryChanged),
           const SizedBox(height: 18),
 
-          const FieldLabelRow(label: 'Support type', required: true),
+          const FieldLabelRow(label: 'Support type'),
           SupportTypeSelector(
             value: _supportType,
             onChanged: (v) => setState(() => _supportType = v),
