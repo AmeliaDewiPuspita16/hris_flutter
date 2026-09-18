@@ -160,20 +160,19 @@ class _AddItRequestScreenState extends State<AddItRequestScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const FieldLabelRow(label: 'Type request'),
+                const FieldLabelRow(label: 'Request type'),
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: AppColors.border, width: 1.2),
-                  ),
-                  child: RequestCategorySelector(
-                    value: _category,
-                    onChanged: _onCategoryChanged,
-                  ),
-                ),
+  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+  decoration: BoxDecoration(
+    color: Colors.white,
+    borderRadius: BorderRadius.circular(10),
+    border: Border.all(color: AppColors.border, width: 1.2),
+  ),
+  child: RequestCategorySelector(
+    value: _category,
+    onChanged: _onCategoryChanged,
+  ),
+),
                 const SizedBox(height: 16),
                 const FieldLabelRow(label: 'Support type'),
                 SupportTypeSelector(
