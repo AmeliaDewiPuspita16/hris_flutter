@@ -36,7 +36,8 @@ class NeedOptionGroup extends StatelessWidget {
 
     if (selectedIndex == -1) {
       // Belum ada yang dipilih — semua baris nempel jadi satu grup.
-      return _OptionGroupCard(options: options, selectedId: null, onSelect: onSelect);
+      return _OptionGroupCard(
+          options: options, selectedId: null, onSelect: onSelect);
     }
 
     final before = options.sublist(0, selectedIndex);
@@ -48,7 +49,8 @@ class NeedOptionGroup extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (before.isNotEmpty) ...[
-          _OptionGroupCard(options: before, selectedId: null, onSelect: onSelect),
+          _OptionGroupCard(
+              options: before, selectedId: null, onSelect: onSelect),
           const SizedBox(height: 8),
         ],
         Container(
@@ -60,14 +62,24 @@ class NeedOptionGroup extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _OptionRow(option: selected, selected: true, onTap: () => onSelect(selected.id)),
+              _OptionRow(
+                  option: selected,
+                  selected: true,
+                  onTap: () => onSelect(selected.id)),
               if (expandedChild != null) ...[
                 // Pemisah antara judul/deskripsi opsi dan field tambahannya
                 // di bawah, supaya jelas ini bagian yang berbeda — bukan
                 // menyambung begitu saja.
-                Divider(height: 1, thickness: 1, color: AppColors.border),
+                Divider(
+                  height: 1,
+                  thickness: 1,
+                  color: AppColors.border,
+                  indent: 60,
+                  endIndent: 16,
+                ),
+                // Divider(height: 1, thickness: 1, color: AppColors.border),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(40, 12, 14, 14),
+                  padding: const EdgeInsets.fromLTRB(60, 12, 14, 14),
                   child: expandedChild,
                 ),
               ],
@@ -76,7 +88,8 @@ class NeedOptionGroup extends StatelessWidget {
         ),
         if (after.isNotEmpty) ...[
           const SizedBox(height: 8),
-          _OptionGroupCard(options: after, selectedId: null, onSelect: onSelect),
+          _OptionGroupCard(
+              options: after, selectedId: null, onSelect: onSelect),
         ],
       ],
     );
@@ -108,7 +121,12 @@ class _OptionGroupCard extends StatelessWidget {
         children: [
           for (var i = 0; i < options.length; i++) ...[
             if (i > 0)
-              Divider(height: 1, color: AppColors.border.withValues(alpha: 0.7)),
+              Divider(
+                height: 1,
+                color: AppColors.border.withValues(alpha: 0.7),
+                // indent: 600,
+                // endIndent: 12,
+              ),
             _OptionRow(
               option: options[i],
               selected: options[i].id == selectedId,
@@ -128,10 +146,16 @@ class _OptionGroupCard extends StatelessWidget {
 ({IconData icon, String description}) _metaFor(NeedOption option) {
   final label = option.label.toLowerCase();
   if (label.contains('new employee')) {
-    return (icon: Icons.person_add_alt_outlined, description: 'Opens an 8-field form');
+    return (
+      icon: Icons.person_add_alt_outlined,
+      description: 'Opens an 8-field form'
+    );
   }
   if (label.contains('account creation')) {
-    return (icon: Icons.person_outline, description: 'Existing employee, no account yet');
+    return (
+      icon: Icons.person_outline,
+      description: 'Existing employee, no account yet'
+    );
   }
   if (label.contains('account management')) {
     return (
@@ -143,7 +167,10 @@ class _OptionGroupCard extends StatelessWidget {
     return (icon: Icons.wifi, description: 'Connectivity issue or new access');
   }
   if (label.contains('backup')) {
-    return (icon: Icons.backup_outlined, description: 'Weekly scheduled data backup');
+    return (
+      icon: Icons.backup_outlined,
+      description: 'Weekly scheduled data backup'
+    );
   }
   if (label.contains('download') || label.contains('install')) {
     return (
@@ -152,16 +179,28 @@ class _OptionGroupCard extends StatelessWidget {
     );
   }
   if (label.contains('hardware') || label.contains('computer')) {
-    return (icon: Icons.desktop_windows_outlined, description: 'Laptop, PC, printer, mouse');
+    return (
+      icon: Icons.desktop_windows_outlined,
+      description: 'Laptop, PC, printer, mouse'
+    );
   }
   if (label.contains('event') || label.contains('meeting')) {
-    return (icon: Icons.cast_outlined, description: 'Projector, pointer, videotron, webcam');
+    return (
+      icon: Icons.cast_outlined,
+      description: 'Projector, pointer, videotron, webcam'
+    );
   }
   if (label.contains('design')) {
-    return (icon: Icons.palette_outlined, description: 'Poster, banner, streamer, logo');
+    return (
+      icon: Icons.palette_outlined,
+      description: 'Poster, banner, streamer, logo'
+    );
   }
   if (label.contains('documentation')) {
-    return (icon: Icons.photo_camera_outlined, description: 'Photo or video coverage');
+    return (
+      icon: Icons.photo_camera_outlined,
+      description: 'Photo or video coverage'
+    );
   }
   if (label.contains('print')) {
     return (icon: Icons.print_outlined, description: 'ID card, certificate');
@@ -206,8 +245,7 @@ class _OptionRow extends StatelessWidget {
               child: Icon(
                 meta.icon,
                 size: 17,
-                // color: selected ? AppColors.primary : AppColors.textMuted,
-                color: AppColors.primary
+                color: selected ? AppColors.primary : AppColors.textMuted
               ),
             ),
             const SizedBox(width: 12),
