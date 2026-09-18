@@ -95,7 +95,8 @@ class _AddItRequestScreenState extends State<AddItRequestScreen> {
     if (_supportType == null) return 'Please select a support type.';
 
     final option = _selectedOption;
-    if (option == null) return 'Please choose one option under "What do you need".';
+    if (option == null)
+      return 'Please choose one option under "What do you need".';
 
     switch (option.fieldKind) {
       case NeedFieldKind.textField:
@@ -122,7 +123,8 @@ class _AddItRequestScreenState extends State<AddItRequestScreen> {
   void _submit() {
     final error = _validate();
     if (error != null) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(error)));
       return;
     }
 
@@ -158,10 +160,21 @@ class _AddItRequestScreenState extends State<AddItRequestScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const FieldLabelRow(label: 'Request type', required: true),
-                RequestCategorySelector(value: _category, onChanged: _onCategoryChanged),
+                const FieldLabelRow(label: 'Request type'),
+                Container(
+  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+  decoration: BoxDecoration(
+    color: Colors.white,
+    borderRadius: BorderRadius.circular(10),
+    border: Border.all(color: AppColors.border, width: 1.2),
+  ),
+  child: RequestCategorySelector(
+    value: _category,
+    onChanged: _onCategoryChanged,
+  ),
+),
                 const SizedBox(height: 16),
-                const FieldLabelRow(label: 'Support type', required: true),
+                const FieldLabelRow(label: 'Support type'),
                 SupportTypeSelector(
                   value: _supportType,
                   onChanged: (v) => setState(() => _supportType = v),
@@ -169,7 +182,6 @@ class _AddItRequestScreenState extends State<AddItRequestScreen> {
               ],
             ),
           ),
-
           if (_category != null) ...[
             const SizedBox(height: 18),
             const FieldLabelRow(label: 'What do you need', required: true),
@@ -180,7 +192,6 @@ class _AddItRequestScreenState extends State<AddItRequestScreen> {
               expandedChildBuilder: _buildExpandedField,
             ),
           ],
-
           if (_selectedOption != null) ...[
             const SizedBox(height: 18),
             const FieldLabelRow(label: 'Description', required: true),
@@ -191,26 +202,29 @@ class _AddItRequestScreenState extends State<AddItRequestScreen> {
               style: AppTextStyles.body,
               decoration: InputDecoration(
                 hintText: 'Describe your request in detail',
-                hintStyle: AppTextStyles.body.copyWith(color: AppColors.textMuted),
+                hintStyle:
+                    AppTextStyles.body.copyWith(color: AppColors.textMuted),
                 filled: true,
                 fillColor: Colors.white,
                 contentPadding: const EdgeInsets.all(12),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: AppColors.border, width: 1.5),
+                  borderSide:
+                      const BorderSide(color: AppColors.border, width: 1.5),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: AppColors.border, width: 1.5),
+                  borderSide:
+                      const BorderSide(color: AppColors.border, width: 1.5),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: AppColors.primaryMid, width: 1.5),
+                  borderSide:
+                      const BorderSide(color: AppColors.primaryMid, width: 1.5),
                 ),
               ),
             ),
             const SizedBox(height: 18),
-
             const FieldLabelRow(label: 'Attachment'),
             AttachmentRowField(
               fileName: _attachmentFileName,
@@ -221,7 +235,6 @@ class _AddItRequestScreenState extends State<AddItRequestScreen> {
                 });
               },
             ),
-
             const SizedBox(height: 22),
             SizedBox(
               width: double.infinity,
@@ -231,7 +244,8 @@ class _AddItRequestScreenState extends State<AddItRequestScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
                 ),
                 child: Text(
                   'Submit request',
@@ -268,7 +282,8 @@ class _AddItRequestScreenState extends State<AddItRequestScreen> {
             NeedChoiceChips(
               labels: option.checkboxLabels,
               selected: _checkboxSelections[option.id] ?? const {},
-              onChanged: (v) => setState(() => _checkboxSelections[option.id] = v),
+              onChanged: (v) =>
+                  setState(() => _checkboxSelections[option.id] = v),
             ),
           ],
         );
@@ -282,7 +297,8 @@ class _AddItRequestScreenState extends State<AddItRequestScreen> {
             hintStyle: AppTextStyles.body.copyWith(color: AppColors.textMuted),
             filled: true,
             fillColor: Colors.white,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
               borderSide: const BorderSide(color: AppColors.border, width: 1.5),
@@ -293,7 +309,8 @@ class _AddItRequestScreenState extends State<AddItRequestScreen> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: AppColors.primaryMid, width: 1.5),
+              borderSide:
+                  const BorderSide(color: AppColors.primaryMid, width: 1.5),
             ),
           ),
         );

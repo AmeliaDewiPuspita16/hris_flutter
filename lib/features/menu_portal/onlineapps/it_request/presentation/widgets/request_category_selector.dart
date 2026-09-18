@@ -4,13 +4,11 @@ import '../../../../../../core/theme/app_colors.dart';
 import '../../../../../../core/theme/app_text_styles.dart';
 import '../../domain/request_category.dart';
 
-/// Dropdown pilihan "Request type" (IT / Media).
+/// Dropdown "Type request" (IT / Media).
 ///
-/// Sebelumnya dua kartu berikon — diganti jadi dropdown polos tanpa ikon,
-/// konsisten dengan dropdown lain di form ini (mis. Department, Executive
-/// type pada [NewEmployeeSubform]). Label + tanda "REQUIRED" tetap datang
-/// dari [FieldLabelRow] di [AddItRequestScreen], jadi widget ini sengaja
-/// tidak merender label sendiri supaya tidak dobel.
+/// Sengaja diberi border + radius supaya jelas terlihat sebagai kontrol
+/// yang bisa di-tap — bukan sekadar teks statis. Support type di sebelahnya
+/// memakai pill abu yang sudah jelas "interaktif", jadi tidak butuh border.
 class RequestCategorySelector extends StatelessWidget {
   const RequestCategorySelector({
     super.key,
@@ -23,41 +21,47 @@ class RequestCategorySelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DropdownButtonFormField<RequestCategory>(
-      value: value,
-      isExpanded: true,
-      icon: const Icon(Icons.keyboard_arrow_down, color: AppColors.textMuted, size: 20),
-      style: AppTextStyles.body.copyWith(color: AppColors.text),
-      dropdownColor: Colors.white,
-      borderRadius: BorderRadius.circular(10),
-      hint: Text(
-        '-- Select --',
-        style: AppTextStyles.body.copyWith(color: AppColors.textMuted),
+    return DropdownButtonHideUnderline(
+      child: DropdownButton<RequestCategory>(
+        value: value,
+        isExpanded: true,
+        isDense: true,
+        icon: const Icon(
+          Icons.keyboard_arrow_down,
+          color: AppColors.textMuted,
+          size: 18,
+        ),
+        style: AppTextStyles.body.copyWith(
+          color: AppColors.text,
+          fontWeight: FontWeight.w700,
+          fontSize: 14,
+        ),
+        dropdownColor: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        hint: Text(
+          '-- Select --',
+          style: AppTextStyles.body.copyWith(
+            color: AppColors.textMuted,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        items: [
+          for (final category in RequestCategory.values)
+            DropdownMenuItem(
+              value: category,
+              child: Text(
+                category.label,
+                style: AppTextStyles.body.copyWith(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13.5,
+                ),
+              ),
+            ),
+        ],
+        onChanged: (v) {
+          if (v != null) onChanged(v);
+        },
       ),
-      decoration: InputDecoration(
-        filled: true,
-        fillColor: Colors.white,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: AppColors.border, width: 1.5),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: AppColors.border, width: 1.5),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: AppColors.primaryMid, width: 1.5),
-        ),
-      ),
-      items: [
-        for (final category in RequestCategory.values)
-          DropdownMenuItem(value: category, child: Text(category.label)),
-      ],
-      onChanged: (v) {
-        if (v != null) onChanged(v);
-      },
     );
   }
 }
