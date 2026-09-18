@@ -2,30 +2,28 @@ import 'package:flutter/material.dart';
 
 import '../../../../../../core/theme/app_colors.dart';
 import '../../../../../../core/theme/app_text_styles.dart';
-import '../../domain/pr_status.dart';
+import '../../domain/purchase_requisition_page.dart';
 
 /// Deret chip filter status, pengganti dropdown "Status" di web.
 ///
-/// [statuses] diambil dari seluruh data (bukan dari hasil pencarian) supaya
-/// chip tidak muncul-hilang sewaktu orang mengetik di kolom cari, sementara
-/// [counts] mengikuti hasil pencarian supaya angkanya jujur.
+/// Angkanya datang dari `summary` server, jadi tetap benar untuk seluruh PR
+/// meski baru satu halaman yang termuat. Status bernilai nol tetap
+/// ditampilkan supaya deret chip tidak berubah-ubah sewaktu orang mengetik
+/// di kolom cari.
 class PrStatusFilterBar extends StatelessWidget {
   const PrStatusFilterBar({
     super.key,
-    required this.statuses,
     required this.counts,
-    required this.totalCount,
     required this.selected,
     required this.onChanged,
   });
 
-  final List<PrStatus> statuses;
-  final Map<PrStatus, int> counts;
-  final int totalCount;
+  final PrStatusCounts counts;
 
-  /// Null berarti chip "Semua" yang aktif.
-  final PrStatus? selected;
-  final ValueChanged<PrStatus?> onChanged;
+  /// Kode status yang aktif. Null berarti chip "Semua".
+  final String? selected;
+
+  final ValueChanged<String?> onChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -36,21 +34,21 @@ class PrStatusFilterBar extends StatelessWidget {
         children: [
           _FilterChip(
             label: 'Semua',
-            count: totalCount,
+            count: counts.all,
             color: AppColors.primary,
             background: AppColors.primaryLight,
             active: selected == null,
             onTap: () => onChanged(null),
           ),
-          for (final status in statuses) ...[
+          for (final status in counts.reportedCodes) ...[
             const SizedBox(width: 8),
             _FilterChip(
               label: status.shortLabel,
-              count: counts[status] ?? 0,
+              count: counts.countFor(status.code),
               color: status.color,
               background: status.background,
-              active: selected == status,
-              onTap: () => onChanged(status),
+              active: selected == status.code,
+              onTap: () => onChanged(status.code),
             ),
           ],
         ],
@@ -78,6 +76,10 @@ class _FilterChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Status yang kosong ditampilkan pudar: masih bisa ditekan, tapi tidak
+    // ikut menarik perhatian di antara yang ada isinya.
+    final empty = count == 0 && !active;
+
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(20),
@@ -97,7 +99,9 @@ class _FilterChip extends StatelessWidget {
             fontFamily: AppTextStyles.fontFamily,
             fontSize: 11,
             fontWeight: active ? FontWeight.w700 : FontWeight.w600,
-            color: active ? color : AppColors.textMid,
+            color: active
+                ? color
+                : (empty ? AppColors.textMuted : AppColors.textMid),
           ),
         ),
       ),

@@ -1,64 +1,102 @@
 import 'approval_step.dart';
 import 'document_stage.dart';
+import 'json_value.dart';
 import 'pr_attachment.dart';
 import 'pr_line_item.dart';
-import 'pr_status.dart';
+import 'purchase_requisition_summary.dart';
 
-/// Satu Purchase Requisition beserta seluruh isi layar detailnya.
-class PurchaseRequisition {
+/// Satu PR lengkap, dari `GET /api/portal/apps/eprocurement/{id}`.
+///
+/// Mewarisi [PurchaseRequisitionSummary] karena respons detail memang
+/// ringkasan yang sama ditambah rinciannya — dengan begitu layar detail bisa
+/// menampilkan kepala halaman dari ringkasan yang sudah ada di daftar sambil
+/// menunggu rinciannya datang.
+class PurchaseRequisition extends PurchaseRequisitionSummary {
   const PurchaseRequisition({
-    required this.id,
-    required this.prNumber,
-    required this.date,
+    required super.id,
+    required super.prNumber,
+    required super.prDate,
+    required super.section,
+    required super.requestor,
+    required super.purpose,
+    required super.itemsCount,
+    required super.totalEstimatedAmount,
+    required super.currency,
+    required super.status,
     required this.department,
-    required this.section,
-    required this.requestor,
-    required this.requiredDate,
-    required this.purpose,
-    required this.status,
-    required this.items,
+    required this.attachmentsCount,
+    this.requiredDate,
+    this.priority,
+    this.paperRef,
+    this.revisionNotes,
+    this.rejectionReason,
+    this.submittedAt,
+    this.approvedAt,
+    this.items = const [],
     this.attachments = const [],
-    this.approvalSteps = const [],
-    this.documentStages = const [],
+    this.approvalProgress = const [],
+    this.documentProgress = const [],
   });
 
-  final String id;
-
-  /// Ex: "PR/EVD/26-09/10".
-  final String prNumber;
-
-  final DateTime date;
   final String department;
-  final String section;
-  final String requestor;
-  final DateTime requiredDate;
-  final String purpose;
-  final PrStatus status;
+  final int attachmentsCount;
+
+  /// Tanggal barang/jasa dibutuhkan. Boleh kosong.
+  final DateTime? requiredDate;
+
+  final String? priority;
+
+  /// Nomor dokumen kertas pendamping, bila ada.
+  final String? paperRef;
+
+  /// Terisi saat PR dikembalikan untuk diperbaiki.
+  final String? revisionNotes;
+
+  /// Terisi saat PR ditolak.
+  final String? rejectionReason;
+
+  final DateTime? submittedAt;
+  final DateTime? approvedAt;
+
   final List<PrLineItem> items;
   final List<PrAttachment> attachments;
-  final List<ApprovalStep> approvalSteps;
-  final List<DocumentStage> documentStages;
+  final List<ApprovalStep> approvalProgress;
+  final List<DocumentStage> documentProgress;
 
-  int get itemCount => items.length;
+  factory PurchaseRequisition.fromJson(Map<String, dynamic> json) {
+    // Field yang sama dengan daftar diurai sekali saja, di satu tempat.
+    final base = PurchaseRequisitionSummary.fromJson(json);
 
-  /// Est. Total di kepala layar detail. Dihitung dari [items] supaya angka di
-  /// kartu daftar dan jumlah di tabel item tidak mungkin berselisih.
-  int get estimatedTotal =>
-      items.fold(0, (total, item) => total + item.subtotal);
-
-  /// Ex: "1 item", "8 items" — persis badge jumlah item di web.
-  String get itemCountLabel => itemCount == 1 ? '1 item' : '$itemCount items';
-
-  /// Apakah PR ini cocok dengan kata kunci di kolom "Cari".
-  ///
-  /// Mencari di nomor PR, nama requestor, dan purpose — tiga kolom yang
-  /// dibaca orang saat mencari PR tertentu. Query kosong cocok dengan semua.
-  bool matchesQuery(String query) {
-    final keyword = query.trim().toLowerCase();
-    if (keyword.isEmpty) return true;
-
-    return prNumber.toLowerCase().contains(keyword) ||
-        requestor.toLowerCase().contains(keyword) ||
-        purpose.toLowerCase().contains(keyword);
+    return PurchaseRequisition(
+      id: base.id,
+      prNumber: base.prNumber,
+      prDate: base.prDate,
+      section: base.section,
+      requestor: base.requestor,
+      purpose: base.purpose,
+      itemsCount: base.itemsCount,
+      totalEstimatedAmount: base.totalEstimatedAmount,
+      currency: base.currency,
+      status: base.status,
+      department: '${json['department'] ?? ''}',
+      attachmentsCount: intOr(json['attachments_count'], 0),
+      requiredDate: dateOrNull(json['required_date']),
+      priority: textOrNull(json['priority']),
+      paperRef: textOrNull(json['paper_ref']),
+      revisionNotes: textOrNull(json['revision_notes']),
+      rejectionReason: textOrNull(json['rejection_reason']),
+      submittedAt: dateOrNull(json['submitted_at']),
+      approvedAt: dateOrNull(json['approved_at']),
+      items: _mapList(json['items'], PrLineItem.fromJson),
+      attachments: _mapList(json['attachments'], PrAttachment.fromJson),
+      approvalProgress: _mapList(json['approval_progress'], ApprovalStep.fromJson),
+      documentProgress: _mapList(json['document_progress'], DocumentStage.fromJson),
+    );
   }
 }
+
+List<T> _mapList<T>(dynamic value, T Function(Map<String, dynamic>) map) =>
+    (value as List<dynamic>? ?? const [])
+        .whereType<Map<String, dynamic>>()
+        .map(map)
+        .toList(growable: false);

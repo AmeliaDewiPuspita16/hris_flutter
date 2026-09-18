@@ -46,5 +46,17 @@
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
         </intent>
+        <!-- Dibutuhkan url_launcher untuk membuka lampiran PR di browser.
+             Sejak Android 11, tanpa deklarasi ini launchUrl() gagal diam-diam
+             karena aplikasi tidak boleh melihat aplikasi lain yang bisa
+             menangani http/https. -->
+        <intent>
+            <action android:name="android.intent.action.VIEW"/>
+            <data android:scheme="https"/>
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW"/>
+            <data android:scheme="http"/>
+        </intent>
     </queries>
 </manifest>

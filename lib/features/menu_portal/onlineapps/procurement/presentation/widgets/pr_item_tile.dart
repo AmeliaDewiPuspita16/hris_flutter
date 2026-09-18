@@ -13,15 +13,9 @@ import '../../domain/pr_line_item.dart';
 /// dilepas karena keempat labelnya terulang di tiap item dan membuat
 /// subtotal — angka yang paling dicari — tenggelam di antara nilai lain.
 class PrItemTile extends StatelessWidget {
-  const PrItemTile({
-    super.key,
-    required this.item,
-    required this.number,
-    required this.showDivider,
-  });
+  const PrItemTile({super.key, required this.item, required this.showDivider});
 
   final PrLineItem item;
-  final int number;
   final bool showDivider;
 
   /// Lebar kolom nomor, dipakai lagi untuk menjorokkan baris di bawahnya
@@ -46,7 +40,7 @@ class PrItemTile extends StatelessWidget {
               SizedBox(
                 width: _numberColumnWidth,
                 child: Text(
-                  '$number',
+                  '${item.lineNumber}',
                   style: AppTextStyles.caption.copyWith(
                     fontWeight: FontWeight.w700,
                     color: AppColors.textMuted,
@@ -56,13 +50,25 @@ class PrItemTile extends StatelessWidget {
               _KindChip(kind: item.kind),
               const SizedBox(width: 8),
               Expanded(
-                child: Text(
-                  item.description,
-                  style: AppTextStyles.body.copyWith(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    height: 1.35,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item.description,
+                      style: AppTextStyles.body.copyWith(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        height: 1.35,
+                      ),
+                    ),
+                    if (item.specification != null) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        item.specification!,
+                        style: AppTextStyles.caption.copyWith(height: 1.4),
+                      ),
+                    ],
+                  ],
                 ),
               ),
             ],
@@ -78,7 +84,7 @@ class PrItemTile extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '${item.qty} ${item.unit} × ${formatRupiah(item.estPrice)}',
+                        '${item.quantityLabel} × ${formatRupiah(item.unitPrice)}',
                         style: AppTextStyles.caption.copyWith(
                           color: AppColors.textMid,
                         ),
@@ -89,7 +95,8 @@ class PrItemTile extends StatelessWidget {
                       if (item.glAccount != null) ...[
                         const SizedBox(height: 3),
                         Text(
-                          'GL ${item.glAccount}',
+                          'GL ${item.glAccount}'
+                          '${item.segment != null ? ' · ${item.segment}' : ''}',
                           style: AppTextStyles.caption,
                         ),
                       ],
@@ -100,7 +107,7 @@ class PrItemTile extends StatelessWidget {
                 // Gelap, bukan hijau: hijau disimpan untuk Estimated Total di
                 // kaki daftar supaya angka pamungkasnya tetap menonjol.
                 Text(
-                  formatRupiah(item.subtotal),
+                  formatRupiah(item.totalPrice),
                   style: const TextStyle(
                     fontFamily: AppTextStyles.fontFamily,
                     fontSize: 14,
@@ -111,6 +118,17 @@ class PrItemTile extends StatelessWidget {
               ],
             ),
           ),
+          if (item.notes != null)
+            Padding(
+              padding: const EdgeInsets.only(left: _numberColumnWidth, top: 6),
+              child: Text(
+                item.notes!,
+                style: AppTextStyles.caption.copyWith(
+                  fontStyle: FontStyle.italic,
+                  height: 1.4,
+                ),
+              ),
+            ),
         ],
       ),
     );

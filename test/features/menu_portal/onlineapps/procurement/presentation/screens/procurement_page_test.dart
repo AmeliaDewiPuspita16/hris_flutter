@@ -1,135 +1,143 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hris_mobile/features/menu_portal/onlineapps/procurement/domain/pr_line_item.dart';
-import 'package:hris_mobile/features/menu_portal/onlineapps/procurement/domain/pr_status.dart';
-import 'package:hris_mobile/features/menu_portal/onlineapps/procurement/domain/purchase_requisition.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:hris_mobile/features/menu_portal/onlineapps/procurement/presentation/screens/pr_detail_screen.dart';
 import 'package:hris_mobile/features/menu_portal/onlineapps/procurement/presentation/screens/procurement_page.dart';
 
+import '../../../../../../fixtures/eprocurement_response.dart';
+import '../../support/procurement_harness.dart';
+
 void main() {
-  PurchaseRequisition requisition({
-    required String id,
-    required String prNumber,
-    String section = 'F&B Service',
-    String requestor = 'Rindiani',
-    String purpose = 'operational Restaurant',
-    PrStatus status = PrStatus.pendingHod,
-    List<PrLineItem>? items,
-  }) =>
-      PurchaseRequisition(
-        id: id,
-        prNumber: prNumber,
-        date: DateTime(2026, 9, 18),
-        department: 'EVD',
-        section: section,
-        requestor: requestor,
-        requiredDate: DateTime(2026, 9, 17),
-        purpose: purpose,
-        status: status,
-        items: items ??
-            const [
-              PrLineItem(
-                description: 'Tisu evo napkin luncheon 100\'s',
-                kind: PrItemKind.goods,
-                qty: 5,
-                unit: 'BOX',
-                estPrice: 453000,
-              ),
-            ],
-      );
+  // Layar detail memformat tanggal dengan locale id_ID. Di aplikasi
+  // disiapkan main(); di test harus disiapkan sendiri.
+  setUpAll(() => initializeDateFormatting('id_ID'));
 
-  final evd = requisition(id: 'pr-1', prNumber: 'PR/EVD/26-09/10');
-  final est = requisition(
-    id: 'pr-2',
-    prNumber: 'PR/EST/26-09/13',
-    section: 'Estate Admin Asssitant',
-    requestor: 'Darmawati',
-    purpose: 'Melakukan maintenance unit Forklif Power House',
-    status: PrStatus.pendingDgm,
-  );
-
-  Future<void> pumpPage(
-    WidgetTester tester, {
-    List<PurchaseRequisition>? requisitions,
-  }) async {
+  Future<void> pumpPage(WidgetTester tester, ProcurementHarness harness) async {
     await tester.pumpWidget(
-      MaterialApp(
-        home: ProcurementPage(requisitions: requisitions ?? [evd, est]),
-      ),
+      MaterialApp(home: ProcurementPage(repository: harness.repository)),
     );
-    await tester.pump();
   }
 
-  testWidgets('menampilkan ringkasan tiap PR di kartunya', (tester) async {
-    await pumpPage(tester, requisitions: [evd]);
+  /// Menunggu request pertama selesai dan hasilnya tergambar.
+  Future<void> settle(WidgetTester tester) async {
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 50));
+  }
 
-    expect(find.text('PR/EVD/26-09/10'), findsOneWidget);
-    expect(find.text('18 Sep 2026 · F&B Service'), findsOneWidget);
-    expect(find.text('Rindiani'), findsOneWidget);
-    expect(find.text('operational Restaurant'), findsOneWidget);
-    expect(find.text('1 item'), findsOneWidget);
-    expect(find.text('Rp 2.265.000'), findsOneWidget);
-    expect(find.text('Pending HOD'), findsOneWidget);
-  });
+  testWidgets('menampilkan spinner selagi memuat pertama kali', (tester) async {
+    final harness = ProcurementHarness((_, __) async {
+      await Future<void>.delayed(const Duration(milliseconds: 200));
+      return ok(eprocurementListEnvelope());
+    });
 
-  testWidgets('chip filter menyebut jumlah PR per status', (tester) async {
-    await pumpPage(tester);
-
-    expect(find.text('Semua (2)'), findsOneWidget);
-    expect(find.text('HOD (1)'), findsOneWidget);
-    expect(find.text('DGM (1)'), findsOneWidget);
-  });
-
-  testWidgets('chip filter hanya memunculkan status yang ada datanya',
-      (tester) async {
-    await pumpPage(tester, requisitions: [evd]);
-
-    expect(find.text('HOD (1)'), findsOneWidget);
-    expect(find.text('DGM (0)'), findsNothing);
-    expect(find.text('Rejected (0)'), findsNothing);
-  });
-
-  testWidgets('memilih chip status menyisakan PR berstatus itu saja',
-      (tester) async {
-    await pumpPage(tester);
-
-    await tester.tap(find.text('DGM (1)'));
+    await pumpPage(tester, harness);
     await tester.pump();
 
-    expect(find.text('PR/EST/26-09/13'), findsOneWidget);
-    expect(find.text('PR/EVD/26-09/10'), findsNothing);
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+
+    await tester.pump(const Duration(milliseconds: 300));
   });
 
-  testWidgets('kolom cari menyaring PR lewat nama requestor', (tester) async {
-    await pumpPage(tester);
+  testWidgets('menampilkan kartu PR dari server', (tester) async {
+    final harness = ProcurementHarness((_, __) => ok(eprocurementListEnvelope()));
 
-    await tester.enterText(find.byType(TextField), 'darmawati');
-    await tester.pump();
+    await pumpPage(tester, harness);
+    await settle(tester);
 
-    expect(find.text('PR/EST/26-09/13'), findsOneWidget);
-    expect(find.text('PR/EVD/26-09/10'), findsNothing);
+    expect(find.text('PR/AML/26-09/01'), findsOneWidget);
+    expect(find.text('Rika Susila Susanti'), findsOneWidget);
+    expect(find.text('Rp 2.938.005.000'), findsOneWidget);
+    expect(find.text('Pending Review'), findsOneWidget);
   });
 
-  testWidgets('menampilkan "Tidak ada data" saat tidak ada yang cocok',
+  testWidgets('chip filter menyebut jumlah dari ringkasan server',
       (tester) async {
-    await pumpPage(tester);
+    final harness = ProcurementHarness((_, __) => ok(eprocurementListEnvelope()));
 
-    await tester.enterText(find.byType(TextField), 'tidak ada ini');
-    await tester.pump();
+    await pumpPage(tester, harness);
+    await settle(tester);
+
+    expect(find.text('Semua (9)'), findsOneWidget);
+    expect(find.text('Under Review (3)'), findsOneWidget);
+    expect(find.text('DGM (0)'), findsOneWidget);
+  });
+
+  testWidgets('menekan chip mengirim filter status ke server', (tester) async {
+    final harness = ProcurementHarness((_, __) => ok(eprocurementListEnvelope()));
+
+    await pumpPage(tester, harness);
+    await settle(tester);
+
+    await tester.tap(find.text('HOD (1)'));
+    await settle(tester);
+
+    expect(harness.lastRequest.queryParameters['status'], 'pending_hod');
+  });
+
+  testWidgets('mengetik di kolom cari mengirim kata kunci setelah jeda',
+      (tester) async {
+    final harness = ProcurementHarness((_, __) => ok(eprocurementListEnvelope()));
+
+    await pumpPage(tester, harness);
+    await settle(tester);
+
+    await tester.enterText(find.byType(TextField), 'forklift');
+    await tester.pump(const Duration(milliseconds: 100));
+
+    // Belum lewat jeda ketik — belum ada request kedua.
+    expect(harness.requested, hasLength(1));
+
+    await tester.pump(const Duration(milliseconds: 500));
+    await settle(tester);
+
+    expect(harness.lastRequest.queryParameters['search'], 'forklift');
+  });
+
+  testWidgets('kegagalan memunculkan pesan dan tombol coba lagi',
+      (tester) async {
+    var attempts = 0;
+    final harness = ProcurementHarness((_, __) {
+      attempts++;
+      if (attempts == 1) return fails(message: 'Server sibuk');
+      return ok(eprocurementListEnvelope());
+    });
+
+    await pumpPage(tester, harness);
+    await settle(tester);
+
+    expect(find.text('Server sibuk'), findsOneWidget);
+
+    await tester.tap(find.text('Coba lagi'));
+    await settle(tester);
+
+    expect(find.text('PR/AML/26-09/01'), findsOneWidget);
+  });
+
+  testWidgets('menampilkan "Tidak ada data" saat server tidak mengirim PR',
+      (tester) async {
+    final harness = ProcurementHarness(
+      (_, __) => ok(eprocurementListEnvelope(items: const [])),
+    );
+
+    await pumpPage(tester, harness);
+    await settle(tester);
 
     expect(find.text('Tidak ada data'), findsOneWidget);
   });
 
-  testWidgets('jumlah di chip ikut kata kunci, tapi chipnya tidak hilang',
-      (tester) async {
-    await pumpPage(tester);
+  testWidgets('mengetuk kartu membuka halaman detail PR', (tester) async {
+    final harness = ProcurementHarness((url, __) {
+      if (url.path.endsWith('/9')) return ok({'data': eprocurementDetail()});
+      return ok(eprocurementListEnvelope());
+    });
 
-    await tester.enterText(find.byType(TextField), 'darmawati');
-    await tester.pump();
+    await pumpPage(tester, harness);
+    await settle(tester);
 
-    expect(find.text('Semua (1)'), findsOneWidget);
-    expect(find.text('DGM (1)'), findsOneWidget);
-    expect(find.text('HOD (0)'), findsOneWidget);
+    await tester.tap(find.text('PR/AML/26-09/01'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(PrDetailScreen), findsOneWidget);
   });
 
   testWidgets('kartu tidak meluber di layar HP sempit', (tester) async {
@@ -138,20 +146,11 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    // Pakai data contoh sungguhan: di sanalah nama section dan purpose
-    // terpanjang berada.
-    await tester.pumpWidget(const MaterialApp(home: ProcurementPage()));
-    await tester.pump();
+    final harness = ProcurementHarness((_, __) => ok(eprocurementListEnvelope()));
+
+    await pumpPage(tester, harness);
+    await settle(tester);
 
     expect(tester.takeException(), isNull);
-  });
-
-  testWidgets('mengetuk kartu membuka halaman detail PR', (tester) async {
-    await pumpPage(tester);
-
-    await tester.tap(find.text('PR/EVD/26-09/10'));
-    await tester.pumpAndSettle();
-
-    expect(find.byType(PrDetailScreen), findsOneWidget);
   });
 }

@@ -28,4 +28,12 @@ class ApiConfig {
   /// dimiliki role `hrga` dan `admin`. Dikirim sebagai multipart karena
   /// menerima lampiran `photos[]`.
   static const String hrAnnouncement = '/api/portal/hr_announcement';
+
+  /// Procurement Monitoring. Daftar PR di path ini, detail satu PR di
+  /// `$eprocurement/{id}`.
+  ///
+  /// Endpoint daftarnya menaruh `summary` dan `meta` bersebelahan dengan
+  /// `data`, jadi harus diambil lewat [ApiClient.getEnvelope], bukan
+  /// `getList`.
+  static const String eprocurement = '/api/portal/apps/eprocurement';
 }
