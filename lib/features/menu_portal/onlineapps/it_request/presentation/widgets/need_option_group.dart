@@ -239,7 +239,7 @@ class _OptionRow extends StatelessWidget {
               height: 36,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: AppColors.bg,
+                color: selected ? AppColors.primaryLight : AppColors.bg,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(

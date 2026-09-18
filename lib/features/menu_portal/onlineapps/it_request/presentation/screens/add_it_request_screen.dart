@@ -148,27 +148,30 @@ class _AddItRequestScreenState extends State<AddItRequestScreen> {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
         children: [
-          Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.border),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const FieldLabelRow(label: 'Request type', required: true),
-                RequestCategorySelector(value: _category, onChanged: _onCategoryChanged),
-                const SizedBox(height: 16),
-                const FieldLabelRow(label: 'Support type', required: true),
-                SupportTypeSelector(
-                  value: _supportType,
-                  onChanged: (v) => setState(() => _supportType = v),
-                ),
-              ],
-            ),
-          ),
+          Row(
+  crossAxisAlignment: CrossAxisAlignment.start,
+  children: [
+    Expanded(
+      child: _FieldBox(
+        label: 'TYPE REQUEST',
+        child: RequestCategorySelector(
+          value: _category,
+          onChanged: _onCategoryChanged,
+        ),
+      ),
+    ),
+    const SizedBox(width: 10),
+    Expanded(
+      child: _FieldBox(
+        label: 'SUPPORT TYPE',
+        child: SupportTypeSelector(
+          value: _supportType,
+          onChanged: (v) => setState(() => _supportType = v),
+        ),
+      ),
+    ),
+  ],
+),
 
           if (_category != null) ...[
             const SizedBox(height: 18),
@@ -304,5 +307,42 @@ class _AddItRequestScreenState extends State<AddItRequestScreen> {
           onChanged: (v) => setState(() => _newEmployeeData = v),
         );
     }
+  }
+}
+
+/// Card putih kecil berisi label uppercase + 1 kontrol, dipakai berpasangan
+/// untuk "TYPE REQUEST" & "SUPPORT TYPE" di baris atas form.
+class _FieldBox extends StatelessWidget {
+  const _FieldBox({required this.label, required this.child});
+
+  final String label;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 12, 12, 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            label,
+            style: AppTextStyles.caption.copyWith(
+              fontSize: 9.5,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.7,
+              color: AppColors.textMuted,
+            ),
+          ),
+          const SizedBox(height: 8),
+          child,
+        ],
+      ),
+    );
   }
 }

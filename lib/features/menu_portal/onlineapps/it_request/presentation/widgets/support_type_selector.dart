@@ -4,8 +4,9 @@ import '../../../../../../core/theme/app_colors.dart';
 import '../../../../../../core/theme/app_text_styles.dart';
 import '../../domain/support_type.dart';
 
-/// Segmented control "Support type" (Request / Repair / Return) —
-/// semua opsi kelihatan sekaligus tanpa perlu dibuka.
+/// Segmented control "Support type" (Request / Repair / Return) gaya pill:
+/// container abu membungkus ketiga opsi, yang terpilih jadi pill hijau tua
+/// dengan teks putih — opsi lain transparan dengan teks abu.
 class SupportTypeSelector extends StatelessWidget {
   const SupportTypeSelector({
     super.key,
@@ -19,17 +20,14 @@ class SupportTypeSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      clipBehavior: Clip.antiAlias,
+      padding: const EdgeInsets.all(3),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.border),
+        color: AppColors.neutralBg, // abu muda (0xFFEDEDE7)
+        borderRadius: BorderRadius.circular(9),
       ),
       child: Row(
         children: [
-          for (final type in SupportType.values) ...[
-            if (type != SupportType.values.first)
-              Container(width: 1, height: 22, color: AppColors.border),
+          for (final type in SupportType.values)
             Expanded(
               child: _Segment(
                 label: type.label,
@@ -37,7 +35,6 @@ class SupportTypeSelector extends StatelessWidget {
                 onTap: () => onChanged(type),
               ),
             ),
-          ],
         ],
       ),
     );
@@ -57,18 +54,25 @@ class _Segment extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
+    return GestureDetector(
       onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 11),
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(vertical: 7),
         alignment: Alignment.center,
-        color: active ? AppColors.primary : Colors.transparent,
+        decoration: BoxDecoration(
+          color: active ? AppColors.primary : Colors.transparent,
+          borderRadius: BorderRadius.circular(7),
+        ),
         child: Text(
           label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: TextStyle(
             fontFamily: AppTextStyles.fontFamily,
-            fontSize: 11,
-            fontWeight: FontWeight.w600,
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
             color: active ? Colors.white : AppColors.textMid,
           ),
         ),

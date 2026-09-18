@@ -49,7 +49,7 @@ class NeedOptionCatalog {
   static const _it = <NeedOption>[
     NeedOption(
       id: 'account_creation',
-      label: 'Account creation (existing employee without an account)',
+      label: 'Account creation',
       fieldKind: NeedFieldKind.checkboxGroup,
       checkboxLabels: [
         'Email',
