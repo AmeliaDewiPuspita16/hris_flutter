@@ -4,13 +4,11 @@ import '../../../../../../core/theme/app_colors.dart';
 import '../../../../../../core/theme/app_text_styles.dart';
 import '../../domain/request_category.dart';
 
-/// Dropdown pilihan "Request type" (IT / Media).
+/// Dropdown "Type request" (IT / Media).
 ///
-/// Sebelumnya dua kartu berikon — diganti jadi dropdown polos tanpa ikon,
-/// konsisten dengan dropdown lain di form ini (mis. Department, Executive
-/// type pada [NewEmployeeSubform]). Label + tanda "REQUIRED" tetap datang
-/// dari [FieldLabelRow] di [AddItRequestScreen], jadi widget ini sengaja
-/// tidak merender label sendiri supaya tidak dobel.
+/// Sengaja diberi border + radius supaya jelas terlihat sebagai kontrol
+/// yang bisa di-tap — bukan sekadar teks statis. Support type di sebelahnya
+/// memakai pill abu yang sudah jelas "interaktif", jadi tidak butuh border.
 class RequestCategorySelector extends StatelessWidget {
   const RequestCategorySelector({
     super.key,
@@ -36,7 +34,7 @@ class RequestCategorySelector extends StatelessWidget {
         style: AppTextStyles.body.copyWith(
           color: AppColors.text,
           fontWeight: FontWeight.w700,
-          fontSize: 15,
+          fontSize: 14,
         ),
         dropdownColor: Colors.white,
         borderRadius: BorderRadius.circular(10),
@@ -55,7 +53,7 @@ class RequestCategorySelector extends StatelessWidget {
                 category.label,
                 style: AppTextStyles.body.copyWith(
                   fontWeight: FontWeight.w600,
-                  fontSize: 14,
+                  fontSize: 13.5,
                 ),
               ),
             ),
