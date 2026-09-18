@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../../../core/theme/app_colors.dart';
 import '../../../../../../core/theme/app_text_styles.dart';
 import '../../../../../../core/widgets/back_header.dart';
+import '../../../procurement/presentation/screens/procurement_page.dart';
 import '../../domain/online_apps_demo_data.dart';
 import '../../domain/request_type.dart';
 import '../widgets/choose_request_type_sheet.dart';
@@ -54,7 +55,9 @@ class OnlineAppsScreen extends StatelessWidget {
       onInventory: () => _showComingSoon(context, 'Inventory'),
       onMeterReading: () => _showComingSoon(context, 'Meter Reading'),
       onReservation: () => _showComingSoon(context, 'Reservation'),
-      onProcurement: () => _showComingSoon(context, 'Procurement Monitoring'),
+      onProcurement: () => Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const ProcurementPage()),
+      ),
       onTenantFeedback: () => _showComingSoon(context, 'Tenant Feedback'),
       onWorkOrder: () => _openWorkOrder(context),
       onHseWorkRequest: () => _showComingSoon(context, 'HSE Work Request'),
