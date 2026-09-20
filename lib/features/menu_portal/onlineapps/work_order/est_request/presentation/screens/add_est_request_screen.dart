@@ -3,13 +3,13 @@ import 'package:flutter/material.dart';
 import '../../../../../../../core/theme/app_colors.dart';
 import '../../../../../../../core/theme/app_text_styles.dart';
 import '../../../../../../../core/utils/date_formatter.dart';
-import '../../../../../../../core/widgets/app_attachment_field.dart';
-import '../../../../../../../core/widgets/app_dropdown.dart';
-import '../../../../../../../core/widgets/app_text_field.dart';
 import '../../../../../../../core/widgets/back_header.dart';
 import '../../domain/est_request_item.dart';
 import '../../domain/est_request_status.dart';
 import '../../domain/est_request_type.dart';
+import '../widgets/est_photo_upload_field.dart';
+import '../widgets/field_label_row.dart';
+import '../widgets/request_type_selector.dart';
 
 /// Layar "+ Add Request"
 ///
@@ -25,7 +25,7 @@ class AddEstRequestScreen extends StatefulWidget {
 }
 
 class _AddEstRequestScreenState extends State<AddEstRequestScreen> {
-  EstRequestType? _type;
+  EstRequestType? _type = EstRequestType.repair;
   final _locationController = TextEditingController();
   final _descriptionController = TextEditingController();
   String? _imageFileName;
@@ -73,6 +73,26 @@ class _AddEstRequestScreenState extends State<AddEstRequestScreen> {
     Navigator.of(context).pop(item);
   }
 
+  InputDecoration _fieldDecoration(String hint) => InputDecoration(
+        hintText: hint,
+        hintStyle: AppTextStyles.body.copyWith(color: AppColors.textMuted),
+        filled: true,
+        fillColor: Colors.white,
+        contentPadding: const EdgeInsets.all(12),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: AppColors.border, width: 1.5),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: AppColors.border, width: 1.5),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: AppColors.primaryMid, width: 1.5),
+        ),
+      );
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -84,41 +104,49 @@ class _AddEstRequestScreenState extends State<AddEstRequestScreen> {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
         children: [
-          AppDropdown<EstRequestType>(
-            label: 'Type of Request',
-            required: true,
-            value: _type ?? EstRequestType.repair,
-            items: [
-              for (final t in EstRequestType.values) (value: t, label: t.label),
-            ],
-            onChanged: (v) => setState(() => _type = v),
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.border),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const FieldLabelRow(label: 'Type of request'),
+                RequestTypeSelector(
+                  value: _type,
+                  onChanged: (v) => setState(() => _type = v),
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 18),
-          AppAttachmentField(
-            label: 'Image',
-            hint: '*.png / *.jpg / *.jpeg — max 2MB',
+          const FieldLabelRow(label: 'Location', required: true),
+          TextField(
+            controller: _locationController,
+            style: AppTextStyles.body,
+            decoration: _fieldDecoration('Contoh: Blok 3 unit 8'),
+          ),
+          const SizedBox(height: 18),
+          const FieldLabelRow(label: 'Description', required: true),
+          TextField(
+            controller: _descriptionController,
+            minLines: 4,
+            maxLines: null,
+            style: AppTextStyles.body,
+            decoration: _fieldDecoration('Jelaskan detail permintaan Anda'),
+          ),
+          const SizedBox(height: 18),
+          const FieldLabelRow(label: 'Photo'),
+          EstPhotoUploadField(
             fileName: _imageFileName,
             onTap: () {
               setState(() {
                 _imageFileName = _imageFileName == null ? 'photo.jpg' : null;
               });
             },
-          ),
-          const SizedBox(height: 18),
-          AppTextField(
-            label: 'Location',
-            required: true,
-            controller: _locationController,
-            hint: 'Contoh: Blok 3 unit 8',
-          ),
-          const SizedBox(height: 18),
-          AppTextField(
-            label: 'Description',
-            required: true,
-            controller: _descriptionController,
-            hint: 'Jelaskan detail permintaan Anda',
-            minLines: 4,
-            maxLines: null,
           ),
           const SizedBox(height: 22),
           SizedBox(
@@ -132,7 +160,7 @@ class _AddEstRequestScreenState extends State<AddEstRequestScreen> {
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),
               child: Text(
-                'Submit',
+                'Submit request',
                 style: AppTextStyles.buttonText.copyWith(color: Colors.white),
               ),
             ),
