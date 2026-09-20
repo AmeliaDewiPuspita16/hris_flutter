@@ -7,7 +7,7 @@ import '../../domain/request_type.dart';
 /// Bottom sheet "Choose request type" saat user membuka Work Order.
 ///
 /// Cuma dua opsi tetap (IT Request / EST Request) sehingga cukup sebagai
-/// sheet, bukan halaman baru — mengikuti modal "Choose App" di versi web.
+/// sheet, bukan halaman baru
 /// Mengembalikan [RequestType] yang dipilih lewat Navigator.pop, atau null
 /// kalau ditutup tanpa memilih.
 class ChooseRequestTypeSheet extends StatelessWidget {

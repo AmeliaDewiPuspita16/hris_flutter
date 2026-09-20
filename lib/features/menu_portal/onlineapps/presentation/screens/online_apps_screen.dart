@@ -3,19 +3,16 @@ import 'package:flutter/material.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_text_styles.dart';
 import '../../../../../core/widgets/back_header.dart';
-import '../../procurement/presentation/screens/procurement_page.dart';
 import '../../domain/online_apps_demo_data.dart';
+import '../../procurement/presentation/screens/procurement_page.dart';
 import '../../work_order/domain/request_type.dart';
+import '../../work_order/est_request/presentation/screens/est_request_screen.dart';
+import '../../work_order/it_request/presentation/screens/it_request_screen.dart';
 import '../../work_order/presentation/widgets/choose_request_type_sheet.dart';
 import '../widgets/online_app_tile.dart';
-import '../../work_order/it_request/presentation/screens/it_request_screen.dart';
 
 /// Halaman daftar Online Apps, dibuka dari salah satu 4 menu utama di
 /// Beranda ("Record", "Data", "Online Apps", "Dashboard").
-///
-/// Dipush sebagai halaman baru (bukan tab Beranda), jadi bottom nav HRIS
-/// tidak ikut terbawa — sesuai pola "pindah page tanpa mempertahankan
-/// bottom nav" untuk keempat menu utama portal.
 class OnlineAppsScreen extends StatelessWidget {
   const OnlineAppsScreen({super.key});
 
@@ -27,8 +24,7 @@ class OnlineAppsScreen extends StatelessWidget {
   }
 
   /// "Work Order" punya 2 sub-pilihan (IT / EST Request), jadi tampil lewat
-  /// bottom sheet dulu sebelum pindah ke form yang sesuai — form-nya sendiri
-  /// belum dibuat di iterasi ini, jadi untuk sementara jatuh ke placeholder.
+  /// bottom sheet dulu sebelum pindah ke halaman yang sesuai.
   Future<void> _openWorkOrder(BuildContext context) async {
     final type = await showModalBottomSheet<RequestType>(
       context: context,
@@ -45,7 +41,9 @@ class OnlineAppsScreen extends StatelessWidget {
           MaterialPageRoute(builder: (_) => const ItRequestScreen()),
         );
       case RequestType.est:
-        _showComingSoon(context, 'Form EST Request');
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const EstRequestScreen()),
+        );
     }
   }
 

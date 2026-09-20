@@ -6,8 +6,7 @@ import '../../../../../core/widgets/app_card.dart';
 import '../../domain/online_app_item.dart';
 
 /// Satu baris di halaman Online Apps: ikon, judul + departemen, dan chevron
-/// di kanan — pengganti tombol "Go" kotak di versi web supaya lebih
-/// minimalis di mobile.
+/// di kanan
 class OnlineAppTile extends StatelessWidget {
   const OnlineAppTile({super.key, required this.item});
 

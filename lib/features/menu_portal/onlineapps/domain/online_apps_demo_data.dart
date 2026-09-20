@@ -3,11 +3,11 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import 'online_app_item.dart';
 
-/// Data contoh daftar Online Apps.
+/// Data daftar Online Apps.
 ///
 /// Disusun sebagai function (bukan konstanta statis) karena tiap item butuh
 /// [VoidCallback] dari pemanggil — beberapa perlu BuildContext untuk buka
-/// modal atau halaman lain. Sama seperti pola HomeDemoData.
+/// modal atau halaman lain.
 class OnlineAppsDemoData {
   OnlineAppsDemoData._();
 
