@@ -1,5 +1,6 @@
 import '../../../../../core/logging/app_logger.dart';
-import 'json_value.dart';
+import '../../../../../core/network/page_meta.dart';
+import '../../../../../core/utils/json_value.dart';
 import 'pr_status.dart';
 import 'purchase_requisition_summary.dart';
 
@@ -82,32 +83,4 @@ class PrStatusCounts {
   List<PrStatusCode> get reportedCodes => PrStatusCode.values
       .where((code) => byCode.containsKey(code.code))
       .toList(growable: false);
-}
-
-/// Keterangan paginasi dari `meta`.
-class PageMeta {
-  const PageMeta({
-    required this.currentPage,
-    required this.lastPage,
-    required this.perPage,
-    required this.total,
-  });
-
-  final int currentPage;
-  final int lastPage;
-  final int perPage;
-  final int total;
-
-  bool get hasMore => currentPage < lastPage;
-
-  /// Amplop tanpa `meta` dianggap satu halaman penuh — lebih aman daripada
-  /// terus meminta halaman berikutnya yang tidak ada.
-  factory PageMeta.fromJson(Map<String, dynamic> json) {
-    return PageMeta(
-      currentPage: intOr(json['current_page'], 1),
-      lastPage: intOr(json['last_page'], 1),
-      perPage: intOr(json['per_page'], 20),
-      total: intOr(json['total'], 0),
-    );
-  }
 }

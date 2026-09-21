@@ -2,20 +2,28 @@ import 'package:flutter/material.dart';
 
 import '../../../../../../../core/theme/app_colors.dart';
 import '../../../../../../../core/theme/app_text_styles.dart';
+import '../../../../../../../core/utils/date_formatter.dart';
 import '../../../../../../../core/widgets/app_card.dart';
 import '../../domain/it_request_item.dart';
+import '../../domain/it_request_type.dart';
+import 'it_request_rating_stars.dart';
 
-/// Satu baris di tab "Form IT & Media" — mengemas kolom tabel web
-/// (Requestor, Request Type, Description, Approval Status) jadi satu kartu
-/// ringkas, sama polanya dengan `EstRequestRow` di EST Request.
+/// Satu baris riwayat permintaan IT/Media milik staff: jenis + kategori,
+/// deskripsi, badge status, tanggal, dan rating (kalau sudah dinilai) —
+/// dipakai untuk item yang TIDAK sedang menunggu rating (item yang
+/// menunggu rating pakai [ItRequestFeedbackBanner]).
 class ItRequestCard extends StatelessWidget {
-  const ItRequestCard({super.key, required this.item});
+  const ItRequestCard({super.key, required this.item, this.onTap});
 
   final ItRequestItem item;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
+    final isMedia = item.type == ItRequestType.media;
+
     return AppCard(
+      onTap: onTap,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -23,57 +31,67 @@ class ItRequestCard extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Icon(
+                isMedia ? Icons.palette_outlined : Icons.dns_outlined,
+                size: 14,
+                color: isMedia ? AppColors.violet : AppColors.teal,
+              ),
+              const SizedBox(width: 5),
               Expanded(
+                flex: 3,
                 child: Text(
-                  '${item.requesterName} · ${item.department}',
-                  style: AppTextStyles.body.copyWith(fontWeight: FontWeight.w600),
+                  '${item.type.label} · ${item.category.label}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyles.caption.copyWith(
+                    color: isMedia ? AppColors.violet : AppColors.teal,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
               const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-                decoration: BoxDecoration(
-                  color: item.status.background,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  item.status.label,
-                  style: TextStyle(
-                    fontFamily: AppTextStyles.fontFamily,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                    color: item.status.color,
+              // Flexible, bukan lebar tetap: label status dari server tidak
+              // dibatasi panjangnya, dan tanpa ini label panjang bisa
+              // meluber di layar sempit alih-alih terpotong rapi.
+              Flexible(
+                flex: 2,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: item.status.background,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    item.status.label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontFamily: AppTextStyles.fontFamily,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: item.status.color,
+                    ),
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 6),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-            decoration: BoxDecoration(
-              color: AppColors.neutralBg,
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Text(
-              '${item.category.label} (${item.supportType.label})',
-              style: const TextStyle(
-                fontFamily: AppTextStyles.fontFamily,
-                fontSize: 9.5,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textMid,
-              ),
-            ),
-          ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           Text(
             item.description,
-            maxLines: 2,
+            maxLines: 3,
             overflow: TextOverflow.ellipsis,
-            style: AppTextStyles.caption.copyWith(height: 1.4),
+            style: AppTextStyles.body.copyWith(fontWeight: FontWeight.w600, height: 1.35),
           ),
-          const SizedBox(height: 6),
-          Text(item.date, style: AppTextStyles.caption),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: Text(DateFormatter.shortDate(item.createdAt), style: AppTextStyles.caption),
+              ),
+              if (item.rating != null) ItRequestRatingStars(rating: item.rating!, size: 13),
+            ],
+          ),
         ],
       ),
     );

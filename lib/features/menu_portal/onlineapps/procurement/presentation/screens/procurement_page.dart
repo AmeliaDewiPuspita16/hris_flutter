@@ -14,7 +14,7 @@ import '../bloc/list/procurement_list_event.dart';
 import '../bloc/list/procurement_list_state.dart';
 import '../widgets/pr_card.dart';
 import '../widgets/pr_status_filter_bar.dart';
-import '../widgets/procurement_error_view.dart';
+import '../../../../../../core/widgets/app_error_view.dart';
 import 'pr_detail_screen.dart';
 
 /// Halaman Procurement Monitoring — daftar Purchase Requisition.
@@ -168,7 +168,7 @@ class _ProcurementViewState extends State<_ProcurementView> {
     // Kalau daftar sudah ada, kegagalan memuat halaman berikutnya tidak
     // boleh menghapus yang sudah dibaca orang.
     if (state.status == ProcurementListStatus.failure && state.items.isEmpty) {
-      return ProcurementErrorView(
+      return AppErrorView(
         message: state.errorMessage ?? 'Gagal memuat daftar PR.',
         onRetry: () => context
             .read<ProcurementListBloc>()

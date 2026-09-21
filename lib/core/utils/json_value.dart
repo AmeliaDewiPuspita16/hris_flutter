@@ -1,4 +1,6 @@
-/// Pembaca nilai JSON yang dipakai berulang oleh model-model EProcurement.
+/// Pembaca nilai JSON yang dipakai berulang oleh model-model yang memetakan
+/// respons API — awalnya ditulis untuk EProcurement, dipindah ke core begitu
+/// IT Request ikut membutuhkan set helper yang sama persis.
 library;
 
 /// String yang benar-benar berisi, atau null.

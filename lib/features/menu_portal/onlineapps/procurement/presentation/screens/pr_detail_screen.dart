@@ -24,7 +24,7 @@ import '../widgets/pr_item_count_chip.dart';
 import '../widgets/pr_item_tile.dart';
 import '../widgets/pr_notes_banner.dart';
 import '../widgets/pr_section_title.dart';
-import '../widgets/procurement_error_view.dart';
+import '../../../../../../core/widgets/app_error_view.dart';
 
 /// Membuka URL lampiran. Diambil alih test supaya tidak menyentuh plugin.
 typedef UrlOpener = Future<bool> Function(Uri url);
@@ -116,7 +116,7 @@ class _PrDetailView extends StatelessWidget {
     if (state.status == PrDetailStatus.failure) {
       return SizedBox(
         height: 260,
-        child: ProcurementErrorView(
+        child: AppErrorView(
           message: state.errorMessage ?? 'Gagal memuat detail PR.',
           onRetry: () =>
               context.read<PrDetailBloc>().add(PrDetailRequested(summary.id)),
