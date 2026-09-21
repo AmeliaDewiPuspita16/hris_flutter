@@ -18,6 +18,7 @@ import '../../../pengajuan/presentation/pengajuan_screen.dart';
 import '../../../profil/presentation/screens/profil_screen.dart';
 import '../../../gaji/presentation/gaji_screen.dart';
 import '../../../notifikasi/domain/app_notification.dart';
+import '../../../notifikasi/domain/notification_category.dart';
 import '../../../notifikasi/domain/notification_demo_data.dart';
 import '../../../notifikasi/presentation/screens/notifikasi_screen.dart';
 import '../../../auth/domain/auth_user.dart';
@@ -161,9 +162,13 @@ class _BerandaScreenState extends State<BerandaScreen> {
   }
 
   /// SEMENTARA: belum ada halaman approval Leave sungguhan (beda dari IT
-  /// yang sudah punya tab Approve Request) — jumlahnya sekadar data demo
-  /// sampai fitur itu dibuat.
-  int get _leaveApprovalCount => 2;
+  /// yang sudah punya tab Approve Request) — dihitung dari notifikasi
+  /// kategori Leave yang masih butuh keputusan, supaya angkanya tetap
+  /// sinkron dengan yang muncul di tab "Action" Notifications, sampai ada
+  /// API approval Leave sungguhan.
+  int get _leaveApprovalCount => _notifications
+      .where((n) => n.category == NotificationCategory.leave && n.needsAction)
+      .length;
 
   int get _itApprovalCount => ApproveRequestDemoData.items().length;
 

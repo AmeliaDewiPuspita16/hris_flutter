@@ -42,16 +42,31 @@ class ActionNeededCard extends StatelessWidget {
                     children: [
                       Row(
                         children: [
-                          Icon(category.icon, size: 15, color: category.color),
-                          const SizedBox(width: 6),
-                          Text(
-                            category.label.toUpperCase(),
-                            style: TextStyle(
-                              fontFamily: AppTextStyles.fontFamily,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: 0.6,
-                              color: category.color,
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: category.background,
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(category.icon, size: 13, color: category.color),
+                                const SizedBox(width: 5),
+                                Text(
+                                  category.label.toUpperCase(),
+                                  style: TextStyle(
+                                    fontFamily: AppTextStyles.fontFamily,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: 0.6,
+                                    color: category.color,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                           const Spacer(),
@@ -138,23 +153,22 @@ class _DecisionButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final style = TextStyle(
       fontFamily: AppTextStyles.fontFamily,
-      fontSize: 13,
-      fontWeight: FontWeight.w700,
+      fontSize: 12.5,
+      fontWeight: FontWeight.w600,
       color: filled ? Colors.white : AppColors.rejected,
     );
 
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(9),
+      borderRadius: BorderRadius.circular(18),
       child: Container(
-        height: 38,
+        height: 34,
         alignment: Alignment.center,
         decoration: BoxDecoration(
           color: filled ? AppColors.primary : Colors.transparent,
-          borderRadius: BorderRadius.circular(9),
+          borderRadius: BorderRadius.circular(18),
           border: Border.all(
             color: filled ? AppColors.primary : AppColors.rejected,
-            width: 1.4,
           ),
         ),
         child: Text(label, style: style),

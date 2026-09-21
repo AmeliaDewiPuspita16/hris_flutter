@@ -48,6 +48,20 @@ class NotificationCategory {
     background: AppColors.tealBg,
   );
 
+  static const itRequest = NotificationCategory(
+    label: 'IT request',
+    icon: Icons.computer_outlined,
+    color: AppColors.itRequest,
+    background: AppColors.itRequestBg,
+  );
+
+  static const estRequest = NotificationCategory(
+    label: 'EST request',
+    icon: Icons.home_repair_service_outlined,
+    color: AppColors.estRequest,
+    background: AppColors.estRequestBg,
+  );
+
   static const announcement = NotificationCategory(
     label: 'Announcement',
     icon: Icons.campaign_outlined,

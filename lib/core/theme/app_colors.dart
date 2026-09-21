@@ -44,6 +44,16 @@ class AppColors {
   static const rejected = Color(0xFFD85A30); // dangerDotColor
   static const rejectedBg = Color(0xFFFCEAE3); // tint dari rejected
 
+  // Kategori notifikasi IT & EST Request — sengaja dipisah dari palet
+  // approval/payroll/attendance/leave/announcement supaya ketiga jenis
+  // approval di banner Beranda (Leave/IT/EST) tetap gampang dibedakan
+  // begitu masuk daftar Notifications.
+  static const itRequest = Color(0xFF2E5FA3); // biru, khusus tag "IT request"
+  static const itRequestBg = Color(0xFFE7EFF9);
+
+  static const estRequest = Color(0xFF8B5E34); // cokelat tanah, khusus tag "EST request"
+  static const estRequestBg = Color(0xFFF4EBE0);
+
   static const neutral = Color(0xFF888780); // inactiveNavColor
   static const neutralBg = Color(0xFFEDEDE7);
 
