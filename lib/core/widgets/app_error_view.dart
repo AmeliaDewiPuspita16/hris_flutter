@@ -1,18 +1,16 @@
 import 'package:flutter/material.dart';
 
-import '../../../../../../core/theme/app_colors.dart';
-import '../../../../../../core/theme/app_text_styles.dart';
+import '../theme/app_colors.dart';
+import '../theme/app_text_styles.dart';
 
 /// Pesan galat beserta tombol muat ulang.
 ///
-/// Dipakai daftar maupun detail: keduanya gagal dengan cara yang sama dan
-/// pemulihannya juga sama — coba lagi.
-class ProcurementErrorView extends StatelessWidget {
-  const ProcurementErrorView({
-    super.key,
-    required this.message,
-    required this.onRetry,
-  });
+/// Dipakai layar mana pun yang memuat data lewat repository: daftar maupun
+/// detail gagal dengan cara yang sama dan pemulihannya juga sama — coba
+/// lagi. Awalnya ditulis untuk EProcurement, dipindah ke core begitu IT
+/// Request ikut membutuhkan tampilan galat yang sama persis.
+class AppErrorView extends StatelessWidget {
+  const AppErrorView({super.key, required this.message, required this.onRetry});
 
   /// Pesan dari server, sudah siap ditampilkan.
   final String message;

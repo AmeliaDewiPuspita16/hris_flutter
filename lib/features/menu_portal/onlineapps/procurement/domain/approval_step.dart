@@ -1,5 +1,5 @@
 import 'approval_state.dart';
-import 'json_value.dart';
+import '../../../../../core/utils/json_value.dart';
 
 /// Satu tahap di "Approval Progress" — HOD, Under Review, DGM, Finance
 /// Manager, GM.

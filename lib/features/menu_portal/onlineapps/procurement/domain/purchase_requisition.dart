@@ -1,6 +1,6 @@
 import 'approval_step.dart';
 import 'document_stage.dart';
-import 'json_value.dart';
+import '../../../../../core/utils/json_value.dart';
 import 'pr_attachment.dart';
 import 'pr_line_item.dart';
 import 'purchase_requisition_summary.dart';

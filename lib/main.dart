@@ -12,6 +12,7 @@ import 'features/auth/presentation/bloc/auth/auth_event.dart';
 import 'features/auth/presentation/widgets/auth_gate.dart';
 import 'features/home/data/announcement_repository.dart';
 import 'features/menu_portal/onlineapps/procurement/data/procurement_repository.dart';
+import 'features/menu_portal/onlineapps/work_order/it_request/data/it_request_repository.dart';
 import 'features/shared/data/department_repository.dart';
 
 Future<void> main() async {
@@ -37,6 +38,7 @@ Future<void> main() async {
       departmentRepository: DepartmentRepository(apiClient: apiClient),
       announcementRepository: AnnouncementRepository(apiClient: apiClient),
       procurementRepository: ProcurementRepository(apiClient: apiClient),
+      itRequestRepository: ItRequestRepository(apiClient: apiClient),
     ),
   );
 }
@@ -48,17 +50,21 @@ class MyApp extends StatelessWidget {
     DepartmentRepository? departmentRepository,
     AnnouncementRepository? announcementRepository,
     ProcurementRepository? procurementRepository,
+    ItRequestRepository? itRequestRepository,
   })  : departmentRepository = departmentRepository ??
             DepartmentRepository(apiClient: ApiClient()),
         announcementRepository = announcementRepository ??
             AnnouncementRepository(apiClient: ApiClient()),
         procurementRepository = procurementRepository ??
-            ProcurementRepository(apiClient: ApiClient());
+            ProcurementRepository(apiClient: ApiClient()),
+        itRequestRepository = itRequestRepository ??
+            ItRequestRepository(apiClient: ApiClient());
 
   final AuthRepository authRepository;
   final DepartmentRepository departmentRepository;
   final AnnouncementRepository announcementRepository;
   final ProcurementRepository procurementRepository;
+  final ItRequestRepository itRequestRepository;
 
   @override
   Widget build(BuildContext context) {
@@ -72,6 +78,7 @@ class MyApp extends StatelessWidget {
         RepositoryProvider.value(value: departmentRepository),
         RepositoryProvider.value(value: announcementRepository),
         RepositoryProvider.value(value: procurementRepository),
+        RepositoryProvider.value(value: itRequestRepository),
       ],
       child: BlocProvider(
         create: (_) =>

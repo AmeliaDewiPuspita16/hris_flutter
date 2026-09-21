@@ -2,36 +2,44 @@ import 'package:flutter/material.dart';
 
 import '../../../../../../core/theme/app_colors.dart';
 
-/// Status siklus satu permintaan IT/Media, dari sudut pandang staff yang
-/// mengajukan (bukan status internal tim IT yang lebih rinci di web).
-enum ItRequestStatus {
-  waitingHod,
-  approved,
-  onProgress,
-  completed,
-  rejected;
+/// Status satu request IT/Media, dari `{code, label}` di respons.
+///
+/// Sengaja bukan enum. Label yang tampil selalu milik server, jadi kode baru
+/// yang ditambahkan backend tetap terbaca di layar tanpa aplikasi perlu
+/// dirilis ulang — pola sama dengan `PrStatus` di EProcurement.
+///
+/// Baru dua kode yang diketahui pasti artinya: "done" (sudah dikerjakan tim
+/// IT, menunggu rating dari user) dan "finished" (sudah dinilai/ditutup).
+/// Kode lain (mis. tahap menunggu HOD, sedang dikerjakan) belum ada
+/// contohnya — daripada menebak warnanya, kode tak dikenal jatuh ke netral;
+/// labelnya tetap benar karena datang dari server.
+class ItRequestStatus {
+  const ItRequestStatus({required this.code, required this.label});
 
-  String get label => switch (this) {
-        ItRequestStatus.waitingHod => 'Wait Approval HOD',
-        ItRequestStatus.approved => 'Approved',
-        ItRequestStatus.onProgress => 'On Progress',
-        ItRequestStatus.completed => 'Selesai',
-        ItRequestStatus.rejected => 'Rejected',
+  final String code;
+  final String label;
+
+  factory ItRequestStatus.fromJson(Map<String, dynamic>? json) {
+    final code = '${json?['code'] ?? ''}';
+    final serverLabel = json?['label'];
+    final label = serverLabel is String && serverLabel.isNotEmpty
+        ? serverLabel
+        : (code.isEmpty ? 'Tidak diketahui' : code);
+
+    return ItRequestStatus(code: code, label: label);
+  }
+
+  Color get color => switch (code) {
+        'finished' => AppColors.present,
+        'done' => AppColors.accent,
+        'rejected' || 'cancelled' => AppColors.rejected,
+        _ => AppColors.neutral,
       };
 
-  Color get color => switch (this) {
-        ItRequestStatus.waitingHod => AppColors.pending,
-        ItRequestStatus.approved => AppColors.present,
-        ItRequestStatus.onProgress => AppColors.teal,
-        ItRequestStatus.completed => AppColors.present,
-        ItRequestStatus.rejected => AppColors.rejected,
-      };
-
-  Color get background => switch (this) {
-        ItRequestStatus.waitingHod => AppColors.pendingBg,
-        ItRequestStatus.approved => AppColors.presentBg,
-        ItRequestStatus.onProgress => AppColors.tealBg,
-        ItRequestStatus.completed => AppColors.presentBg,
-        ItRequestStatus.rejected => AppColors.rejectedBg,
+  Color get background => switch (code) {
+        'finished' => AppColors.presentBg,
+        'done' => AppColors.accentBg,
+        'rejected' || 'cancelled' => AppColors.rejectedBg,
+        _ => AppColors.neutralBg,
       };
 }

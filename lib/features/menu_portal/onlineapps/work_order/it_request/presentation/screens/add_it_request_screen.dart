@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 
 import '../../../../../../../core/theme/app_colors.dart';
 import '../../../../../../../core/theme/app_text_styles.dart';
-import '../../../../../../../core/utils/date_formatter.dart';
 import '../../../../../../../core/widgets/back_header.dart';
+import '../../domain/checking.dart';
+import '../../domain/code_label.dart';
 import '../../domain/it_request_item.dart';
 import '../../domain/it_request_status.dart';
+import '../../domain/it_request_type.dart';
 import '../../domain/need_option.dart';
 import '../../domain/new_employee_data.dart';
 import '../../domain/request_category.dart';
@@ -26,9 +28,10 @@ import '../widgets/support_type_selector.dart';
 /// dalam sheet yang berbagi layar dengan latar belakang.
 ///
 /// Mengembalikan [ItRequestItem] baru lewat Navigator.pop kalau berhasil
-/// disubmit, atau null kalau ditutup tanpa submit. Belum terhubung ke API —
-/// sesuai pola fitur ini sekarang (lihat [ItRequestDemoData]), item baru
-/// murni disusun dari isian form di sini.
+/// disubmit, atau null kalau ditutup tanpa submit. Belum ada endpoint submit
+/// di server, jadi item baru murni disusun dari isian form di sini —
+/// pemanggil (`ItFormAndMediaTab`) cuma menyisipkannya ke puncak daftar
+/// yang sudah diambil dari API, bukan benar-benar mengirimnya.
 ///
 /// Versi ini mengganti tampilan dropdown/checkbox bawaan web dengan kartu,
 /// segmented control, dan grup opsi yang cuma memberi jarak pada baris yang
@@ -129,11 +132,22 @@ class _AddItRequestScreenState extends State<AddItRequestScreen> {
     }
 
     final now = DateTime.now();
+    final option = _selectedOption!;
+    // Belum ada endpoint submit untuk IT Request, jadi item ini murni
+    // disusun di sini dan cuma disisipkan ke puncak daftar secara lokal
+    // (lihat ItRequestLocalItemAdded) — tidak benar-benar tersimpan di
+    // server. Id negatif dipakai supaya tidak pernah bentrok dengan id
+    // sungguhan dari server, yang selalu positif.
     final item = ItRequestItem(
-      id: 'req-${now.microsecondsSinceEpoch}',
+      id: -now.microsecondsSinceEpoch,
+      type: _category == RequestCategory.media ? ItRequestType.media : ItRequestType.it,
+      supportType: _supportType!.label.toUpperCase(),
+      category: CodeLabel(code: option.id, label: option.label),
       description: _descriptionController.text.trim(),
-      date: DateFormatter.shortDate(now),
-      status: ItRequestStatus.waitingHod,
+      approval: const CodeLabel(code: 'pending', label: 'Pending'),
+      checking: const Checking(checked: false, label: 'Belum'),
+      status: const ItRequestStatus(code: 'submitted', label: 'Menunggu Diproses'),
+      createdAt: now,
     );
 
     Navigator.of(context).pop(item);

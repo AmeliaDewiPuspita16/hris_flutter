@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../../../../core/theme/app_colors.dart';
 import '../../../../../../../core/theme/app_text_styles.dart';
+import '../../../../../../../core/utils/date_formatter.dart';
 import '../../../../../../../core/widgets/app_card.dart';
 import '../../domain/it_request_item.dart';
 
@@ -62,7 +63,7 @@ class ItRequestFeedbackBanner extends StatelessWidget {
                       ),
                       const SizedBox(height: 3),
                       Text(
-                        'Selesai dikerjakan · ${item.date}',
+                        'Selesai dikerjakan · ${DateFormatter.shortDate(item.createdAt)}',
                         style: AppTextStyles.caption,
                       ),
                       const SizedBox(height: 4),

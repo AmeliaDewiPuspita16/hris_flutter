@@ -36,4 +36,12 @@ class ApiConfig {
   /// `data`, jadi harus diambil lewat [ApiClient.getEnvelope], bukan
   /// `getList`.
   static const String eprocurement = '/api/portal/apps/eprocurement';
+
+  /// IT/Media Request — riwayat permintaan milik user sendiri. Daftar di
+  /// path ini, detail satu request di `$itRequest/{id}`.
+  ///
+  /// Sama seperti [eprocurement], endpoint daftarnya menaruh `summary` dan
+  /// `meta` bersebelahan dengan `data`, jadi harus diambil lewat
+  /// [ApiClient.getEnvelope].
+  static const String itRequest = '/api/portal/apps/it_request';
 }

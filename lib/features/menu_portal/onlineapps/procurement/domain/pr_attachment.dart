@@ -1,4 +1,4 @@
-import 'json_value.dart';
+import '../../../../../core/utils/json_value.dart';
 
 /// Berkas atau tautan yang dilampirkan pada sebuah Purchase Requisition.
 class PrAttachment {

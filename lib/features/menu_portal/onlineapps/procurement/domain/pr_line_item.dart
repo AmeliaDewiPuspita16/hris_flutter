@@ -1,4 +1,4 @@
-import 'json_value.dart';
+import '../../../../../core/utils/json_value.dart';
 
 /// Barang atau jasa yang diminta, dari `item_type`.
 enum PrItemKind {

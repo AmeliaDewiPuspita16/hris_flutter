@@ -19,6 +19,9 @@ class AppColors {
   static const teal = Color(0xFF2C7A7B);
   static const tealBg = Color(0xFFE6FFFA);
 
+  static const orange = Color(0xFFF97316);
+  static const orangeBg = Color(0xFFFFF1E6);
+
   static const bannerAccent = Color(0xFFB7E4C7);
 
   // Warna netral (abu/putih)
