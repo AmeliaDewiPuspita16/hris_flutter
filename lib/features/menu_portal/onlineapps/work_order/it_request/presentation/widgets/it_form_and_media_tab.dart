@@ -16,7 +16,9 @@ import 'it_request_feedback_banner.dart';
 import 'it_request_feedback_sheet.dart';
 
 /// Isi tab "Form IT & Media": tombol ajukan request (di-gate oleh feedback
-/// yang belum diselesaikan) + riwayat permintaan sendiri.
+/// yang belum diselesaikan) + daftar SEMUA permintaan (bukan cuma riwayat
+/// sendiri) dengan pencarian — sama polanya dengan tab "All Request" di
+/// `EstRequestScreen`, mengikuti tabel penuh yang sama di versi web.
 ///
 /// Dipakai baik sebagai body utuh untuk staff biasa (tanpa tab) maupun
 /// sebagai tab pertama untuk tim IT — isinya sama karena tim IT juga bisa

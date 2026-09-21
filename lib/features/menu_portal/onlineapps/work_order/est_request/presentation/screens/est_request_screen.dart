@@ -7,9 +7,11 @@ import '../../domain/est_request_demo_data.dart';
 import '../../domain/est_request_item.dart';
 import '../../domain/est_request_status.dart';
 import '../../domain/est_work_detail.dart';
+import '../widgets/est_approve_hod_tab.dart';
 import '../widgets/est_request_feedback_banner.dart';
 import '../widgets/est_request_feedback_sheet.dart';
 import '../widgets/est_request_row.dart';
+import '../widgets/est_request_tab_bar.dart';
 import '../widgets/maintenance_plan_sheet.dart';
 import 'add_est_request_screen.dart';
 import 'est_request_detail_screen.dart';
@@ -18,15 +20,35 @@ import 'est_request_detail_screen.dart';
 /// tombol Add Request yang di-gate oleh feedback yang
 /// belum diselesaikan.
 ///
-/// Tab Approve Request / List Request khusus admin EST  — fokus pada sisi requester.
+/// SEMENTARA: pembagian requester vs HOD masih lewat flag [isHod] lokal,
+/// sama seperti catatan [isItTeam] di `ItRequestScreen` — pemetaan role asli
+/// belum diputuskan.
+///
+/// - Requester biasa (`isHod: false`): cuma daftar All Request, tanpa tab —
+///   perilakunya persis seperti sebelum tab HOD ditambahkan.
+/// - HOD (`isHod: true`): tab All Request / Approve HOD, mengikuti pola
+///   Form IT & Media / Approve Request di `ItRequestScreen`.
 class EstRequestScreen extends StatefulWidget {
-  const EstRequestScreen({super.key});
+  const EstRequestScreen({
+    super.key,
+    this.isHod = true,
+    this.initialTabIndex = 0,
+  });
+
+  final bool isHod;
+
+  /// Tab yang aktif saat layar ini dibuka (0 All Request, 1 Approve HOD).
+  /// Dipakai tag "EST" di banner approval Beranda untuk masuk langsung ke
+  /// tab Approve HOD. Diabaikan kalau [isHod] false.
+  final int initialTabIndex;
 
   @override
   State<EstRequestScreen> createState() => _EstRequestScreenState();
 }
 
 class _EstRequestScreenState extends State<EstRequestScreen> {
+  late int _tabIndex = widget.initialTabIndex;
+
   List<EstRequestItem> _items = EstRequestDemoData.items();
   final _searchController = TextEditingController();
   String _query = '';
@@ -39,6 +61,9 @@ class _EstRequestScreenState extends State<EstRequestScreen> {
 
   List<EstRequestItem> get _awaitingFeedback =>
       _items.where((r) => r.awaitingFeedback).toList();
+
+  List<EstRequestItem> get _pendingHodApproval =>
+      _items.where((r) => r.status == EstRequestStatus.waitApprovalHod).toList();
 
   bool get _canAddRequest => _awaitingFeedback.isEmpty;
 
@@ -149,107 +174,170 @@ class _EstRequestScreenState extends State<EstRequestScreen> {
     }
   }
 
+  /// Approve naikkan status ke [EstRequestStatus.maintenancePlan] supaya
+  /// requester langsung bisa lihat rencana kerja (tombol "Maintenance
+  /// Plan" di baris All Request). Reject dikembalikan ke [onWaiting] —
+  /// EST-nya masih ada, cuma rencana kerjanya perlu disusun ulang, jadi
+  /// tidak dihapus dari daftar seperti pola hapus di IT Request.
+  void _decideHod(EstRequestItem item, {required bool approved}) {
+    setState(() {
+      _items = [
+        for (final r in _items)
+          if (r.id == item.id)
+            r.copyWith(
+              status: approved
+                  ? EstRequestStatus.maintenancePlan
+                  : EstRequestStatus.onWaiting,
+            )
+          else
+            r,
+      ];
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          approved
+              ? 'Rencana kerja untuk ${item.requesterName} disetujui'
+              : 'Rencana kerja untuk ${item.requesterName} dikembalikan ke tim EST',
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final results = _filtered;
-
     return Scaffold(
       backgroundColor: AppColors.bg,
       appBar: BackHeader(
         title: 'EST Work Order',
         onBack: () => Navigator.of(context).pop(),
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-        children: [
-          for (final item in _awaitingFeedback) ...[
-            EstRequestFeedbackBanner(
-              item: item,
-              onGiveFeedback: () => _giveFeedback(item),
+      body: widget.isHod ? _buildHodView() : _buildAllRequestTab(),
+    );
+  }
+
+  Widget _buildHodView() {
+    // IndexedStack menjaga tab All Request tetap "hidup" di belakang layar
+    // saat pindah ke Approve HOD, jadi posisi scroll & isi pencarian tidak
+    // reset — sama seperti alasan IndexedStack di ItRequestScreen.
+    final tabs = [
+      _buildAllRequestTab(),
+      EstApproveHodTab(
+        items: _pendingHodApproval,
+        onApprove: (item) => _decideHod(item, approved: true),
+        onReject: (item) => _decideHod(item, approved: false),
+      ),
+    ];
+
+    return Column(
+      children: [
+        const SizedBox(height: 12),
+        EstRequestTabBar(
+          labels: const ['All Request', 'Approve HOD'],
+          activeIndex: _tabIndex,
+          badgeCounts: {1: _pendingHodApproval.length},
+          onChanged: (i) => setState(() => _tabIndex = i),
+        ),
+        const SizedBox(height: 10),
+        Expanded(child: IndexedStack(index: _tabIndex, children: tabs)),
+      ],
+    );
+  }
+
+  Widget _buildAllRequestTab() {
+    final results = _filtered;
+
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+      children: [
+        for (final item in _awaitingFeedback) ...[
+          EstRequestFeedbackBanner(
+            item: item,
+            onGiveFeedback: () => _giveFeedback(item),
+          ),
+          const SizedBox(height: 12),
+        ],
+        if (_canAddRequest)
+          SizedBox(
+            width: double.infinity,
+            height: 46,
+            child: ElevatedButton.icon(
+              onPressed: _addRequest,
+              icon: const Icon(Icons.add, size: 18),
+              label: Text('Add Request', style: AppTextStyles.buttonText),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
             ),
-            const SizedBox(height: 12),
-          ],
-          if (_canAddRequest)
-            SizedBox(
-              width: double.infinity,
-              height: 46,
-              child: ElevatedButton.icon(
-                onPressed: _addRequest,
-                icon: const Icon(Icons.add, size: 18),
-                label: Text('Add Request', style: AppTextStyles.buttonText),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                ),
-              ),
-            )
-          else
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              decoration: BoxDecoration(
-                color: AppColors.accentBg,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.lock_outline, size: 16, color: AppColors.accent),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Selesaikan feedback di atas dulu untuk membuka '
-                      'pengajuan baru.',
-                      style: AppTextStyles.caption.copyWith(
-                        color: AppColors.text,
-                        height: 1.4,
-                      ),
+          )
+        else
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              color: AppColors.accentBg,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.lock_outline, size: 16, color: AppColors.accent),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Selesaikan feedback di atas dulu untuk membuka '
+                    'pengajuan baru.',
+                    style: AppTextStyles.caption.copyWith(
+                      color: AppColors.text,
+                      height: 1.4,
                     ),
                   ),
-                ],
-              ),
-            ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: _searchController,
-            onChanged: (v) => setState(() => _query = v),
-            style: AppTextStyles.body,
-            decoration: InputDecoration(
-              hintText: 'Search request...',
-              hintStyle: AppTextStyles.body.copyWith(color: AppColors.textMuted),
-              prefixIcon: const Icon(Icons.search, size: 19, color: AppColors.textMuted),
-              filled: true,
-              fillColor: Colors.white,
-              contentPadding: const EdgeInsets.symmetric(vertical: 4),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: const BorderSide(color: AppColors.border, width: 1.5),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: const BorderSide(color: AppColors.border, width: 1.5),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: const BorderSide(color: AppColors.primaryMid, width: 1.5),
-              ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 14),
-          if (results.isEmpty)
-            Padding(
-              padding: const EdgeInsets.only(top: 24),
-              child: Center(
-                child: Text('Tidak ada data', style: AppTextStyles.bodyMuted),
-              ),
-            )
-          else
-            for (var i = 0; i < results.length; i++) ...[
-              if (i > 0) const SizedBox(height: 10),
-              EstRequestRow(item: results[i], onTap: () => _onTapItem(results[i])),
-            ],
-        ],
-      ),
+        const SizedBox(height: 16),
+        TextField(
+          controller: _searchController,
+          onChanged: (v) => setState(() => _query = v),
+          style: AppTextStyles.body,
+          decoration: InputDecoration(
+            hintText: 'Search request...',
+            hintStyle: AppTextStyles.body.copyWith(color: AppColors.textMuted),
+            prefixIcon: const Icon(Icons.search, size: 19, color: AppColors.textMuted),
+            filled: true,
+            fillColor: Colors.white,
+            contentPadding: const EdgeInsets.symmetric(vertical: 4),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: AppColors.border, width: 1.5),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: AppColors.border, width: 1.5),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: AppColors.primaryMid, width: 1.5),
+            ),
+          ),
+        ),
+        const SizedBox(height: 14),
+        if (results.isEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 24),
+            child: Center(
+              child: Text('Tidak ada data', style: AppTextStyles.bodyMuted),
+            ),
+          )
+        else
+          for (var i = 0; i < results.length; i++) ...[
+            if (i > 0) const SizedBox(height: 10),
+            EstRequestRow(item: results[i], onTap: () => _onTapItem(results[i])),
+          ],
+      ],
     );
   }
 }
