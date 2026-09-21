@@ -3,12 +3,10 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/utils/date_formatter.dart';
-import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/back_header.dart';
 import '../../domain/app_notification.dart';
 import '../../domain/notification_filter.dart';
-import '../widgets/action_needed_card.dart';
-import '../widgets/notification_filter_chips.dart';
+import '../widgets/notification_filter_tabs.dart';
 import '../widgets/notification_tile.dart';
 
 /// Halaman Notifications.
@@ -16,6 +14,12 @@ import '../widgets/notification_tile.dart';
 /// Daftarnya dipegang pemanggil ([notifications]) dan setiap perubahan
 /// dilaporkan lewat [onChanged], supaya titik penanda di lonceng Beranda
 /// ikut bergerak saat notifikasi dibaca atau diputuskan di sini.
+///
+/// Tampilannya sengaja dibuat rata: satu daftar putih tanpa kartu, dengan
+/// filter sebagai tab bergaris bawah di atas ([NotificationFilterTabs])
+/// alih-alih deretan chip pil. Notifikasi yang butuh keputusan tidak lagi
+/// memakai kartu berbeda — cuma naik ke kelompok paling atas dan
+/// menumbuhkan sepasang tombol kecil di barisnya sendiri.
 class NotifikasiScreen extends StatefulWidget {
   const NotifikasiScreen({
     super.key,
@@ -27,8 +31,8 @@ class NotifikasiScreen extends StatefulWidget {
   final List<AppNotification> notifications;
   final ValueChanged<List<AppNotification>> onChanged;
 
-  /// Filter chip yang aktif saat layar ini dibuka — dipakai banner approval
-  /// di Beranda untuk masuk langsung ke tab "Action" alih-alih "All".
+  /// Filter yang aktif saat layar ini dibuka — dipakai banner approval di
+  /// Beranda untuk masuk langsung ke "Action" alih-alih "All".
   final NotificationFilter initialFilter;
 
   @override
@@ -53,7 +57,7 @@ class _NotifikasiScreenState extends State<NotifikasiScreen> {
   void _markRead(String id) => _replace(id, (n) => n.copyWith(isRead: true));
 
   /// Keputusan sekaligus menandai sudah dibaca — begitu diputuskan,
-  /// notifikasinya turun dari blok "Needs your action".
+  /// notifikasinya turun dari kelompok "Perlu tindakan".
   void _decide(String id, NotificationDecision decision) {
     _replace(id, (n) => n.copyWith(decision: decision, isRead: true));
   }
@@ -69,13 +73,10 @@ class _NotifikasiScreenState extends State<NotifikasiScreen> {
     ]);
   }
 
-  /// Angka di chip = berapa yang belum dibaca, bukan total. Chip yang sudah
-  /// tuntas jadi polos, jadi mata langsung tertuju ke yang masih menumpuk.
+  /// Angka per filter = berapa yang belum dibaca, bukan total.
   Map<NotificationFilter, int> get _unreadCounts => {
         for (final filter in NotificationFilter.values)
-          filter: _items
-              .where((n) => filter.matches(n) && !n.isRead)
-              .length,
+          filter: _items.where((n) => filter.matches(n) && !n.isRead).length,
       };
 
   @override
@@ -85,7 +86,7 @@ class _NotifikasiScreenState extends State<NotifikasiScreen> {
     final rest = visible.where((n) => !n.needsAction).toList();
 
     return Scaffold(
-      backgroundColor: AppColors.bg,
+      backgroundColor: AppColors.card,
       appBar: BackHeader(
         title: 'Notifications',
         onBack: () => Navigator.of(context).pop(),
@@ -100,8 +101,7 @@ class _NotifikasiScreenState extends State<NotifikasiScreen> {
       ),
       body: Column(
         children: [
-          const SizedBox(height: 14),
-          NotificationFilterChips(
+          NotificationFilterTabs(
             selected: _filter,
             counts: _unreadCounts,
             onSelected: (filter) => setState(() => _filter = filter),
@@ -142,72 +142,51 @@ class _NotificationList extends StatelessWidget {
   Map<String, List<AppNotification>> get _grouped {
     final groups = <String, List<AppNotification>>{};
     for (final item in rest) {
-      groups.putIfAbsent(DateFormatter.dayGroup(item.createdAt), () => []).add(item);
+      groups
+          .putIfAbsent(DateFormatter.dayGroup(item.createdAt), () => [])
+          .add(item);
     }
     return groups;
   }
 
   @override
   Widget build(BuildContext context) {
-    final groups = _grouped;
-
     return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 18, 20, 28),
+      padding: const EdgeInsets.only(bottom: 28),
       children: [
         if (pending.isNotEmpty) ...[
-          const _GroupLabel('Needs your action'),
-          const SizedBox(height: 10),
+          const _GroupLabel('Perlu tindakan'),
           for (final item in pending)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: ActionNeededCard(
-                notification: item,
-                onDecide: (decision) => onDecide(item.id, decision),
-              ),
+            NotificationTile(
+              notification: item,
+              onTap: () => onRead(item.id),
+              onDecide: (decision) => onDecide(item.id, decision),
             ),
-          const SizedBox(height: 10),
         ],
-        for (final entry in groups.entries) ...[
+        for (final entry in _grouped.entries) ...[
           _GroupLabel(entry.key),
-          const SizedBox(height: 10),
-          AppCard(
-            padding: EdgeInsets.zero,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: Column(
-                children: [
-                  for (var i = 0; i < entry.value.length; i++) ...[
-                    if (i > 0)
-                      const Divider(
-                        height: 1,
-                        thickness: 1,
-                        color: AppColors.border,
-                      ),
-                    // Notifikasi informasi boleh digeser untuk dibuang;
-                    // yang menunggu keputusan sengaja tidak, supaya tidak
-                    // terhapus tanpa sengaja sebelum ditindaklanjuti.
-                    Dismissible(
-                      key: ValueKey(entry.value[i].id),
-                      direction: DismissDirection.endToStart,
-                      onDismissed: (_) => onDismiss(entry.value[i].id),
-                      background: const _DismissBackground(),
-                      child: NotificationTile(
-                        notification: entry.value[i],
-                        onTap: () => onRead(entry.value[i].id),
-                      ),
-                    ),
-                  ],
-                ],
+          for (final item in entry.value)
+            // Notifikasi informasi boleh digeser untuk dibuang; yang masih
+            // menunggu keputusan sengaja tidak, supaya tidak terhapus tanpa
+            // sengaja sebelum ditindaklanjuti.
+            Dismissible(
+              key: ValueKey(item.id),
+              direction: DismissDirection.endToStart,
+              onDismissed: (_) => onDismiss(item.id),
+              background: const _DismissBackground(),
+              child: NotificationTile(
+                notification: item,
+                onTap: () => onRead(item.id),
               ),
             ),
-          ),
-          const SizedBox(height: 18),
         ],
       ],
     );
   }
 }
 
+/// Pemisah antar kelompok. Bukan judul tebal berjarak lebar — cuma penanda
+/// kecil, karena isinya yang harus dibaca, bukan labelnya.
 class _GroupLabel extends StatelessWidget {
   const _GroupLabel(this.label);
 
@@ -215,14 +194,16 @@ class _GroupLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text(
-      label.toUpperCase(),
-      style: const TextStyle(
-        fontFamily: AppTextStyles.fontFamily,
-        fontSize: 10.5,
-        fontWeight: FontWeight.w800,
-        letterSpacing: 0.9,
-        color: AppColors.textMuted,
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 18, 20, 4),
+      child: Text(
+        label,
+        style: const TextStyle(
+          fontFamily: AppTextStyles.fontFamily,
+          fontSize: 11.5,
+          fontWeight: FontWeight.w700,
+          color: AppColors.textMuted,
+        ),
       ),
     );
   }
@@ -261,37 +242,28 @@ class _EmptyState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              width: 72,
-              height: 72,
-              alignment: Alignment.center,
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppColors.neutralBg,
-              ),
-              child: const Icon(
-                Icons.notifications_none,
-                size: 32,
-                color: AppColors.textMuted,
-              ),
+            const Icon(
+              Icons.notifications_none,
+              size: 34,
+              color: AppColors.textMuted,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             const Text(
-              'Nothing here',
+              'Belum ada notifikasi',
               style: TextStyle(
                 fontFamily: AppTextStyles.fontFamily,
-                fontSize: 15,
+                fontSize: 14,
                 fontWeight: FontWeight.w700,
                 color: AppColors.text,
               ),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 4),
             const Text(
-              'You are all caught up. New updates will show up here.',
+              'Pembaruan baru akan muncul di sini.',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontFamily: AppTextStyles.fontFamily,
-                fontSize: 12.5,
+                fontSize: 12,
                 color: AppColors.textMuted,
                 height: 1.45,
               ),
