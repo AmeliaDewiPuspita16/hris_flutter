@@ -1,43 +1,51 @@
-import 'progress_state.dart';
-
-/// Rincian di dalam sebuah [DocumentStage] — dipakai tahap "PR Approval"
-/// yang menurunkan lagi jadi HOD / Under Review / DGM / Finance / GM.
-class DocumentSubStep {
-  const DocumentSubStep({
-    required this.label,
-    required this.state,
-    this.note,
-  });
-
-  /// Ex: "HOD".
-  final String label;
-
-  /// Ex: "Menunggu persetujuan". Null bila tahap ini belum punya kabar apa pun.
-  final String? note;
-
-  final ProgressState state;
-}
+import 'document_state.dart';
 
 /// Satu tahap di "Progress Dokumen": PR Approval -> Vendor Tally ->
 /// Purchase Order -> Goods Receipt.
-///
-/// Bentuknya berbeda dari [ApprovalStep] (bertingkat, bukan bernomor), jadi
-/// dimodelkan terpisah alih-alih dipaksa jadi satu model dengan field
-/// nullable yang cuma kepakai di salah satu timeline.
 class DocumentStage {
   const DocumentStage({
-    required this.title,
-    required this.statusLabel,
+    required this.code,
+    required this.label,
     required this.state,
-    this.subSteps = const [],
+    this.count,
+    this.numbers = const [],
   });
 
-  /// Ex: "PR Approval".
-  final String title;
+  /// Ex: "vendor_tally".
+  final String code;
 
-  /// Ex: "Sedang Berjalan", "Belum dibuat", "Belum ada".
-  final String statusLabel;
+  /// Ex: "Vendor Tally".
+  final String label;
 
-  final ProgressState state;
-  final List<DocumentSubStep> subSteps;
+  final DocumentState state;
+
+  /// Jumlah dokumen yang sudah terbit di tahap ini. Null bila tahapnya
+  /// memang tidak menghitung dokumen (PR Approval).
+  final int? count;
+
+  /// Nomor dokumen yang sudah terbit, ex: ["BIIE/26-08-003"].
+  final List<String> numbers;
+
+  /// Keterangan siap tampil. Server tidak mengirim `state_label` untuk
+  /// progress dokumen, jadi disusun di sini.
+  String get stateLabel => switch (state) {
+        DocumentState.done => 'Selesai',
+        DocumentState.inProgress => 'Sedang Berjalan',
+        DocumentState.rejected => 'Ditolak',
+        DocumentState.notStarted => 'Belum ada',
+      };
+
+  factory DocumentStage.fromJson(Map<String, dynamic> json) {
+    final count = json['count'];
+
+    return DocumentStage(
+      code: '${json['code'] ?? ''}',
+      label: '${json['label'] ?? ''}',
+      state: DocumentState.fromCode('${json['state'] ?? ''}'),
+      count: count is int ? count : null,
+      numbers: (json['numbers'] as List<dynamic>? ?? const [])
+          .whereType<String>()
+          .toList(growable: false),
+    );
+  }
 }

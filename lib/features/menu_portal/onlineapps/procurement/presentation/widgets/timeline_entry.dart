@@ -2,24 +2,28 @@ import 'package:flutter/material.dart';
 
 import '../../../../../../core/theme/app_colors.dart';
 import '../../../../../../core/theme/app_text_styles.dart';
-import '../../domain/progress_state.dart';
 
 /// Satu baris timeline: titik di kiri, garis penyambung ke baris berikutnya,
 /// isi bebas di kanan.
 ///
-/// Dipakai dua timeline di layar detail — "Approval Progress" (titik
-/// bernomor) dan "Progress Dokumen" (titik polos) — makanya nomornya
-/// opsional.
+/// Menerima warna dan "sudah tersentuh atau belum" secara langsung, bukan
+/// enum tertentu, karena dipakai dua timeline dengan kumpulan keadaan yang
+/// berbeda — `ApprovalState` (5 keadaan) dan `DocumentState` (4 keadaan).
 class TimelineEntry extends StatelessWidget {
   const TimelineEntry({
     super.key,
-    required this.state,
+    required this.color,
+    required this.filled,
     required this.isLast,
     required this.child,
     this.number,
   });
 
-  final ProgressState state;
+  final Color color;
+
+  /// Titik yang sudah tersentuh digambar padat; yang belum hanya lingkaran
+  /// samar, supaya posisi PR terbaca tanpa membaca teksnya.
+  final bool filled;
 
   /// Baris terakhir tidak menggambar garis penyambung.
   final bool isLast;
@@ -39,7 +43,7 @@ class TimelineEntry extends StatelessWidget {
             width: 22,
             child: Column(
               children: [
-                _Dot(state: state, number: number),
+                _Dot(color: color, filled: filled, number: number),
                 if (!isLast)
                   Expanded(
                     child: Container(width: 1.5, color: AppColors.border),
@@ -61,23 +65,22 @@ class TimelineEntry extends StatelessWidget {
 }
 
 class _Dot extends StatelessWidget {
-  const _Dot({required this.state, this.number});
+  const _Dot({required this.color, required this.filled, this.number});
 
-  final ProgressState state;
+  final Color color;
+  final bool filled;
   final int? number;
 
   @override
   Widget build(BuildContext context) {
-    final filled = state.isFilled;
-
     return Container(
       width: 22,
       height: 22,
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: filled ? state.color : state.background,
+        color: filled ? color : Colors.transparent,
         shape: BoxShape.circle,
-        border: Border.all(color: filled ? state.color : AppColors.border),
+        border: Border.all(color: filled ? color : AppColors.border),
       ),
       child: number == null
           ? null

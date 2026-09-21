@@ -11,6 +11,7 @@ import 'features/auth/presentation/bloc/auth/auth_bloc.dart';
 import 'features/auth/presentation/bloc/auth/auth_event.dart';
 import 'features/auth/presentation/widgets/auth_gate.dart';
 import 'features/home/data/announcement_repository.dart';
+import 'features/menu_portal/onlineapps/procurement/data/procurement_repository.dart';
 import 'features/shared/data/department_repository.dart';
 
 Future<void> main() async {
@@ -35,6 +36,7 @@ Future<void> main() async {
       ),
       departmentRepository: DepartmentRepository(apiClient: apiClient),
       announcementRepository: AnnouncementRepository(apiClient: apiClient),
+      procurementRepository: ProcurementRepository(apiClient: apiClient),
     ),
   );
 }
@@ -45,14 +47,18 @@ class MyApp extends StatelessWidget {
     required this.authRepository,
     DepartmentRepository? departmentRepository,
     AnnouncementRepository? announcementRepository,
+    ProcurementRepository? procurementRepository,
   })  : departmentRepository = departmentRepository ??
             DepartmentRepository(apiClient: ApiClient()),
         announcementRepository = announcementRepository ??
-            AnnouncementRepository(apiClient: ApiClient());
+            AnnouncementRepository(apiClient: ApiClient()),
+        procurementRepository = procurementRepository ??
+            ProcurementRepository(apiClient: ApiClient());
 
   final AuthRepository authRepository;
   final DepartmentRepository departmentRepository;
   final AnnouncementRepository announcementRepository;
+  final ProcurementRepository procurementRepository;
 
   @override
   Widget build(BuildContext context) {
@@ -65,6 +71,7 @@ class MyApp extends StatelessWidget {
         RepositoryProvider.value(value: authRepository),
         RepositoryProvider.value(value: departmentRepository),
         RepositoryProvider.value(value: announcementRepository),
+        RepositoryProvider.value(value: procurementRepository),
       ],
       child: BlocProvider(
         create: (_) =>

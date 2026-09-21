@@ -20,6 +20,8 @@ dependencies:
   flutter_bloc: ^9.1.1
   flutter_secure_storage: ^11.1.1
   image_picker: ^1.2.3
+  # Membuka lampiran PR (berkas maupun tautan) di aplikasi bawaan perangkat.
+  url_launcher: ^6.3.1
 
 dev_dependencies:
   flutter_test:

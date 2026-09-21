@@ -60,7 +60,7 @@ class ApiClient {
         headers: _headers(authenticated: authenticated),
         body: jsonEncode(body ?? const <String, dynamic>{}),
       ),
-    ).then((data) => _expectMap(data, 'POST', uri));
+    ).then((envelope) => _expectMap(envelope['data'], 'POST', uri));
   }
 
   /// Mengirim `multipart/form-data` — dipakai endpoint yang menerima berkas,
@@ -99,7 +99,7 @@ class ApiClient {
 
         return http.Response.fromStream(await _httpClient.send(request));
       },
-    ).then((data) => _expectMap(data, 'POST', uri));
+    ).then((envelope) => _expectMap(envelope['data'], 'POST', uri));
   }
 
   /// Mengirim GET dan mengembalikan isi `data` dari amplop respons, sebagai
@@ -119,7 +119,32 @@ class ApiClient {
         uri,
         headers: _headers(authenticated: authenticated),
       ),
-    ).then((data) => _expectMap(data, 'GET', uri));
+    ).then((envelope) => _expectMap(envelope['data'], 'GET', uri));
+  }
+
+  /// Mengirim GET dan mengembalikan **seluruh amplop**, bukan hanya isi `data`.
+  ///
+  /// Sebagian endpoint menaruh keterangan tambahan bersebelahan dengan `data`,
+  /// bukan di dalamnya — mis. `GET /api/portal/apps/eprocurement` yang
+  /// mengirim `summary` (jumlah PR per status) dan `meta` (paginasi) sebagai
+  /// kunci sejajar. Lewat [get] atau [getList] keduanya akan terbuang.
+  ///
+  /// Pemeriksaan galat dan keberadaan `data` tetap sama seperti [get].
+  Future<Map<String, dynamic>> getEnvelope(
+    String path, {
+    bool authenticated = true,
+  }) {
+    final uri = _uriFor(path);
+    AppLogger.info('GET $uri');
+
+    return _send(
+      'GET',
+      uri,
+      () => _httpClient.get(
+        uri,
+        headers: _headers(authenticated: authenticated),
+      ),
+    );
   }
 
   /// Mengirim GET dan mengembalikan isi `data` dari amplop respons, sebagai
@@ -140,7 +165,7 @@ class ApiClient {
         uri,
         headers: _headers(authenticated: authenticated),
       ),
-    ).then((data) => _expectList(data, 'GET', uri));
+    ).then((envelope) => _expectList(envelope['data'], 'GET', uri));
   }
 
   /// Badan request untuk keperluan log, dengan field rahasia disamarkan.
@@ -176,7 +201,7 @@ class ApiClient {
 
   /// Menjalankan request lalu menerjemahkan setiap cara gagalnya menjadi
   /// [ApiException].
-  Future<dynamic> _send(
+  Future<Map<String, dynamic>> _send(
     String method,
     Uri uri,
     Future<http.Response> Function() request,
@@ -210,12 +235,13 @@ class ApiClient {
   static String _truncate(String body, [int max = 500]) =>
       body.length <= max ? body : '${body.substring(0, max)}…';
 
-  /// Membuka amplop respons, atau melempar [ApiException] yang sesuai.
+  /// Memeriksa amplop respons, atau melempar [ApiException] yang sesuai.
   ///
-  /// Mengembalikan isi `data` apa adanya (bisa Map, bisa List) — pemanggil
-  /// ([_expectMap] / [_expectList]) yang menentukan bentuk mana yang
-  /// diharapkan untuk endpoint tersebut.
-  dynamic _unwrap(http.Response response) {
+  /// Mengembalikan amplopnya utuh — bukan hanya `data` — karena sebagian
+  /// endpoint menaruh keterangan lain di sampingnya (lihat [getEnvelope]).
+  /// Pemanggil yang hanya butuh isinya memetik `['data']` sendiri, lalu
+  /// menentukan bentuk yang diharapkan lewat [_expectMap] / [_expectList].
+  Map<String, dynamic> _unwrap(http.Response response) {
     final envelope = _decode(response.body);
     final serverMessage = _messageFrom(envelope);
     final status = response.statusCode;
@@ -274,7 +300,7 @@ class ApiClient {
       throw const ApiException.server();
     }
 
-    return envelope['data'];
+    return envelope;
   }
 
   /// Memastikan `data` berbentuk objek, untuk [post] dan [get].

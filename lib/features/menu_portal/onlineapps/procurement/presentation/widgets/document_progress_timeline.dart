@@ -6,7 +6,7 @@ import '../../domain/document_stage.dart';
 import 'timeline_entry.dart';
 
 /// Perjalanan dokumen PR: PR Approval -> Vendor Tally -> Purchase Order ->
-/// Goods Receipt, dengan rincian tahap di dalam "PR Approval".
+/// Goods Receipt, beserta nomor dokumen yang sudah terbit di tiap tahap.
 class DocumentProgressTimeline extends StatelessWidget {
   const DocumentProgressTimeline({super.key, required this.stages});
 
@@ -18,7 +18,8 @@ class DocumentProgressTimeline extends StatelessWidget {
       children: [
         for (var i = 0; i < stages.length; i++)
           TimelineEntry(
-            state: stages[i].state,
+            color: stages[i].state.color,
+            filled: stages[i].state.isFilled,
             isLast: i == stages.length - 1,
             child: _StageContent(stage: stages[i]),
           ),
@@ -37,23 +38,24 @@ class _StageContent extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Judul dan status sengaja jadi dua Text bersebelahan tanpa pemisah
-        // "—" seperti di web: di layar sempit keduanya boleh turun baris
+        // Judul dan keadaan sengaja dua Text bersebelahan tanpa pemisah "—"
+        // seperti di web: di layar sempit keduanya boleh turun baris
         // sendiri-sendiri tanpa menyisakan tanda pisah menggantung.
         Wrap(
           spacing: 8,
           crossAxisAlignment: WrapCrossAlignment.center,
           children: [
             Text(
-              stage.title,
+              stage.label,
               style: AppTextStyles.body.copyWith(
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
-                color: stage.state.isFilled ? AppColors.text : AppColors.textMid,
+                color:
+                    stage.state.isFilled ? AppColors.text : AppColors.textMid,
               ),
             ),
             Text(
-              stage.statusLabel,
+              stage.stateLabel,
               style: TextStyle(
                 fontFamily: AppTextStyles.fontFamily,
                 fontSize: 11,
@@ -63,46 +65,42 @@ class _StageContent extends StatelessWidget {
             ),
           ],
         ),
-        for (final sub in stage.subSteps)
-          Padding(
-            padding: const EdgeInsets.only(top: 6),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  margin: const EdgeInsets.only(top: 5),
-                  width: 6,
-                  height: 6,
-                  decoration: BoxDecoration(
-                    color: sub.state.isFilled
-                        ? sub.state.color
-                        : AppColors.border,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  sub.label,
-                  style: AppTextStyles.caption.copyWith(
-                    color: sub.state.isFilled
-                        ? AppColors.textMid
-                        : AppColors.textMuted,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                if (sub.note != null) ...[
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: Text(
-                      sub.note!,
-                      style: AppTextStyles.caption.copyWith(color: sub.state.color),
-                    ),
-                  ),
-                ],
-              ],
-            ),
+        if (stage.numbers.isNotEmpty) ...[
+          const SizedBox(height: 6),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              for (final number in stage.numbers) _DocumentNumber(number: number),
+            ],
           ),
+        ],
       ],
+    );
+  }
+}
+
+/// Nomor dokumen yang sudah terbit, mis. "BIIE/26-08-003".
+class _DocumentNumber extends StatelessWidget {
+  const _DocumentNumber({required this.number});
+
+  final String number;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: AppColors.neutralBg,
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        number,
+        style: AppTextStyles.caption.copyWith(
+          color: AppColors.textMid,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
     );
   }
 }
