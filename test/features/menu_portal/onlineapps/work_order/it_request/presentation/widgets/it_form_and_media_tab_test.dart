@@ -1,21 +1,45 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
+import 'package:hris_mobile/core/network/api_client.dart';
 import 'package:hris_mobile/core/theme/app_colors.dart';
 import 'package:hris_mobile/features/menu_portal/onlineapps/work_order/it_request/data/it_request_repository.dart';
 import 'package:hris_mobile/features/menu_portal/onlineapps/work_order/it_request/presentation/screens/add_it_request_screen.dart';
 import 'package:hris_mobile/features/menu_portal/onlineapps/work_order/it_request/presentation/screens/it_request_detail_screen.dart';
 import 'package:hris_mobile/features/menu_portal/onlineapps/work_order/it_request/presentation/widgets/it_form_and_media_tab.dart';
 import 'package:hris_mobile/features/menu_portal/onlineapps/work_order/it_request/presentation/widgets/it_request_card.dart';
+import 'package:hris_mobile/features/shared/data/department_repository.dart';
 
 import '../../../../../../../fixtures/it_request_response.dart';
 import '../../support/it_request_harness.dart';
 
 void main() {
+  /// Repository departemen yang selalu berhasil, supaya AddItRequestScreen
+  /// yang dibuka lewat FAB (tanpa constructor param) bisa mengambilnya dari
+  /// context tanpa meledak.
+  DepartmentRepository departmentRepository() {
+    return DepartmentRepository(
+      apiClient: ApiClient(
+        httpClient: MockClient(
+          (_) async => http.Response('{"data": []}', 200),
+        ),
+      ),
+    );
+  }
+
   Future<void> pumpTab(WidgetTester tester, ItRequestHarness harness) async {
     await tester.pumpWidget(
-      RepositoryProvider<ItRequestRepository>.value(
-        value: harness.repository,
+      MultiRepositoryProvider(
+        providers: [
+          RepositoryProvider<ItRequestRepository>.value(
+            value: harness.repository,
+          ),
+          RepositoryProvider<DepartmentRepository>.value(
+            value: departmentRepository(),
+          ),
+        ],
         child: const MaterialApp(home: ItFormAndMediaTab()),
       ),
     );

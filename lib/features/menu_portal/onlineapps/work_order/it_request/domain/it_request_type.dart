@@ -12,4 +12,11 @@ enum ItRequestType {
         ItRequestType.it => 'IT',
         ItRequestType.media => 'Media',
       };
+
+  /// Nilai `type_request` untuk `POST /api/portal/apps/it_request` — beda
+  /// dari [label]: field ini dikirim sebagai kode angka, bukan nama.
+  String get formValue => switch (this) {
+        ItRequestType.it => '1',
+        ItRequestType.media => '2',
+      };
 }

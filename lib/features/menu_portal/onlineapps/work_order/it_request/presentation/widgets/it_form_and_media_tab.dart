@@ -67,11 +67,13 @@ class _ItFormAndMediaViewState extends State<_ItFormAndMediaView> {
   void _onScroll() {
     if (!_scrollController.hasClients) return;
 
-    final remaining =
-        _scrollController.position.maxScrollExtent - _scrollController.position.pixels;
+    final remaining = _scrollController.position.maxScrollExtent -
+        _scrollController.position.pixels;
     if (remaining > _loadMoreThreshold) return;
 
-    context.read<ItRequestListBloc>().add(const ItRequestListNextPageRequested());
+    context
+        .read<ItRequestListBloc>()
+        .add(const ItRequestListNextPageRequested());
   }
 
   /// Item yang sudah dikerjakan tapi belum dinilai — ditampilkan sebagai
@@ -138,8 +140,10 @@ class _ItFormAndMediaViewState extends State<_ItFormAndMediaView> {
   }
 
   Future<void> _refresh() async {
-    final bloc = context.read<ItRequestListBloc>()..add(const ItRequestListRefreshed());
-    await bloc.stream.firstWhere((s) => s.status != ItRequestListStatus.loading);
+    final bloc = context.read<ItRequestListBloc>()
+      ..add(const ItRequestListRefreshed());
+    await bloc.stream
+        .firstWhere((s) => s.status != ItRequestListStatus.loading);
   }
 
   @override
@@ -154,7 +158,8 @@ class _ItFormAndMediaViewState extends State<_ItFormAndMediaView> {
         // FAB baru ditampilkan setelah kita benar-benar tahu jawabannya dari
         // server — selama masih memuat/gagal, lebih aman disembunyikan
         // daripada berkedip muncul-hilang.
-        final showFab = state.status == ItRequestListStatus.success && state.canAddRequest;
+        final showFab =
+            state.status == ItRequestListStatus.success && state.canAddRequest;
 
         return Scaffold(
           backgroundColor: Colors.transparent,
@@ -181,7 +186,9 @@ class _ItFormAndMediaViewState extends State<_ItFormAndMediaView> {
     if (state.status == ItRequestListStatus.failure && state.items.isEmpty) {
       return AppErrorView(
         message: state.errorMessage ?? 'Gagal memuat riwayat request.',
-        onRetry: () => context.read<ItRequestListBloc>().add(const ItRequestListRefreshed()),
+        onRetry: () => context
+            .read<ItRequestListBloc>()
+            .add(const ItRequestListRefreshed()),
       );
     }
 
@@ -195,7 +202,8 @@ class _ItFormAndMediaViewState extends State<_ItFormAndMediaView> {
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
         children: [
           for (final item in awaiting) ...[
-            ItRequestFeedbackBanner(item: item, onGiveFeedback: () => _giveFeedback(item)),
+            ItRequestFeedbackBanner(
+                item: item, onGiveFeedback: () => _giveFeedback(item)),
             const SizedBox(height: 12),
           ],
           // Server bilang masih ada yang menunggu rating, tapi tidak ada
@@ -211,22 +219,20 @@ class _ItFormAndMediaViewState extends State<_ItFormAndMediaView> {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.lock_outline, size: 16, color: AppColors.accent),
+                  const Icon(Icons.lock_outline,
+                      size: 16, color: AppColors.accent),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       'Selesaikan feedback untuk request yang sudah dikerjakan dulu '
                       'untuk membuka pengajuan baru.',
-                      style: AppTextStyles.caption.copyWith(color: AppColors.text, height: 1.4),
+                      style: AppTextStyles.caption
+                          .copyWith(color: AppColors.text, height: 1.4),
                     ),
                   ),
                 ],
               ),
             ),
-          const Padding(
-            padding: EdgeInsets.only(top: 20, bottom: 10, left: 2),
-            child: Text('Riwayat Saya', style: AppTextStyles.sectionTitle),
-          ),
           if (history.isEmpty && awaiting.isEmpty)
             Padding(
               padding: const EdgeInsets.only(top: 24),
@@ -237,7 +243,8 @@ class _ItFormAndMediaViewState extends State<_ItFormAndMediaView> {
           else
             for (var i = 0; i < history.length; i++) ...[
               if (i > 0) const SizedBox(height: 10),
-              ItRequestCard(item: history[i], onTap: () => _openDetail(history[i])),
+              ItRequestCard(
+                  item: history[i], onTap: () => _openDetail(history[i])),
             ],
           if (state.loadingMore)
             const Padding(

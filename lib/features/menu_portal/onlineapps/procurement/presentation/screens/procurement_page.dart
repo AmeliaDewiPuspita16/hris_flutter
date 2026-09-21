@@ -136,11 +136,11 @@ class _ProcurementViewState extends State<_ProcurementView> {
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
                 child: AppTextField(
-                  label: 'Cari',
                   controller: _searchController,
                   hint: 'Nomor PR, requestor, atau purpose',
                   icon: Icons.search,
                   onChanged: _onSearchChanged,
+                  label: 'Search',
                 ),
               ),
               PrStatusFilterBar(

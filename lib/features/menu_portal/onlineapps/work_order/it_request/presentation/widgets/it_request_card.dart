@@ -37,8 +37,13 @@ class ItRequestCard extends StatelessWidget {
                 color: isMedia ? AppColors.violet : AppColors.teal,
               ),
               const SizedBox(width: 5),
+              // Expanded di sini, bukan Flexible di kedua sisi: kalau
+              // keduanya berbagi flex, badge kebagian "kotak" selebar
+              // jatahnya sendiri dan nempel di tengah, bukan mepet kanan.
+              // Expanded pada teks kategori membuatnya menyerap SEMUA sisa
+              // ruang sampai pas seukuran badge, jadi badge otomatis mepet
+              // ke tepi kanan kartu.
               Expanded(
-                flex: 3,
                 child: Text(
                   '${item.type.label} · ${item.category.label}',
                   maxLines: 1,
@@ -50,11 +55,11 @@ class ItRequestCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              // Flexible, bukan lebar tetap: label status dari server tidak
-              // dibatasi panjangnya, dan tanpa ini label panjang bisa
-              // meluber di layar sempit alih-alih terpotong rapi.
-              Flexible(
-                flex: 2,
+              // Lebar dibatasi (bukan dibiarkan bebas) supaya label status
+              // yang sangat panjang dari server tetap terpotong rapi,
+              // bukan meluber ke luar kartu.
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 130),
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
                   decoration: BoxDecoration(

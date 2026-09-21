@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../../../../../../../core/theme/app_colors.dart';
 import '../../../../../../../core/theme/app_text_styles.dart';
 import '../../../../../../../core/widgets/app_dropdown.dart';
 import '../../../../../../../core/widgets/app_text_field.dart';
+import '../../../../../../shared/domain/department.dart';
 import '../../domain/new_employee_data.dart';
 import 'need_choice_chips.dart';
 
@@ -14,22 +16,36 @@ import 'need_choice_chips.dart';
 /// dan melaporkan tiap perubahan ke pemanggil lewat [onChanged], supaya
 /// nilai [data] tetap jadi satu-satunya sumber kebenaran di layar induk.
 ///
-/// Dropdown Executive type & Department sengaja langsung diisi nilai
-/// default (bukan menampilkan "-- Select --") begitu sub-form ini
-/// terbuka — supaya terasa lebih siap pakai, bukan formulir kosong yang
-/// kaku. Default itu langsung dikirim ke [onChanged] lewat
-/// [WidgetsBinding.addPostFrameCallback] saat sub-form pertama kali
-/// terbuka, supaya validasi "wajib isi" di layar induk tidak keliru
-/// menganggap field ini belum diisi padahal sudah kelihatan terisi.
+/// [departments] dimuat sekali oleh layar induk (lihat `AddItRequestScreen`)
+/// lewat `DepartmentRepository` yang sama dipakai form pengumuman — bukan
+/// daftar tebakan lokal, karena `new_employee_department` yang dikirim ke
+/// server butuh ID numerik departemen sungguhan. Selama [departments] masih
+/// kosong (belum selesai dimuat) atau [departmentsError] terisi (gagal
+/// dimuat), dropdown-nya diganti indikator/retry.
+///
+/// Dropdown Executive type sengaja langsung diisi nilai default (bukan
+/// menampilkan "-- Select --") begitu sub-form ini terbuka — supaya terasa
+/// lebih siap pakai, bukan formulir kosong yang kaku. Department ikut
+/// diisi begitu [departments] tersedia. Default itu langsung dikirim ke
+/// [onChanged] lewat [WidgetsBinding.addPostFrameCallback] saat sub-form
+/// pertama kali terbuka (atau saat departemen baru selesai dimuat), supaya
+/// validasi "wajib isi" di layar induk tidak keliru menganggap field ini
+/// belum diisi padahal sudah kelihatan terisi.
 class NewEmployeeSubform extends StatefulWidget {
   const NewEmployeeSubform({
     super.key,
     required this.data,
     required this.onChanged,
+    required this.departments,
+    this.departmentsError,
+    this.onRetryLoadDepartments,
   });
 
   final NewEmployeeData data;
   final ValueChanged<NewEmployeeData> onChanged;
+  final List<Department> departments;
+  final String? departmentsError;
+  final VoidCallback? onRetryLoadDepartments;
 
   @override
   State<NewEmployeeSubform> createState() => _NewEmployeeSubformState();
@@ -44,15 +60,33 @@ class _NewEmployeeSubformState extends State<NewEmployeeSubform> {
   @override
   void initState() {
     super.initState();
-    if (widget.data.executiveType == null || widget.data.department == null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        _emit((d) => d.copyWith(
-              executiveType: d.executiveType ?? ExecutiveType.values.first,
-              department: d.department ?? Department.values.first,
-            ));
-      });
+    _fillDefaultsIfNeeded();
+  }
+
+  @override
+  void didUpdateWidget(NewEmployeeSubform oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Departemen baru selesai dimuat setelah sub-form ini terbuka — isi
+    // default begitu daftarnya tersedia, bukan cuma sekali di initState.
+    if (oldWidget.departments.isEmpty && widget.departments.isNotEmpty) {
+      _fillDefaultsIfNeeded();
     }
+  }
+
+  void _fillDefaultsIfNeeded() {
+    if (widget.data.executiveType != null &&
+        (widget.data.department != null || widget.departments.isEmpty)) {
+      return;
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _emit((d) => d.copyWith(
+            executiveType: d.executiveType ?? ExecutiveType.values.first,
+            department: d.department ??
+                (widget.departments.isEmpty ? null : widget.departments.first),
+          ));
+    });
   }
 
   @override
@@ -106,15 +140,7 @@ class _NewEmployeeSubformState extends State<NewEmployeeSubform> {
           onChanged: (v) => _emit((d) => d.copyWith(executiveType: v)),
         ),
         const SizedBox(height: 12),
-        AppDropdown<Department>(
-          label: 'Department',
-          required: true,
-          value: widget.data.department ?? Department.values.first,
-          items: [
-            for (final dept in Department.values) (value: dept, label: dept.label),
-          ],
-          onChanged: (v) => _emit((d) => d.copyWith(department: v)),
-        ),
+        _buildDepartmentField(),
         const SizedBox(height: 12),
         AppTextField(
           label: 'Section (optional)',
@@ -131,6 +157,57 @@ class _NewEmployeeSubformState extends State<NewEmployeeSubform> {
           onChanged: (v) => _emit((d) => d.copyWith(equipmentNeeded: v)),
         ),
       ],
+    );
+  }
+
+  Widget _buildDepartmentField() {
+    if (widget.departmentsError != null) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            widget.departmentsError!,
+            style: const TextStyle(fontSize: 12, color: AppColors.rejected),
+          ),
+          const SizedBox(height: 6),
+          InkWell(
+            onTap: widget.onRetryLoadDepartments,
+            child: const Text(
+              'Coba lagi',
+              style: TextStyle(
+                fontSize: 12,
+                color: AppColors.primary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
+    if (widget.departments.isEmpty) {
+      return const Row(
+        children: [
+          SizedBox(
+            width: 16,
+            height: 16,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+          SizedBox(width: 10),
+          Text('Loading departments...', style: AppTextStyles.body),
+        ],
+      );
+    }
+
+    return AppDropdown<Department>(
+      label: 'Department',
+      required: true,
+      value: widget.data.department ?? widget.departments.first,
+      items: [
+        for (final department in widget.departments)
+          (value: department, label: department.name),
+      ],
+      onChanged: (v) => _emit((d) => d.copyWith(department: v)),
     );
   }
 }

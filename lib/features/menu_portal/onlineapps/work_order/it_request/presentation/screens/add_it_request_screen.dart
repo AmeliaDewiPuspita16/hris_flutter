@@ -1,12 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:image_picker/image_picker.dart' as picker;
 
+import '../../../../../../../core/logging/app_logger.dart';
+import '../../../../../../../core/network/api_exception.dart';
 import '../../../../../../../core/theme/app_colors.dart';
 import '../../../../../../../core/theme/app_text_styles.dart';
+import '../../../../../../../core/widgets/app_text_field.dart';
 import '../../../../../../../core/widgets/back_header.dart';
-import '../../domain/checking.dart';
-import '../../domain/code_label.dart';
+import '../../../../../../shared/data/department_repository.dart';
+import '../../../../../../shared/domain/department.dart';
+import '../../data/it_request_repository.dart';
+import '../../domain/it_request_attachment.dart';
 import '../../domain/it_request_item.dart';
-import '../../domain/it_request_status.dart';
 import '../../domain/it_request_type.dart';
 import '../../domain/need_option.dart';
 import '../../domain/new_employee_data.dart';
@@ -20,6 +26,14 @@ import '../widgets/new_employee_subform.dart';
 import '../widgets/request_category_selector.dart';
 import '../widgets/support_type_selector.dart';
 
+/// Membuka galeri dan mengembalikan gambar yang dipilih, atau null kalau
+/// dibatalkan.
+///
+/// Disuntik lewat konstruktor supaya test bisa menggantinya tanpa perlu
+/// plugin galeri sungguhan — pola sama dengan `PhotoPicker` di form
+/// pengumuman.
+typedef AttachmentPicker = Future<ItRequestAttachment?> Function();
+
 /// Layar "+ Add Request" — dibuka dari [ItFormAndMediaTab].
 ///
 /// Sengaja dibuat sebagai halaman penuh, bukan bottom sheet, karena
@@ -27,38 +41,72 @@ import '../widgets/support_type_selector.dart';
 /// employee account creation") — akan sulit dipakai kalau harus scroll di
 /// dalam sheet yang berbagi layar dengan latar belakang.
 ///
-/// Mengembalikan [ItRequestItem] baru lewat Navigator.pop kalau berhasil
-/// disubmit, atau null kalau ditutup tanpa submit. Belum ada endpoint submit
-/// di server, jadi item baru murni disusun dari isian form di sini —
-/// pemanggil (`ItFormAndMediaTab`) cuma menyisipkannya ke puncak daftar
-/// yang sudah diambil dari API, bukan benar-benar mengirimnya.
+/// Mengirim ke `POST /api/portal/apps/it_request` lewat [ItRequestRepository]
+/// dan mengembalikan [ItRequestItem] (bentuknya [ItRequestDetail], hasil
+/// dari server) lewat Navigator.pop kalau berhasil, atau null kalau ditutup
+/// tanpa submit. Galat ditangani dengan setState lokal (bukan bloc) — ini
+/// satu aksi sekali-jalan yang terikat ke satu layar, pola sama dengan
+/// `CreateAnnouncementSheet`.
 ///
 /// Versi ini mengganti tampilan dropdown/checkbox bawaan web dengan kartu,
 /// segmented control, dan grup opsi yang cuma memberi jarak pada baris yang
 /// sedang dipilih — lihat [RequestCategorySelector], [SupportTypeSelector],
 /// dan [NeedOptionGroup].
 class AddItRequestScreen extends StatefulWidget {
-  const AddItRequestScreen({super.key});
+  const AddItRequestScreen({
+    super.key,
+    this.repository,
+    this.departmentRepository,
+    this.pickAttachment,
+  });
+
+  final ItRequestRepository? repository;
+  final DepartmentRepository? departmentRepository;
+
+  /// Null berarti memakai galeri sungguhan lewat image_picker.
+  final AttachmentPicker? pickAttachment;
 
   @override
   State<AddItRequestScreen> createState() => _AddItRequestScreenState();
 }
 
 class _AddItRequestScreenState extends State<AddItRequestScreen> {
+  late final ItRequestRepository _repository;
+  late final DepartmentRepository _departmentRepository;
+
   RequestCategory? _category = RequestCategory.it;
   SupportType? _supportType;
   String? _selectedNeedId;
 
   final Map<String, Set<String>> _checkboxSelections = {};
   final Map<String, TextEditingController> _specifyControllers = {};
+  final _usernameDescController = TextEditingController();
   NewEmployeeData _newEmployeeData = const NewEmployeeData();
 
   final _descriptionController = TextEditingController();
-  String? _attachmentFileName;
+
+  ItRequestAttachment? _attachment;
+  String? _attachmentError;
+
+  List<Department> _departments = const [];
+  String? _departmentsError;
+
+  String? _submitError;
+  bool _submitting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _repository = widget.repository ?? context.read<ItRequestRepository>();
+    _departmentRepository =
+        widget.departmentRepository ?? context.read<DepartmentRepository>();
+    _loadDepartments();
+  }
 
   @override
   void dispose() {
     _descriptionController.dispose();
+    _usernameDescController.dispose();
     for (final controller in _specifyControllers.values) {
       controller.dispose();
     }
@@ -78,6 +126,18 @@ class _AddItRequestScreenState extends State<AddItRequestScreen> {
   TextEditingController _specifyController(String optionId) =>
       _specifyControllers.putIfAbsent(optionId, () => TextEditingController());
 
+  Future<void> _loadDepartments() async {
+    setState(() => _departmentsError = null);
+    try {
+      final departments = await _departmentRepository.getActiveDepartments();
+      if (!mounted) return;
+      setState(() => _departments = departments);
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() => _departmentsError = e.message);
+    }
+  }
+
   void _onCategoryChanged(RequestCategory category) {
     setState(() {
       _category = category;
@@ -85,6 +145,7 @@ class _AddItRequestScreenState extends State<AddItRequestScreen> {
       // pilihan dan sub-field sebelumnya sudah tidak relevan lagi.
       _selectedNeedId = null;
       _checkboxSelections.clear();
+      _usernameDescController.clear();
       _newEmployeeData = const NewEmployeeData();
       for (final controller in _specifyControllers.values) {
         controller.dispose();
@@ -93,18 +154,34 @@ class _AddItRequestScreenState extends State<AddItRequestScreen> {
     });
   }
 
+  /// True kalau checkbox "New username" pada grup Account management
+  /// sedang tercentang — satu-satunya opsi yang butuh field tambahan di
+  /// atas checkbox group-nya sendiri (`username_desc` wajib diisi).
+  bool _needsUsernameDesc(NeedOption option) =>
+      option.id == 'account_mgmt' &&
+      (_checkboxSelections[option.id]?.contains('New username') ?? false);
+
   String? _validate() {
     if (_category == null) return 'Please select a request type.';
     if (_supportType == null) return 'Please select a support type.';
 
     final option = _selectedOption;
-    if (option == null)
+    if (option == null) {
       return 'Please choose one option under "What do you need".';
+    }
 
     switch (option.fieldKind) {
       case NeedFieldKind.textField:
         if (_specifyController(option.id).text.trim().isEmpty) {
           return 'Please fill in "${option.textHint}".';
+        }
+      case NeedFieldKind.checkboxGroup:
+        if ((_checkboxSelections[option.id] ?? const <String>{}).isEmpty) {
+          return 'Please select at least one option in "What do you need?".';
+        }
+        if (_needsUsernameDesc(option) &&
+            _usernameDescController.text.trim().isEmpty) {
+          return 'Please specify the desired username.';
         }
       case NeedFieldKind.newEmployeeForm:
         if (!_newEmployeeData.isComplete) {
@@ -112,7 +189,6 @@ class _AddItRequestScreenState extends State<AddItRequestScreen> {
               'number, type, and department).';
         }
       case NeedFieldKind.none:
-      case NeedFieldKind.checkboxGroup:
         break;
     }
 
@@ -123,34 +199,127 @@ class _AddItRequestScreenState extends State<AddItRequestScreen> {
     return null;
   }
 
-  void _submit() {
-    final error = _validate();
-    if (error != null) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(error)));
+  /// Field tambahan spesifik kategori, sudah diresolusi ke nama field
+  /// server lewat metadata yang menempel di [NeedOption] — lihat
+  /// `NeedOptionCatalog`.
+  Map<String, String> _categoryFields(NeedOption option) {
+    final selected = _checkboxSelections[option.id] ?? const <String>{};
+
+    return {
+      for (final label in selected)
+        option.checkboxFieldCodes[option.checkboxLabels.indexOf(label)]: '1',
+      if (option.textFieldCode != null)
+        option.textFieldCode!: _specifyController(option.id).text.trim(),
+      if (_needsUsernameDesc(option))
+        'username_desc': _usernameDescController.text.trim(),
+      if (option.fieldKind == NeedFieldKind.newEmployeeForm) ..._newEmployeeFields(),
+    };
+  }
+
+  Map<String, String> _newEmployeeFields() {
+    final data = _newEmployeeData;
+    return {
+      'new_employee_name': data.fullName.trim(),
+      if (data.preferredName.trim().isNotEmpty)
+        'new_employee_preferred_name': data.preferredName.trim(),
+      'new_employee_number': data.employeeNumber.trim(),
+      'new_employee_level': data.executiveType!.label,
+      'new_employee_department': '${data.department!.id}',
+      if (data.section.trim().isNotEmpty) 'new_employee_section': data.section.trim(),
+      for (final label in data.equipmentNeeded)
+        NewEmployeeEquipment.fieldCodes[label]!: '1',
+    };
+  }
+
+  Future<ItRequestAttachment?> _pickFromGallery() async {
+    final file = await picker.ImagePicker().pickImage(source: picker.ImageSource.gallery);
+    if (file == null) return null;
+
+    return ItRequestAttachment(
+      path: file.path,
+      fileName: file.name,
+      sizeBytes: await file.length(),
+    );
+  }
+
+  Future<void> _pickAttachment() async {
+    if (_submitting) return;
+
+    if (_attachment != null) {
+      setState(() {
+        _attachment = null;
+        _attachmentError = null;
+      });
       return;
     }
 
-    final now = DateTime.now();
-    final option = _selectedOption!;
-    // Belum ada endpoint submit untuk IT Request, jadi item ini murni
-    // disusun di sini dan cuma disisipkan ke puncak daftar secara lokal
-    // (lihat ItRequestLocalItemAdded) — tidak benar-benar tersimpan di
-    // server. Id negatif dipakai supaya tidak pernah bentrok dengan id
-    // sungguhan dari server, yang selalu positif.
-    final item = ItRequestItem(
-      id: -now.microsecondsSinceEpoch,
-      type: _category == RequestCategory.media ? ItRequestType.media : ItRequestType.it,
-      supportType: _supportType!.label.toUpperCase(),
-      category: CodeLabel(code: option.id, label: option.label),
-      description: _descriptionController.text.trim(),
-      approval: const CodeLabel(code: 'pending', label: 'Pending'),
-      checking: const Checking(checked: false, label: 'Belum'),
-      status: const ItRequestStatus(code: 'submitted', label: 'Menunggu Diproses'),
-      createdAt: now,
-    );
+    final pick = widget.pickAttachment ?? _pickFromGallery;
 
-    Navigator.of(context).pop(item);
+    final ItRequestAttachment? picked;
+    try {
+      picked = await pick();
+    } catch (e) {
+      if (mounted) setState(() => _attachmentError = 'Tidak bisa membuka galeri.');
+      return;
+    }
+
+    if (!mounted || picked == null) return;
+
+    final error = picked.validationError;
+    setState(() {
+      if (error != null) {
+        _attachmentError = error;
+      } else {
+        _attachment = picked;
+        _attachmentError = null;
+      }
+    });
+  }
+
+  Future<void> _submit() async {
+    final error = _validate();
+    if (error != null) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
+      return;
+    }
+
+    if (_submitting) return;
+
+    setState(() {
+      _submitting = true;
+      _submitError = null;
+    });
+
+    final option = _selectedOption!;
+
+    try {
+      final detail = await _repository.submit(
+        type: _category == RequestCategory.media ? ItRequestType.media : ItRequestType.it,
+        supportType: _supportType!,
+        requestCategoryCode: option.requestCategoryCode,
+        description: _descriptionController.text.trim(),
+        categoryFields: _categoryFields(option),
+        imagePath: _attachment?.path,
+      );
+
+      if (!mounted) return;
+      Navigator.of(context).pop(detail);
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _submitError = e.message;
+        _submitting = false;
+      });
+    } catch (e, stack) {
+      // Berkas yang sudah terhapus setelah dipilih sampai ke sini sebagai
+      // FileSystemException — tidak boleh bocor mentah ke layar.
+      AppLogger.error('Gagal mengajukan IT request', e, stack);
+      if (!mounted) return;
+      setState(() {
+        _submitError = 'Gagal mengajukan request. Coba lagi.';
+        _submitting = false;
+      });
+    }
   }
 
   @override
@@ -176,17 +345,17 @@ class _AddItRequestScreenState extends State<AddItRequestScreen> {
               children: [
                 const FieldLabelRow(label: 'Request type'),
                 Container(
-  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-  decoration: BoxDecoration(
-    color: Colors.white,
-    borderRadius: BorderRadius.circular(10),
-    border: Border.all(color: AppColors.border, width: 1.2),
-  ),
-  child: RequestCategorySelector(
-    value: _category,
-    onChanged: _onCategoryChanged,
-  ),
-),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: AppColors.border, width: 1.2),
+                  ),
+                  child: RequestCategorySelector(
+                    value: _category,
+                    onChanged: _onCategoryChanged,
+                  ),
+                ),
                 const SizedBox(height: 16),
                 const FieldLabelRow(label: 'Support type'),
                 SupportTypeSelector(
@@ -216,55 +385,66 @@ class _AddItRequestScreenState extends State<AddItRequestScreen> {
               style: AppTextStyles.body,
               decoration: InputDecoration(
                 hintText: 'Describe your request in detail',
-                hintStyle:
-                    AppTextStyles.body.copyWith(color: AppColors.textMuted),
+                hintStyle: AppTextStyles.body.copyWith(color: AppColors.textMuted),
                 filled: true,
                 fillColor: Colors.white,
                 contentPadding: const EdgeInsets.all(12),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
-                  borderSide:
-                      const BorderSide(color: AppColors.border, width: 1.5),
+                  borderSide: const BorderSide(color: AppColors.border, width: 1.5),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
-                  borderSide:
-                      const BorderSide(color: AppColors.border, width: 1.5),
+                  borderSide: const BorderSide(color: AppColors.border, width: 1.5),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
-                  borderSide:
-                      const BorderSide(color: AppColors.primaryMid, width: 1.5),
+                  borderSide: const BorderSide(color: AppColors.primaryMid, width: 1.5),
                 ),
               ),
             ),
             const SizedBox(height: 18),
             const FieldLabelRow(label: 'Attachment'),
             AttachmentRowField(
-              fileName: _attachmentFileName,
-              onTap: () {
-                setState(() {
-                  _attachmentFileName =
-                      _attachmentFileName == null ? 'attachment.jpg' : null;
-                });
-              },
+              fileName: _attachment?.fileName,
+              onTap: _pickAttachment,
             ),
+            if (_attachmentError != null) ...[
+              const SizedBox(height: 6),
+              Text(
+                _attachmentError!,
+                style: const TextStyle(fontSize: 11, color: AppColors.rejected),
+              ),
+            ],
+            if (_submitError != null) ...[
+              const SizedBox(height: 16),
+              _FormError(message: _submitError!),
+            ],
             const SizedBox(height: 22),
             SizedBox(
               width: double.infinity,
               height: 48,
               child: ElevatedButton(
-                onPressed: _submit,
+                onPressed: _submitting ? null : _submit,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10)),
+                  disabledBackgroundColor: AppColors.primary.withValues(alpha: 0.6),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
-                child: Text(
-                  'Submit request',
-                  style: AppTextStyles.buttonText.copyWith(color: Colors.white),
-                ),
+                child: _submitting
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation(Colors.white),
+                        ),
+                      )
+                    : Text(
+                        'Submit request',
+                        style: AppTextStyles.buttonText.copyWith(color: Colors.white),
+                      ),
               ),
             ),
           ],
@@ -283,22 +463,20 @@ class _AddItRequestScreenState extends State<AddItRequestScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Text(
-            //   'Select All That Apply',
-            //   style: AppTextStyles.caption.copyWith(
-            //     fontSize: 11,
-            //     fontWeight: FontWeight.w700,
-            //     letterSpacing: 0.4,
-            //     color: AppColors.textMuted,
-            //   ),
-            // ),
-            // const SizedBox(height: 8),
             NeedChoiceChips(
               labels: option.checkboxLabels,
               selected: _checkboxSelections[option.id] ?? const {},
-              onChanged: (v) =>
-                  setState(() => _checkboxSelections[option.id] = v),
+              onChanged: (v) => setState(() => _checkboxSelections[option.id] = v),
             ),
+            if (_needsUsernameDesc(option)) ...[
+              const SizedBox(height: 12),
+              AppTextField(
+                label: 'Desired username',
+                controller: _usernameDescController,
+                hint: 'e.g. andi.pratama',
+                required: true,
+              ),
+            ],
           ],
         );
 
@@ -311,8 +489,7 @@ class _AddItRequestScreenState extends State<AddItRequestScreen> {
             hintStyle: AppTextStyles.body.copyWith(color: AppColors.textMuted),
             filled: true,
             fillColor: Colors.white,
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
               borderSide: const BorderSide(color: AppColors.border, width: 1.5),
@@ -323,8 +500,7 @@ class _AddItRequestScreenState extends State<AddItRequestScreen> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide:
-                  const BorderSide(color: AppColors.primaryMid, width: 1.5),
+              borderSide: const BorderSide(color: AppColors.primaryMid, width: 1.5),
             ),
           ),
         );
@@ -333,7 +509,42 @@ class _AddItRequestScreenState extends State<AddItRequestScreen> {
         return NewEmployeeSubform(
           data: _newEmployeeData,
           onChanged: (v) => setState(() => _newEmployeeData = v),
+          departments: _departments,
+          departmentsError: _departmentsError,
+          onRetryLoadDepartments: _loadDepartments,
         );
     }
+  }
+}
+
+/// Pesan galat dari server, ditaruh tepat di atas tombol submit.
+class _FormError extends StatelessWidget {
+  const _FormError({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: AppColors.rejectedBg,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppColors.rejected),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.error_outline, size: 16, color: AppColors.rejected),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              message,
+              style: const TextStyle(fontSize: 12, color: AppColors.rejected),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

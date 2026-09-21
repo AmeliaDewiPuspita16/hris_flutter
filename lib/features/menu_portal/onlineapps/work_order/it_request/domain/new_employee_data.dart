@@ -1,50 +1,18 @@
 import 'package:flutter/foundation.dart';
 
+import '../../../../../shared/domain/department.dart';
+
 /// Dropdown "Executive / Non-Executive" pada sub-form New employee account
 /// creation.
 enum ExecutiveType {
   executive,
   nonExecutive;
 
+  /// Sekaligus nilai yang dikirim ke `new_employee_level` — server memakai
+  /// string ini apa adanya.
   String get label => switch (this) {
         ExecutiveType.executive => 'Executive',
         ExecutiveType.nonExecutive => 'Non-Executive',
-      };
-}
-
-/// Dropdown "Department" pada sub-form New employee account creation —
-/// sesuai daftar departemen di versi web.
-enum Department {
-  aml,
-  bdd,
-  cdd,
-  crs,
-  est,
-  evd,
-  fin,
-  gmo,
-  hrGa,
-  hse,
-  ims,
-  itm,
-  pod,
-  ssd;
-
-  String get label => switch (this) {
-        Department.aml => 'AML',
-        Department.bdd => 'BDD',
-        Department.cdd => 'CDD',
-        Department.crs => 'CRS',
-        Department.est => 'EST',
-        Department.evd => 'EVD',
-        Department.fin => 'FIN',
-        Department.gmo => 'GMO',
-        Department.hrGa => 'HR & GA',
-        Department.hse => 'HSE',
-        Department.ims => 'IMS',
-        Department.itm => 'ITM',
-        Department.pod => 'POD',
-        Department.ssd => 'SSD',
       };
 }
 
@@ -59,12 +27,27 @@ class NewEmployeeEquipment {
   static const synologyDrive = 'Synology Drive account';
 
   static const all = [laptop, email, biiePortal, synologyDrive];
+
+  /// Nama field multipart untuk tiap label, dikirim ke
+  /// `POST /api/portal/apps/it_request` saat kategorinya `new_employee_req`.
+  static const fieldCodes = {
+    laptop: 'new_employee_need_laptop',
+    email: 'new_employee_need_email',
+    biiePortal: 'new_employee_need_portal',
+    synologyDrive: 'new_employee_need_synology',
+  };
 }
 
 /// Data sub-form "New employee account creation" — satu-satunya opsi "What
 /// do you need?" dengan struktur field sendiri (bukan checkbox/text field
 /// generik seperti opsi lain), sesuai form pendaftaran karyawan baru di
 /// versi web.
+///
+/// [department] memakai [Department] dari `features/shared` (id + name dari
+/// `GET /api/data/department`) — sama seperti dropdown Department di form
+/// pengumuman — karena `new_employee_department` di
+/// `POST /api/portal/apps/it_request` butuh ID numerik departemen
+/// sungguhan, bukan label yang ditebak.
 @immutable
 class NewEmployeeData {
   const NewEmployeeData({
