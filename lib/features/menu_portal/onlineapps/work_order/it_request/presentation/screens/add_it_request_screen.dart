@@ -131,6 +131,12 @@ class _AddItRequestScreenState extends State<AddItRequestScreen> {
     final now = DateTime.now();
     final item = ItRequestItem(
       id: 'req-${now.microsecondsSinceEpoch}',
+      // 'Anda' / '-' — sama seperti konvensi di AddEstRequestScreen, karena
+      // belum ada identitas user asli yang terhubung ke form ini.
+      requesterName: 'Anda',
+      department: '-',
+      category: _category!,
+      supportType: _supportType!,
       description: _descriptionController.text.trim(),
       date: DateFormatter.shortDate(now),
       status: ItRequestStatus.waitingHod,

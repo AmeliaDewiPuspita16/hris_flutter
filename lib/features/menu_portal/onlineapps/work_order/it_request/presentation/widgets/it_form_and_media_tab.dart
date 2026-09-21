@@ -10,11 +10,12 @@ import 'it_request_feedback_banner.dart';
 import 'it_request_feedback_sheet.dart';
 
 /// Isi tab "Form IT & Media": tombol ajukan request (di-gate oleh feedback
-/// yang belum diselesaikan) + riwayat permintaan sendiri.
+/// yang belum diselesaikan) + daftar SEMUA permintaan (bukan cuma riwayat
+/// sendiri) dengan pencarian — sama polanya dengan tab "All Request" di
+/// `EstRequestScreen`, mengikuti tabel penuh yang sama di versi web.
 ///
 /// Dipakai baik sebagai body utuh untuk staff biasa (tanpa tab) maupun
-/// sebagai tab pertama untuk tim IT — isinya sama karena tim IT juga bisa
-/// mengajukan permintaan sendiri seperti staff lain.
+/// sebagai tab pertama untuk tim IT.
 class ItFormAndMediaTab extends StatefulWidget {
   const ItFormAndMediaTab({super.key});
 
@@ -23,12 +24,32 @@ class ItFormAndMediaTab extends StatefulWidget {
 }
 
 class _ItFormAndMediaTabState extends State<ItFormAndMediaTab> {
-  List<ItRequestItem> _myRequests = ItRequestDemoData.myRequests();
+  List<ItRequestItem> _items = ItRequestDemoData.items();
+  final _searchController = TextEditingController();
+  String _query = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   List<ItRequestItem> get _awaitingFeedback =>
-      _myRequests.where((r) => r.awaitingFeedback).toList();
+      _items.where((r) => r.awaitingFeedback).toList();
 
   bool get _canAddRequest => _awaitingFeedback.isEmpty;
+
+  List<ItRequestItem> get _filtered {
+    final visible = _items.where((r) => !r.awaitingFeedback);
+    if (_query.trim().isEmpty) return visible.toList();
+
+    final q = _query.trim().toLowerCase();
+    return visible.where((r) {
+      return r.requesterName.toLowerCase().contains(q) ||
+          r.department.toLowerCase().contains(q) ||
+          r.description.toLowerCase().contains(q);
+    }).toList();
+  }
 
   Future<void> _giveFeedback(ItRequestItem item) async {
     final rating = await showModalBottomSheet<int>(
@@ -41,8 +62,8 @@ class _ItFormAndMediaTabState extends State<ItFormAndMediaTab> {
     if (rating == null || !mounted) return;
 
     setState(() {
-      _myRequests = [
-        for (final r in _myRequests)
+      _items = [
+        for (final r in _items)
           if (r.id == item.id) r.copyWith(awaitingFeedback: false) else r,
       ];
     });
@@ -60,7 +81,7 @@ class _ItFormAndMediaTabState extends State<ItFormAndMediaTab> {
 
     if (newItem == null || !mounted) return;
 
-    setState(() => _myRequests = [newItem, ..._myRequests]);
+    setState(() => _items = [newItem, ..._items]);
 
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -70,9 +91,7 @@ class _ItFormAndMediaTabState extends State<ItFormAndMediaTab> {
 
   @override
   Widget build(BuildContext context) {
-    // Item yang menunggu feedback sudah tampil sebagai banner di atas, jadi
-    // di sini cuma sisanya supaya tidak dobel.
-    final history = _myRequests.where((r) => !r.awaitingFeedback).toList();
+    final results = _filtered;
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
@@ -124,14 +143,45 @@ class _ItFormAndMediaTabState extends State<ItFormAndMediaTab> {
               ],
             ),
           ),
-        const Padding(
-          padding: EdgeInsets.only(top: 20, bottom: 10, left: 2),
-          child: Text('Riwayat Saya', style: AppTextStyles.sectionTitle),
+        const SizedBox(height: 16),
+        TextField(
+          controller: _searchController,
+          onChanged: (v) => setState(() => _query = v),
+          style: AppTextStyles.body,
+          decoration: InputDecoration(
+            hintText: 'Search request...',
+            hintStyle: AppTextStyles.body.copyWith(color: AppColors.textMuted),
+            prefixIcon: const Icon(Icons.search, size: 19, color: AppColors.textMuted),
+            filled: true,
+            fillColor: Colors.white,
+            contentPadding: const EdgeInsets.symmetric(vertical: 4),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: AppColors.border, width: 1.5),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: AppColors.border, width: 1.5),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: const BorderSide(color: AppColors.primaryMid, width: 1.5),
+            ),
+          ),
         ),
-        for (var i = 0; i < history.length; i++) ...[
-          if (i > 0) const SizedBox(height: 10),
-          ItRequestCard(item: history[i]),
-        ],
+        const SizedBox(height: 14),
+        if (results.isEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 24),
+            child: Center(
+              child: Text('Tidak ada data', style: AppTextStyles.bodyMuted),
+            ),
+          )
+        else
+          for (var i = 0; i < results.length; i++) ...[
+            if (i > 0) const SizedBox(height: 10),
+            ItRequestCard(item: results[i]),
+          ],
       ],
     );
   }
