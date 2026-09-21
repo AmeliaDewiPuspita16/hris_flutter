@@ -4,20 +4,26 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../data/announcement_repository.dart';
 import '../../../absensi/presentation/absensi_screen.dart';
-import '../../../auth/domain/auth_user.dart';
-import '../../../gaji/presentation/gaji_screen.dart';
 import '../../../kelola_tim/presentation/screens/kelola_tim_screen.dart';
 import '../../../menu_portal/onlineapps/presentation/screens/online_apps_screen.dart';
+import '../../../menu_portal/onlineapps/work_order/est_request/domain/est_request_demo_data.dart';
+import '../../../menu_portal/onlineapps/work_order/est_request/domain/est_request_status.dart';
+import '../../../menu_portal/onlineapps/work_order/it_request/domain/approve_request_demo_data.dart';
+import '../../../menu_portal/onlineapps/work_order/it_request/presentation/screens/it_request_screen.dart';
+import '../../../notifikasi/domain/notification_filter.dart';
+import '../widgets/approval_summary_banner.dart';
+import '../../../pengajuan/presentation/pengajuan_screen.dart';
+import '../../../profil/presentation/screens/profil_screen.dart';
+import '../../../gaji/presentation/gaji_screen.dart';
 import '../../../notifikasi/domain/app_notification.dart';
 import '../../../notifikasi/domain/notification_demo_data.dart';
 import '../../../notifikasi/presentation/screens/notifikasi_screen.dart';
-import '../../../pengajuan/presentation/pengajuan_screen.dart';
-import '../../../profil/presentation/screens/profil_screen.dart';
+import '../../../auth/domain/auth_user.dart';
 import '../../../shared/domain/role.dart';
-import '../../data/announcement_repository.dart';
-import '../../domain/home_demo_data.dart';
 import '../../domain/published_announcement.dart';
+import '../../domain/home_demo_data.dart';
 import '../../domain/service_shortcut.dart';
 import '../widgets/activity_section.dart';
 import '../widgets/announcement_detail_sheet.dart';
@@ -154,7 +160,44 @@ class _BerandaScreenState extends State<BerandaScreen> {
     setState(() => _announcements = [created, ..._announcements]);
   }
 
-  void _openApprovalTab() => setState(() => _activeTab = _approvalTabIndex);
+  /// SEMENTARA: belum ada halaman approval Leave sungguhan (beda dari IT
+  /// yang sudah punya tab Approve Request) — jumlahnya sekadar data demo
+  /// sampai fitur itu dibuat.
+  int get _leaveApprovalCount => 2;
+
+  int get _itApprovalCount => ApproveRequestDemoData.items().length;
+
+  /// Dianggap "butuh approval HOD" kalau statusnya [EstRequestStatus.
+  /// waitApprovalHosd] — belum ada tab Approve Request sungguhan untuk EST
+  /// seperti IT, jadi ini juga masih perkiraan dari data demo.
+  int get _estApprovalCount => EstRequestDemoData.items()
+      .where((r) => r.status == EstRequestStatus.waitApprovalHod)
+      .length;
+
+  void _openApprovalNotifications() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => NotifikasiScreen(
+          notifications: _notifications,
+          onChanged: (updated) => setState(() => _notifications = updated),
+          initialFilter: NotificationFilter.action,
+        ),
+      ),
+    );
+  }
+
+  void _openItApproval() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => const ItRequestScreen(initialTabIndex: 1),
+      ),
+    );
+  }
+
+  /// SEMENTARA: EST belum punya tab Approve Request sendiri seperti IT
+  /// (menu EST Request baru sisi requester) — untuk sekarang jatuh ke
+  /// Notifications juga, sama seperti Leave.
+  void _openEstApproval() => _openApprovalNotifications();
 
   /// Menu utama "Online Apps" — dipush sebagai halaman baru, bukan tab,
   /// jadi bottom nav Beranda tidak ikut tampil di sana.
@@ -331,11 +374,24 @@ class _BerandaScreenState extends State<BerandaScreen> {
                 date: DateTime.now(),
                 onActionTap: () => _openTab(_absensiTab),
               ),
-              PendingRequestCard(
-                count: 2,
-                description: 'Overtime · Business Trip',
-                onTap: () => _openTab(_pengajuanTab),
+              // SEMENTARA: tanpa gerbang role dulu (lihat catatan di
+              // ApprovalSummaryBanner) — dulu ini TeamBanner di bawah Main
+              // Menu, dipindah ke sini (pola awal HRIS: di bawah header, di
+              // atas Main Menu) sekaligus digabung 3 modul.
+              ApprovalSummaryBanner(
+                leaveCount: _leaveApprovalCount,
+                itCount: _itApprovalCount,
+                estCount: _estApprovalCount,
+                onTapAll: _openApprovalNotifications,
+                onTapLeave: _openApprovalNotifications,
+                onTapIt: _openItApproval,
+                onTapEst: _openEstApproval,
               ),
+              //PendingRequestCard(
+              //  count: 2,
+              //  description: 'Overtime · Business Trip',
+              //  onTap: () => _openTab(_pengajuanTab),
+              //),
               LayananSection(services: _buildServices()),
               SaldoSection(
                 balances: HomeDemoData.quotaBalancesFor(_role),
@@ -354,15 +410,6 @@ class _BerandaScreenState extends State<BerandaScreen> {
                     (_role == Role.hrPublisher),
                 onCreateTap: _openCreateAnnouncement,
               ),
-              if (_role == Role.hod)
-                TeamBanner(
-                  icon: Icons.fact_check_outlined,
-                  iconColor: AppColors.primary,
-                  iconBackground: AppColors.primaryLight,
-                  title: '3 Requests Need Review',
-                  subtitle: 'Team approvals are waiting for you',
-                  onTap: _openApprovalTab,
-                ),
               if (_role == Role.admin)
                 // SEMENTARA
                 TeamBanner(

@@ -21,10 +21,15 @@ class NotifikasiScreen extends StatefulWidget {
     super.key,
     required this.notifications,
     required this.onChanged,
+    this.initialFilter = NotificationFilter.all,
   });
 
   final List<AppNotification> notifications;
   final ValueChanged<List<AppNotification>> onChanged;
+
+  /// Filter chip yang aktif saat layar ini dibuka — dipakai banner approval
+  /// di Beranda untuk masuk langsung ke tab "Action" alih-alih "All".
+  final NotificationFilter initialFilter;
 
   @override
   State<NotifikasiScreen> createState() => _NotifikasiScreenState();
@@ -32,7 +37,7 @@ class NotifikasiScreen extends StatefulWidget {
 
 class _NotifikasiScreenState extends State<NotifikasiScreen> {
   late List<AppNotification> _items = List.of(widget.notifications);
-  NotificationFilter _filter = NotificationFilter.all;
+  late NotificationFilter _filter = widget.initialFilter;
 
   void _update(List<AppNotification> next) {
     setState(() => _items = next);

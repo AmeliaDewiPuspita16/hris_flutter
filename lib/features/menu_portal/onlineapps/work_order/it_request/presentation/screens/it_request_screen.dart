@@ -21,16 +21,26 @@ import '../widgets/report_tab_placeholder.dart';
 /// - Tim IT (`isItTeam: true`): tab Form IT & Media / Approve Request /
 ///   List Request / Report. Report masih placeholder kosong di iterasi ini.
 class ItRequestScreen extends StatefulWidget {
-  const ItRequestScreen({super.key, this.isItTeam = true});
+  const ItRequestScreen({
+    super.key,
+    this.isItTeam = true,
+    this.initialTabIndex = 0,
+  });
 
   final bool isItTeam;
+
+  /// Tab yang aktif saat layar ini dibuka (lihat urutan di [_buildTeamView]:
+  /// 0 Form IT & Media, 1 Approve Request, 2 List Request, 3 Report).
+  /// Dipakai tag "IT" di banner approval Beranda untuk masuk langsung ke
+  /// tab Approve Request. Diabaikan kalau [isItTeam] false.
+  final int initialTabIndex;
 
   @override
   State<ItRequestScreen> createState() => _ItRequestScreenState();
 }
 
 class _ItRequestScreenState extends State<ItRequestScreen> {
-  int _tabIndex = 0;
+  late int _tabIndex = widget.initialTabIndex;
   List<ApproveRequestItem> _pendingApprovals = ApproveRequestDemoData.items();
 
   void _decide(ApproveRequestItem item, {required bool approved}) {
