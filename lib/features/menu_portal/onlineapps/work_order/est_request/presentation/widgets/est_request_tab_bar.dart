@@ -26,13 +26,17 @@ class EstRequestTabBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Ukuran & padding disamakan dengan HseStatusTabs (height 36, chip lebih
+    // ramping) — sebelumnya lebih besar (height 38, padding horizontal 14
+    // tanpa padding vertikal). ListView tidak lagi punya padding horizontal
+    // sendiri karena sekarang selalu ditaruh di dalam Padding(16) level
+    // layar, sama seperti HseStatusTabs.
     return SizedBox(
-      height: 38,
+      height: 36,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
         itemCount: labels.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 6),
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
         itemBuilder: (context, index) {
           final active = index == activeIndex;
           final badge = badgeCounts[index];
@@ -41,7 +45,7 @@ class EstRequestTabBar extends StatelessWidget {
             onTap: () => onChanged(index),
             borderRadius: BorderRadius.circular(20),
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 color: active ? AppColors.primary : AppColors.card,
@@ -55,8 +59,8 @@ class EstRequestTabBar extends StatelessWidget {
                     labels[index],
                     style: TextStyle(
                       fontFamily: AppTextStyles.fontFamily,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w700,
                       color: active ? Colors.white : AppColors.textMid,
                     ),
                   ),
