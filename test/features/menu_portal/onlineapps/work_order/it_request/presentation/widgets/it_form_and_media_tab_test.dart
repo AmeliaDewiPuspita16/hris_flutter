@@ -136,6 +136,31 @@ void main() {
   });
 
   testWidgets(
+      'item can_rate true tapi is_mine false — bukan punya user login, '
+      'tidak dianggap butuh feedback', (tester) async {
+    final harness = ItRequestHarness(
+      (_, __) => ok(itRequestListEnvelope(
+        items: [
+          itRequestListItem(
+            id: 2394,
+            description: 'Punya orang lain',
+            statusCode: 'done',
+            rating: null,
+            canRate: true,
+            isMine: false,
+          ),
+        ],
+        awaitingRating: 1,
+      )),
+    );
+
+    await pumpTab(tester, harness);
+    await settle(tester);
+
+    expect(find.text('Beri Feedback'), findsNothing);
+  });
+
+  testWidgets(
       'status done + rating kosong saja TIDAK cukup — can_rate false tidak '
       'menampilkan banner (server yang menentukan, bukan tebakan klien)',
       (tester) async {

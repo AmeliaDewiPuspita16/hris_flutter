@@ -8,9 +8,8 @@ import 'est_approve_hod_card.dart';
 /// disusun tim EST ([EstRequestStatus.waitApprovalHod]) dan menunggu
 /// keputusan HOD, dengan approve/reject langsung dari kartu.
 ///
-/// Sama seperti pola `ApproveRequestTab` di IT Request: state list-nya
-/// dipegang [EstRequestScreen] (parent), bukan di sini, supaya badge
-/// jumlah di tab bar ikut update begitu ada yang diputuskan.
+/// State list-nya dipegang [EstRequestScreen] (parent), bukan di sini,
+/// supaya badge jumlah di tab bar ikut update begitu ada yang diputuskan.
 class EstApproveHodTab extends StatelessWidget {
   const EstApproveHodTab({
     super.key,

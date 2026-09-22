@@ -85,22 +85,26 @@ class _ItFormAndMediaViewState extends State<_ItFormAndMediaView> {
         .add(const ItRequestListNextPageRequested());
   }
 
-  /// Item yang sudah dikerjakan tapi belum dinilai — ditampilkan sebagai
-  /// banner, bukan kartu riwayat biasa.
+  /// Item MILIK USER LOGIN yang sudah dikerjakan tapi belum dinilai —
+  /// ditampilkan sebagai banner, bukan kartu riwayat biasa.
   ///
   /// `canRate` datang langsung dari server, menggantikan tebakan lama
   /// `status.code == 'done' && rating == null` — server yang tahu pasti
-  /// kapan sebuah request boleh dinilai.
+  /// kapan sebuah request boleh dinilai. `isMine` WAJIB ikut diperiksa:
+  /// daftar ini berisi permintaan SELURUH perusahaan, dan `canRate` cuma
+  /// berarti "butuh rating" kalau requester-nya memang user yang sedang
+  /// login — bukan permintaan orang lain yang kebetulan lewat di daftar.
   ///
   /// Server juga memberi tahu TOTAL yang menunggu rating lewat
   /// `summary.awaitingRating` (dipakai [ItRequestListState.canAddRequest]),
   /// tapi tidak memberi tahu YANG MANA di luar `canRate` per item — daftarnya
-  /// diurut "terbaru dulu", bukan dikelompokkan per status. Jadi banner ini
-  /// cuma menampilkan yang kebetulan sudah termuat di halaman ini; kalau ada
-  /// yang menunggu rating di halaman berikutnya yang belum digulir, tombol
-  /// "+ Add Request" tetap terkunci (itu authoritative), tapi bannernya baru
-  /// muncul setelah halaman itu ikut termuat.
-  bool _isAwaitingFeedback(ItRequestItem item) => item.canRate;
+  /// diurut "terbaru dulu" atas SELURUH perusahaan, bukan cuma milik user
+  /// login, jadi item yang butuh rating bisa saja tertimbun jauh di halaman
+  /// berikutnya. `ItRequestListBloc` sudah menangani ini sendiri (lihat
+  /// `_huntForOwnAwaitingItem`) dengan memuat halaman berikutnya secara
+  /// otomatis sampai ketemu atau sampai halaman terakhir — jadi cukup baca
+  /// `state.items` di sini, tidak perlu logika susul-menyusul halaman lagi.
+  bool _isAwaitingFeedback(ItRequestItem item) => item.isMine && item.canRate;
 
   /// Rincian penuh (termasuk `handling`) belum tentu ada di [item] dari
   /// daftar, jadi diambil dulu supaya modal feedback bisa menampilkan

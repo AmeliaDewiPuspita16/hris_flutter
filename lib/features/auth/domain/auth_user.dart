@@ -106,6 +106,14 @@ class AuthUser {
   bool get canPublishAnnouncement =>
       hasRole('hrga') || hasRole('admin');
 
+  /// Boleh mengakses tab tim IT (List Request/Report) di IT Request —
+  /// dimiliki role `it media` dan `admin`.
+  ///
+  /// Sama seperti [canPublishAnnouncement]: cuma untuk menyembunyikan tab,
+  /// server tetap penentu terakhir.
+  bool get canManageItRequest =>
+      hasRole('it media') || hasRole('admin');
+
   bool hasRole(String role) {
     final target = role.toLowerCase();
     return roles.any((r) => r.toLowerCase() == target);

@@ -184,6 +184,47 @@ void main() {
     });
   });
 
+  group('AuthUser.canManageItRequest', () {
+    test('true untuk role "it media"', () {
+      final user = AuthUser.fromJson({
+        'id': 1,
+        'name': 'Budi',
+        'email': 'budi@biie.co.id',
+        'roles': [
+          {'name': 'it media'},
+        ],
+      });
+
+      expect(user.canManageItRequest, isTrue);
+    });
+
+    test('true untuk role "admin"', () {
+      final user = AuthUser.fromJson({
+        'id': 1,
+        'name': 'Rini',
+        'email': 'rini@biie.co.id',
+        'roles': [
+          {'name': 'admin'},
+        ],
+      });
+
+      expect(user.canManageItRequest, isTrue);
+    });
+
+    test('false untuk role lain', () {
+      final user = AuthUser.fromJson({
+        'id': 1,
+        'name': 'Amelia',
+        'email': 'amelia@biie.co.id',
+        'roles': [
+          {'name': 'gmo'},
+        ],
+      });
+
+      expect(user.canManageItRequest, isFalse);
+    });
+  });
+
   group('AuthUser.hasRole', () {
     test('mengenali role yang dimiliki tanpa membedakan huruf besar-kecil',
         () {

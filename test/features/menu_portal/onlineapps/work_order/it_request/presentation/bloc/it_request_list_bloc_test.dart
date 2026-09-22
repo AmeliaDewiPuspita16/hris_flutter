@@ -75,6 +75,69 @@ void main() {
     await bloc.close();
   });
 
+  test(
+      'otomatis memuat halaman berikutnya sampai ketemu request sendiri '
+      'yang butuh rating', () async {
+    final harness = ItRequestHarness((url, __) {
+      final page = int.parse(url.queryParameters['page'] ?? '1');
+      return ok(itRequestListEnvelope(
+        items: [
+          if (page < 3)
+            itRequestListItem(id: page, canRate: false)
+          else
+            itRequestListItem(id: page, isMine: true, canRate: true),
+        ],
+        awaitingRating: 1,
+        currentPage: page,
+        lastPage: 3,
+      ));
+    });
+    final bloc = blocOver(harness);
+
+    bloc.add(const ItRequestListStarted());
+    await settle(bloc);
+    // Perburuan otomatis berjalan setelah status berubah dari loading —
+    // tunggu sampai halaman terakhir (3) benar-benar termuat.
+    await bloc.stream.firstWhere((s) => s.meta.currentPage == 3);
+
+    expect(harness.requested, hasLength(3));
+    expect(bloc.state.items.map((i) => i.id), [1, 2, 3]);
+    expect(
+      bloc.state.items.any((i) => i.isMine && i.canRate),
+      isTrue,
+    );
+
+    await bloc.close();
+  });
+
+  test(
+      'berhenti mencari begitu halaman terakhir tercapai walau belum '
+      'ketemu request sendiri yang butuh rating', () async {
+    final harness = ItRequestHarness((url, __) {
+      final page = int.parse(url.queryParameters['page'] ?? '1');
+      return ok(itRequestListEnvelope(
+        items: [itRequestListItem(id: page, canRate: false)],
+        awaitingRating: 1,
+        currentPage: page,
+        lastPage: 2,
+      ));
+    });
+    final bloc = blocOver(harness);
+
+    bloc.add(const ItRequestListStarted());
+    await settle(bloc);
+    await bloc.stream.firstWhere((s) => s.meta.currentPage == 2);
+    // Beri kesempatan bloc melakukan permintaan tambahan (kalau ada bug
+    // yang bikin ia terus meminta) sebelum memeriksa jumlah permintaan.
+    await Future<void>.delayed(const Duration(milliseconds: 20));
+
+    expect(harness.requested, hasLength(2));
+    expect(bloc.state.meta.hasMore, isFalse);
+    expect(bloc.state.items.any((i) => i.isMine && i.canRate), isFalse);
+
+    await bloc.close();
+  });
+
   test('halaman berikutnya menambah item, bukan menggantinya', () async {
     final harness = ItRequestHarness(
       (url, call) => ok(

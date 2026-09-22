@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 import '../../../../../../../core/theme/app_colors.dart';
 import '../../../../../../../core/theme/app_text_styles.dart';
 
-/// Segmented pill tab bar untuk tampilan IT Request tim IT — 
-/// (Form IT & Media / Approve Request / List Request /
-/// Report), dibuat scroll horizontal supaya muat di layar sempit.
+/// Segmented pill tab bar untuk tampilan IT Request tim IT — (Form IT &
+/// Media / List Request / Report), dibuat scroll horizontal supaya muat di
+/// layar sempit.
 class ItRequestTabBar extends StatelessWidget {
   const ItRequestTabBar({
     super.key,
@@ -19,8 +19,8 @@ class ItRequestTabBar extends StatelessWidget {
   final int activeIndex;
   final ValueChanged<int> onChanged;
 
-  /// Badge merah opsional per index, misalnya jumlah request yang belum
-  /// diputuskan pada tab "Approve Request".
+  /// Badge merah opsional per index, misalnya jumlah item yang butuh
+  /// perhatian pada tab tersebut.
   final Map<int, int> badgeCounts;
 
   @override

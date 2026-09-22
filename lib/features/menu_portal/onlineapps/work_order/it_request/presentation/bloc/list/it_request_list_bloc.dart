@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../../../../../core/logging/app_logger.dart';
 import '../../../../../../../../core/network/api_exception.dart';
 import '../../../data/it_request_repository.dart';
+import '../../../domain/it_request_item.dart';
 import '../../../domain/it_request_summary.dart';
 import 'it_request_list_event.dart';
 import 'it_request_list_state.dart';
@@ -52,6 +53,8 @@ class ItRequestListBloc extends Bloc<ItRequestListEvent, ItRequestListState> {
         meta: page.meta,
         loadingMore: false,
       ));
+
+      await _huntForOwnAwaitingItem(token, emit);
     } on ApiException catch (e) {
       if (token != _requestToken) return;
 
@@ -74,6 +77,55 @@ class ItRequestListBloc extends Bloc<ItRequestListEvent, ItRequestListState> {
       ));
     }
   }
+
+  /// Daftar di tab ini berisi permintaan SELURUH perusahaan (bukan cuma
+  /// milik user login), diurut terbaru dulu — sementara `summary.
+  /// awaitingRating` dari server dihitung khusus dari permintaan MILIK USER
+  /// SENDIRI. Kalau permintaan user yang butuh rating itu bukan yang
+  /// terbaru (tertimbun permintaan user lain yang lebih baru), halaman
+  /// pertama saja bisa jadi tidak memuatnya sama sekali — banner "Beri
+  /// Feedback" pun tidak pernah muncul walau tombol "+ Add Request" sudah
+  /// terkunci.
+  ///
+  /// Jadi begitu halaman pertama termuat, kalau server masih bilang ada
+  /// yang menunggu rating tapi belum ada satu pun item `isMine && canRate`
+  /// yang termuat, bloc ini otomatis lanjut memuat halaman-halaman
+  /// berikutnya sampai ketemu atau sampai server bilang sudah halaman
+  /// terakhir (`meta.hasMore` false) — supaya banner-nya benar-benar bisa
+  /// muncul tanpa user harus menggulir manual entah sampai halaman keberapa.
+  Future<void> _huntForOwnAwaitingItem(
+    int token,
+    Emitter<ItRequestListState> emit,
+  ) async {
+    while (state.summary.awaitingRating > 0 &&
+        !_hasOwnAwaitingItem(state.items) &&
+        state.meta.hasMore) {
+      if (token != _requestToken) return;
+
+      try {
+        final page = await _repository.fetchList(page: state.meta.currentPage + 1);
+        if (token != _requestToken) return;
+
+        emit(state.copyWith(
+          items: [...state.items, ...page.items],
+          summary: page.summary,
+          meta: page.meta,
+        ));
+      } on ApiException catch (e) {
+        // Perburuan ini cuma penyempurnaan tampilan — kegagalan di
+        // tengahnya tidak boleh menimpa daftar yang sudah berhasil dimuat
+        // dengan layar galat.
+        AppLogger.info(
+          'Perburuan halaman IT Request untuk item yang butuh rating '
+          'berhenti karena galat: ${e.message}',
+        );
+        return;
+      }
+    }
+  }
+
+  bool _hasOwnAwaitingItem(List<ItRequestItem> items) =>
+      items.any((item) => item.isMine && item.canRate);
 
   Future<void> _onNextPage(
     ItRequestListNextPageRequested event,
