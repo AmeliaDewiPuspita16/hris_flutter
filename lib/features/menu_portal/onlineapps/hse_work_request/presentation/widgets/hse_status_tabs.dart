@@ -35,17 +35,24 @@ class HseStatusTabs extends StatelessWidget {
           final status = _all[index];
           final isSelected = status == selected;
 
+          // "Semua" (status == null) sengaja tetap hijau primary sesuai
+          // permintaan, tidak ikut skema warna per-status seperti chip
+          // lainnya.
+          final selectedFg = status == null ? Colors.white : status.color;
+          final selectedBg = status == null ? AppColors.primary : status.background;
+          final selectedBorder = status == null ? AppColors.primary : status.color;
+
           return ChoiceChip(
             label: Text(_labelFor(status)),
             selected: isSelected,
             onSelected: (_) => onChanged(status),
             labelStyle: AppTextStyles.caption.copyWith(
               fontWeight: FontWeight.w700,
-              color: isSelected ? Colors.white : AppColors.textMid,
+              color: isSelected ? selectedFg : AppColors.textMid,
             ),
             backgroundColor: Colors.white,
-            selectedColor: AppColors.primary,
-            side: BorderSide(color: isSelected ? AppColors.primary : AppColors.border),
+            selectedColor: selectedBg,
+            side: BorderSide(color: isSelected ? selectedBorder : AppColors.border),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
             visualDensity: VisualDensity.compact,

@@ -105,12 +105,12 @@ class _CategoryTag extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: AppColors.hseRequestBg,
+        color: AppColors.neutralBg,
         borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
         label,
-        style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w600, color: AppColors.hseRequest),
+        style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w600, color: AppColors.textMid),
       ),
     );
   }
