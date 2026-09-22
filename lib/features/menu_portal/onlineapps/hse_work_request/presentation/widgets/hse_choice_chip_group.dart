@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../../../../core/theme/app_colors.dart';
 import '../../../../../../../core/theme/app_text_styles.dart';
 import '../../../../../../../core/widgets/app_text_field.dart';
+import 'field_label_row.dart';
 
 /// Grup pilihan majemuk berbentuk chip, mis. "Type of Works" & "Personal
 /// Protective Equipment".
@@ -20,6 +21,7 @@ class HseChoiceChipGroup extends StatelessWidget {
     this.onChanged,
     this.otherController,
     this.readOnly = false,
+    this.required = false,
   });
 
   final String title;
@@ -28,6 +30,7 @@ class HseChoiceChipGroup extends StatelessWidget {
   final ValueChanged<String>? onChanged;
   final TextEditingController? otherController;
   final bool readOnly;
+  final bool required;
 
   @override
   Widget build(BuildContext context) {
@@ -61,8 +64,8 @@ class HseChoiceChipGroup extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: AppTextStyles.sectionTitle),
-          const SizedBox(height: 8),
+          FieldLabelRow(label: title, required: required),
+          const SizedBox(height: 4),
           Wrap(
             spacing: 8,
             runSpacing: 8,

@@ -4,6 +4,7 @@ import '../../../../../../../core/theme/app_colors.dart';
 import '../../../../../../../core/theme/app_text_styles.dart';
 import '../../../../../../../core/widgets/app_card.dart';
 import '../../../../../../../core/widgets/app_text_field.dart';
+import 'field_label_row.dart';
 
 /// Satu grup checklist bertitel, mis. "General Checklist".
 ///
@@ -66,18 +67,8 @@ class HseChecklistGroup extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          RichText(
-            text: TextSpan(
-              style: AppTextStyles.sectionTitle,
-              children: [
-                TextSpan(text: title),
-                if (required)
-                  const TextSpan(
-                      text: ' *', style: TextStyle(color: AppColors.rejected)),
-              ],
-            ),
-          ),
-          const SizedBox(height: 8),
+          FieldLabelRow(label: title, required: required),
+          const SizedBox(height: 4),
           AppCard(
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
             child: Column(

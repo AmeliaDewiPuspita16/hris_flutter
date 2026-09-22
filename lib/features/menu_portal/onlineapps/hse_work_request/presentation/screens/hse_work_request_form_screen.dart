@@ -90,6 +90,13 @@ class _HseWorkRequestFormScreenState extends State<HseWorkRequestFormScreen> {
   bool get _step2Valid =>
       _generalChecklist.isNotEmpty || _otherGeneralController.text.trim().isNotEmpty;
 
+  // Type of Works & PPE sekarang ditandai "Required" (lihat _StepTypeAndPpe),
+  // jadi wajib divalidasi juga sebelum lanjut ke Review — sama polanya
+  // dengan _step2Valid untuk General Checklist.
+  bool get _step3Valid =>
+      (_typeOfWorks.isNotEmpty || _otherTypeOfWorkController.text.trim().isNotEmpty) &&
+      (_ppe.isNotEmpty || _otherPpeController.text.trim().isNotEmpty);
+
   void _goTo(int step) {
     setState(() => _step = step);
     _pageController.animateToPage(
@@ -109,6 +116,12 @@ class _HseWorkRequestFormScreenState extends State<HseWorkRequestFormScreen> {
     if (_step == 1 && !_step2Valid) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Pilih minimal satu general checklist.')),
+      );
+      return;
+    }
+    if (_step == 2 && !_step3Valid) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Pilih minimal satu Type of Works dan satu PPE.')),
       );
       return;
     }
@@ -308,72 +321,143 @@ class _StepDetailPekerjaan extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Field dikelompokkan ke dalam kartu bertajuk (ikon + judul) mengikuti
+    // pola "Type of request" / "Location" di AddItRequestScreen &
+    // AddEstRequestScreen — supaya form permit yang cukup panjang ini lebih
+    // mudah dipindai per bagian, bukan satu tumpukan field rata.
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
       children: [
-        AppTextField(label: 'PIC', controller: picController, required: true, hint: 'Nama PIC'),
+        Text(
+          'Isi detail pekerjaan yang akan dilakukan sebelum melanjutkan ke checklist keselamatan.',
+          style: AppTextStyles.bodyMuted,
+        ),
         const SizedBox(height: 14),
-        AppDropdown<String>(
-          label: 'Department',
-          value: department ?? '',
-          required: true,
-          items: [
-            const (value: '', label: '-- Pilih --'),
-            for (final dept in HseChecklistCatalog.departments) (value: dept, label: dept),
+        _SectionCard(
+          icon: Icons.badge_outlined,
+          title: 'Informasi PIC',
+          children: [
+            AppTextField(label: 'PIC', controller: picController, required: true, hint: 'Nama PIC'),
+            const SizedBox(height: 14),
+            AppDropdown<String>(
+              label: 'Department',
+              value: department ?? '',
+              required: true,
+              items: [
+                const (value: '', label: 'Pilih'),
+                for (final dept in HseChecklistCatalog.departments) (value: dept, label: dept),
+              ],
+              onChanged: (value) {
+                if (value.isNotEmpty) onDepartmentChanged(value);
+              },
+            ),
+            const SizedBox(height: 14),
+            AppDropdown<HseRequestCategory>(
+              label: 'Kategori',
+              value: category,
+              required: true,
+              items: [
+                for (final value in HseRequestCategory.values) (value: value, label: value.label),
+              ],
+              onChanged: onCategoryChanged,
+            ),
           ],
-          onChanged: (value) {
-            if (value.isNotEmpty) onDepartmentChanged(value);
-          },
         ),
-        const SizedBox(height: 14),
-        AppDropdown<HseRequestCategory>(
-          label: 'Kategori',
-          value: category,
-          required: true,
-          items: [
-            for (final value in HseRequestCategory.values) (value: value, label: value.label),
+        const SizedBox(height: 16),
+        _SectionCard(
+          icon: Icons.location_on_outlined,
+          title: 'Lokasi & Ruang Lingkup Kerja',
+          children: [
+            AppTextField(
+              label: 'Location',
+              controller: locationController,
+              required: true,
+              hint: 'Lokasi pekerjaan',
+            ),
+            const SizedBox(height: 14),
+            AppTextField(
+              label: 'Materials',
+              controller: materialsController,
+              required: true,
+              hint: 'Material / alat kerja yang dipakai',
+              maxLines: 3,
+              minLines: 2,
+            ),
+            const SizedBox(height: 14),
+            AppTextField(
+              label: 'Vendor',
+              controller: vendorController,
+              hint: 'Nama vendor (opsional)',
+            ),
           ],
-          onChanged: onCategoryChanged,
         ),
-        const SizedBox(height: 14),
-        AppTextField(
-          label: 'Location',
-          controller: locationController,
-          required: true,
-          hint: 'Lokasi pekerjaan',
-        ),
-        const SizedBox(height: 14),
-        AppTextField(
-          label: 'Materials',
-          controller: materialsController,
-          required: true,
-          hint: 'Material / alat kerja yang dipakai',
-          maxLines: 3,
-          minLines: 2,
-        ),
-        const SizedBox(height: 14),
-        AppTextField(
-          label: 'Vendor',
-          controller: vendorController,
-          hint: 'Nama vendor (opsional)',
-        ),
-        const SizedBox(height: 14),
-        AppTextField(
-          label: 'Total Workers',
-          controller: totalWorkersController,
-          required: true,
-          hint: 'Jumlah pekerja',
-          keyboardType: TextInputType.number,
-        ),
-        const SizedBox(height: 14),
-        AppDateRangeField(
-          label: 'Date of Work',
-          required: true,
-          startDate: dateStart,
-          endDate: dateEnd,
-          onChanged: onDateChanged,
+        const SizedBox(height: 16),
+        _SectionCard(
+          icon: Icons.event_outlined,
+          title: 'Jadwal & Jumlah Pekerja',
+          children: [
+            AppTextField(
+              label: 'Total Workers',
+              controller: totalWorkersController,
+              required: true,
+              hint: 'Jumlah pekerja',
+              keyboardType: TextInputType.number,
+            ),
+            const SizedBox(height: 14),
+            AppDateRangeField(
+              label: 'Date of Work',
+              required: true,
+              startDate: dateStart,
+              endDate: dateEnd,
+              onChanged: onDateChanged,
+            ),
+          ],
         ),
       ],
+    );
+  }
+}
+
+/// Kartu bertajuk (ikon bulat + judul) yang membungkus satu grup field —
+/// versi HSE dari kartu putih berbingkai di [AddItRequestScreen] /
+/// [AddEstRequestScreen], dipakai untuk mengelompokkan field step "Detail
+/// Pekerjaan" yang jumlahnya cukup banyak.
+class _SectionCard extends StatelessWidget {
+  const _SectionCard({
+    required this.icon,
+    required this.title,
+    required this.children,
+  });
+
+  final IconData icon;
+  final String title;
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return AppCard(
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryLight,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(icon, size: 16, color: AppColors.primary),
+              ),
+              const SizedBox(width: 8),
+              Text(title, style: AppTextStyles.sectionTitle),
+            ],
+          ),
+          const SizedBox(height: 14),
+          ...children,
+        ],
+      ),
     );
   }
 }
@@ -440,6 +524,7 @@ class _StepTypeAndPpe extends StatelessWidget {
           selected: selectedTypes,
           onChanged: onToggleType,
           otherController: otherTypeController,
+          required: true,
         ),
         HseChoiceChipGroup(
           title: 'Personal Protective Equipment',
@@ -447,6 +532,7 @@ class _StepTypeAndPpe extends StatelessWidget {
           selected: selectedPpe,
           onChanged: onTogglePpe,
           otherController: otherPpeController,
+          required: true,
         ),
       ],
     );

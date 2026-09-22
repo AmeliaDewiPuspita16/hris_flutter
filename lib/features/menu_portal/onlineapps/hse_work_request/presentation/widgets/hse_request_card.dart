@@ -7,7 +7,6 @@ import '../../../../../../../core/widgets/app_card.dart';
 import '../../../../../../../core/widgets/status_badge.dart';
 import '../../domain/hse_work_request.dart';
 import '../../domain/hse_request_status.dart';
-import '../../domain/hse_request_category.dart';
 
 // Satu baris tabel web ("ID Register, Name, Dept, Category, Date,
 /// Location, Acknowledge, Approval, Status") diringkas jadi satu card
