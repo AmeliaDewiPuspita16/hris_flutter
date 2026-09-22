@@ -7,7 +7,7 @@ import '../../../../../../auth/presentation/bloc/auth/auth_bloc.dart';
 import '../widgets/it_form_and_media_tab.dart';
 import '../widgets/it_request_tab_bar.dart';
 import '../widgets/list_request_tab.dart';
-import '../widgets/report_tab_placeholder.dart';
+import '../widgets/report_tab.dart';
 
 /// Halaman IT Request.
 ///
@@ -66,7 +66,7 @@ class _ItRequestScreenState extends State<ItRequestScreen> {
     final tabs = const [
       ItFormAndMediaTab(),
       ListRequestTab(),
-      ReportTabPlaceholder(),
+      ReportTab(),
     ];
 
     return Column(

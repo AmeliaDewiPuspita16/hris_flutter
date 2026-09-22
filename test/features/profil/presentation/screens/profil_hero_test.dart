@@ -24,14 +24,34 @@ void main() {
     );
   }
 
-  testWidgets('menampilkan nama, inisial, section, dan NIK pengguna',
-      (tester) async {
+  testWidgets('menampilkan nama, section, dan NIK pengguna', (tester) async {
     await pumpProfil(tester, user: AuthUser.fromJson(loginResponseUser()));
 
     expect(find.text('Ari Putra'), findsOneWidget);
-    expect(find.text('AP'), findsOneWidget);
     expect(find.text('IT Solution'), findsOneWidget);
     expect(find.text('NIP: 0774'), findsOneWidget);
+  });
+
+  testWidgets('menampilkan foto profil saat user punya image', (tester) async {
+    final user = AuthUser.fromJson(loginResponseUser());
+    await pumpProfil(tester, user: user);
+
+    final image = tester.widget<Image>(find.byType(Image));
+    expect((image.image as NetworkImage).url, user.photoUrl);
+  });
+
+  testWidgets('menampilkan inisial saat user belum punya foto', (tester) async {
+    await pumpProfil(
+      tester,
+      user: AuthUser.fromJson({
+        'id': 1,
+        'name': 'Ari Putra',
+        'email': 'ariputra@biie.co.id',
+      }),
+    );
+
+    expect(find.text('AP'), findsOneWidget);
+    expect(find.byType(Image), findsNothing);
   });
 
   testWidgets('tidak lagi menampilkan data demo saat pengguna tersedia',

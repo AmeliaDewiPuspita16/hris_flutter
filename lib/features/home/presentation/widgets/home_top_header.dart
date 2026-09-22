@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/widgets/user_avatar.dart';
 import '../../../auth/domain/auth_user.dart';
 import '../../../shared/domain/role.dart';
 
@@ -53,18 +54,12 @@ class HomeTopHeader extends StatelessWidget {
       ),
       child: Row(
         children: [
-          CircleAvatar(
+          UserAvatar(
+            initials: initials,
+            photoUrl: user?.photoUrl,
             radius: 22,
             backgroundColor: Colors.white.withValues(alpha: 0.18),
-            child: Text(
-              initials,
-              style: const TextStyle(
-                fontFamily: AppTextStyles.fontFamily,
-                color: Colors.white,
-                fontWeight: FontWeight.w700,
-                fontSize: 15,
-              ),
-            ),
+            fontSize: 15,
           ),
           const SizedBox(width: 12),
           Expanded(

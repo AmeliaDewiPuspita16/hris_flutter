@@ -1,3 +1,5 @@
+import '../../../core/network/api_config.dart';
+
 /// Pengguna yang sedang masuk, hasil pemetaan `data.user` dari API login.
 ///
 /// Hanya [id], [name], dan [email] yang diwajibkan. Sisanya nullable dengan
@@ -97,6 +99,15 @@ class AuthUser {
   /// Nama dipecah per kata, tahan terhadap spasi berlebih dari server.
   List<String> get _nameParts =>
       name.trim().split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
+
+  /// URL foto profil yang siap dimuat, dibangun dari [image] (nama berkas
+  /// apa adanya dari server) — null kalau user belum punya foto.
+  ///
+  /// Beda dari lampiran pengumuman/PR yang server-nya sudah mengirim URL
+  /// penuh: di sini prefix foldernya (`storage/profile/`) belum pernah
+  /// dikirim server, jadi klien yang menyusunnya sendiri.
+  String? get photoUrl =>
+      image == null || image!.isEmpty ? null : '${ApiConfig.baseUrl}/storage/profile/$image';
 
   /// Boleh menerbitkan pengumuman HR — izin `hr-announcement-post`, yang
   /// menurut dokumentasi API dimiliki role `hrga` dan `admin`.
