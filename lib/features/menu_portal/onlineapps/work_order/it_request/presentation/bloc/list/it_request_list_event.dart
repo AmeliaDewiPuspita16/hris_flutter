@@ -1,3 +1,4 @@
+import '../../../domain/it_request_detail.dart';
 import '../../../domain/it_request_item.dart';
 
 /// Hal-hal yang bisa terjadi pada riwayat IT/Media Request.
@@ -32,17 +33,15 @@ class ItRequestLocalItemAdded extends ItRequestListEvent {
   final ItRequestItem item;
 }
 
-/// User memberi rating lewat bottom sheet feedback.
-///
-/// Local-only, dengan alasan sama seperti [ItRequestLocalItemAdded]: belum
-/// ada endpoint submit rating. Rating disisipkan ke item yang cocok, dan
-/// `summary.awaitingRating` dikurangi satu secara optimistis supaya tombol
-/// "+ Add Request" langsung terbuka lagi seperti sebelum fitur ini
-/// tersambung ke API — begitu endpoint submit-nya ada, event ini tinggal
-/// diganti memanggil repository sungguhan tanpa mengubah bentuk state.
-class ItRequestLocalFeedbackGiven extends ItRequestListEvent {
-  const ItRequestLocalFeedbackGiven({required this.id, required this.rating});
+/// User berhasil mengirim rating lewat bottom sheet feedback —
+/// [ItRequestFeedbackSheet] sudah memanggil `ItRequestRepository.submitRating`
+/// sendiri (pola sama dengan `AddItRequestScreen`/[ItRequestLocalItemAdded]),
+/// jadi [detail] di sini adalah rincian TERBARU dari server, bukan tebakan
+/// lokal. Item yang cocok di daftar diganti dengan [detail], dan
+/// `summary.awaitingRating` dikurangi satu supaya tombol "+ Add Request"
+/// langsung terbuka lagi begitu tidak ada lagi yang menunggu rating.
+class ItRequestFeedbackGiven extends ItRequestListEvent {
+  const ItRequestFeedbackGiven(this.detail);
 
-  final int id;
-  final int rating;
+  final ItRequestDetail detail;
 }

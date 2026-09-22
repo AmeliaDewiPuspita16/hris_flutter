@@ -18,10 +18,16 @@ class ItRequestFeedbackBanner extends StatelessWidget {
     super.key,
     required this.item,
     required this.onGiveFeedback,
+    this.loading = false,
   });
 
   final ItRequestItem item;
   final VoidCallback onGiveFeedback;
+
+  /// True selagi rincian request sedang diambil sebelum modal feedback
+  /// dibuka — tombol dinonaktifkan dan menampilkan spinner supaya tidak
+  /// terkesan diam saja saat ditekan.
+  final bool loading;
 
   @override
   Widget build(BuildContext context) {
@@ -77,17 +83,27 @@ class ItRequestFeedbackBanner extends StatelessWidget {
                         width: double.infinity,
                         height: 38,
                         child: ElevatedButton(
-                          onPressed: onGiveFeedback,
+                          onPressed: loading ? null : onGiveFeedback,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: AppColors.primary,
+                            disabledBackgroundColor: AppColors.primary,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(9),
                             ),
                           ),
-                          child: Text(
-                            'Beri Feedback',
-                            style: AppTextStyles.buttonText.copyWith(color: Colors.white),
-                          ),
+                          child: loading
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2.2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : Text(
+                                  'Beri Feedback',
+                                  style: AppTextStyles.buttonText.copyWith(color: Colors.white),
+                                ),
                         ),
                       ),
                     ],

@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hris_mobile/features/menu_portal/onlineapps/work_order/it_request/domain/it_request_detail.dart';
 import 'package:hris_mobile/features/menu_portal/onlineapps/work_order/it_request/domain/it_request_item.dart';
 import 'package:hris_mobile/features/menu_portal/onlineapps/work_order/it_request/domain/it_request_type.dart';
 import 'package:hris_mobile/features/menu_portal/onlineapps/work_order/it_request/domain/checking.dart';
@@ -144,8 +145,8 @@ void main() {
     await bloc.close();
   });
 
-  test('memberi feedback lokal mengisi rating dan mengurangi awaitingRating',
-      () async {
+  test('memberi feedback mengganti item dengan detail dari server dan '
+      'mengurangi awaitingRating', () async {
     final harness = ItRequestHarness(
       (_, __) => ok(itRequestListEnvelope(
         items: [itRequestListItem(id: 2394, statusCode: 'done', rating: null)],
@@ -157,7 +158,9 @@ void main() {
     bloc.add(const ItRequestListStarted());
     await settle(bloc);
 
-    bloc.add(const ItRequestLocalFeedbackGiven(id: 2394, rating: 4));
+    bloc.add(ItRequestFeedbackGiven(
+      ItRequestDetail.fromJson(itRequestDetail(id: 2394, rating: 4, canRate: false)),
+    ));
     await bloc.stream.firstWhere((s) => s.summary.awaitingRating == 0);
 
     expect(bloc.state.items.single.rating, 4);
@@ -166,8 +169,7 @@ void main() {
     await bloc.close();
   });
 
-  test('memberi feedback lokal juga mematikan canRate item itu sendiri',
-      () async {
+  test('memberi feedback juga mematikan canRate item itu sendiri', () async {
     // Bukan cuma summary.awaitingRating yang perlu turun — item yang baru
     // dinilai juga tidak boleh lagi dianggap "butuh rating" oleh UI banner,
     // yang membaca canRate per item, bukan summary.
@@ -182,10 +184,41 @@ void main() {
     bloc.add(const ItRequestListStarted());
     await settle(bloc);
 
-    bloc.add(const ItRequestLocalFeedbackGiven(id: 2394, rating: 4));
+    bloc.add(ItRequestFeedbackGiven(
+      ItRequestDetail.fromJson(itRequestDetail(id: 2394, rating: 4, canRate: false)),
+    ));
     await bloc.stream.firstWhere((s) => s.items.single.rating == 4);
 
     expect(bloc.state.items.single.canRate, isFalse);
+
+    await bloc.close();
+  });
+
+  test('memberi feedback membawa ratingComment dari server ke item', () async {
+    final harness = ItRequestHarness(
+      (_, __) => ok(itRequestListEnvelope(
+        items: [itRequestListItem(id: 2394, statusCode: 'done', rating: null, canRate: true)],
+        awaitingRating: 1,
+      )),
+    );
+    final bloc = blocOver(harness);
+
+    bloc.add(const ItRequestListStarted());
+    await settle(bloc);
+
+    bloc.add(ItRequestFeedbackGiven(
+      ItRequestDetail.fromJson(itRequestDetail(
+        id: 2394,
+        rating: 5,
+        canRate: false,
+        ratingComment: 'Responsif, terima kasih!',
+      )),
+    ));
+    await bloc.stream.firstWhere((s) => s.items.single.rating == 5);
+
+    final updated = bloc.state.items.single;
+    expect(updated, isA<ItRequestDetail>());
+    expect((updated as ItRequestDetail).ratingComment, 'Responsif, terima kasih!');
 
     await bloc.close();
   });
@@ -198,7 +231,9 @@ void main() {
     bloc.add(const ItRequestListStarted());
     await settle(bloc);
 
-    bloc.add(const ItRequestLocalFeedbackGiven(id: 2395, rating: 5));
+    bloc.add(ItRequestFeedbackGiven(
+      ItRequestDetail.fromJson(itRequestDetail(id: 2395, rating: 5, canRate: false)),
+    ));
     await Future<void>.delayed(const Duration(milliseconds: 20));
 
     expect(bloc.state.summary.awaitingRating, 0);

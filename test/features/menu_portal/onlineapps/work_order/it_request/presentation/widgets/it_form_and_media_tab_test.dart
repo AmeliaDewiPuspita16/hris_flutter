@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -156,10 +159,16 @@ void main() {
   });
 
   testWidgets(
-      'memberi feedback menghilangkan banner dan akhirnya membuka FAB',
-      (tester) async {
-    final harness = ItRequestHarness(
-      (_, __) => ok(itRequestListEnvelope(
+      'memberi feedback mengambil rincian, mengirim rating, lalu '
+      'menghilangkan banner dan akhirnya membuka FAB', (tester) async {
+    final harness = ItRequestHarness((url, __) {
+      if (url.path.endsWith('/rating')) {
+        return ok({'data': itRequestDetail(id: 2394, rating: 4, canRate: false)});
+      }
+      if (url.path.endsWith('/2394')) {
+        return ok({'data': itRequestDetail(id: 2394, rating: null, canRate: true)});
+      }
+      return ok(itRequestListEnvelope(
         items: [
           itRequestListItem(
             id: 2394,
@@ -170,13 +179,15 @@ void main() {
           ),
         ],
         awaitingRating: 1,
-      )),
-    );
+      ));
+    });
 
     await pumpTab(tester, harness);
     await settle(tester);
 
     await tester.tap(find.text('Beri Feedback'));
+    // Dua kali pumpAndSettle: sekali untuk fetchDetail (sebelum sheet
+    // dibuka), sekali lagi untuk animasi showModalBottomSheet.
     await tester.pumpAndSettle();
     await tester.tap(find.byIcon(Icons.star_outline_rounded).at(3));
     await tester.pump();
@@ -185,6 +196,77 @@ void main() {
 
     expect(find.text('Beri Feedback'), findsNothing);
     expect(find.byType(FloatingActionButton), findsOneWidget);
+  });
+
+  testWidgets(
+      'gagal memuat rincian sebelum modal dibuka menampilkan snackbar dan '
+      'modal tidak terbuka', (tester) async {
+    final harness = ItRequestHarness((url, __) {
+      if (url.path.endsWith('/2394')) return fails(message: 'Gagal memuat detail.');
+      return ok(itRequestListEnvelope(
+        items: [
+          itRequestListItem(
+            id: 2394,
+            description: 'Perbaikan print WWTP',
+            statusCode: 'done',
+            rating: null,
+            canRate: true,
+          ),
+        ],
+        awaitingRating: 1,
+      ));
+    });
+
+    await pumpTab(tester, harness);
+    await settle(tester);
+
+    await tester.tap(find.text('Beri Feedback'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Gagal memuat detail.'), findsOneWidget);
+    // Judul sheet ("Beri feedback", huruf kecil) beda dari tombol banner
+    // ("Beri Feedback") — memastikan sheet-nya sendiri memang tidak terbuka.
+    expect(find.text('Beri feedback'), findsNothing);
+  });
+
+  testWidgets('menekan Beri Feedback menampilkan spinner selagi memuat rincian',
+      (tester) async {
+    final detailCompleter = Completer<void>();
+    final harness = ItRequestHarness((url, __) async {
+      if (url.path.endsWith('/2394')) {
+        await detailCompleter.future;
+        return http.Response(
+          jsonEncode({'data': itRequestDetail(id: 2394, rating: null, canRate: true)}),
+          200,
+        );
+      }
+      return http.Response(
+        jsonEncode(itRequestListEnvelope(
+          items: [
+            itRequestListItem(
+              id: 2394,
+              description: 'Perbaikan print WWTP',
+              statusCode: 'done',
+              rating: null,
+              canRate: true,
+            ),
+          ],
+          awaitingRating: 1,
+        )),
+        200,
+      );
+    });
+
+    await pumpTab(tester, harness);
+    await settle(tester);
+
+    await tester.tap(find.text('Beri Feedback'));
+    await tester.pump();
+
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+
+    detailCompleter.complete();
+    await tester.pumpAndSettle();
   });
 
   testWidgets('kegagalan memunculkan pesan dan tombol coba lagi', (tester) async {

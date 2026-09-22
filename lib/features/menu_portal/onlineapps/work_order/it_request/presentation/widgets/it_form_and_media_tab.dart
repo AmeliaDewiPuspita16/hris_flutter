@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../../../../core/network/api_exception.dart';
 import '../../../../../../../core/theme/app_colors.dart';
 import '../../../../../../../core/theme/app_text_styles.dart';
 import '../../../../../../../core/widgets/app_error_view.dart';
 import '../../data/it_request_repository.dart';
+import '../../domain/it_request_detail.dart';
 import '../../domain/it_request_item.dart';
 import '../bloc/list/it_request_list_bloc.dart';
 import '../bloc/list/it_request_list_event.dart';
@@ -53,6 +55,11 @@ class _ItFormAndMediaViewState extends State<_ItFormAndMediaView> {
 
   final _scrollController = ScrollController();
 
+  /// Id item yang rinciannya sedang diambil sebelum modal feedback dibuka —
+  /// null berarti tidak ada yang sedang dalam proses. Cuma satu banner yang
+  /// bisa "loading" sekaligus, jadi satu id sudah cukup.
+  int? _loadingFeedbackId;
+
   @override
   void initState() {
     super.initState();
@@ -95,19 +102,35 @@ class _ItFormAndMediaViewState extends State<_ItFormAndMediaView> {
   /// muncul setelah halaman itu ikut termuat.
   bool _isAwaitingFeedback(ItRequestItem item) => item.canRate;
 
+  /// Rincian penuh (termasuk `handling`) belum tentu ada di [item] dari
+  /// daftar, jadi diambil dulu supaya modal feedback bisa menampilkan
+  /// ringkasan pengerjaan tim IT — bukan cuma deskripsi singkat.
   Future<void> _giveFeedback(ItRequestItem item) async {
-    final rating = await showModalBottomSheet<int>(
+    final repository = context.read<ItRequestRepository>();
+
+    setState(() => _loadingFeedbackId = item.id);
+    ItRequestDetail detail;
+    try {
+      detail = await repository.fetchDetail(item.id);
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() => _loadingFeedbackId = null);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+      return;
+    }
+    if (!mounted) return;
+    setState(() => _loadingFeedbackId = null);
+
+    final result = await showModalBottomSheet<ItRequestDetail>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => ItRequestFeedbackSheet(description: item.description),
+      builder: (_) => ItRequestFeedbackSheet(detail: detail, repository: repository),
     );
 
-    if (rating == null || !mounted) return;
+    if (result == null || !mounted) return;
 
-    context
-        .read<ItRequestListBloc>()
-        .add(ItRequestLocalFeedbackGiven(id: item.id, rating: rating));
+    context.read<ItRequestListBloc>().add(ItRequestFeedbackGiven(result));
 
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -205,7 +228,10 @@ class _ItFormAndMediaViewState extends State<_ItFormAndMediaView> {
         children: [
           for (final item in awaiting) ...[
             ItRequestFeedbackBanner(
-                item: item, onGiveFeedback: () => _giveFeedback(item)),
+              item: item,
+              onGiveFeedback: () => _giveFeedback(item),
+              loading: _loadingFeedbackId == item.id,
+            ),
             const SizedBox(height: 12),
           ],
           // Server bilang masih ada yang menunggu rating, tapi tidak ada

@@ -8,8 +8,9 @@ import 'it_request_list_event.dart';
 import 'it_request_list_state.dart';
 
 /// Mengurus riwayat IT/Media Request: memuat halaman, menambah halaman
-/// berikutnya, dan dua penyesuaian lokal (tambah request, beri feedback)
-/// yang belum punya endpoint submit di server.
+/// berikutnya, dan menyisipkan hasil aksi yang sudah dieksekusi layar/sheet
+/// pemanggil sendiri (tambah request, beri feedback) — bloc ini cuma
+/// menyatukan hasilnya ke state, bukan yang memanggil API-nya.
 class ItRequestListBloc extends Bloc<ItRequestListEvent, ItRequestListState> {
   ItRequestListBloc({required ItRequestRepository repository})
       : _repository = repository,
@@ -18,7 +19,7 @@ class ItRequestListBloc extends Bloc<ItRequestListEvent, ItRequestListState> {
     on<ItRequestListRefreshed>(_onReload);
     on<ItRequestListNextPageRequested>(_onNextPage);
     on<ItRequestLocalItemAdded>(_onLocalItemAdded);
-    on<ItRequestLocalFeedbackGiven>(_onLocalFeedbackGiven);
+    on<ItRequestFeedbackGiven>(_onFeedbackGiven);
   }
 
   final ItRequestRepository _repository;
@@ -112,17 +113,14 @@ class ItRequestListBloc extends Bloc<ItRequestListEvent, ItRequestListState> {
     ));
   }
 
-  void _onLocalFeedbackGiven(
-    ItRequestLocalFeedbackGiven event,
+  void _onFeedbackGiven(
+    ItRequestFeedbackGiven event,
     Emitter<ItRequestListState> emit,
   ) {
     emit(state.copyWith(
       items: [
         for (final item in state.items)
-          if (item.id == event.id)
-            item.copyWith(rating: event.rating, canRate: false)
-          else
-            item,
+          if (item.id == event.detail.id) event.detail else item,
       ],
       summary: ItRequestSummary(
         awaitingRating:

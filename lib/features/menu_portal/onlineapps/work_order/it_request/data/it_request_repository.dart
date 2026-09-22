@@ -87,6 +87,34 @@ class ItRequestRepository {
     }
   }
 
+  /// Mengirim rating 1–5 bintang + catatan opsional untuk request yang
+  /// sudah selesai dikerjakan.
+  ///
+  /// Bentuk `data` pada respons sama persis dengan `GET .../{id}`, jadi
+  /// dipetakan lewat [ItRequestDetail.fromJson] yang sama — pemanggil bisa
+  /// langsung memakai `canRate`/`rating`/`ratingComment` terbaru dari server
+  /// tanpa fetch ulang.
+  ///
+  /// Melempar [ApiException] bila gagal, termasuk galat validasi.
+  Future<ItRequestDetail> submitRating(
+    int id, {
+    required int star,
+    String? message,
+  }) async {
+    final data = await _apiClient.post(
+      '${ApiConfig.itRequest}/$id/rating',
+      body: {'star': star, 'message': message},
+    );
+
+    try {
+      return ItRequestDetail.fromJson(data);
+    } on FormatException {
+      throw const ApiException.server(
+        'Rating terkirim, tapi respons server tidak dikenali.',
+      );
+    }
+  }
+
   static String _pathWithQuery(String path, Map<String, String> query) =>
       Uri(path: path, queryParameters: query).toString();
 }
