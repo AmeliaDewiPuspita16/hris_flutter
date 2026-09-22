@@ -184,6 +184,27 @@ void main() {
     });
   });
 
+  group('AuthUser.photoUrl', () {
+    test('membangun URL penuh dari nama berkas image', () {
+      final user = AuthUser.fromJson(loginResponseUser());
+
+      expect(
+        user.photoUrl,
+        'https://biieportal.co.id/storage/profile/ElAfRcrE0ZRtHsLm5PvIqGo32hIc0n3OrlmC8lsz.jpg',
+      );
+    });
+
+    test('null kalau image tidak dikirim server', () {
+      final user = AuthUser.fromJson({
+        'id': 1,
+        'name': 'Karyawan Baru',
+        'email': 'baru@biie.co.id',
+      });
+
+      expect(user.photoUrl, isNull);
+    });
+  });
+
   group('AuthUser.canManageItRequest', () {
     test('true untuk role "it media"', () {
       final user = AuthUser.fromJson({

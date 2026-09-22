@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_card.dart';
+import '../../../../core/widgets/user_avatar.dart';
 import '../../../auth/domain/auth_user.dart';
 import '../../../auth/presentation/bloc/auth/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth/auth_event.dart';
@@ -124,16 +125,13 @@ class ProfilScreen extends StatelessWidget {
       decoration: const BoxDecoration(gradient: AppColors.primaryGradient),
       child: Row(
         children: [
-          Container(
-            width: 64,
-            height: 64,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color:  Colors.white.withValues(alpha: 0.18),
-              shape: BoxShape.circle,
-              // border: Border.all(color: Colors.white.withValues(alpha: 0.3), width: 3),
-            ),
-            child: Text(user?.initials ?? p.initials, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: Colors.white)),
+          UserAvatar(
+            initials: user?.initials ?? p.initials,
+            photoUrl: user?.photoUrl,
+            radius: 32,
+            backgroundColor: Colors.white.withValues(alpha: 0.18),
+            fontSize: 22,
+            fontWeight: FontWeight.w800,
           ),
           const SizedBox(width: 14),
           Expanded(

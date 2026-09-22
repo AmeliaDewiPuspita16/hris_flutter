@@ -24,10 +24,26 @@ void main() {
     expect(find.text('Hi, Nanda'), findsNothing);
   });
 
-  testWidgets('menampilkan inisial pengguna di avatar', (tester) async {
-    await pumpHeader(tester, user: AuthUser.fromJson(loginResponseUser()));
+  testWidgets('menampilkan foto profil saat user punya image', (tester) async {
+    final user = AuthUser.fromJson(loginResponseUser());
+    await pumpHeader(tester, user: user);
+
+    final image = tester.widget<Image>(find.byType(Image));
+    expect((image.image as NetworkImage).url, user.photoUrl);
+  });
+
+  testWidgets('menampilkan inisial saat user belum punya foto', (tester) async {
+    await pumpHeader(
+      tester,
+      user: AuthUser.fromJson({
+        'id': 1,
+        'name': 'Ari Putra',
+        'email': 'ariputra@biie.co.id',
+      }),
+    );
 
     expect(find.text('AP'), findsOneWidget);
+    expect(find.byType(Image), findsNothing);
   });
 
   testWidgets('menampilkan section sebagai baris kedua', (tester) async {

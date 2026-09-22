@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:hris_mobile/features/auth/domain/auth_session.dart';
 import 'package:hris_mobile/features/auth/domain/auth_user.dart';
 import 'package:hris_mobile/features/auth/presentation/bloc/auth/auth_bloc.dart';
@@ -14,6 +15,8 @@ import '../../../../../../../support/auth_harness.dart';
 import '../../support/it_request_harness.dart';
 
 void main() {
+  setUpAll(() => initializeDateFormatting('id_ID'));
+
   Future<AuthBloc> authBlocWith(WidgetTester tester, List<String> roles) async {
     final harness = AuthHarness();
     harness.storage.session = AuthSession(
