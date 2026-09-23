@@ -57,6 +57,16 @@ class AppColors {
   static const estRequest = Color(0xFF8B5E34); // cokelat tanah, khusus tag "EST request"
   static const estRequestBg = Color(0xFFF4EBE0);
 
+  static const hseRequest = Color(0xFFB3261E); // merah bata, khusus tag "HSE request"
+  static const hseRequestBg = Color(0xFFFBEAE9);
+
+  // Status "On Progress" — dipakai HSE Work Request yang punya 4 status
+  // (On Waiting/On Progress/Done/Reject), beda dari present/pending/rejected
+  // yang sudah ada karena ketiganya representasi "selesai/menunggu/ditolak",
+  // sedangkan ini representasi "sedang berjalan".
+  static const inProgress = Color(0xFF1D4ED8);
+  static const inProgressBg = Color(0xFFE8EEFC);
+
   static const neutral = Color(0xFF888780); // inactiveNavColor
   static const neutralBg = Color(0xFFEDEDE7);
 

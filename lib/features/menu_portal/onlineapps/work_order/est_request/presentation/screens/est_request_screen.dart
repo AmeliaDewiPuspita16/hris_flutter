@@ -213,16 +213,84 @@ class _EstRequestScreenState extends State<EstRequestScreen> {
         title: 'EST Work Order',
         onBack: () => Navigator.of(context).pop(),
       ),
-      body: widget.isHod ? _buildHodView() : _buildAllRequestTab(),
+      // FAB oranye di kanan-bawah, sama pola dengan IT Request & HSE Work
+      // Request — menggantikan tombol "Add Request" full-width yang
+      // sebelumnya ada di atas list. Disembunyikan (bukan didisable) saat
+      // requester masih punya feedback tertunda; alasannya dijelaskan lewat
+      // banner kunci di dalam list (lihat _buildAllRequestList).
+      floatingActionButton: _canAddRequest
+          ? FloatingActionButton(
+              onPressed: _addRequest,
+              backgroundColor: AppColors.orange,
+              foregroundColor: Colors.white,
+              tooltip: 'Add Request',
+              child: const Icon(Icons.add),
+            )
+          : null,
+      body: SafeArea(
+        top: false,
+        child: Column(
+          children: [
+            // Search dipindah ke atas (fixed, di luar area scroll) dan tab
+            // "All Request"/"Approve HOD" ditaruh di bawahnya — mengikuti
+            // urutan search-lalu-filter di HseWorkRequestListScreen.
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  TextField(
+                    controller: _searchController,
+                    onChanged: (v) => setState(() => _query = v),
+                    style: AppTextStyles.body,
+                    decoration: InputDecoration(
+                      hintText: 'Search request...',
+                      hintStyle: AppTextStyles.body.copyWith(color: AppColors.textMuted),
+                      prefixIcon: const Icon(Icons.search, size: 19, color: AppColors.textMuted),
+                      filled: true,
+                      fillColor: Colors.white,
+                      contentPadding: const EdgeInsets.symmetric(vertical: 4),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: AppColors.border, width: 1.5),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: AppColors.border, width: 1.5),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: const BorderSide(color: AppColors.primaryMid, width: 1.5),
+                      ),
+                    ),
+                  ),
+                  if (widget.isHod) ...[
+                    const SizedBox(height: 12),
+                    EstRequestTabBar(
+                      labels: const ['All Request', 'Approve HOD'],
+                      activeIndex: _tabIndex,
+                      badgeCounts: {1: _pendingHodApproval.length},
+                      onChanged: (i) => setState(() => _tabIndex = i),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            Expanded(
+              child: widget.isHod ? _buildHodTabs() : _buildAllRequestList(),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
-  Widget _buildHodView() {
-    // IndexedStack menjaga tab All Request tetap "hidup" di belakang layar
-    // saat pindah ke Approve HOD, jadi posisi scroll & isi pencarian tidak
-    // reset — sama seperti alasan IndexedStack di ItRequestScreen.
+  /// IndexedStack menjaga tab All Request tetap "hidup" di belakang layar
+  /// saat pindah ke Approve HOD, jadi posisi scroll & isi pencarian tidak
+  /// reset — sama seperti alasan IndexedStack di ItRequestScreen.
+  Widget _buildHodTabs() {
     final tabs = [
-      _buildAllRequestTab(),
+      _buildAllRequestList(),
       EstApproveHodTab(
         items: _pendingHodApproval,
         onApprove: (item) => _decideHod(item, approved: true),
@@ -230,26 +298,16 @@ class _EstRequestScreenState extends State<EstRequestScreen> {
       ),
     ];
 
-    return Column(
-      children: [
-        const SizedBox(height: 12),
-        EstRequestTabBar(
-          labels: const ['All Request', 'Approve HOD'],
-          activeIndex: _tabIndex,
-          badgeCounts: {1: _pendingHodApproval.length},
-          onChanged: (i) => setState(() => _tabIndex = i),
-        ),
-        const SizedBox(height: 10),
-        Expanded(child: IndexedStack(index: _tabIndex, children: tabs)),
-      ],
-    );
+    return IndexedStack(index: _tabIndex, children: tabs);
   }
 
-  Widget _buildAllRequestTab() {
+  Widget _buildAllRequestList() {
     final results = _filtered;
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+      // Padding bawah ekstra (88) supaya baris terakhir tidak tertutup FAB
+      // "Add Request" yang mengambang, sama seperti di HSE.
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 88),
       children: [
         for (final item in _awaitingFeedback) ...[
           EstRequestFeedbackBanner(
@@ -258,22 +316,7 @@ class _EstRequestScreenState extends State<EstRequestScreen> {
           ),
           const SizedBox(height: 12),
         ],
-        if (_canAddRequest)
-          SizedBox(
-            width: double.infinity,
-            height: 46,
-            child: ElevatedButton.icon(
-              onPressed: _addRequest,
-              icon: const Icon(Icons.add, size: 18),
-              label: Text('Add Request', style: AppTextStyles.buttonText),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-            ),
-          )
-        else
+        if (!_canAddRequest) ...[
           Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -298,33 +341,8 @@ class _EstRequestScreenState extends State<EstRequestScreen> {
               ],
             ),
           ),
-        const SizedBox(height: 16),
-        TextField(
-          controller: _searchController,
-          onChanged: (v) => setState(() => _query = v),
-          style: AppTextStyles.body,
-          decoration: InputDecoration(
-            hintText: 'Search request...',
-            hintStyle: AppTextStyles.body.copyWith(color: AppColors.textMuted),
-            prefixIcon: const Icon(Icons.search, size: 19, color: AppColors.textMuted),
-            filled: true,
-            fillColor: Colors.white,
-            contentPadding: const EdgeInsets.symmetric(vertical: 4),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: AppColors.border, width: 1.5),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: AppColors.border, width: 1.5),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: AppColors.primaryMid, width: 1.5),
-            ),
-          ),
-        ),
-        const SizedBox(height: 14),
+          const SizedBox(height: 16),
+        ],
         if (results.isEmpty)
           Padding(
             padding: const EdgeInsets.only(top: 24),
