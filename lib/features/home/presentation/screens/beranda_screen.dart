@@ -5,7 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../data/announcement_repository.dart';
-import '../../../absensi/presentation/absensi_screen.dart';
+import '../../../absensi/presentation/screens/absensi_screen.dart';
 import '../../../kelola_tim/presentation/screens/kelola_tim_screen.dart';
 import '../../../menu_portal/onlineapps/presentation/screens/online_apps_screen.dart';
 import '../../../menu_portal/onlineapps/work_order/est_request/domain/est_request_demo_data.dart';
