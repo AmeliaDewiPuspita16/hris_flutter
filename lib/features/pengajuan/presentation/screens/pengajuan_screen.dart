@@ -2,23 +2,23 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
-import '../../shared/domain/role.dart';
+import '../../../shared/domain/role.dart';
 
-import '../domain/leave_type.dart';
-import 'widgets/ringkasan_tab.dart';
-import 'widgets/ajukan_tab.dart';
-import 'widgets/status_tab.dart';
+import '../../domain/leave_type.dart';
+import '../widgets/ringkasan_tab.dart';
+import '../widgets/ajukan_tab.dart';
+import '../widgets/status_tab.dart';
 
-enum _SubmitTab { 
-  ringkasan, 
-  ajukan, 
-  status 
+enum _SubmitTab {
+  ringkasan,
+  ajukan,
+  status
 }
 
 
 class PengajuanScreen extends StatefulWidget {
   const PengajuanScreen({
-    super.key, 
+    super.key,
     required this.role
   });
 
@@ -103,9 +103,9 @@ class _PengajuanScreenState extends State<PengajuanScreen> {
             decoration: BoxDecoration(
               border: Border(
                 bottom: BorderSide(
-                  color: active 
-                    ? AppColors.primary 
-                    : Colors.transparent, 
+                  color: active
+                    ? AppColors.primary
+                    : Colors.transparent,
                   width: 2.5
                 )
               ),
@@ -114,11 +114,11 @@ class _PengajuanScreenState extends State<PengajuanScreen> {
               label,
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 13, 
-                fontWeight: 
-                FontWeight.w700, 
-                color: active 
-                  ? AppColors.primary 
+                fontSize: 13,
+                fontWeight:
+                FontWeight.w700,
+                color: active
+                  ? AppColors.primary
                   : AppColors.textMuted
               ),
             ),
@@ -130,7 +130,7 @@ class _PengajuanScreenState extends State<PengajuanScreen> {
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
       decoration: const BoxDecoration(
-        color: Colors.white, 
+        color: Colors.white,
         border: Border(
           bottom: BorderSide(
             color: AppColors.border

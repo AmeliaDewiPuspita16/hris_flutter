@@ -39,7 +39,6 @@ class _StatusTabState extends State<StatusTab> {
       AppStatus.present,
       'Disetujui oleh Dewi Kusuma',
     ),
-
     _HistoryItem(
       'Lembur',
       Color(0xFF6B46C1),
@@ -48,7 +47,6 @@ class _StatusTabState extends State<StatusTab> {
       AppStatus.pending,
       'Menunggu persetujuan',
     ),
-
     _HistoryItem(
       'Cek Kesehatan',
       AppColors.presentMid,
@@ -57,7 +55,6 @@ class _StatusTabState extends State<StatusTab> {
       AppStatus.present,
       'Disetujui',
     ),
-
     _HistoryItem(
       'MC/Sakit',
       AppColors.rejected,
@@ -66,7 +63,6 @@ class _StatusTabState extends State<StatusTab> {
       AppStatus.rejected,
       'Ditolak: Surat dokter tidak lengkap',
     ),
-
     _HistoryItem(
       'Izin',
       AppColors.pending,
@@ -75,7 +71,6 @@ class _StatusTabState extends State<StatusTab> {
       AppStatus.present,
       'Disetujui',
     ),
-
     _HistoryItem(
       'Cuti Tahunan',
       AppColors.primaryMid,
@@ -88,26 +83,22 @@ class _StatusTabState extends State<StatusTab> {
 
   List<_HistoryItem> get filteredHistory {
     return historyItems.where((history) {
-      if (_statusFilter ==
-              _StatusFilter.menunggu &&
+      if (_statusFilter == _StatusFilter.menunggu &&
           history.status != AppStatus.pending) {
         return false;
       }
 
-      if (_statusFilter ==
-              _StatusFilter.disetujui &&
+      if (_statusFilter == _StatusFilter.disetujui &&
           history.status != AppStatus.present) {
         return false;
       }
 
-      if (_statusFilter ==
-              _StatusFilter.ditolak &&
+      if (_statusFilter == _StatusFilter.ditolak &&
           history.status != AppStatus.rejected) {
         return false;
       }
 
-      if (_typeFilter != 'semua' &&
-          history.type != _typeFilter) {
+      if (_typeFilter != 'semua' && history.type != _typeFilter) {
         return false;
       }
 
@@ -118,15 +109,11 @@ class _StatusTabState extends State<StatusTab> {
   @override
   Widget build(BuildContext context) {
     return Column(
-      crossAxisAlignment:
-          CrossAxisAlignment.stretch,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _buildFilter(),
-
         Expanded(
-          child: filteredHistory.isEmpty
-              ? _buildEmpty()
-              : _buildHistory(),
+          child: filteredHistory.isEmpty ? _buildEmpty() : _buildHistory(),
         ),
       ],
     );
@@ -151,16 +138,13 @@ class _StatusTabState extends State<StatusTab> {
         child: Row(
           children: [
             ..._StatusFilter.values.map((filter) {
-              final active =
-                  _statusFilter == filter;
+              final active = _statusFilter == filter;
 
-              final label = filter.name[0]
-                      .toUpperCase() +
-                  filter.name.substring(1);
+              final label =
+                  filter.name[0].toUpperCase() + filter.name.substring(1);
 
               return Padding(
-                padding:
-                    const EdgeInsets.only(
+                padding: const EdgeInsets.only(
                   right: 6,
                 ),
                 child: InkWell(
@@ -169,24 +153,17 @@ class _StatusTabState extends State<StatusTab> {
                       _statusFilter = filter;
                     });
                   },
-                  borderRadius:
-                      BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(20),
                   child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(
+                    padding: const EdgeInsets.symmetric(
                       horizontal: 12,
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: active
-                          ? AppColors.primary
-                          : Colors.white,
-                      borderRadius:
-                          BorderRadius.circular(20),
+                      color: active ? AppColors.primary : Colors.white,
+                      borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: active
-                            ? AppColors.primary
-                            : AppColors.border,
+                        color: active ? AppColors.primary : AppColors.border,
                         width: 1.5,
                       ),
                     ),
@@ -194,36 +171,28 @@ class _StatusTabState extends State<StatusTab> {
                       label,
                       style: TextStyle(
                         fontSize: 11,
-                        fontWeight:
-                            FontWeight.w600,
-                        color: active
-                            ? Colors.white
-                            : AppColors.textMuted,
+                        fontWeight: FontWeight.w600,
+                        color: active ? Colors.white : AppColors.textMuted,
                       ),
                     ),
                   ),
                 ),
               );
             }),
-
             Container(
               width: 1,
               height: 20,
               color: AppColors.border,
-              margin:
-                  const EdgeInsets.symmetric(
+              margin: const EdgeInsets.symmetric(
                 horizontal: 6,
               ),
             ),
-
             Container(
-              padding:
-                  const EdgeInsets.symmetric(
+              padding: const EdgeInsets.symmetric(
                 horizontal: 4,
               ),
               decoration: BoxDecoration(
-                borderRadius:
-                    BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(20),
                 border: Border.all(
                   color: AppColors.border,
                   width: 1.5,
@@ -234,8 +203,7 @@ class _StatusTabState extends State<StatusTab> {
                   value: _typeFilter,
                   style: const TextStyle(
                     fontSize: 11,
-                    fontWeight:
-                        FontWeight.w600,
+                    fontWeight: FontWeight.w600,
                     color: AppColors.textMuted,
                   ),
                   items: [
@@ -243,10 +211,7 @@ class _StatusTabState extends State<StatusTab> {
                       value: 'semua',
                       child: Text('Semua Jenis'),
                     ),
-
-                    ...LeaveTypeX
-                        .optionsFor(widget.role)
-                        .map(
+                    ...LeaveTypeX.optionsFor(widget.role).map(
                       (type) {
                         return DropdownMenuItem(
                           value: type.label,
@@ -257,8 +222,7 @@ class _StatusTabState extends State<StatusTab> {
                   ],
                   onChanged: (value) {
                     setState(() {
-                      _typeFilter =
-                          value ?? 'semua';
+                      _typeFilter = value ?? 'semua';
                     });
                   },
                 ),
@@ -274,55 +238,44 @@ class _StatusTabState extends State<StatusTab> {
     return ListView.separated(
       padding: const EdgeInsets.all(20),
       itemCount: filteredHistory.length,
-      separatorBuilder: (_, __) =>
-          const SizedBox(height: 10),
+      separatorBuilder: (_, __) => const SizedBox(height: 10),
       itemBuilder: (context, index) {
-        final history =
-            filteredHistory[index];
+        final history = filteredHistory[index];
 
         return AppCard(
           padding: const EdgeInsets.all(14),
           child: Column(
-            crossAxisAlignment:
-                CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Wrap(
-                spacing: 6,
-                runSpacing: 6,
-                crossAxisAlignment:
-                    WrapCrossAlignment.center,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
+                  // Badge Tipe (Kiri)
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(
+                    padding: const EdgeInsets.symmetric(
                       horizontal: 8,
                       vertical: 3,
                     ),
                     decoration: BoxDecoration(
                       color: history.typeBg,
-                      borderRadius:
-                          BorderRadius.circular(6),
+                      borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
                       history.type,
                       style: TextStyle(
                         fontSize: 10,
-                        fontWeight:
-                            FontWeight.w700,
-                        color:
-                            history.typeColor,
+                        fontWeight: FontWeight.w700,
+                        color: history.typeColor,
                       ),
                     ),
                   ),
-
+                  // Badge Status (Kanan)
                   StatusBadge(
                     status: history.status,
                   ),
                 ],
               ),
-
               const SizedBox(height: 6),
-
               Text(
                 history.date,
                 style: const TextStyle(
@@ -331,23 +284,17 @@ class _StatusTabState extends State<StatusTab> {
                   color: AppColors.text,
                 ),
               ),
-
               const SizedBox(height: 3),
-
               Text(
                 history.note,
                 style: TextStyle(
                   fontSize: 11,
-                  color:
-                      history.status ==
-                              AppStatus.rejected
-                          ? AppColors.rejected
-                          : AppColors.textMuted,
-                  fontWeight:
-                      history.status ==
-                              AppStatus.rejected
-                          ? FontWeight.w600
-                          : FontWeight.w400,
+                  color: history.status == AppStatus.rejected
+                      ? AppColors.rejected
+                      : AppColors.textMuted,
+                  fontWeight: history.status == AppStatus.rejected
+                      ? FontWeight.w600
+                      : FontWeight.w400,
                 ),
               ),
             ],
@@ -366,9 +313,7 @@ class _StatusTabState extends State<StatusTab> {
             '🔍',
             style: TextStyle(fontSize: 36),
           ),
-
           SizedBox(height: 12),
-
           Text(
             'Tidak ada data ditemukan',
             style: TextStyle(

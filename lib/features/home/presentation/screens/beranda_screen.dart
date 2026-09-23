@@ -14,7 +14,7 @@ import '../../../menu_portal/onlineapps/work_order/it_request/domain/approve_req
 import '../../../menu_portal/onlineapps/work_order/it_request/presentation/screens/it_request_screen.dart';
 import '../../../notifikasi/domain/notification_filter.dart';
 import '../widgets/approval_summary_banner.dart';
-import '../../../pengajuan/presentation/pengajuan_screen.dart';
+import '../../../pengajuan/presentation/screens/pengajuan_screen.dart';
 import '../../../profil/presentation/screens/profil_screen.dart';
 import '../../../gaji/presentation/gaji_screen.dart';
 import '../../../notifikasi/domain/app_notification.dart';
