@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/logging/app_logger.dart';
+import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/app_date_field.dart';
@@ -10,42 +12,47 @@ import '../../../../core/widgets/app_dropdown.dart';
 import '../../../../core/widgets/app_time_field.dart';
 
 import '../../../shared/domain/role.dart';
+import '../../data/pengajuan_repository.dart';
+import '../../domain/duration_type.dart';
+import '../../domain/leave_request_draft.dart';
 import '../../domain/leave_type.dart';
+import '../bloc/history/leave_history_bloc.dart';
+import '../bloc/history/leave_history_event.dart';
+import 'duration_type_selector.dart';
+import 'reason_field.dart';
+import 'upload_field.dart';
 
-enum _DurationType {
-  full,
-  half,
-  hourly,
-}
-
+/// Tab "Ajukan" — form pengajuan cuti/izin/lembur/cek kesehatan.
+///
+/// Field yang tampil dinamis mengikuti [LeaveType] terpilih (lihat
+/// [_buildDynamicFields]). Submit memanggil
+/// `PengajuanRepository.submitLeaveRequest` sendiri lalu menyisipkan
+/// hasilnya ke [LeaveHistoryBloc] yang sudah disediakan `PengajuanScreen` —
+/// pola sama dengan `AddItRequestScreen`/`ItRequestLocalItemAdded` di
+/// modul IT Request. Galat ditangani dengan setState lokal (bukan bloc
+/// tersendiri) karena ini aksi sekali-jalan yang terikat ke satu form,
+/// sama seperti `AddItRequestScreen`.
 class AjukanTab extends StatefulWidget {
   const AjukanTab({
     super.key,
     required this.role,
-    required this.leaveType,
-    required this.izinCategory,
-    required this.submitted,
-    required this.onLeaveTypeChanged,
-    required this.onIzinCategoryChanged,
-    required this.onSubmit,
+    required this.onSubmitted,
   });
 
   final Role role;
-  final LeaveType leaveType;
-  final LeaveCategory izinCategory;
-  final bool submitted;
 
-  final ValueChanged<LeaveType> onLeaveTypeChanged;
-  final ValueChanged<LeaveCategory> onIzinCategoryChanged;
-  final VoidCallback onSubmit;
+  /// Dipanggil sesaat setelah pengajuan berhasil terkirim, supaya
+  /// `PengajuanScreen` bisa memindahkan tab aktif ke Status.
+  final VoidCallback onSubmitted;
 
   @override
   State<AjukanTab> createState() => _AjukanTabState();
 }
 
 class _AjukanTabState extends State<AjukanTab> {
-  _DurationType _durationType =
-      _DurationType.full;
+  late LeaveType _leaveType = LeaveTypeX.optionsFor(widget.role).first;
+  LeaveCategory _izinCategory = LeaveCategory.mcSakit;
+  DurationType _durationType = DurationType.full;
 
   final _reasonCtrl = TextEditingController();
 
@@ -56,21 +63,79 @@ class _AjukanTabState extends State<AjukanTab> {
   TimeOfDay? _endTime = const TimeOfDay(hour: 12, minute: 0);
   String? _fileName;
 
+  bool _submitting = false;
+  bool _submitted = false;
+  String? _submitError;
+
   @override
   void dispose() {
     _reasonCtrl.dispose();
-
     super.dispose();
+  }
+
+  bool get _needsTimeRange =>
+      _leaveType == LeaveType.lembur || _durationType != DurationType.full;
+
+  Future<void> _handleSubmit() async {
+    setState(() {
+      _submitting = true;
+      _submitError = null;
+    });
+
+    final draft = LeaveRequestDraft(
+      leaveType: _leaveType,
+      izinCategory: _leaveType == LeaveType.izin ? _izinCategory : null,
+      durationType: _durationType,
+      startDate: _startDate,
+      endDate: _endDate,
+      date: _date,
+      startTime: _needsTimeRange ? _startTime : null,
+      endTime: _needsTimeRange ? _endTime : null,
+      reason: _reasonCtrl.text.trim().isEmpty ? null : _reasonCtrl.text.trim(),
+      attachmentFileName: _fileName,
+    );
+
+    try {
+      final repository = context.read<PengajuanRepository>();
+      final entry = await repository.submitLeaveRequest(draft);
+
+      if (!mounted) return;
+      context.read<LeaveHistoryBloc>().add(LeaveHistoryLocalItemAdded(entry));
+
+      setState(() {
+        _submitting = false;
+        _submitted = true;
+      });
+
+      await Future.delayed(const Duration(milliseconds: 1500));
+      if (!mounted) return;
+      widget.onSubmitted();
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _submitting = false;
+        _submitError = e.message;
+      });
+    } catch (e, stack) {
+      AppLogger.error(
+        'Pengajuan gagal dikirim karena galat tak terduga',
+        e,
+        stack,
+      );
+
+      if (!mounted) return;
+      setState(() {
+        _submitting = false;
+        _submitError = 'Terjadi kesalahan tak terduga. Coba lagi.';
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    if (widget.submitted) {
-      return _buildSubmitted();
-    }
+    if (_submitted) return _buildSubmitted();
 
-    final options =
-        LeaveTypeX.optionsFor(widget.role);
+    final options = LeaveTypeX.optionsFor(widget.role);
 
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
@@ -80,8 +145,7 @@ class _AjukanTabState extends State<AjukanTab> {
           AppCard(
             padding: const EdgeInsets.all(18),
             child: Column(
-              crossAxisAlignment:
-                  CrossAxisAlignment.stretch,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const Text(
                   'DETAIL PENGAJUAN',
@@ -92,45 +156,34 @@ class _AjukanTabState extends State<AjukanTab> {
                     letterSpacing: 0.3,
                   ),
                 ),
-
                 const SizedBox(height: 14),
-
-                const Divider(
-                  height: 1,
-                  color: AppColors.border,
-                ),
-
+                const Divider(height: 1, color: AppColors.border),
                 const SizedBox(height: 16),
-
                 AppDropdown<LeaveType>(
                   label: 'Jenis Pengajuan',
-                  value: widget.leaveType,
+                  value: _leaveType,
                   required: true,
-                  items: options
-                      .map(
-                        (o) => (
-                          value: o,
-                          label: o.label,
-                        ),
-                      )
-                      .toList(),
-                  onChanged:
-                      widget.onLeaveTypeChanged,
+                  items: options.map((o) => (value: o, label: o.label)).toList(),
+                  onChanged: (value) => setState(() => _leaveType = value),
                 ),
-
                 const SizedBox(height: 16),
-
                 ..._buildDynamicFields(),
+                if (_submitError != null) ...[
+                  const SizedBox(height: 12),
+                  Text(
+                    _submitError!,
+                    style: const TextStyle(fontSize: 12, color: AppColors.rejected),
+                  ),
+                ],
               ],
             ),
           ),
-
           const SizedBox(height: 18),
-
           AppButton(
             label: 'Kirim Pengajuan',
             variant: AppButtonVariant.green,
-            onPressed: widget.onSubmit,
+            isLoading: _submitting,
+            onPressed: _handleSubmit,
           ),
         ],
       ),
@@ -140,8 +193,7 @@ class _AjukanTabState extends State<AjukanTab> {
   Widget _buildSubmitted() {
     return Center(
       child: Padding(
-        padding:
-            const EdgeInsets.symmetric(horizontal: 40),
+        padding: const EdgeInsets.symmetric(horizontal: 40),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -152,19 +204,11 @@ class _AjukanTabState extends State<AjukanTab> {
               decoration: BoxDecoration(
                 color: AppColors.presentBg,
                 shape: BoxShape.circle,
-                border: Border.all(
-                  color: AppColors.presentMid,
-                  width: 2,
-                ),
+                border: Border.all(color: AppColors.presentMid, width: 2),
               ),
-              child: const Text(
-                '✅',
-                style: TextStyle(fontSize: 36),
-              ),
+              child: const Text('✅', style: TextStyle(fontSize: 36)),
             ),
-
             const SizedBox(height: 16),
-
             const Text(
               'Pengajuan Terkirim!',
               style: TextStyle(
@@ -173,15 +217,10 @@ class _AjukanTabState extends State<AjukanTab> {
                 color: AppColors.present,
               ),
             ),
-
             const SizedBox(height: 8),
-
             const Text(
               'Mengarahkan ke halaman status...',
-              style: TextStyle(
-                fontSize: 13,
-                color: AppColors.textMuted,
-              ),
+              style: TextStyle(fontSize: 13, color: AppColors.textMuted),
             ),
           ],
         ),
@@ -190,7 +229,7 @@ class _AjukanTabState extends State<AjukanTab> {
   }
 
   List<Widget> _buildDynamicFields() {
-    switch (widget.leaveType) {
+    switch (_leaveType) {
       case LeaveType.cutiTahunan:
       case LeaveType.cutiPengganti:
         return [
@@ -199,78 +238,42 @@ class _AjukanTabState extends State<AjukanTab> {
             startDate: _startDate,
             endDate: _endDate,
             required: true,
-            onChanged: (start, end) {
-              setState(() {
-                _startDate = start;
-                _endDate = end;
-              });
-            },
+            onChanged: (start, end) => setState(() {
+              _startDate = start;
+              _endDate = end;
+            }),
           ),
-
           const SizedBox(height: 16),
-
-          _reasonField(hint: 'Contoh: Liburan keluarga...'),
+          ReasonField(controller: _reasonCtrl, hint: 'Contoh: Liburan keluarga...'),
         ];
 
       case LeaveType.izin:
         return [
           AppDropdown<LeaveCategory>(
             label: 'Kategori Izin',
-            value: widget.izinCategory,
+            value: _izinCategory,
             required: true,
-            items: LeaveCategoryX.all
-                .map(
-                  (category) => (
-                    value: category,
-                    label: category.label,
-                  ),
-                )
-                .toList(),
-            onChanged: widget.onIzinCategoryChanged,
+            items: LeaveCategoryX.all.map((c) => (value: c, label: c.label)).toList(),
+            onChanged: (value) => setState(() => _izinCategory = value),
           ),
-
           const SizedBox(height: 16),
-
           AppDateField(
             label: 'Tanggal Izin',
             value: _date,
             required: true,
             onChanged: (date) => setState(() => _date = date),
           ),
-
           const SizedBox(height: 16),
-
-          _durationSelector(),
-
-          if (_durationType != _DurationType.full) ...[
+          DurationTypeSelector(
+            value: _durationType,
+            onChanged: (type) => setState(() => _durationType = type),
+          ),
+          if (_durationType != DurationType.full) ...[
             const SizedBox(height: 16),
-
-            Row(
-              children: [
-                Expanded(
-                  child: AppTimeField(
-                    label: 'Mulai',
-                    value: _startTime,
-                    onChanged: (time) => setState(() => _startTime = time),
-                  ),
-                ),
-
-                const SizedBox(width: 12),
-
-                Expanded(
-                  child: AppTimeField(
-                    label: 'Selesai',
-                    value: _endTime,
-                    onChanged: (time) => setState(() => _endTime = time),
-                  ),
-                ),
-              ],
-            ),
+            _timeRangeRow(startLabel: 'Mulai', endLabel: 'Selesai'),
           ],
-
           const SizedBox(height: 16),
-
-          _reasonField(hint: 'Contoh: Keperluan medis...'),
+          ReasonField(controller: _reasonCtrl, hint: 'Contoh: Keperluan medis...'),
         ];
 
       case LeaveType.lembur:
@@ -281,334 +284,66 @@ class _AjukanTabState extends State<AjukanTab> {
             required: true,
             onChanged: (date) => setState(() => _date = date),
           ),
-
           const SizedBox(height: 16),
-
-          Row(
-            children: [
-              Expanded(
-                child: AppTimeField(
-                  label: 'Waktu Mulai',
-                  value: _startTime,
-                  onChanged: (time) => setState(() => _startTime = time),
-                ),
-              ),
-
-              const SizedBox(width: 12),
-
-              Expanded(
-                child: AppTimeField(
-                  label: 'Waktu Selesai',
-                  value: _endTime,
-                  onChanged: (time) => setState(() => _endTime = time),
-                ),
-              ),
-            ],
-          ),
-
+          _timeRangeRow(startLabel: 'Waktu Mulai', endLabel: 'Waktu Selesai'),
           const SizedBox(height: 16),
-
-          _reasonField(
+          ReasonField(
+            controller: _reasonCtrl,
             label: 'Uraian Pekerjaan',
-            hint:
-                'Contoh: Penyelesaian laporan Q2...',
+            hint: 'Contoh: Penyelesaian laporan Q2...',
           ),
         ];
 
       case LeaveType.cekKesehatan:
         return [
           Container(
-            padding:
-                const EdgeInsets.symmetric(
-              horizontal: 14,
-              vertical: 12,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             decoration: BoxDecoration(
               color: const Color(0xFFFFFBEB),
-              border: Border.all(
-                color: AppColors.accentLight,
-              ),
-              borderRadius:
-                  BorderRadius.circular(10),
+              border: Border.all(color: AppColors.accentLight),
+              borderRadius: BorderRadius.circular(10),
             ),
             child: const Text(
-              '🩺 Jadwalkan pemeriksaan kesehatan tahunan. Surat dokter wajib diunggah setelah pemeriksaan.',
-              style: TextStyle(
-                fontSize: 12,
-                color: Color(0xFF744210),
-              ),
+              '🩺 Jadwalkan pemeriksaan kesehatan tahunan. Surat dokter wajib '
+              'diunggah setelah pemeriksaan.',
+              style: TextStyle(fontSize: 12, color: Color(0xFF744210)),
             ),
           ),
-
           const SizedBox(height: 16),
-
           AppDateField(
             label: 'Tanggal Cek Kesehatan',
             value: _date,
             required: true,
             onChanged: (date) => setState(() => _date = date),
           ),
-
           const SizedBox(height: 16),
-
-          _uploadField(
+          UploadField(
             label: 'Surat / Bukti Pemeriksaan',
             required: true,
-            defaultFile:
-                'bukti_cek_kesehatan.pdf',
+            fileName: _fileName,
+            defaultFile: 'bukti_cek_kesehatan.pdf',
+            onChanged: (name) => setState(() => _fileName = name),
           ),
         ];
     }
   }
 
-  Widget _reasonField({
-    String label = 'Alasan',
-    required String hint,
-    int maxLines = 3,
-  }) {
-    return Column(
-      crossAxisAlignment:
-          CrossAxisAlignment.start,
+  Widget _timeRangeRow({required String startLabel, required String endLabel}) {
+    return Row(
       children: [
-        Text(
-          label,
-          style: AppTextStyles.label,
-        ),
-
-        const SizedBox(height: 6),
-
-        TextField(
-          controller: _reasonCtrl,
-          maxLines: maxLines,
-          style: AppTextStyles.body,
-          decoration: InputDecoration(
-            hintText: hint,
-            hintStyle:
-                AppTextStyles.body.copyWith(
-              color: AppColors.textMuted,
-            ),
-            filled: true,
-            fillColor: Colors.white,
-            contentPadding:
-                const EdgeInsets.all(12),
-            border: OutlineInputBorder(
-              borderRadius:
-                  BorderRadius.circular(10),
-              borderSide: const BorderSide(
-                color: AppColors.border,
-                width: 1.5,
-              ),
-            ),
-            enabledBorder:
-                OutlineInputBorder(
-              borderRadius:
-                  BorderRadius.circular(10),
-              borderSide: const BorderSide(
-                color: AppColors.border,
-                width: 1.5,
-              ),
-            ),
-            focusedBorder:
-                OutlineInputBorder(
-              borderRadius:
-                  BorderRadius.circular(10),
-              borderSide: const BorderSide(
-                color: AppColors.primaryMid,
-                width: 1.5,
-              ),
-            ),
+        Expanded(
+          child: AppTimeField(
+            label: startLabel,
+            value: _startTime,
+            onChanged: (time) => setState(() => _startTime = time),
           ),
         ),
-      ],
-    );
-  }
-
-  Widget _durationSelector() {
-    const options = [
-      (
-        _DurationType.full,
-        'Seharian',
-      ),
-      (
-        _DurationType.half,
-        'Setengah Hari',
-      ),
-      (
-        _DurationType.hourly,
-        'Per Jam',
-      ),
-    ];
-
-    return Column(
-      crossAxisAlignment:
-          CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Durasi',
-          style: AppTextStyles.label,
-        ),
-
-        const SizedBox(height: 8),
-
-        Row(
-          children: options.map((option) {
-            final active =
-                _durationType == option.$1;
-
-            return Expanded(
-              child: Padding(
-                padding: EdgeInsets.only(
-                  right:
-                      option == options.last
-                          ? 0
-                          : 8,
-                ),
-                child: InkWell(
-                  onTap: () {
-                    setState(() {
-                      _durationType =
-                          option.$1;
-                    });
-                  },
-                  borderRadius:
-                      BorderRadius.circular(9),
-                  child: Container(
-                    padding:
-                        const EdgeInsets.symmetric(
-                      vertical: 9,
-                    ),
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: active
-                          ? AppColors.primary
-                          : Colors.white,
-                      borderRadius:
-                          BorderRadius.circular(9),
-                      border: Border.all(
-                        color: active
-                            ? AppColors.primary
-                            : AppColors.border,
-                        width: 1.5,
-                      ),
-                    ),
-                    child: Text(
-                      option.$2,
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight:
-                            FontWeight.w600,
-                        color: active
-                            ? Colors.white
-                            : AppColors.textMuted,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            );
-          }).toList(),
-        ),
-      ],
-    );
-  }
-
-  Widget _uploadField({
-    required String label,
-    bool required = false,
-    required String defaultFile,
-  }) {
-    final hasFile = _fileName != null;
-
-    return Column(
-      crossAxisAlignment:
-          CrossAxisAlignment.start,
-      children: [
-        RichText(
-          text: TextSpan(
-            style: AppTextStyles.label,
-            children: [
-              TextSpan(text: label),
-
-              if (required)
-                const TextSpan(
-                  text: ' *',
-                  style: TextStyle(
-                    color: AppColors.rejected,
-                  ),
-                ),
-            ],
-          ),
-        ),
-
-        const SizedBox(height: 6),
-
-        InkWell(
-          onTap: () {
-            setState(() {
-              _fileName =
-                  hasFile ? null : defaultFile;
-            });
-          },
-          borderRadius:
-              BorderRadius.circular(12),
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: hasFile
-                  ? AppColors.presentBg
-                  : const Color(0xFFFAFAFA),
-              borderRadius:
-                  BorderRadius.circular(12),
-              border: Border.all(
-                color: hasFile
-                    ? AppColors.presentMid
-                    : AppColors.border,
-                width: 2,
-              ),
-            ),
-            child: hasFile
-                ? Text(
-                    '📄 $_fileName',
-                    textAlign:
-                        TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight:
-                          FontWeight.w700,
-                      color:
-                          AppColors.presentMid,
-                    ),
-                  )
-                : const Column(
-                    children: [
-                      Icon(
-                        Icons.upload_outlined,
-                        color:
-                            AppColors.textMuted,
-                      ),
-                      SizedBox(height: 8),
-                      Text(
-                        'Tap untuk unggah',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight:
-                              FontWeight.w600,
-                          color:
-                              AppColors.textSub,
-                        ),
-                      ),
-                      SizedBox(height: 4),
-                      Text(
-                        'PDF, JPG, PNG · Maks. 5MB',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color:
-                              AppColors.textMuted,
-                        ),
-                      ),
-                    ],
-                  ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: AppTimeField(
+            label: endLabel,
+            value: _endTime,
+            onChanged: (time) => setState(() => _endTime = time),
           ),
         ),
       ],

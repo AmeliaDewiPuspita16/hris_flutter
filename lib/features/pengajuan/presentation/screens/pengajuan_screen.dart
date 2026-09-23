@@ -1,52 +1,67 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/network/api_client.dart';
 import '../../../shared/domain/role.dart';
 
-import '../../domain/leave_type.dart';
-import '../widgets/ringkasan_tab.dart';
+import '../../data/pengajuan_repository.dart';
+import '../bloc/balance/leave_balance_bloc.dart';
+import '../bloc/balance/leave_balance_event.dart';
+import '../bloc/history/leave_history_bloc.dart';
+import '../bloc/history/leave_history_event.dart';
 import '../widgets/ajukan_tab.dart';
+import '../widgets/ringkasan_tab.dart';
 import '../widgets/status_tab.dart';
 
-enum _SubmitTab {
-  ringkasan,
-  ajukan,
-  status
+enum _SubmitTab { ringkasan, ajukan, status }
+
+/// Shell tab Pengajuan (Ringkasan / Ajukan / Status).
+///
+/// Menyediakan [LeaveBalanceBloc] dan [LeaveHistoryBloc] di sini, satu
+/// tingkat di atas ketiga tab, supaya [AjukanTab] bisa menyisipkan hasil
+/// submit ke [LeaveHistoryBloc] yang sama yang dibaca [StatusTab] — tanpa
+/// kedua bloc itu perlu saling kenal satu sama lain.
+class PengajuanScreen extends StatelessWidget {
+  const PengajuanScreen({super.key, required this.role, this.repository});
+
+  final Role role;
+
+  /// Diisi test; di aplikasi diambil dari [RepositoryProvider].
+  final PengajuanRepository? repository;
+
+  @override
+  Widget build(BuildContext context) {
+    final pengajuan = repository ?? PengajuanRepository(apiClient: ApiClient());
+
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create: (_) => LeaveBalanceBloc(repository: pengajuan, role: role)
+            ..add(const LeaveBalanceStarted()),
+        ),
+        BlocProvider(
+          create: (_) => LeaveHistoryBloc(repository: pengajuan)
+            ..add(const LeaveHistoryStarted()),
+        ),
+      ],
+      child: _PengajuanView(role: role),
+    );
+  }
 }
 
-
-class PengajuanScreen extends StatefulWidget {
-  const PengajuanScreen({
-    super.key,
-    required this.role
-  });
+class _PengajuanView extends StatefulWidget {
+  const _PengajuanView({required this.role});
 
   final Role role;
 
   @override
-  State<PengajuanScreen> createState() => _PengajuanScreenState();
+  State<_PengajuanView> createState() => _PengajuanViewState();
 }
 
-class _PengajuanScreenState extends State<PengajuanScreen> {
+class _PengajuanViewState extends State<_PengajuanView> {
   _SubmitTab _tab = _SubmitTab.ringkasan;
-
-  LeaveType _leaveType = LeaveType.cutiTahunan;
-  LeaveCategory _izinCategory = LeaveCategory.mcSakit;
-
-  bool _submitted = false;
-
-  void _handleSubmit() {
-    setState(() => _submitted = true);
-    Future.delayed(const Duration(milliseconds: 1500), () {
-      if (!mounted) return;
-
-      setState(() {
-        _submitted = false;
-        _tab = _SubmitTab.status;
-      });
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -58,33 +73,20 @@ class _PengajuanScreenState extends State<PengajuanScreen> {
         child: ColoredBox(
           color: AppColors.bg,
           child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _buildHeader(),
-
-            Expanded(
-              child: switch (_tab) {
-                _SubmitTab.ringkasan => RingkasanTab(role: widget.role),
-                _SubmitTab.ajukan => AjukanTab(
-                  role: widget.role,
-                  leaveType: _leaveType,
-                  izinCategory: _izinCategory,
-                  submitted: _submitted,
-
-                  onLeaveTypeChanged: (value) {
-                    setState(() => _leaveType = value);
-                  },
-
-                  onIzinCategoryChanged: (value) {
-                    setState(() => _izinCategory = value);
-                  },
-                  onSubmit: _handleSubmit,
-                ),
-
-                _SubmitTab.status => StatusTab(role: widget.role),
-              },
-            ),
-          ],
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _buildHeader(),
+              Expanded(
+                child: switch (_tab) {
+                  _SubmitTab.ringkasan => const RingkasanTab(),
+                  _SubmitTab.ajukan => AjukanTab(
+                      role: widget.role,
+                      onSubmitted: () => setState(() => _tab = _SubmitTab.status),
+                    ),
+                  _SubmitTab.status => StatusTab(role: widget.role),
+                },
+              ),
+            ],
           ),
         ),
       ),
@@ -103,11 +105,9 @@ class _PengajuanScreenState extends State<PengajuanScreen> {
             decoration: BoxDecoration(
               border: Border(
                 bottom: BorderSide(
-                  color: active
-                    ? AppColors.primary
-                    : Colors.transparent,
-                  width: 2.5
-                )
+                  color: active ? AppColors.primary : Colors.transparent,
+                  width: 2.5,
+                ),
               ),
             ),
             child: Text(
@@ -115,11 +115,8 @@ class _PengajuanScreenState extends State<PengajuanScreen> {
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 13,
-                fontWeight:
-                FontWeight.w700,
-                color: active
-                  ? AppColors.primary
-                  : AppColors.textMuted
+                fontWeight: FontWeight.w700,
+                color: active ? AppColors.primary : AppColors.textMuted,
               ),
             ),
           ),
@@ -131,11 +128,7 @@ class _PengajuanScreenState extends State<PengajuanScreen> {
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
       decoration: const BoxDecoration(
         color: Colors.white,
-        border: Border(
-          bottom: BorderSide(
-            color: AppColors.border
-          )
-        )
+        border: Border(bottom: BorderSide(color: AppColors.border)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -144,7 +137,6 @@ class _PengajuanScreenState extends State<PengajuanScreen> {
             padding: EdgeInsets.only(bottom: 14),
             child: Text('Pengajuan', style: AppTextStyles.h2),
           ),
-
           Row(
             children: [
               tabButton(_SubmitTab.ringkasan, 'Ringkasan'),

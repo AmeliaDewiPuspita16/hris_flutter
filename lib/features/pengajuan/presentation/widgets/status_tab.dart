@@ -1,23 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/status_badge.dart';
 import '../../../shared/domain/role.dart';
+import '../../domain/leave_history_entry.dart';
 import '../../domain/leave_type.dart';
+import '../bloc/history/leave_history_bloc.dart';
+import '../bloc/history/leave_history_state.dart';
 
-enum _StatusFilter {
-  semua,
-  menunggu,
-  disetujui,
-  ditolak,
-}
+enum _StatusFilter { semua, menunggu, disetujui, ditolak }
 
+/// Tab "Status" — riwayat pengajuan dengan filter status & jenis.
+///
+/// Sumber datanya [LeaveHistoryBloc]. Filter di sini murni state tampilan
+/// (menyaring data yang sudah termuat), bukan sumber data itu sendiri —
+/// jadi tetap disimpan lokal di widget ini, bukan di bloc.
 class StatusTab extends StatefulWidget {
-  const StatusTab({
-    super.key,
-    required this.role,
-  });
+  const StatusTab({super.key, required this.role});
 
   final Role role;
 
@@ -27,111 +28,62 @@ class StatusTab extends StatefulWidget {
 
 class _StatusTabState extends State<StatusTab> {
   _StatusFilter _statusFilter = _StatusFilter.semua;
-
   String _typeFilter = 'semua';
 
-  static const historyItems = [
-    _HistoryItem(
-      'Cuti Tahunan',
-      AppColors.primaryMid,
-      AppColors.primaryLight,
-      '17–19 Jul 2026',
-      AppStatus.present,
-      'Disetujui oleh Dewi Kusuma',
-    ),
-    _HistoryItem(
-      'Lembur',
-      Color(0xFF6B46C1),
-      Color(0xFFFAF5FF),
-      '28 Agu 2026 · 18:30–20:45',
-      AppStatus.pending,
-      'Menunggu persetujuan',
-    ),
-    _HistoryItem(
-      'Cek Kesehatan',
-      AppColors.presentMid,
-      AppColors.presentBg,
-      '10 Agu 2026',
-      AppStatus.present,
-      'Disetujui',
-    ),
-    _HistoryItem(
-      'MC/Sakit',
-      AppColors.rejected,
-      AppColors.rejectedBg,
-      '5–6 Agu 2026',
-      AppStatus.rejected,
-      'Ditolak: Surat dokter tidak lengkap',
-    ),
-    _HistoryItem(
-      'Izin',
-      AppColors.pending,
-      AppColors.pendingBg,
-      '25 Jul 2026 · Setengah Hari',
-      AppStatus.present,
-      'Disetujui',
-    ),
-    _HistoryItem(
-      'Cuti Tahunan',
-      AppColors.primaryMid,
-      AppColors.primaryLight,
-      '1–3 Jul 2026',
-      AppStatus.present,
-      'Disetujui',
-    ),
-  ];
-
-  List<_HistoryItem> get filteredHistory {
-    return historyItems.where((history) {
-      if (_statusFilter == _StatusFilter.menunggu &&
-          history.status != AppStatus.pending) {
+  List<LeaveHistoryEntry> _applyFilter(List<LeaveHistoryEntry> items) {
+    return items.where((history) {
+      if (_statusFilter == _StatusFilter.menunggu && history.status != AppStatus.pending) {
         return false;
       }
-
-      if (_statusFilter == _StatusFilter.disetujui &&
-          history.status != AppStatus.present) {
+      if (_statusFilter == _StatusFilter.disetujui && history.status != AppStatus.present) {
         return false;
       }
-
-      if (_statusFilter == _StatusFilter.ditolak &&
-          history.status != AppStatus.rejected) {
+      if (_statusFilter == _StatusFilter.ditolak && history.status != AppStatus.rejected) {
         return false;
       }
-
       if (_typeFilter != 'semua' && history.type != _typeFilter) {
         return false;
       }
-
       return true;
     }).toList();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _buildFilter(),
-        Expanded(
-          child: filteredHistory.isEmpty ? _buildEmpty() : _buildHistory(),
-        ),
-      ],
+    return BlocBuilder<LeaveHistoryBloc, LeaveHistoryState>(
+      builder: (context, state) {
+        if (state.status == LeaveHistoryStatus.loading && state.items.isEmpty) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (state.status == LeaveHistoryStatus.failure && state.items.isEmpty) {
+          return Center(
+            child: Text(
+              state.errorMessage ?? 'Gagal memuat riwayat.',
+              style: const TextStyle(color: AppColors.textMuted),
+            ),
+          );
+        }
+
+        final filtered = _applyFilter(state.items);
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _buildFilter(),
+            Expanded(child: filtered.isEmpty ? _buildEmpty() : _buildHistory(filtered)),
+          ],
+        );
+      },
     );
   }
 
   Widget _buildFilter() {
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 20,
-        vertical: 12,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       decoration: const BoxDecoration(
         color: Colors.white,
-        border: Border(
-          bottom: BorderSide(
-            color: AppColors.border,
-          ),
-        ),
+        border: Border(bottom: BorderSide(color: AppColors.border)),
       ),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
@@ -139,26 +91,15 @@ class _StatusTabState extends State<StatusTab> {
           children: [
             ..._StatusFilter.values.map((filter) {
               final active = _statusFilter == filter;
-
-              final label =
-                  filter.name[0].toUpperCase() + filter.name.substring(1);
+              final label = filter.name[0].toUpperCase() + filter.name.substring(1);
 
               return Padding(
-                padding: const EdgeInsets.only(
-                  right: 6,
-                ),
+                padding: const EdgeInsets.only(right: 6),
                 child: InkWell(
-                  onTap: () {
-                    setState(() {
-                      _statusFilter = filter;
-                    });
-                  },
+                  onTap: () => setState(() => _statusFilter = filter),
                   borderRadius: BorderRadius.circular(20),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
                       color: active ? AppColors.primary : Colors.white,
                       borderRadius: BorderRadius.circular(20),
@@ -183,20 +124,13 @@ class _StatusTabState extends State<StatusTab> {
               width: 1,
               height: 20,
               color: AppColors.border,
-              margin: const EdgeInsets.symmetric(
-                horizontal: 6,
-              ),
+              margin: const EdgeInsets.symmetric(horizontal: 6),
             ),
             Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 4,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 4),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: AppColors.border,
-                  width: 1.5,
-                ),
+                border: Border.all(color: AppColors.border, width: 1.5),
               ),
               child: DropdownButtonHideUnderline(
                 child: DropdownButton<String>(
@@ -207,24 +141,12 @@ class _StatusTabState extends State<StatusTab> {
                     color: AppColors.textMuted,
                   ),
                   items: [
-                    const DropdownMenuItem(
-                      value: 'semua',
-                      child: Text('Semua Jenis'),
-                    ),
+                    const DropdownMenuItem(value: 'semua', child: Text('Semua Jenis')),
                     ...LeaveTypeX.optionsFor(widget.role).map(
-                      (type) {
-                        return DropdownMenuItem(
-                          value: type.label,
-                          child: Text(type.label),
-                        );
-                      },
+                      (type) => DropdownMenuItem(value: type.label, child: Text(type.label)),
                     ),
                   ],
-                  onChanged: (value) {
-                    setState(() {
-                      _typeFilter = value ?? 'semua';
-                    });
-                  },
+                  onChanged: (value) => setState(() => _typeFilter = value ?? 'semua'),
                 ),
               ),
             ),
@@ -234,13 +156,13 @@ class _StatusTabState extends State<StatusTab> {
     );
   }
 
-  Widget _buildHistory() {
+  Widget _buildHistory(List<LeaveHistoryEntry> items) {
     return ListView.separated(
       padding: const EdgeInsets.all(20),
-      itemCount: filteredHistory.length,
+      itemCount: items.length,
       separatorBuilder: (_, __) => const SizedBox(height: 10),
       itemBuilder: (context, index) {
-        final history = filteredHistory[index];
+        final history = items[index];
 
         return AppCard(
           padding: const EdgeInsets.all(14),
@@ -250,14 +172,10 @@ class _StatusTabState extends State<StatusTab> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // Badge Tipe (Kiri)
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 3,
-                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
-                      color: history.typeBg,
+                      color: history.typeBackground,
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
@@ -269,10 +187,7 @@ class _StatusTabState extends State<StatusTab> {
                       ),
                     ),
                   ),
-                  // Badge Status (Kanan)
-                  StatusBadge(
-                    status: history.status,
-                  ),
+                  StatusBadge(status: history.status),
                 ],
               ),
               const SizedBox(height: 6),
@@ -309,10 +224,7 @@ class _StatusTabState extends State<StatusTab> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            '🔍',
-            style: TextStyle(fontSize: 36),
-          ),
+          Text('🔍', style: TextStyle(fontSize: 36)),
           SizedBox(height: 12),
           Text(
             'Tidak ada data ditemukan',
@@ -326,22 +238,4 @@ class _StatusTabState extends State<StatusTab> {
       ),
     );
   }
-}
-
-class _HistoryItem {
-  const _HistoryItem(
-    this.type,
-    this.typeColor,
-    this.typeBg,
-    this.date,
-    this.status,
-    this.note,
-  );
-
-  final String type;
-  final Color typeColor;
-  final Color typeBg;
-  final String date;
-  final AppStatus status;
-  final String note;
 }
