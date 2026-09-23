@@ -4,7 +4,7 @@ import '../../../../../../../core/theme/app_colors.dart';
 import '../../../../../../../core/theme/app_text_styles.dart';
 import '../../../../../../../core/widgets/app_card.dart';
 import '../../../../../../../core/widgets/app_text_field.dart';
-import 'field_label_row.dart';
+import '../../../../../../../core/widgets/field_label_row.dart';
 
 /// Satu grup checklist bertitel, mis. "General Checklist".
 ///

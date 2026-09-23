@@ -4,6 +4,7 @@ import 'package:table_calendar/table_calendar.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
 import '../utils/date_formatter.dart';
+import 'field_label_row.dart';
 
 /// Field tanggal tunggal. Tap untuk membuka bottom sheet kalender
 /// minimalis (table_calendar), menggantikan input teks manual DD/MM/YYYY.
@@ -39,17 +40,7 @@ class AppDateField extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        RichText(
-          text: TextSpan(
-            style: AppTextStyles.label,
-            children: [
-              TextSpan(text: label),
-              if (required)
-                const TextSpan(text: ' *', style: TextStyle(color: AppColors.rejected)),
-            ],
-          ),
-        ),
-        const SizedBox(height: 6),
+        FieldLabelRow(label: label, required: required),
         InkWell(
           onTap: () => _open(context),
           borderRadius: BorderRadius.circular(10),

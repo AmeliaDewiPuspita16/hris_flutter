@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 
-import '../../../../../../../core/theme/app_colors.dart';
-import '../../../../../../../core/theme/app_text_styles.dart';
+import '../theme/app_colors.dart';
+import '../theme/app_text_styles.dart';
 
 /// Baris label field bergaya "Label ... Required" di bagian atas tiap
-/// section form — dipakai untuk mengganti tanda bintang merah (*)
+/// section form.
+///
+/// Sebelumnya digandakan identik di 3 modul form (HSE Work Request, EST
+/// Request, IT Request); disatukan ke sini karena isinya sama persis dan
+/// tidak spesifik ke satu modul manapun.
 class FieldLabelRow extends StatelessWidget {
   const FieldLabelRow({
     super.key,

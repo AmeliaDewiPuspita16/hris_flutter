@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../../../../core/theme/app_colors.dart';
 import '../../../../../../../core/theme/app_text_styles.dart';
 import '../../../../../../../core/widgets/app_text_field.dart';
-import 'field_label_row.dart';
+import '../../../../../../../core/widgets/field_label_row.dart';
 
 /// Grup pilihan majemuk berbentuk chip, mis. "Type of Works" & "Personal
 /// Protective Equipment".

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
+import 'field_label_row.dart';
 
 class AppTextField extends StatelessWidget {
   const AppTextField({
@@ -38,15 +39,7 @@ class AppTextField extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        RichText(
-          text: TextSpan(
-            style: AppTextStyles.label,
-            children: [
-              TextSpan(text: label),
-              if (required) const TextSpan(text: ' *', style: TextStyle(color: AppColors.rejected)),
-            ],
-          ),
-        ),
+        FieldLabelRow(label: label, required: required),
         const SizedBox(height: 6),
         TextField(
           controller: controller,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
+import 'field_label_row.dart';
 
 /// Field jam. Tap untuk membuka bottom sheet dengan wheel scroll picker
 /// minimalis (jam:menit), menggantikan input teks manual HH:mm.
@@ -39,17 +40,7 @@ class AppTimeField extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        RichText(
-          text: TextSpan(
-            style: AppTextStyles.label,
-            children: [
-              TextSpan(text: label),
-              if (required)
-                const TextSpan(text: ' *', style: TextStyle(color: AppColors.rejected)),
-            ],
-          ),
-        ),
-        const SizedBox(height: 6),
+        FieldLabelRow(label: label, required: required),
         InkWell(
           onTap: () => _open(context),
           borderRadius: BorderRadius.circular(10),
