@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/app_card.dart';
+import '../../../../core/widgets/tap_fade.dart';
 import '../../domain/service_shortcut.dart';
 
 /// Grid pintasan layanan.
@@ -77,7 +78,7 @@ class _ServiceTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
+    return TapFade(
       onTap: service.onTap,
       borderRadius: BorderRadius.circular(12),
       child: Padding(

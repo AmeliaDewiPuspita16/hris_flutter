@@ -5,7 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../data/announcement_repository.dart';
-import '../../../absensi/presentation/absensi_screen.dart';
+import '../../../absensi/presentation/screens/absensi_screen.dart';
 import '../../../kelola_tim/presentation/screens/kelola_tim_screen.dart';
 import '../../../menu_portal/onlineapps/presentation/screens/online_apps_screen.dart';
 import '../../../menu_portal/onlineapps/work_order/est_request/domain/est_request_demo_data.dart';
@@ -14,7 +14,7 @@ import '../../../menu_portal/onlineapps/work_order/it_request/domain/approve_req
 import '../../../menu_portal/onlineapps/work_order/it_request/presentation/screens/it_request_screen.dart';
 import '../../../notifikasi/domain/notification_filter.dart';
 import '../widgets/approval_summary_banner.dart';
-import '../../../pengajuan/presentation/pengajuan_screen.dart';
+import '../../../pengajuan/presentation/screens/pengajuan_screen.dart';
 import '../../../profil/presentation/screens/profil_screen.dart';
 // import '../../../gaji/presentation/gaji_screen.dart';
 import '../../../notifikasi/domain/app_notification.dart';

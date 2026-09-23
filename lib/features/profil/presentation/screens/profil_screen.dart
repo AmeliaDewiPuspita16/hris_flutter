@@ -154,7 +154,7 @@ class ProfilScreen extends StatelessWidget {
   }
 
   Widget _buildStatsCard() {
-    const stats = [('7 Thn', 'Masa Kerja'), ('94%', 'Kehadiran'), ('8', 'Sisa Cuti')];
+    const stats = [('2 Bln', 'Masa Kerja'), ('94%', 'Kehadiran'), ('3', 'Sisa Cuti')];
     return AppCard(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       child: Row(

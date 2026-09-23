@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
+import 'tap_fade.dart';
 
 class AppCard extends StatelessWidget {
   const AppCard({
@@ -35,7 +36,7 @@ class AppCard extends StatelessWidget {
     );
 
     if (onTap == null) return content;
-    return InkWell(
+    return TapFade(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
       child: content,
