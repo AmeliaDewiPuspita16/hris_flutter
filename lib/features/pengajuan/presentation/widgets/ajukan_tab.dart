@@ -126,7 +126,7 @@ class _AjukanTabState extends State<AjukanTab> {
       if (!mounted) return;
       setState(() {
         _submitting = false;
-        _submitError = 'Terjadi kesalahan tak terduga. Coba lagi.';
+        _submitError = 'An unexpected error occurred. Please try again.';
       });
     }
   }
@@ -148,7 +148,7 @@ class _AjukanTabState extends State<AjukanTab> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const Text(
-                  'DETAIL PENGAJUAN',
+                  'REQUEST DETAILS',
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
@@ -160,7 +160,7 @@ class _AjukanTabState extends State<AjukanTab> {
                 const Divider(height: 1, color: AppColors.border),
                 const SizedBox(height: 16),
                 AppDropdown<LeaveType>(
-                  label: 'Jenis Pengajuan',
+                  label: 'Request Type',
                   value: _leaveType,
                   required: true,
                   items: options.map((o) => (value: o, label: o.label)).toList(),
@@ -180,7 +180,7 @@ class _AjukanTabState extends State<AjukanTab> {
           ),
           const SizedBox(height: 18),
           AppButton(
-            label: 'Kirim Pengajuan',
+            label: 'Submit Request',
             variant: AppButtonVariant.green,
             isLoading: _submitting,
             onPressed: _handleSubmit,
@@ -210,7 +210,7 @@ class _AjukanTabState extends State<AjukanTab> {
             ),
             const SizedBox(height: 16),
             const Text(
-              'Pengajuan Terkirim!',
+              'Request Submitted!',
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w800,
@@ -219,7 +219,7 @@ class _AjukanTabState extends State<AjukanTab> {
             ),
             const SizedBox(height: 8),
             const Text(
-              'Mengarahkan ke halaman status...',
+              'Redirecting to status page...',
               style: TextStyle(fontSize: 13, color: AppColors.textMuted),
             ),
           ],
@@ -234,7 +234,7 @@ class _AjukanTabState extends State<AjukanTab> {
       case LeaveType.cutiPengganti:
         return [
           AppDateRangeField(
-            label: 'Rentang Tanggal',
+            label: 'Date Range',
             startDate: _startDate,
             endDate: _endDate,
             required: true,
@@ -244,13 +244,13 @@ class _AjukanTabState extends State<AjukanTab> {
             }),
           ),
           const SizedBox(height: 16),
-          ReasonField(controller: _reasonCtrl, hint: 'Contoh: Liburan keluarga...'),
+          ReasonField(controller: _reasonCtrl, hint: 'Example: Family vacation...'),
         ];
 
       case LeaveType.izin:
         return [
           AppDropdown<LeaveCategory>(
-            label: 'Kategori Izin',
+            label: 'Permission Category',
             value: _izinCategory,
             required: true,
             items: LeaveCategoryX.all.map((c) => (value: c, label: c.label)).toList(),
@@ -258,7 +258,7 @@ class _AjukanTabState extends State<AjukanTab> {
           ),
           const SizedBox(height: 16),
           AppDateField(
-            label: 'Tanggal Izin',
+            label: 'Permission Date',
             value: _date,
             required: true,
             onChanged: (date) => setState(() => _date = date),
@@ -270,27 +270,27 @@ class _AjukanTabState extends State<AjukanTab> {
           ),
           if (_durationType != DurationType.full) ...[
             const SizedBox(height: 16),
-            _timeRangeRow(startLabel: 'Mulai', endLabel: 'Selesai'),
+            _timeRangeRow(startLabel: 'Start', endLabel: 'End'),
           ],
           const SizedBox(height: 16),
-          ReasonField(controller: _reasonCtrl, hint: 'Contoh: Keperluan medis...'),
+          ReasonField(controller: _reasonCtrl, hint: 'Example: Medical needs...'),
         ];
 
       case LeaveType.lembur:
         return [
           AppDateField(
-            label: 'Tanggal Lembur',
+            label: 'Overtime Date',
             value: _date,
             required: true,
             onChanged: (date) => setState(() => _date = date),
           ),
           const SizedBox(height: 16),
-          _timeRangeRow(startLabel: 'Waktu Mulai', endLabel: 'Waktu Selesai'),
+          _timeRangeRow(startLabel: 'Start Time', endLabel: 'End Time'),
           const SizedBox(height: 16),
           ReasonField(
             controller: _reasonCtrl,
-            label: 'Uraian Pekerjaan',
-            hint: 'Contoh: Penyelesaian laporan Q2...',
+            label: 'Work Description',
+            hint: 'Example: Completing Q2 report...',
           ),
         ];
 
@@ -304,21 +304,21 @@ class _AjukanTabState extends State<AjukanTab> {
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Text(
-              '🩺 Jadwalkan pemeriksaan kesehatan tahunan. Surat dokter wajib '
-              'diunggah setelah pemeriksaan.',
+              '🩺 Schedule your annual health check-up. A doctor note must '
+              'be uploaded after the examination.',
               style: TextStyle(fontSize: 12, color: Color(0xFF744210)),
             ),
           ),
           const SizedBox(height: 16),
           AppDateField(
-            label: 'Tanggal Cek Kesehatan',
+            label: 'Health Check Date',
             value: _date,
             required: true,
             onChanged: (date) => setState(() => _date = date),
           ),
           const SizedBox(height: 16),
           UploadField(
-            label: 'Surat / Bukti Pemeriksaan',
+            label: 'Doctor\'s Note / Proof of Examination',
             required: true,
             fileName: _fileName,
             defaultFile: 'bukti_cek_kesehatan.pdf',

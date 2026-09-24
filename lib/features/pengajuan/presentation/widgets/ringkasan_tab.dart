@@ -25,7 +25,7 @@ class RingkasanTab extends StatelessWidget {
         if (state.status == LeaveBalanceStatus.failure && state.balances.isEmpty) {
           return Center(
             child: Text(
-              state.errorMessage ?? 'Gagal memuat saldo.',
+              state.errorMessage ?? 'Failed to load balance.',
               style: const TextStyle(color: AppColors.textMuted),
             ),
           );
@@ -37,7 +37,7 @@ class RingkasanTab extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                'Saldo cuti & izin tahun $year',
+                'Leave & permission balance for $year',
                 style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
               ),
               const SizedBox(height: 14),
@@ -92,8 +92,8 @@ class _BalanceCard extends StatelessWidget {
                     const SizedBox(height: 6),
                     Text(
                       balance.total != null
-                          ? 'Terpakai ${balance.used} dari ${balance.total} ${balance.unit}'
-                          : 'Terkumulasi: ${balance.used} ${balance.unit}',
+                          ? 'Used ${balance.used} of ${balance.total} ${balance.unit}'
+                          : 'Accumulated: ${balance.used} ${balance.unit}',
                       style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
                     ),
                   ],
@@ -112,7 +112,7 @@ class _BalanceCard extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    balance.total != null ? 'Tersisa' : 'Saldo',
+                    balance.total != null ? 'Remaining' : 'Balance',
                     style: const TextStyle(fontSize: 10, color: AppColors.textMuted),
                   ),
                 ],

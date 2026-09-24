@@ -69,7 +69,7 @@ class UploadField extends StatelessWidget {
                       Icon(Icons.upload_outlined, color: AppColors.textMuted),
                       SizedBox(height: 8),
                       Text(
-                        'Tap untuk unggah',
+                        'Tap to upload',
                         style: TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
@@ -78,7 +78,7 @@ class UploadField extends StatelessWidget {
                       ),
                       SizedBox(height: 4),
                       Text(
-                        'PDF, JPG, PNG · Maks. 5MB',
+                        'PDF, JPG, PNG · Max. 5MB',
                         style: TextStyle(fontSize: 11, color: AppColors.textMuted),
                       ),
                     ],

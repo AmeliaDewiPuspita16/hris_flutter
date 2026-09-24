@@ -10,7 +10,7 @@ import '../../domain/leave_type.dart';
 import '../bloc/history/leave_history_bloc.dart';
 import '../bloc/history/leave_history_state.dart';
 
-enum _StatusFilter { semua, menunggu, disetujui, ditolak }
+enum _StatusFilter { all, pending, approved, rejected }
 
 /// Tab "Status" — riwayat pengajuan dengan filter status & jenis.
 ///
@@ -27,21 +27,21 @@ class StatusTab extends StatefulWidget {
 }
 
 class _StatusTabState extends State<StatusTab> {
-  _StatusFilter _statusFilter = _StatusFilter.semua;
-  String _typeFilter = 'semua';
+  _StatusFilter _statusFilter = _StatusFilter.all;
+  String _typeFilter = 'all';
 
   List<LeaveHistoryEntry> _applyFilter(List<LeaveHistoryEntry> items) {
     return items.where((history) {
-      if (_statusFilter == _StatusFilter.menunggu && history.status != AppStatus.pending) {
+      if (_statusFilter == _StatusFilter.pending && history.status != AppStatus.pending) {
         return false;
       }
-      if (_statusFilter == _StatusFilter.disetujui && history.status != AppStatus.present) {
+      if (_statusFilter == _StatusFilter.approved && history.status != AppStatus.present) {
         return false;
       }
-      if (_statusFilter == _StatusFilter.ditolak && history.status != AppStatus.rejected) {
+      if (_statusFilter == _StatusFilter.rejected && history.status != AppStatus.rejected) {
         return false;
       }
-      if (_typeFilter != 'semua' && history.type != _typeFilter) {
+      if (_typeFilter != 'all' && history.type != _typeFilter) {
         return false;
       }
       return true;
@@ -59,7 +59,7 @@ class _StatusTabState extends State<StatusTab> {
         if (state.status == LeaveHistoryStatus.failure && state.items.isEmpty) {
           return Center(
             child: Text(
-              state.errorMessage ?? 'Gagal memuat riwayat.',
+              state.errorMessage ?? 'Failed to load history.',
               style: const TextStyle(color: AppColors.textMuted),
             ),
           );
@@ -141,12 +141,12 @@ class _StatusTabState extends State<StatusTab> {
                     color: AppColors.textMuted,
                   ),
                   items: [
-                    const DropdownMenuItem(value: 'semua', child: Text('Semua Jenis')),
+                    const DropdownMenuItem(value: 'all', child: Text('All Types')),
                     ...LeaveTypeX.optionsFor(widget.role).map(
                       (type) => DropdownMenuItem(value: type.label, child: Text(type.label)),
                     ),
                   ],
-                  onChanged: (value) => setState(() => _typeFilter = value ?? 'semua'),
+                  onChanged: (value) => setState(() => _typeFilter = value ?? 'all'),
                 ),
               ),
             ),
@@ -227,7 +227,7 @@ class _StatusTabState extends State<StatusTab> {
           Text('🔍', style: TextStyle(fontSize: 36)),
           SizedBox(height: 12),
           Text(
-            'Tidak ada data ditemukan',
+            'No data found',
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,

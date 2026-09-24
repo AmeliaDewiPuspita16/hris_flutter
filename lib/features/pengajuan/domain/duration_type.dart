@@ -5,13 +5,13 @@ extension DurationTypeX on DurationType {
   String get label {
     switch (this) {
       case DurationType.full:
-        return 'Seharian';
+        return 'Full Day';
 
       case DurationType.half:
-        return 'Setengah Hari';
+        return 'Half Day';
 
       case DurationType.hourly:
-        return 'Per Jam';
+        return 'Hourly';
     }
   }
 }
