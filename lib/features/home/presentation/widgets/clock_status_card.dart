@@ -24,46 +24,80 @@ class ClockStatusCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            DateFormatter.fullDate(date),
-            style: const TextStyle(
-              fontFamily: AppTextStyles.fontFamily,
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: AppColors.textMid,
-            ),
+          Row(
+            children: [
+              const Icon(Icons.calendar_today_outlined, size: 14, color: AppColors.textMid),
+              const SizedBox(width: 8),
+              Text(
+                DateFormatter.fullDate(date),
+                style: const TextStyle(
+                  fontFamily: AppTextStyles.fontFamily,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textMid,
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 10),
           ClipRRect(
             borderRadius: BorderRadius.circular(16),
-            child: ColoredBox(
-              color: AppColors.primary,
+            child: SizedBox(
+              height: 190,
               child: Stack(
+                fit: StackFit.expand,
                 children: [
-                  const Positioned(top: -56, right: -36, child: _CornerGlow()),
+                  Image.asset('assets/images/drone.png', fit: BoxFit.cover),
+                  const Positioned(bottom: -30, left: -30, child: _CornerGlow()),
+                  DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
+                        colors: [
+                          AppColors.primary,
+                          AppColors.primary,
+                          AppColors.primary.withValues(alpha: 0),
+                        ],
+                        stops: const [0, 0.42, 0.85],
+                      ),
+                    ),
+                  ),
                   Padding(
                     padding: const EdgeInsets.all(18),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        _ShiftBadge(label: status.shiftLabel),
+                        const SizedBox(height: 12),
                         Text(
-                          'TODAY · ${status.shiftLabel.toUpperCase()}',
-                          style: TextStyle(
+                          status.shiftTime.replaceAll('–', ' – '),
+                          style: const TextStyle(
                             fontFamily: AppTextStyles.fontFamily,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 1,
-                            color: Colors.white.withValues(alpha: 0.6),
+                            fontSize: 26,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                            height: 1,
                           ),
                         ),
-                        const SizedBox(height: 12),
-                        _ShiftRow(status: status),
-                        const SizedBox(height: 14),
-                        Divider(
-                          height: 1,
-                          color: Colors.white.withValues(alpha: 0.15),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Icon(Icons.location_on_outlined, size: 14, color: Colors.white.withValues(alpha: 0.85)),
+                            const SizedBox(width: 4),
+                            Text(
+                              status.location,
+                              style: TextStyle(
+                                fontFamily: AppTextStyles.fontFamily,
+                                fontSize: 12.5,
+                                color: Colors.white.withValues(alpha: 0.85),
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 14),
+                        const Spacer(),
+                        Divider(height: 1, color: Colors.white.withValues(alpha: 0.2)),
+                        const SizedBox(height: 12),
                         _StatusRow(status: status, onActionTap: onActionTap),
                       ],
                     ),
@@ -78,58 +112,54 @@ class ClockStatusCard extends StatelessWidget {
   }
 }
 
-/// Lingkaran samar di pojok kanan atas, biar bidang hijaunya tidak datar.
+/// Pil kecil "OFFICE HOURS" di pojok kiri-atas kartu.
+class _ShiftBadge extends StatelessWidget {
+  const _ShiftBadge({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.18),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.access_time_rounded, size: 12, color: Colors.white),
+          const SizedBox(width: 5),
+          Text(
+            label.toUpperCase(),
+            style: const TextStyle(
+              fontFamily: AppTextStyles.fontFamily,
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.6,
+              color: Colors.white,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Lingkaran samar di pojok kartu, biar bidang hijaunya tidak datar.
 class _CornerGlow extends StatelessWidget {
   const _CornerGlow();
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 170,
-      height: 170,
+      width: 150,
+      height: 150,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: Colors.white.withValues(alpha: 0.05),
+        color: Colors.white.withValues(alpha: 0.06),
       ),
-    );
-  }
-}
-
-class _ShiftRow extends StatelessWidget {
-  const _ShiftRow({required this.status});
-
-  final AttendanceStatus status;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.baseline,
-      textBaseline: TextBaseline.alphabetic,
-      children: [
-        Text(
-          status.shiftTime,
-          style: const TextStyle(
-            fontFamily: AppTextStyles.fontFamily,
-            fontSize: 26,
-            fontWeight: FontWeight.w800,
-            color: Colors.white,
-            height: 1,
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Text(
-            status.location,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontFamily: AppTextStyles.fontFamily,
-              fontSize: 12,
-              color: Colors.white.withValues(alpha: 0.7),
-            ),
-          ),
-        ),
-      ],
     );
   }
 }
@@ -143,28 +173,57 @@ class _StatusRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Container(
-          width: 8,
-          height: 8,
+          width: 12,
+          height: 12,
           decoration: const BoxDecoration(
             shape: BoxShape.circle,
-            color: AppColors.primaryLight,
+            color: AppColors.activeDot,
           ),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: 10),
         Expanded(
-          child: Text(
-            status.statusText,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontFamily: AppTextStyles.fontFamily,
-              fontSize: 12.5,
-              fontWeight: FontWeight.w500,
-              color: Colors.white,
-            ),
-          ),
+          child: status.isClockedIn
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Clocked in at ${status.clockInTime}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontFamily: AppTextStyles.fontFamily,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
+                    Text(
+                      status.workedDuration ?? '',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontFamily: AppTextStyles.fontFamily,
+                        fontSize: 11.5,
+                        color: Colors.white.withValues(alpha: 0.7),
+                      ),
+                    ),
+                  ],
+                )
+              : const Text(
+                  'You have not clocked in yet',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontFamily: AppTextStyles.fontFamily,
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.white,
+                  ),
+                ),
         ),
         const SizedBox(width: 12),
         ElevatedButton(
@@ -173,16 +232,25 @@ class _StatusRow extends StatelessWidget {
             backgroundColor: AppColors.card,
             foregroundColor: AppColors.primary,
             elevation: 0,
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 11),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
             shape: const StadiumBorder(),
           ),
-          child: Text(
-            status.actionLabel,
-            style: const TextStyle(
-              fontFamily: AppTextStyles.fontFamily,
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-            ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.access_time_rounded, size: 15, color: AppColors.primary),
+              const SizedBox(width: 6),
+              Text(
+                status.actionLabel,
+                style: const TextStyle(
+                  fontFamily: AppTextStyles.fontFamily,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(width: 2),
+              const Icon(Icons.chevron_right, size: 16, color: AppColors.primary),
+            ],
           ),
         ),
       ],

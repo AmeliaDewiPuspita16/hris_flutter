@@ -17,7 +17,7 @@ import '../../../notifikasi/domain/notification_filter.dart';
 import '../widgets/approval_summary_banner.dart';
 import '../../../pengajuan/presentation/screens/pengajuan_screen.dart';
 import '../../../profil/presentation/screens/profil_screen.dart';
-import '../../../gaji/presentation/gaji_screen.dart';
+// import '../../../gaji/presentation/gaji_screen.dart';
 import '../../../notifikasi/domain/app_notification.dart';
 import '../../../notifikasi/domain/notification_category.dart';
 import '../../../notifikasi/domain/notification_demo_data.dart';
@@ -35,7 +35,7 @@ import '../widgets/create_announcement_sheet.dart';
 import '../widgets/home_bottom_nav.dart';
 import '../widgets/home_top_header.dart';
 import '../widgets/layanan_section.dart';
-import '../widgets/pending_request_card.dart';
+// import '../widgets/pending_request_card.dart';
 import '../widgets/saldo_section.dart';
 import '../widgets/team_banner.dart';
 
@@ -138,11 +138,11 @@ class _BerandaScreenState extends State<BerandaScreen> {
     );
   }
 
-  void _openPayslip() {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const PayslipScreen()),
-    );
-  }
+  // void _openPayslip() {
+  //   Navigator.of(context).push(
+  //     MaterialPageRoute(builder: (_) => const PayslipScreen()),
+  //   );
+  // }
 
   void _openKelolaTim() {
     Navigator.of(context).push(
@@ -258,13 +258,16 @@ class _BerandaScreenState extends State<BerandaScreen> {
         ServiceShortcut(
           icon: Icons.description_outlined,
           label: 'Record',
+          subtitle: 'Attendance & Report',
           color: AppColors.primaryMid,
           background: AppColors.primaryLight,
+          featured: true,
           onTap: _openRecord,
         ),
         ServiceShortcut(
           icon: Icons.storage_outlined,
           label: 'Data',
+          subtitle: 'Database & Files',
           color: AppColors.accent,
           background: AppColors.accentBg,
           onTap: () {},
@@ -272,6 +275,7 @@ class _BerandaScreenState extends State<BerandaScreen> {
         ServiceShortcut(
           icon: Icons.apps_outlined,
           label: 'Online Apps',
+          subtitle: 'Web Services',
           color: AppColors.teal,
           background: AppColors.tealBg,
           onTap: _openOnlineApps,
@@ -279,6 +283,7 @@ class _BerandaScreenState extends State<BerandaScreen> {
         ServiceShortcut(
           icon: Icons.dashboard_outlined,
           label: 'Dashboard',
+          subtitle: 'Monitoring & Stats',
           color: AppColors.violet,
           background: AppColors.violetBg,
           onTap: () {},
