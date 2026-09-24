@@ -12,6 +12,7 @@ import '../../../menu_portal/onlineapps/work_order/est_request/domain/est_reques
 import '../../../menu_portal/onlineapps/work_order/est_request/domain/est_request_status.dart';
 import '../../../menu_portal/onlineapps/work_order/it_request/domain/approve_request_demo_data.dart';
 import '../../../menu_portal/onlineapps/work_order/it_request/presentation/screens/it_request_screen.dart';
+import '../../../menu_portal/record/presentation/screens/record_screen.dart';
 import '../../../notifikasi/domain/notification_filter.dart';
 import '../widgets/approval_summary_banner.dart';
 import '../../../pengajuan/presentation/screens/pengajuan_screen.dart';
@@ -212,6 +213,12 @@ class _BerandaScreenState extends State<BerandaScreen> {
     );
   }
 
+  void _openRecord() {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const RecordScreen()),
+    );
+  }
+
   List<ServiceShortcut> _buildServices() => [
         // ServiceShortcut(
         //   icon: Icons.event_available_outlined,
@@ -253,7 +260,7 @@ class _BerandaScreenState extends State<BerandaScreen> {
           label: 'Record',
           color: AppColors.primaryMid,
           background: AppColors.primaryLight,
-          onTap: () {},
+          onTap: _openRecord,
         ),
         ServiceShortcut(
           icon: Icons.storage_outlined,

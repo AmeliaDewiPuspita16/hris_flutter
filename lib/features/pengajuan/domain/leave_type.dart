@@ -87,7 +87,6 @@ enum LeaveCategory {
   menikah,
   menikahkanAnak,
   publicHoliday,
-  permission,
   unpaidLeave,
 }
 
@@ -133,9 +132,6 @@ extension LeaveCategoryX on LeaveCategory {
 
       case LeaveCategory.publicHoliday:
         return 'PH';
-
-      case LeaveCategory.permission:
-        return 'PS';
 
       case LeaveCategory.unpaidLeave:
         return 'UPL';
@@ -183,9 +179,6 @@ extension LeaveCategoryX on LeaveCategory {
       case LeaveCategory.publicHoliday:
         return 'Public Holiday';
 
-      case LeaveCategory.permission:
-        return 'Permission';
-
       case LeaveCategory.unpaidLeave:
         return 'Unpaid Leave';
     }
@@ -231,9 +224,6 @@ extension LeaveCategoryX on LeaveCategory {
 
       case LeaveCategory.publicHoliday:
         return Icons.calendar_month_outlined;
-
-      case LeaveCategory.permission:
-        return Icons.assignment_turned_in_outlined;
 
       case LeaveCategory.unpaidLeave:
         return Icons.money_off_outlined;

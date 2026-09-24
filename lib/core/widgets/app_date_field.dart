@@ -63,7 +63,7 @@ class AppDateField extends StatelessWidget {
                 ),
                 const SizedBox(width: 10),
                 Text(
-                  hasValue ? DateFormatter.shortDateID(value!) : 'Pilih tanggal',
+                  hasValue ? DateFormatter.shortDateID(value!) : 'Select date',
                   style: AppTextStyles.body.copyWith(
                     fontWeight: hasValue ? FontWeight.w600 : FontWeight.w400,
                     color: hasValue ? AppColors.text : AppColors.textMuted,
