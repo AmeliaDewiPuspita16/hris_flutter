@@ -3,15 +3,15 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../../../core/theme/app_colors.dart';
 import '../../../../../../core/theme/app_text_styles.dart';
+import '../../../../../../core/widgets/app_text_field.dart';
 import '../../../../../../core/widgets/back_header.dart';
 import '../../data/master_document_repository.dart';
+import '../../domain/master_document.dart';
 import '../bloc/master_document_list_bloc.dart';
 import '../bloc/master_document_list_event.dart';
 import '../bloc/master_document_list_state.dart';
 import '../widgets/master_document_tile.dart';
 
-/// Label tab, urutan & teksnya mengikuti tab di web persis.
-///
 /// Cuma index 0 (Manual) yang sudah tersambung ke data — lihat
 /// [MasterDocumentRepository]. Tab lain menyusul.
 const _tabLabels = [
@@ -43,6 +43,15 @@ class MasterDocumentFileScreen extends StatefulWidget {
 class _MasterDocumentFileScreenState extends State<MasterDocumentFileScreen> {
   int _tabIndex = 0;
 
+  final _searchController = TextEditingController();
+  String _searchQuery = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final repository = widget.repository;
@@ -56,10 +65,21 @@ class _MasterDocumentFileScreenState extends State<MasterDocumentFileScreen> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+            child: AppTextField(
+              controller: _searchController,
+              hint: 'Nomor dokumen atau judul dokumen',
+              icon: Icons.search,
+              label: 'Search',
+              onChanged: (value) => setState(() => _searchQuery = value),
+            ),
+          ),
           _buildTabBar(),
+          const SizedBox(height: 12),
           Expanded(
             child: _tabIndex == 0
-                ? _ManualTab(repository: repository)
+                ? _ManualTab(repository: repository, searchQuery: _searchQuery)
                 : _ComingSoonTab(label: _tabLabels[_tabIndex]),
           ),
         ],
@@ -67,27 +87,25 @@ class _MasterDocumentFileScreenState extends State<MasterDocumentFileScreen> {
     );
   }
 
+  /// Deret chip tab, pola sama dengan `PrStatusFilterBar` di Procurement:
+  /// duduk langsung di atas `AppColors.bg`, tanpa dibungkus container putih
+  /// + garis bawah seperti sebelumnya — supaya search box di atasnya terasa
+  /// menyatu dengan tab, bukan dua panel terpisah.
   Widget _buildTabBar() {
-    return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(bottom: BorderSide(color: AppColors.border)),
-      ),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        child: Row(
-          children: [
-            for (var i = 0; i < _tabLabels.length; i++) ...[
-              if (i > 0) const SizedBox(width: 8),
-              _TabChip(
-                label: _tabLabels[i],
-                active: _tabIndex == i,
-                onTap: () => setState(() => _tabIndex = i),
-              ),
-            ],
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        children: [
+          for (var i = 0; i < _tabLabels.length; i++) ...[
+            if (i > 0) const SizedBox(width: 8),
+            _TabChip(
+              label: _tabLabels[i],
+              active: _tabIndex == i,
+              onTap: () => setState(() => _tabIndex = i),
+            ),
           ],
-        ),
+        ],
       ),
     );
   }
@@ -127,9 +145,10 @@ class _TabChip extends StatelessWidget {
 }
 
 class _ManualTab extends StatelessWidget {
-  const _ManualTab({required this.repository});
+  const _ManualTab({required this.repository, required this.searchQuery});
 
   final MasterDocumentRepository repository;
+  final String searchQuery;
 
   @override
   Widget build(BuildContext context) {
@@ -151,12 +170,23 @@ class _ManualTab extends StatelessWidget {
             );
           }
 
+          final documents = _filter(state.documents, searchQuery);
+
+          if (documents.isEmpty) {
+            return Center(
+              child: Text(
+                'Tidak ada dokumen yang cocok dengan pencarian.',
+                style: AppTextStyles.bodyMuted,
+              ),
+            );
+          }
+
           return ListView.separated(
             padding: const EdgeInsets.all(16),
-            itemCount: state.documents.length,
+            itemCount: documents.length,
             separatorBuilder: (_, __) => const SizedBox(height: 10),
             itemBuilder: (context, index) {
-              final document = state.documents[index];
+              final document = documents[index];
 
               return MasterDocumentTile(
                 document: document,
@@ -168,6 +198,21 @@ class _ManualTab extends StatelessWidget {
         },
       ),
     );
+  }
+
+  /// Filter lokal di client — datanya masih dummy statis (semua sudah
+  /// termuat sekaligus), jadi tidak perlu request baru ke [repository]
+  /// tiap kali orang mengetik, beda dengan pencarian server-side di
+  /// `ProcurementPage`.
+  List<MasterDocument> _filter(List<MasterDocument> documents, String query) {
+    final keyword = query.trim().toLowerCase();
+    if (keyword.isEmpty) return documents;
+
+    return documents
+        .where((doc) =>
+            doc.docNo.toLowerCase().contains(keyword) ||
+            doc.title.toLowerCase().contains(keyword))
+        .toList(growable: false);
   }
 
   void _showDummyAction(BuildContext context, String message) {
