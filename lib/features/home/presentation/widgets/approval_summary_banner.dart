@@ -52,7 +52,7 @@ class ApprovalSummaryBanner extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
       child: AppCard(
-        padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+        padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -60,26 +60,40 @@ class ApprovalSummaryBanner extends StatelessWidget {
               onTap: onTapAll,
               borderRadius: BorderRadius.circular(8),
               child: Padding(
-                padding: const EdgeInsets.only(bottom: 10),
+                padding: const EdgeInsets.only(bottom: 12),
                 child: Row(
                   children: [
-                    const Icon(Icons.fact_check_outlined, size: 20, color: AppColors.rejected),
-                    const SizedBox(width: 10),
+                    Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: const BoxDecoration(
+                            color: AppColors.primaryLight,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.notifications_none_rounded,
+                            size: 20,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                        Positioned(
+                          top: -4,
+                          right: -4,
+                          child: _CountBadge(count: _total),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(width: 12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          RichText(
-                            text: TextSpan(
-                              style: AppTextStyles.body.copyWith(fontWeight: FontWeight.w700),
-                              children: [
-                                TextSpan(
-                                  text: '$_total',
-                                  style: const TextStyle(color: AppColors.rejected),
-                                ),
-                                const TextSpan(text: ' approvals waiting'),
-                              ],
-                            ),
+                          Text(
+                            'Approvals waiting',
+                            style: AppTextStyles.body.copyWith(fontWeight: FontWeight.w700),
                           ),
                           Text(
                             'Tap for all in Notifications',
@@ -93,14 +107,15 @@ class ApprovalSummaryBanner extends StatelessWidget {
                 ),
               ),
             ),
-            const Divider(height: 1, color: AppColors.border),
-            const SizedBox(height: 10),
             Row(
               children: [
                 Expanded(
                   child: _ModuleTag(
                     label: 'Leave',
                     count: leaveCount,
+                    icon: Icons.beach_access_outlined,
+                    color: AppColors.teal,
+                    background: AppColors.tealBg,
                     onTap: onTapLeave,
                   ),
                 ),
@@ -109,6 +124,9 @@ class ApprovalSummaryBanner extends StatelessWidget {
                   child: _ModuleTag(
                     label: 'IT',
                     count: itCount,
+                    icon: Icons.computer_outlined,
+                    color: AppColors.itRequest,
+                    background: AppColors.itRequestBg,
                     onTap: onTapIt,
                   ),
                 ),
@@ -117,6 +135,9 @@ class ApprovalSummaryBanner extends StatelessWidget {
                   child: _ModuleTag(
                     label: 'EST',
                     count: estCount,
+                    icon: Icons.engineering_outlined,
+                    color: AppColors.estRequest,
+                    background: AppColors.estRequestBg,
                     onTap: onTapEst,
                   ),
                 ),
@@ -129,67 +150,94 @@ class ApprovalSummaryBanner extends StatelessWidget {
   }
 }
 
-/// Tile netral per modul (Leave/IT/EST) dengan badge angka merah di pojok —
-/// angka jadi penanda "perlu direspons", bukan sekadar statistik warna-warni.
+/// Badge bulat merah untuk menampilkan angka jumlah — dipakai di ikon lonceng
+/// (total semua modul) maupun di tiap [_ModuleTag] (jumlah per modul).
+class _CountBadge extends StatelessWidget {
+  const _CountBadge({required this.count});
+
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(minWidth: 18),
+      height: 18,
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: AppColors.rejected,
+        borderRadius: BorderRadius.circular(9),
+        border: Border.all(color: Colors.white, width: 1.5),
+      ),
+      child: Text(
+        '$count',
+        style: const TextStyle(
+          fontFamily: AppTextStyles.fontFamily,
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          color: Colors.white,
+          height: 1,
+        ),
+      ),
+    );
+  }
+}
+
+/// Tile per modul (Leave/IT/EST), masing-masing dengan warna & ikon khasnya
+/// sendiri (selaras dengan [NotificationCategory]) supaya gampang dibedakan
+/// sekilas, dengan badge angka merah di pojok sebagai penanda "perlu
+/// direspons".
 class _ModuleTag extends StatelessWidget {
   const _ModuleTag({
     required this.label,
     required this.count,
+    required this.icon,
+    required this.color,
+    required this.background,
     required this.onTap,
   });
 
   final String label;
   final int count;
+  final IconData icon;
+  final Color color;
+  final Color background;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(10),
+      borderRadius: BorderRadius.circular(12),
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 10),
+        padding: const EdgeInsets.fromLTRB(10, 10, 8, 8),
         decoration: BoxDecoration(
-          color: AppColors.neutralBg,
-          borderRadius: BorderRadius.circular(10),
+          color: background,
+          borderRadius: BorderRadius.circular(12),
         ),
-        child: Stack(
-          clipBehavior: Clip.none,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            Center(
-              child: Text(
-                label,
-                style: const TextStyle(
-                  fontFamily: AppTextStyles.fontFamily,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textMid,
-                ),
-              ),
-            ),
-            Positioned(
-              top: -4,
-              right: 8,
-              child: Container(
-                constraints: const BoxConstraints(minWidth: 18),
-                height: 18,
-                padding: const EdgeInsets.symmetric(horizontal: 4),
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: AppColors.rejected,
-                  borderRadius: BorderRadius.circular(9),
-                ),
-                child: Text(
-                  '$count',
-                  style: const TextStyle(
-                    fontFamily: AppTextStyles.fontFamily,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
+            Row(
+              children: [
+                Icon(icon, size: 18, color: color),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    label,
+                    style: TextStyle(
+                      fontFamily: AppTextStyles.fontFamily,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.text,
+                    ),
                   ),
                 ),
-              ),
+                const SizedBox(width: 6),
+                _CountBadge(count: count),
+              ],
             ),
+            Icon(Icons.chevron_right, size: 14, color: color.withValues(alpha: 0.6)),
           ],
         ),
       ),

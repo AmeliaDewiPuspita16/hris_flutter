@@ -258,13 +258,16 @@ class _BerandaScreenState extends State<BerandaScreen> {
         ServiceShortcut(
           icon: Icons.description_outlined,
           label: 'Record',
+          subtitle: 'Attendance & Report',
           color: AppColors.primaryMid,
           background: AppColors.primaryLight,
+          featured: true,
           onTap: _openRecord,
         ),
         ServiceShortcut(
           icon: Icons.storage_outlined,
           label: 'Data',
+          subtitle: 'Database & Files',
           color: AppColors.accent,
           background: AppColors.accentBg,
           onTap: () {},
@@ -272,6 +275,7 @@ class _BerandaScreenState extends State<BerandaScreen> {
         ServiceShortcut(
           icon: Icons.apps_outlined,
           label: 'Online Apps',
+          subtitle: 'Web Services',
           color: AppColors.teal,
           background: AppColors.tealBg,
           onTap: _openOnlineApps,
@@ -279,6 +283,7 @@ class _BerandaScreenState extends State<BerandaScreen> {
         ServiceShortcut(
           icon: Icons.dashboard_outlined,
           label: 'Dashboard',
+          subtitle: 'Monitoring & Stats',
           color: AppColors.violet,
           background: AppColors.violetBg,
           onTap: () {},

@@ -70,6 +70,11 @@ class AppColors {
   static const neutral = Color(0xFF888780); // inactiveNavColor
   static const neutralBg = Color(0xFFEDEDE7);
 
+  /// Titik status "sedang aktif" (mis. sudah clock in) — sengaja lebih
+  /// terang/saturasi dibanding [present] supaya tetap menyala di atas latar
+  /// hijau tua ClockStatusCard.
+  static const activeDot = Color(0xFF3DDC84);
+
   // Hero tetap hijau (sama dengan primary)
   static const heroGreen = Color(0xFF0E4A34);
   static const heroGreenMid = Color(0xFF2D6A4F);
