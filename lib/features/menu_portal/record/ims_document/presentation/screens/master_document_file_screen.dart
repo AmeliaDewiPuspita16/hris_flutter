@@ -12,7 +12,7 @@ import '../bloc/master_document_list_event.dart';
 import '../bloc/master_document_list_state.dart';
 import '../widgets/master_document_tile.dart';
 
-/// Cuma index 0 (Manual) yang sudah tersambung ke data — lihat
+/// Index 0 (Manual) dan 1 (SOP) sudah tersambung ke data — lihat
 /// [MasterDocumentRepository]. Tab lain menyusul.
 const _tabLabels = [
   'Manual',
@@ -55,6 +55,7 @@ class _MasterDocumentFileScreenState extends State<MasterDocumentFileScreen> {
   @override
   Widget build(BuildContext context) {
     final repository = widget.repository;
+    final fetcher = _fetcherFor(repository, _tabIndex);
 
     return Scaffold(
       backgroundColor: AppColors.bg,
@@ -69,7 +70,7 @@ class _MasterDocumentFileScreenState extends State<MasterDocumentFileScreen> {
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
             child: AppTextField(
               controller: _searchController,
-              hint: 'Nomor dokumen atau judul dokumen',
+              hint: 'Nomor dokumen, judul, atau departemen',
               icon: Icons.search,
               label: 'Search',
               onChanged: (value) => setState(() => _searchQuery = value),
@@ -78,13 +79,33 @@ class _MasterDocumentFileScreenState extends State<MasterDocumentFileScreen> {
           _buildTabBar(),
           const SizedBox(height: 12),
           Expanded(
-            child: _tabIndex == 0
-                ? _ManualTab(repository: repository, searchQuery: _searchQuery)
+            child: fetcher != null
+                ? _DocumentTab(
+                    // Ganti key tiap pindah tab supaya BlocProvider di
+                    // dalamnya dibuat ulang (fetch dokumen tab yang baru),
+                    // bukan mempertahankan bloc/data tab sebelumnya.
+                    key: ValueKey(_tabIndex),
+                    fetcher: fetcher,
+                    searchQuery: _searchQuery,
+                  )
                 : _ComingSoonTab(label: _tabLabels[_tabIndex]),
           ),
         ],
       ),
     );
+  }
+
+  /// Method repository untuk tab ke-[index], atau null kalau tabnya belum
+  /// dikerjakan (masih tampil [_ComingSoonTab]).
+  Future<List<MasterDocument>> Function()? _fetcherFor(
+    MasterDocumentRepository repository,
+    int index,
+  ) {
+    return switch (index) {
+      0 => repository.fetchManualDocuments,
+      1 => repository.fetchSopDocuments,
+      _ => null,
+    };
   }
 
   /// Deret chip tab, pola sama dengan `PrStatusFilterBar` di Procurement:
@@ -144,16 +165,23 @@ class _TabChip extends StatelessWidget {
   }
 }
 
-class _ManualTab extends StatelessWidget {
-  const _ManualTab({required this.repository, required this.searchQuery});
+/// Isi satu tab dokumen (Manual, SOP, dst) — daftar dokumen dari [fetcher]
+/// yang mana pun, disaring lokal oleh [searchQuery].
+///
+/// Dipakai ulang untuk tiap tab yang sudah tersambung data, tinggal beda
+/// [fetcher]-nya (`repository.fetchManualDocuments`,
+/// `repository.fetchSopDocuments`, dst) — sama seperti `MasterDocumentListBloc`
+/// yang sudah didesain generik per kategori.
+class _DocumentTab extends StatelessWidget {
+  const _DocumentTab({super.key, required this.fetcher, required this.searchQuery});
 
-  final MasterDocumentRepository repository;
+  final Future<List<MasterDocument>> Function() fetcher;
   final String searchQuery;
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => MasterDocumentListBloc(fetcher: repository.fetchManualDocuments)
+      create: (_) => MasterDocumentListBloc(fetcher: fetcher)
         ..add(const MasterDocumentListStarted()),
       child: BlocBuilder<MasterDocumentListBloc, MasterDocumentListState>(
         builder: (context, state) {
@@ -201,9 +229,13 @@ class _ManualTab extends StatelessWidget {
   }
 
   /// Filter lokal di client — datanya masih dummy statis (semua sudah
-  /// termuat sekaligus), jadi tidak perlu request baru ke [repository]
+  /// termuat sekaligus), jadi tidak perlu request baru ke repository
   /// tiap kali orang mengetik, beda dengan pencarian server-side di
   /// `ProcurementPage`.
+  ///
+  /// Ikut menyaring `hierarchy` (kode departemen) — berguna di tab SOP yang
+  /// departemennya beragam, mis. ketik "SSD" langsung dapat semua dokumen
+  /// SSD.
   List<MasterDocument> _filter(List<MasterDocument> documents, String query) {
     final keyword = query.trim().toLowerCase();
     if (keyword.isEmpty) return documents;
@@ -211,7 +243,8 @@ class _ManualTab extends StatelessWidget {
     return documents
         .where((doc) =>
             doc.docNo.toLowerCase().contains(keyword) ||
-            doc.title.toLowerCase().contains(keyword))
+            doc.title.toLowerCase().contains(keyword) ||
+            doc.hierarchy.toLowerCase().contains(keyword))
         .toList(growable: false);
   }
 
@@ -222,9 +255,9 @@ class _ManualTab extends StatelessWidget {
   }
 }
 
-/// Placeholder untuk tab yang belum dikerjakan (SOP, WI, Form, ANNEX, Form
-/// Template) — sama pola dengan `RecordScreen._showComingSoon`, tapi
-/// sebagai isi tab, bukan snackbar, karena tab tetap harus menampilkan
+/// Placeholder untuk tab yang belum dikerjakan (Work Instruction, Form,
+/// ANNEX, Form Template) — sama pola dengan `RecordScreen._showComingSoon`,
+/// tapi sebagai isi tab, bukan snackbar, karena tab tetap harus menampilkan
 /// sesuatu saat dipilih.
 class _ComingSoonTab extends StatelessWidget {
   const _ComingSoonTab({required this.label});
