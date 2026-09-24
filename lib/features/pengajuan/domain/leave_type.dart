@@ -14,19 +14,19 @@ extension LeaveTypeX on LeaveType {
   String get label {
     switch (this) {
       case LeaveType.cutiTahunan:
-        return 'Cuti Tahunan';
+        return 'Annual Leave';
 
       case LeaveType.izin:
-        return 'Izin';
+        return 'Permission';
 
       case LeaveType.lembur:
-        return 'Lembur';
+        return 'Overtime';
 
       case LeaveType.cutiPengganti:
-        return 'Cuti Pengganti';
+        return 'Off in Liew';
 
       case LeaveType.cekKesehatan:
-        return 'Cek Kesehatan';
+        return 'Medical Check';
     }
   }
 

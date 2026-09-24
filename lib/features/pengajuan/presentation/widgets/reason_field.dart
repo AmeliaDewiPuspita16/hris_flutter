@@ -10,7 +10,7 @@ class ReasonField extends StatelessWidget {
     super.key,
     required this.controller,
     required this.hint,
-    this.label = 'Alasan',
+    this.label = 'Reason',
     this.maxLines = 3,
   });
 

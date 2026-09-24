@@ -135,12 +135,12 @@ class _PengajuanViewState extends State<_PengajuanView> {
         children: [
           const Padding(
             padding: EdgeInsets.only(bottom: 14),
-            child: Text('Pengajuan', style: AppTextStyles.h2),
+            child: Text('Leave Request', style: AppTextStyles.h2),
           ),
           Row(
             children: [
-              tabButton(_SubmitTab.ringkasan, 'Ringkasan'),
-              tabButton(_SubmitTab.ajukan, 'Ajukan'),
+              tabButton(_SubmitTab.ringkasan, 'Summary'),
+              tabButton(_SubmitTab.ajukan, 'Submit'),
               tabButton(_SubmitTab.status, 'Status'),
             ],
           ),
