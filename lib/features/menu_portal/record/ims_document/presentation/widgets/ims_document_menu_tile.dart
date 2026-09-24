@@ -5,8 +5,7 @@ import '../../../../../../core/theme/app_text_styles.dart';
 import '../../../../../../core/widgets/app_card.dart';
 import '../../domain/ims_document_menu_item.dart';
 
-/// Satu baris menu di layar IMS Document — label, deskripsi kecil, dan
-/// tombol "GO" — padanan mobile dari popup "IMS Document" di web.
+/// Satu baris menu di layar IMS Document 
 class ImsDocumentMenuTile extends StatelessWidget {
   const ImsDocumentMenuTile({super.key, required this.item});
 

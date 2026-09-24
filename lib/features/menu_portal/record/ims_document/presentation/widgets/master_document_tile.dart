@@ -77,8 +77,7 @@ class MasterDocumentTile extends StatelessWidget {
   }
 }
 
-/// Badge kategori/departemen dokumen ("IMS", "HSE", "EST", dst) — padanan
-/// `PrStatusBadge`, pil bulat kecil.
+/// Badge kategori/departemen dokumen ("IMS", "HSE", "EST", dst)
 ///
 /// Tab Manual semuanya "IMS" jadi satu warna cukup, tapi tab SOP (dan
 /// tab lain nanti) punya banyak departemen berbeda dalam satu list — warna
@@ -102,6 +101,9 @@ class _HierarchyBadge extends StatelessWidget {
     'SSD': (AppColors.accent, AppColors.accentBg),
     'HR & GA': (AppColors.primaryMid, AppColors.primaryLight),
     'GMO': (AppColors.present, AppColors.presentBg),
+    'ITM': (AppColors.pending, AppColors.pendingBg),
+    'CRS': (AppColors.rejected, AppColors.rejectedBg),
+    'FIN': (AppColors.inProgress, AppColors.inProgressBg),
   };
 
   @override

@@ -1,11 +1,9 @@
 import 'package:flutter/widgets.dart';
 
 /// Satu opsi pada bottom sheet "IMS Document" (Master Document File,
-/// Request, dst) — padanan popup "IMS Document" di web.
+/// Request, dst)
 ///
-/// Field icon/color/background sama polanya dengan [RecordItem], supaya
-/// tampilannya konsisten dengan tile menu lain, bukan cuma label + tombol
-/// "GO".
+/// Field icon/color/background sama polanya dengan [RecordItem]
 class ImsDocumentMenuItem {
   const ImsDocumentMenuItem({
     required this.icon,

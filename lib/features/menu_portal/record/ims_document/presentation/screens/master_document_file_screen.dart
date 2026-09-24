@@ -104,6 +104,10 @@ class _MasterDocumentFileScreenState extends State<MasterDocumentFileScreen> {
     return switch (index) {
       0 => repository.fetchManualDocuments,
       1 => repository.fetchSopDocuments,
+      2 => repository.fetchWiDocuments,
+      3 => repository.fetchFormDocuments,
+      4 => repository.fetchAnnexDocuments,
+      5 => repository.fetchFormTemplateDocuments,
       _ => null,
     };
   }
@@ -229,9 +233,7 @@ class _DocumentTab extends StatelessWidget {
   }
 
   /// Filter lokal di client — datanya masih dummy statis (semua sudah
-  /// termuat sekaligus), jadi tidak perlu request baru ke repository
-  /// tiap kali orang mengetik, beda dengan pencarian server-side di
-  /// `ProcurementPage`.
+  /// termuat sekaligus)
   ///
   /// Ikut menyaring `hierarchy` (kode departemen) — berguna di tab SOP yang
   /// departemennya beragam, mis. ketik "SSD" langsung dapat semua dokumen
@@ -255,10 +257,9 @@ class _DocumentTab extends StatelessWidget {
   }
 }
 
-/// Placeholder untuk tab yang belum dikerjakan (Work Instruction, Form,
-/// ANNEX, Form Template) — sama pola dengan `RecordScreen._showComingSoon`,
-/// tapi sebagai isi tab, bukan snackbar, karena tab tetap harus menampilkan
-/// sesuatu saat dipilih.
+/// Placeholder untuk tab yang belum dikerjakan (ANNEX, Form Template) —
+/// sama pola dengan `RecordScreen._showComingSoon`, tapi sebagai isi tab,
+/// bukan snackbar, karena tab tetap harus menampilkan sesuatu saat dipilih.
 class _ComingSoonTab extends StatelessWidget {
   const _ComingSoonTab({required this.label});
 

@@ -8,11 +8,6 @@ import '../../domain/ims_document_menu_item.dart';
 /// Master Edited File, ISO Attachment, dst), dibuka dari kategori
 /// "IMS Document" di [RecordScreen].
 ///
-/// Pola & styling sengaja disamakan dengan `ChooseRequestTypeSheet` di
-/// Online Apps > Work Order, supaya konsisten satu portal — modal sheet
-/// dengan list tile (icon + label + subtitle), bukan halaman baru dengan
-/// tombol "GO" seperti sebelumnya.
-///
 /// Setiap [ImsDocumentMenuItem] sudah bawa [VoidCallback]-nya sendiri, jadi
 /// begitu di-tap sheet ini langsung menutup diri lalu memanggil callback
 /// tersebut — tidak perlu balik nilai lewat Navigator.pop seperti
