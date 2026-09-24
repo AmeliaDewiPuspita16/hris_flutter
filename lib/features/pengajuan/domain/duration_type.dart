@@ -1,5 +1,5 @@
 /// pilihan durasi pada form Ajukan (Izin & Lembur)
-enum DurationType { full, half, hourly }
+enum DurationType { full, half }
 
 extension DurationTypeX on DurationType {
   String get label {
@@ -9,9 +9,6 @@ extension DurationTypeX on DurationType {
 
       case DurationType.half:
         return 'Half Day';
-
-      case DurationType.hourly:
-        return 'Hourly';
     }
   }
 }
