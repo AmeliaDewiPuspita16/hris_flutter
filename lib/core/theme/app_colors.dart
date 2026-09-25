@@ -47,6 +47,13 @@ class AppColors {
   static const rejected = Color(0xFFD85A30); // dangerDotColor
   static const rejectedBg = Color(0xFFFCEAE3); // tint dari rejected
 
+  /// Status "lembur" (Log Absensi — titik & border kalender, badge
+  /// "Lbr 4,5j"). Alias ke [teal]/[tealBg] yang sudah ada dan memang generik
+  /// (bukan warna dengan makna status lain), jadi tidak perlu hex baru.
+  /// Ganti ke warna lain di sini saja kalau nanti ingin dibedakan.
+  static const overtime = teal;
+  static const overtimeBg = tealBg;
+
   // Kategori notifikasi IT & EST Request — sengaja dipisah dari palet
   // approval/payroll/attendance/leave/announcement supaya ketiga jenis
   // approval di banner Beranda (Leave/IT/EST) tetap gampang dibedakan

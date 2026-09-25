@@ -1,14 +1,18 @@
-import 'attendance_entry.dart';
+import 'attendance_day.dart';
 import 'attendance_summary.dart';
 
-/// Hasil satu kali muat Log Absensi: daftar entri harian beserta
-/// ringkasannya, untuk bulan yang sama.
+/// Hasil satu kali muat Log Absensi: seluruh tanggal dalam satu bulan
+/// (jadwal shift + realisasi kehadiran) beserta ringkasannya.
 class AttendanceMonth {
   const AttendanceMonth({
-    required this.entries,
+    required this.days,
     required this.summary,
   });
 
-  final List<AttendanceEntry> entries;
+  /// Satu entri per tanggal dalam bulan, urut dari tanggal 1 sampai akhir
+  /// bulan (termasuk tanggal yang belum terjadi, karena jadwal shift-nya
+  /// sudah diketahui lebih dulu).
+  final List<AttendanceDay> days;
+
   final AttendanceSummary summary;
 }
