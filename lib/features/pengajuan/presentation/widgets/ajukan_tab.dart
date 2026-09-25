@@ -18,6 +18,7 @@ import '../../domain/leave_request_draft.dart';
 import '../../domain/leave_type.dart';
 import '../bloc/history/leave_history_bloc.dart';
 import '../bloc/history/leave_history_event.dart';
+import 'attachment_field.dart';
 import 'duration_type_selector.dart';
 import 'reason_field.dart';
 import 'upload_field.dart';
@@ -231,6 +232,33 @@ class _AjukanTabState extends State<AjukanTab> {
   List<Widget> _buildDynamicFields() {
     switch (_leaveType) {
       case LeaveType.cutiTahunan:
+        return [
+          AppDateRangeField(
+            label: 'Date Range',
+            startDate: _startDate,
+            endDate: _endDate,
+            required: true,
+            onChanged: (start, end) => setState(() {
+              _startDate = start;
+              _endDate = end;
+            }),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Ideally submitted at least H-3. Last-minute requests are still '
+            'allowed, but may affect payroll.',
+            style: TextStyle(fontSize: 11, color: AppColors.textMuted),
+          ),
+          const SizedBox(height: 16),
+          ReasonField(controller: _reasonCtrl, hint: 'Example: Family vacation...'),
+          const SizedBox(height: 16),
+          AttachmentField(
+            fileName: _fileName,
+            defaultFile: 'lampiran_cuti_tahunan.pdf',
+            onChanged: (name) => setState(() => _fileName = name),
+          ),
+        ];
+
       case LeaveType.cutiPengganti:
         return [
           AppDateRangeField(

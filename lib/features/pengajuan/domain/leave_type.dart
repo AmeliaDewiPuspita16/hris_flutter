@@ -23,7 +23,7 @@ extension LeaveTypeX on LeaveType {
         return 'Overtime';
 
       case LeaveType.cutiPengganti:
-        return 'Off in Liew';
+        return 'Off in Lieu';
 
       case LeaveType.cekKesehatan:
         return 'Medical Check';

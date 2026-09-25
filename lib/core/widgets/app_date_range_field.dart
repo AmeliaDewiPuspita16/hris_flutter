@@ -83,7 +83,7 @@ class AppDateRangeField extends StatelessWidget {
                           ],
                         )
                       : Text(
-                          'Pilih rentang tanggal',
+                          'Select Date Range',
                           style: AppTextStyles.body.copyWith(color: AppColors.textMuted),
                         ),
                 ),
