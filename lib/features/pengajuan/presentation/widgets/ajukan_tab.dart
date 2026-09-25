@@ -243,12 +243,12 @@ class _AjukanTabState extends State<AjukanTab> {
               _endDate = end;
             }),
           ),
-          const SizedBox(height: 8),
-          const Text(
-            'Ideally submitted at least H-3. Last-minute requests are still '
-            'allowed, but may affect payroll.',
-            style: TextStyle(fontSize: 11, color: AppColors.textMuted),
-          ),
+          // const SizedBox(height: 8),
+          // const Text(
+          //   'Ideally submitted at least H-3. Last-minute requests are still '
+          //   'allowed, but may affect payroll.',
+          //   style: TextStyle(fontSize: 11, color: AppColors.textMuted),
+          // ),
           const SizedBox(height: 16),
           ReasonField(controller: _reasonCtrl, hint: 'Example: Family vacation...'),
           const SizedBox(height: 16),
