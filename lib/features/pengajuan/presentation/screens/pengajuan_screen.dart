@@ -71,14 +71,16 @@ class _PengajuanViewState extends State<_PengajuanView> {
       color: AppColors.card,
       child: SafeArea(
         child: ColoredBox(
-          color: AppColors.bg,
+          color: Colors.white,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               _buildHeader(),
               Expanded(
                 child: switch (_tab) {
-                  _SubmitTab.ringkasan => const RingkasanTab(),
+                  _SubmitTab.ringkasan => RingkasanTab(
+                      onSeeAll: () => setState(() => _tab = _SubmitTab.status),
+                    ),
                   _SubmitTab.ajukan => AjukanTab(
                       role: widget.role,
                       onSubmitted: () => setState(() => _tab = _SubmitTab.status),
@@ -94,30 +96,34 @@ class _PengajuanViewState extends State<_PengajuanView> {
   }
 
   Widget _buildHeader() {
-    Widget tabButton(_SubmitTab tab, String label) {
+    Widget tabButton(_SubmitTab tab, String label, IconData icon) {
       final active = _tab == tab;
 
       return Expanded(
         child: InkWell(
           onTap: () => setState(() => _tab = tab),
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 13),
+          borderRadius: BorderRadius.circular(20),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            padding: const EdgeInsets.symmetric(vertical: 9),
             decoration: BoxDecoration(
-              border: Border(
-                bottom: BorderSide(
-                  color: active ? AppColors.primary : Colors.transparent,
-                  width: 2.5,
-                ),
-              ),
+              color: active ? AppColors.primary : Colors.transparent,
+              borderRadius: BorderRadius.circular(20),
             ),
-            child: Text(
-              label,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-                color: active ? AppColors.primary : AppColors.textMuted,
-              ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, size: 14, color: active ? Colors.white : AppColors.textMuted),
+                const SizedBox(width: 5),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w700,
+                    color: active ? Colors.white : AppColors.textMuted,
+                  ),
+                ),
+              ],
             ),
           ),
         ),
@@ -125,11 +131,8 @@ class _PengajuanViewState extends State<_PengajuanView> {
     }
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(bottom: BorderSide(color: AppColors.border)),
-      ),
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+      color: Colors.white,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -137,12 +140,19 @@ class _PengajuanViewState extends State<_PengajuanView> {
             padding: EdgeInsets.only(bottom: 14),
             child: Text('Leave Request', style: AppTextStyles.h2),
           ),
-          Row(
-            children: [
-              tabButton(_SubmitTab.ringkasan, 'Summary'),
-              tabButton(_SubmitTab.ajukan, 'Submit'),
-              tabButton(_SubmitTab.status, 'Status'),
-            ],
+          Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: AppColors.bg,
+              borderRadius: BorderRadius.circular(24),
+            ),
+            child: Row(
+              children: [
+                tabButton(_SubmitTab.ringkasan, 'Summary', Icons.pie_chart_outline_rounded),
+                tabButton(_SubmitTab.ajukan, 'Submit', Icons.edit_outlined),
+                tabButton(_SubmitTab.status, 'Status', Icons.calendar_month_outlined),
+              ],
+            ),
           ),
         ],
       ),

@@ -92,52 +92,72 @@ class PengajuanRepository {
   }
 
   /// Riwayat pengajuan, terbaru lebih dulu.
+  ///
+  /// [requestDate] dibuat relatif ke `DateTime.now()` (bukan tanggal tetap)
+  /// supaya dua entri pertama selalu jatuh di bulan berjalan — dipakai tab
+  /// Ringkasan untuk demo filter "riwayat bulan ini" tanpa perlu backend.
   Future<List<LeaveHistoryEntry>> fetchHistory() async {
     await Future.delayed(_simulatedLatency);
 
-    return const [
+    final now = DateTime.now();
+    DateTime monthsAgo(int months, int day) {
+      final target = DateTime(now.year, now.month - months, 1);
+      return DateTime(target.year, target.month, day.clamp(1, 28));
+    }
+
+    return [
       LeaveHistoryEntry(
         id: 'PGJ-006',
         type: 'Annual Leave',
         typeColor: AppColors.primaryMid,
         typeBackground: AppColors.primaryLight,
-        date: '17–19 Jul 2026',
+        date: '${DateFormatter.shortDateID(monthsAgo(0, now.day.clamp(3, 26) - 2))} – ${DateFormatter.shortDateID(monthsAgo(0, now.day.clamp(3, 26)))}',
+        requestDate: monthsAgo(0, now.day.clamp(3, 26) - 2),
         status: AppStatus.present,
         note: 'Approved by Dewi Kusumaa',
+        reason: 'Family trip to Bandung, sudah dijadwalkan dari awal bulan.',
       ),
       LeaveHistoryEntry(
         id: 'PGJ-005',
-        type: 'Overtime',
-        typeColor: Color(0xFF6B46C1),
-        typeBackground: Color(0xFFFAF5FF),
-        date: '28 Aug 2026 · 18:30–20:45',
+        type: 'Permission',
+        typeColor: AppColors.pending,
+        typeBackground: AppColors.pendingBg,
+        date: '${DateFormatter.shortDateID(monthsAgo(0, (now.day - 10).clamp(1, 25)))} · Half Day',
+        requestDate: monthsAgo(0, (now.day - 10).clamp(1, 25)),
         status: AppStatus.pending,
-        note: 'Pending approval',
+        note: 'Menunggu persetujuan',
+        reason: 'Urus dokumen keluarga di kelurahan.',
       ),
       LeaveHistoryEntry(
         id: 'PGJ-004',
         type: 'Medical Check',
         typeColor: AppColors.presentMid,
         typeBackground: AppColors.presentBg,
-        date: '10 Aug 2026',
+        date: DateFormatter.shortDateID(monthsAgo(1, 10)),
+        requestDate: monthsAgo(1, 10),
         status: AppStatus.present,
         note: 'Approved',
+        reason: 'Medical check-up tahunan wajib perusahaan.',
       ),
       LeaveHistoryEntry(
         id: 'PGJ-003',
         type: 'MC/Sick',
         typeColor: AppColors.rejected,
         typeBackground: AppColors.rejectedBg,
-        date: '5–6 Aug 2026',
+        date: '${DateFormatter.shortDateID(monthsAgo(1, 5))} – ${DateFormatter.shortDateID(monthsAgo(1, 6))}',
+        requestDate: monthsAgo(1, 5),
         status: AppStatus.rejected,
         note: 'Rejected: Incomplete doctor\'s note',
+        reason: 'Demam tinggi, istirahat sesuai anjuran dokter.',
+        photoUrl: 'surat_dokter.jpg',
       ),
       LeaveHistoryEntry(
         id: 'PGJ-002',
-        type: 'Permission',
-        typeColor: AppColors.pending,
-        typeBackground: AppColors.pendingBg,
-        date: '25 Jul 2026 · Half Day',
+        type: 'Overtime',
+        typeColor: const Color(0xFF6B46C1),
+        typeBackground: const Color(0xFFFAF5FF),
+        date: '${DateFormatter.shortDateID(monthsAgo(2, 28))} · 18:30–20:45',
+        requestDate: monthsAgo(2, 28),
         status: AppStatus.present,
         note: 'Disetujui',
       ),
@@ -146,7 +166,8 @@ class PengajuanRepository {
         type: 'Cuti Tahunan',
         typeColor: AppColors.primaryMid,
         typeBackground: AppColors.primaryLight,
-        date: '1–3 Jul 2026',
+        date: '${DateFormatter.shortDateID(monthsAgo(3, 1))} – ${DateFormatter.shortDateID(monthsAgo(3, 3))}',
+        requestDate: monthsAgo(3, 1),
         status: AppStatus.present,
         note: 'Disetujui',
       ),
@@ -167,8 +188,11 @@ class PengajuanRepository {
       typeColor: AppColors.pending,
       typeBackground: AppColors.pendingBg,
       date: _describeDraftDate(draft),
+      requestDate: draft.startDate ?? draft.date ?? DateTime.now(),
       status: AppStatus.pending,
       note: 'Menunggu persetujuan',
+      reason: draft.reason,
+      photoUrl: draft.attachmentFileName,
     );
   }
 
