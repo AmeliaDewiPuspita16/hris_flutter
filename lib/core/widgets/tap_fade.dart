@@ -42,11 +42,11 @@ class _TapFadeState extends State<TapFade> {
   bool _hovering = false;
   bool _pressing = false;
 
-  double get _opacity {
-    if (_pressing) return widget.pressedOpacity;
-    if (_hovering) return widget.hoverOpacity;
-    return 1;
-  }
+  // double get _opacity {
+  //   if (_pressing) return widget.pressedOpacity;
+  //   if (_hovering) return widget.hoverOpacity;
+  //   return 1;
+  // }
 
   void _setHovering(bool value) {
     if (_hovering != value) setState(() => _hovering = value);
