@@ -49,6 +49,56 @@ extension LeaveTypeX on LeaveType {
     }
   }
 
+  /// Warna khas tiap jenis. Sengaja menghindari hijau/oranye/merah supaya
+  /// tidak bentrok dengan warna badge status (Approved/Pending/Rejected)
+  /// yang tampil bersebelahan di daftar riwayat.
+  Color get color {
+    switch (this) {
+      case LeaveType.cutiTahunan:
+        return const Color(0xFF3B6FD4);
+
+      case LeaveType.izin:
+        return const Color(0xFF7E57C2);
+
+      case LeaveType.lembur:
+        return const Color(0xFF8D6E63);
+
+      case LeaveType.cutiPengganti:
+        return const Color(0xFF0E8A9B);
+
+      case LeaveType.cekKesehatan:
+        return const Color(0xFFD6457A);
+    }
+  }
+
+  /// Versi terang dari [color], untuk latar ikon/pill.
+  Color get background {
+    switch (this) {
+      case LeaveType.cutiTahunan:
+        return const Color(0xFFE8F0FE);
+
+      case LeaveType.izin:
+        return const Color(0xFFF1EBFA);
+
+      case LeaveType.lembur:
+        return const Color(0xFFF3ECE8);
+
+      case LeaveType.cutiPengganti:
+        return const Color(0xFFE0F5F8);
+
+      case LeaveType.cekKesehatan:
+        return const Color(0xFFFDE8F0);
+    }
+  }
+
+  /// Cari jenis dari label tampilannya — riwayat menyimpan label, bukan enum.
+  static LeaveType? fromLabel(String label) {
+    for (final type in LeaveType.values) {
+      if (type.label == label) return type;
+    }
+    return null;
+  }
+
   /// Lembur pribadi hanya untuk Non-Executive.
   static bool showPersonalLembur(Role role) {
     return role == Role.nonExecutive;
