@@ -9,6 +9,7 @@ import '../../domain/leave_history_entry.dart';
 import '../../domain/leave_type.dart';
 import '../bloc/history/leave_history_bloc.dart';
 import '../bloc/history/leave_history_state.dart';
+import 'leave_detail_sheet.dart';
 
 enum _StatusFilter { all, pending, approved, rejected }
 
@@ -284,6 +285,8 @@ class _StatusTabState extends State<StatusTab> {
 
         return AppCard(
           padding: const EdgeInsets.all(14),
+          // Tap kartu = lihat detail, sama seperti baris di tab Ringkasan.
+          onTap: () => showLeaveDetailSheet(context, history),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
