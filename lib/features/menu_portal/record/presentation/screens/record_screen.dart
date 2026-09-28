@@ -5,7 +5,8 @@ import '../../../../../core/theme/app_text_styles.dart';
 import '../../../../../core/widgets/back_header.dart';
 import '../../domain/record_demo_data.dart';
 import '../../ims_document/domain/ims_document_menu_data.dart';
-import '../../ims_document/presentation/screens/master_document_file_screen.dart';
+import '../../ims_document/master_document_file/presentation/screens/master_document_file_screen.dart';
+import '../../ims_document/master_edited_file/presentation/screens/master_edited_file_screen.dart';
 import '../../ims_document/presentation/widgets/ims_document_menu_sheet.dart';
 import '../widgets/record_tile.dart';
 
@@ -29,7 +30,9 @@ class RecordScreen extends StatelessWidget {
       onMasterDocumentFile: () => Navigator.of(context).push(
         MaterialPageRoute(builder: (_) => MasterDocumentFileScreen()),
       ),
-      onMasterEditedFile: () => _showComingSoon(context, 'Master Edited File'),
+      onMasterEditedFile: () => Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => MasterEditedFileScreen()),
+      ),
       onIsoAttachment: () => _showComingSoon(context, 'ISO Attachment'),
       onAddMasterDocument: () => _showComingSoon(context, 'Add Master Document'),
       onAddMasterEdited: () => _showComingSoon(context, 'Add Master Edited'),

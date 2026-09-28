@@ -1,4 +1,4 @@
-import '../domain/master_document.dart';
+import '../../shared/domain/master_document.dart';
 import 'seeds/annex_documents_seed.dart';
 import 'seeds/form_documents_seed.dart';
 import 'seeds/form_template_documents_seed.dart';

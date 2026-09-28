@@ -1,4 +1,4 @@
-import '../../domain/master_document.dart';
+import '../../../shared/domain/master_document.dart';
 
 /// Data demo statis untuk tab "Manual".
 const manualDocumentsSeed = <MasterDocument>[
