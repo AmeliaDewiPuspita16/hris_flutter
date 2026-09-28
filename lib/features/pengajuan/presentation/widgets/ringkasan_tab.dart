@@ -182,7 +182,7 @@ class _BalanceSummaryCard extends StatelessWidget {
                   crossAxisCount: 2,
                   mainAxisSpacing: 6,
                   crossAxisSpacing: 6,
-                  childAspectRatio: 2.0,
+                  childAspectRatio: 1.9,
                 ),
                 itemBuilder: (context, index) => _BalanceCell(balance: state.balances[index]),
               ),
@@ -209,7 +209,7 @@ class _BalanceCell extends StatelessWidget {
     final icon = type?.icon ?? Icons.medical_services_outlined;
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(12, 8, 10, 8),
+      padding: const EdgeInsets.fromLTRB(14, 6, 12, 6),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
         // Kiri sedikit lebih pekat, memudar ke tint asli di kanan.
@@ -217,7 +217,7 @@ class _BalanceCell extends StatelessWidget {
           begin: Alignment.centerLeft,
           end: Alignment.centerRight,
           colors: [
-            Color.alphaBlend(color.withOpacity(0.14), tint),
+            Color.alphaBlend(color.withOpacity(0.10), tint),
             tint,
           ],
         ),
@@ -229,34 +229,33 @@ class _BalanceCell extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 6,
-                      height: 6,
-                      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-                    ),
-                    const SizedBox(width: 5),
-                    Expanded(
-                      child: Text(
-                        balance.label,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.text),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 2),
                 Text(
-                  '${balance.remaining} ${balance.unit}',
+                  balance.label,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.text),
+                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textMuted),
                 ),
+                const SizedBox(height: 2),
+                // Angka besar, satuan kecil di sampingnya — hierarki jelas
+                // dan baris tidak terasa padat.
+                Text.rich(
+                  TextSpan(
+                    text: '${balance.remaining}',
+                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.text),
+                    children: [
+                      TextSpan(
+                        text: ' ${balance.unit}',
+                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textMuted),
+                      ),
+                    ],
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 1),
                 Text(
-                  balance.total != null ? 'out of ${balance.total}' : 'Accumulated',
-                  style: const TextStyle(fontSize: 9.5, color: AppColors.textMuted),
+                  balance.total != null ? 'of ${balance.total}' : 'Accumulated',
+                  style: const TextStyle(fontSize: 10, color: AppColors.textMuted),
                 ),
               ],
             ),
