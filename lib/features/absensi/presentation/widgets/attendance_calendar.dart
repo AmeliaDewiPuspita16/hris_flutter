@@ -5,9 +5,9 @@ import '../../domain/attendance_day.dart';
 
 /// Grid kalender Log Absensi.
 ///
-/// - Tanggal yang sudah berlalu/berlangsung: border tipis + titik kecil
+/// - Tanggal yang sudah berlalu/berlangsung: kotak berisi warna lembut + titik kecil
 ///   berwarna sesuai status kehadiran.
-/// - Tanggal yang belum terjadi: border tipis tanpa titik warna (belum ada
+/// - Tanggal yang belum terjadi: kotak lembut tanpa titik warna (belum ada
 ///   realisasi), tapi kode shift tetap muncul di pojok karena jadwalnya
 ///   sudah diketahui dari HR.
 /// - Tap tanggal mana pun untuk melihat detailnya lewat [onDateSelected].
@@ -56,8 +56,8 @@ class AttendanceCalendar extends StatelessWidget {
           padding: EdgeInsets.zero,
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 7,
-            mainAxisSpacing: 4,
-            crossAxisSpacing: 4,
+            mainAxisSpacing: 6,
+            crossAxisSpacing: 6,
             childAspectRatio: 1,
           ),
           itemCount: leadingBlanks + days.length,
@@ -113,16 +113,16 @@ class _DayCell extends StatelessWidget {
   Widget build(BuildContext context) {
     final dotColor = _dotColor;
 
+    // Sel diisi warna lembut (bukan border) supaya tiap tanggal terbaca
+    // sebagai kotak terpisah di atas card putih. Tanggal terpilih diisi
+    // penuh warna primary.
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(10),
       child: Container(
         decoration: BoxDecoration(
-          border: Border.all(
-            color: isSelected ? AppColors.primary : AppColors.border,
-            width: isSelected ? 1.4 : 0.6,
-          ),
-          borderRadius: BorderRadius.circular(8),
+          color: isSelected ? AppColors.primary : AppColors.bg,
+          borderRadius: BorderRadius.circular(10),
         ),
         child: Center(
           child: Column(
@@ -133,17 +133,23 @@ class _DayCell extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
-                  color: AppColors.text,
+                  color: isSelected ? Colors.white : AppColors.text,
                 ),
               ),
               const SizedBox(height: 3),
               SizedBox(
-                height: 4,
-                width: 4,
+                height: 5,
+                width: 5,
                 child: dotColor == null
                     ? null
                     : DecoratedBox(
-                        decoration: BoxDecoration(color: dotColor, shape: BoxShape.circle),
+                        decoration: BoxDecoration(
+                          color: dotColor,
+                          shape: BoxShape.circle,
+                          // Ring putih supaya titik tetap terlihat di atas
+                          // sel hijau.
+                          border: isSelected ? Border.all(color: Colors.white, width: 1) : null,
+                        ),
                       ),
               ),
             ],

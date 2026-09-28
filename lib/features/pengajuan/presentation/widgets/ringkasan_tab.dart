@@ -7,6 +7,7 @@ import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/status_badge.dart';
 import '../../domain/leave_balance.dart';
 import '../../domain/leave_history_entry.dart';
+import '../../domain/leave_type.dart';
 import '../bloc/balance/leave_balance_bloc.dart';
 import '../bloc/balance/leave_balance_state.dart';
 import '../bloc/history/leave_history_bloc.dart';
@@ -150,8 +151,9 @@ class _BalanceSummaryCard extends StatelessWidget {
         return Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: AppColors.bg,
+            color: Colors.white,
             borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: AppColors.border),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -180,7 +182,7 @@ class _BalanceSummaryCard extends StatelessWidget {
                   crossAxisCount: 2,
                   mainAxisSpacing: 6,
                   crossAxisSpacing: 6,
-                  childAspectRatio: 2.3,
+                  childAspectRatio: 2.0,
                 ),
                 itemBuilder: (context, index) => _BalanceCell(balance: state.balances[index]),
               ),
@@ -199,47 +201,67 @@ class _BalanceCell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Warna & ikon disamakan dengan tab Status (palet per jenis di
+    // LeaveTypeX). Jenis di luar enum (mis. Sick Leave) pakai abu-abu biru.
+    final type = LeaveTypeX.fromLabel(balance.label);
+    final color = type?.color ?? const Color(0xFF607D8B);
+    final tint = type?.background ?? const Color(0xFFECEFF1);
+    final icon = type?.icon ?? Icons.medical_services_outlined;
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      padding: const EdgeInsets.fromLTRB(12, 8, 10, 8),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: balance.color.withOpacity(0.35), width: 1),
+        borderRadius: BorderRadius.circular(12),
+        // Kiri sedikit lebih pekat, memudar ke tint asli di kanan.
+        gradient: LinearGradient(
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+          colors: [
+            Color.alphaBlend(color.withOpacity(0.14), tint),
+            tint,
+          ],
+        ),
       ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.only(top: 4),
-            child: Container(
-              width: 6,
-              height: 6,
-              decoration: BoxDecoration(color: balance.color, shape: BoxShape.circle),
-            ),
-          ),
-          const SizedBox(width: 5),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(
-                  balance.label,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.text),
+                Row(
+                  children: [
+                    Container(
+                      width: 6,
+                      height: 6,
+                      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+                    ),
+                    const SizedBox(width: 5),
+                    Expanded(
+                      child: Text(
+                        balance.label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: AppColors.text),
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 2),
                 Text(
                   '${balance.remaining} ${balance.unit}',
-                  style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: AppColors.text),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: AppColors.text),
                 ),
                 Text(
                   balance.total != null ? 'out of ${balance.total}' : 'Accumulated',
-                  style: const TextStyle(fontSize: 9, color: AppColors.textMuted),
+                  style: const TextStyle(fontSize: 9.5, color: AppColors.textMuted),
                 ),
               ],
             ),
           ),
+          Icon(icon, size: 30, color: color.withOpacity(0.55)),
         ],
       ),
     );
