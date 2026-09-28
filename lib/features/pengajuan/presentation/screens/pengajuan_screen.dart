@@ -65,13 +65,15 @@ class _PengajuanViewState extends State<_PengajuanView> {
 
   @override
   Widget build(BuildContext context) {
-    // Strip status bar memakai warna header (putih), bukan warna halaman —
-    // kalau tidak, ada garis beda warna tepat di atas header.
+    // Strip status bar memakai warna header (primary), bukan warna halaman —
+    // kalau tidak, ada garis beda warna tepat di atas header. Badan halaman
+    // memakai AppColors.bg supaya sama dengan Home.
     return ColoredBox(
-      color: AppColors.card,
+      color: AppColors.primary,
       child: SafeArea(
+        bottom: false,
         child: ColoredBox(
-          color: Colors.white,
+          color: AppColors.bg,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -107,20 +109,26 @@ class _PengajuanViewState extends State<_PengajuanView> {
             duration: const Duration(milliseconds: 150),
             padding: const EdgeInsets.symmetric(vertical: 9),
             decoration: BoxDecoration(
-              color: active ? AppColors.primary : Colors.transparent,
+              // Aktif: pil putih dengan teks primary. Tidak aktif: transparan
+              // di atas header hijau dengan teks putih pudar.
+              color: active ? Colors.white : Colors.transparent,
               borderRadius: BorderRadius.circular(20),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(icon, size: 14, color: active ? Colors.white : AppColors.textMuted),
+                Icon(
+                  icon,
+                  size: 14,
+                  color: active ? AppColors.primary : Colors.white.withOpacity(0.75),
+                ),
                 const SizedBox(width: 5),
                 Text(
                   label,
                   style: TextStyle(
                     fontSize: 12.5,
                     fontWeight: FontWeight.w700,
-                    color: active ? Colors.white : AppColors.textMuted,
+                    color: active ? AppColors.primary : Colors.white.withOpacity(0.75),
                   ),
                 ),
               ],
@@ -131,19 +139,26 @@ class _PengajuanViewState extends State<_PengajuanView> {
     }
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
-      color: Colors.white,
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 18),
+      // Solid primary, sudut bawah bulat — sama dengan header Log Absensi.
+      decoration: const BoxDecoration(
+        color: AppColors.primary,
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(28)),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Padding(
-            padding: EdgeInsets.only(bottom: 14),
-            child: Text('Leave Request', style: AppTextStyles.h2),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 14),
+            child: Text(
+              'Leave Request',
+              style: AppTextStyles.h2.copyWith(color: Colors.white),
+            ),
           ),
           Container(
             padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
-              color: AppColors.bg,
+              color: Colors.white.withOpacity(0.16),
               borderRadius: BorderRadius.circular(24),
             ),
             child: Row(

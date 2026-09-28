@@ -210,7 +210,12 @@ class _RangeCalendarSheetState extends State<_RangeCalendarSheet> {
                 rangeEndDecoration: BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
                 rangeStartTextStyle: TextStyle(color: Colors.white, fontSize: 13),
                 rangeEndTextStyle: TextStyle(color: Colors.white, fontSize: 13),
-                withinRangeDecoration: BoxDecoration(color: AppColors.presentBg, shape: BoxShape.circle),
+                // Pita rentang: default table_calendar berwarna biru
+                // (0xFFBBDDFF), jadi diganti hijau muda. Lingkaran hari di
+                // dalam rentang dibuat transparan supaya menyatu dengan
+                // pita, bukan lingkaran sewarna yang "hilang" di dalamnya.
+                rangeHighlightColor: AppColors.primaryLight,
+                withinRangeDecoration: BoxDecoration(color: Colors.transparent, shape: BoxShape.circle),
                 withinRangeTextStyle: TextStyle(color: AppColors.primary, fontSize: 13),
               ),
               onRangeSelected: (start, end, focused) {

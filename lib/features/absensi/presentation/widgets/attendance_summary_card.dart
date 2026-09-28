@@ -5,7 +5,7 @@ import '../../domain/attendance_summary.dart';
 
 /// Kartu ringkasan (Hadir / Terlambat / Jam Lembur) di puncak Log Absensi.
 ///
-/// Ditampilkan sebagai 3 card terpisah; border tiap card memakai warna yang
+/// Ditampilkan sebagai 3 card terpisah; warna tiap card memakai warna yang
 /// sama dengan titik status di kalender di bawahnya, supaya artinya
 /// konsisten di seluruh layar.
 class AttendanceSummaryCard extends StatelessWidget {
@@ -66,9 +66,10 @@ class _StatCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
       decoration: BoxDecoration(
-        color: AppColors.card,
+        // Isi warna lembut dari warna status (tanpa border), selaras dengan
+        // kartu saldo di Leave Request.
+        color: borderColor.withOpacity(0.10),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: borderColor, width: 1),
       ),
       child: Column(
         children: [

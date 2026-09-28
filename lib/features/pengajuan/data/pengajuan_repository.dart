@@ -73,7 +73,7 @@ class PengajuanRepository {
         )
       else
         const LeaveBalance(
-          label: 'Off in Liew',
+          label: 'Off in Lieu',
           used: 2,
           total: 5,
           unit: 'Days',
