@@ -149,7 +149,7 @@ class _PengajuanViewState extends State<_PengajuanView> {
                 Icon(
                   icon,
                   size: 14,
-                  color: active ? AppColors.primary : Colors.white.withOpacity(0.75),
+                  color: active ? AppColors.primary : Colors.white.withValues(alpha: 0.75),
                 ),
                 const SizedBox(width: 5),
                 Text(
@@ -157,7 +157,7 @@ class _PengajuanViewState extends State<_PengajuanView> {
                   style: TextStyle(
                     fontSize: 12.5,
                     fontWeight: FontWeight.w700,
-                    color: active ? AppColors.primary : Colors.white.withOpacity(0.75),
+                    color: active ? AppColors.primary : Colors.white.withValues(alpha: 0.75),
                   ),
                 ),
               ],
@@ -181,7 +181,7 @@ class _PengajuanViewState extends State<_PengajuanView> {
           Container(
             padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.16),
+              color: Colors.white.withValues(alpha: 0.16),
               borderRadius: BorderRadius.circular(24),
             ),
             child: Row(

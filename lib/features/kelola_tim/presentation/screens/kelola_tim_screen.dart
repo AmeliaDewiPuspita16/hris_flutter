@@ -119,7 +119,7 @@ class _KelolaTimScreenState extends State<KelolaTimScreen> {
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.end,
                                 children: [
-                                  Text('${m.leaveRemaining.toStringAsFixed(m.leaveRemaining.truncateToDouble() == m.leaveRemaining ? 0 : 1)}',
+                                  Text(m.leaveRemaining.toStringAsFixed(m.leaveRemaining.truncateToDouble() == m.leaveRemaining ? 0 : 1),
                                       style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.primaryMid)),
                                   const Text('sisa cuti', style: TextStyle(fontSize: 9, color: AppColors.textMuted)),
                                 ],

@@ -217,7 +217,7 @@ class _BalanceCell extends StatelessWidget {
           begin: Alignment.centerLeft,
           end: Alignment.centerRight,
           colors: [
-            Color.alphaBlend(color.withOpacity(0.10), tint),
+            Color.alphaBlend(color.withValues(alpha: 0.10), tint),
             tint,
           ],
         ),
@@ -260,7 +260,7 @@ class _BalanceCell extends StatelessWidget {
               ],
             ),
           ),
-          Icon(icon, size: 30, color: color.withOpacity(0.55)),
+          Icon(icon, size: 30, color: color.withValues(alpha: 0.55)),
         ],
       ),
     );

@@ -2,11 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/logging/app_logger.dart';
+import '../../../../core/network/api_client.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../data/announcement_repository.dart';
 import '../../../absensi/presentation/screens/absensi_screen.dart';
 import '../../../kelola_tim/presentation/screens/kelola_tim_screen.dart';
+import '../../../leave_approval/data/leave_approval_repository.dart';
+import '../../../leave_approval/domain/leave_approval_request.dart';
+import '../../../leave_approval/domain/leave_approval_status.dart';
+import '../../../leave_approval/presentation/screens/leave_approval_screen.dart';
 import '../../../menu_portal/onlineapps/presentation/screens/online_apps_screen.dart';
 import '../../../menu_portal/onlineapps/work_order/est_request/domain/est_request_demo_data.dart';
 import '../../../menu_portal/onlineapps/work_order/est_request/domain/est_request_status.dart';
@@ -22,7 +28,6 @@ import '../../../hris_menu/domain/hris_menu_config.dart';
 import '../../../hris_menu/domain/hris_menu_item.dart';
 import '../../../hris_menu/presentation/screens/hris_menu_screen.dart';
 import '../../../notifikasi/domain/app_notification.dart';
-import '../../../notifikasi/domain/notification_category.dart';
 import '../../../notifikasi/domain/notification_demo_data.dart';
 import '../../../notifikasi/presentation/screens/notifikasi_screen.dart';
 import '../../../auth/domain/auth_user.dart';
@@ -55,6 +60,7 @@ class BerandaScreen extends StatefulWidget {
     required this.role,
     this.user,
     this.announcementRepository,
+    this.leaveApprovalRepository,
   });
 
   final Role role;
@@ -66,6 +72,11 @@ class BerandaScreen extends StatefulWidget {
   /// Boleh diisi manual di test; kalau tidak, diambil dari
   /// RepositoryProvider terdekat.
   final AnnouncementRepository? announcementRepository;
+
+  /// Sumber data Leave Approvals. Dipegang di sini (satu instance) supaya
+  /// badge di Beranda/menu HRIS dan halaman approval membaca data yang
+  /// sama. Diisi manual di test; kalau tidak, dibuat dari [ApiClient].
+  final LeaveApprovalRepository? leaveApprovalRepository;
 
   @override
   State<BerandaScreen> createState() => _BerandaScreenState();
@@ -92,6 +103,15 @@ class _BerandaScreenState extends State<BerandaScreen> {
   bool _loadingAnnouncements = true;
   String? _announcementsError;
 
+  /// Repository approval Leave — satu instance untuk seluruh Beranda.
+  late final LeaveApprovalRepository _leaveApprovalRepository =
+      widget.leaveApprovalRepository ??
+          LeaveApprovalRepository(apiClient: ApiClient());
+
+  /// Jumlah pengajuan Leave yang menunggu keputusan HOD, dibaca dari
+  /// [_leaveApprovalRepository] (BUKAN dihitung dari notifikasi).
+  int _leaveApprovalCount = 0;
+
   Role get _role => widget.role;
 
   int get _unreadCount => _notifications.where((n) => !n.isRead).length;
@@ -100,6 +120,7 @@ class _BerandaScreenState extends State<BerandaScreen> {
   void initState() {
     super.initState();
     _loadAnnouncements();
+    _loadLeaveApprovalCount();
   }
 
   Future<void> _loadAnnouncements() async {
@@ -177,14 +198,83 @@ class _BerandaScreenState extends State<BerandaScreen> {
     setState(() => _announcements = [created, ..._announcements]);
   }
 
-  /// SEMENTARA: belum ada halaman approval Leave sungguhan (beda dari IT
-  /// yang sudah punya tab Approve Request) — dihitung dari notifikasi
-  /// kategori Leave yang masih butuh keputusan, supaya angkanya tetap
-  /// sinkron dengan yang muncul di tab "Action" Notifications, sampai ada
-  /// API approval Leave sungguhan.
-  int get _leaveApprovalCount => _notifications
-      .where((n) => n.category == NotificationCategory.leave && n.needsAction)
-      .length;
+  Future<void> _loadLeaveApprovalCount() async {
+    try {
+      final count = await _leaveApprovalRepository.fetchPendingCount();
+      if (!mounted) return;
+      setState(() => _leaveApprovalCount = count);
+    } catch (e, stack) {
+      AppLogger.error('Jumlah leave approval gagal dimuat', e, stack);
+    }
+  }
+
+  /// Halaman Leave Approvals sungguhan (khusus HRIS/Leave, terpisah dari
+  /// tab Notifications). Dipakai menu HRIS dan tag "Leave" di banner.
+  void _openLeaveApproval() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => LeaveApprovalScreen(
+          repository: _leaveApprovalRepository,
+          onPendingCountChanged: (count) {
+            if (mounted) setState(() => _leaveApprovalCount = count);
+          },
+          onDecided: _syncLeaveNotification,
+        ),
+      ),
+    );
+  }
+
+  /// Keputusan diambil di halaman Leave Approvals → notifikasi Leave yang
+  /// sama ikut turun dari "Action" supaya tidak tertinggal menggantung.
+  void _syncLeaveNotification(LeaveApprovalRequest request) {
+    final decision = request.status == LeaveApprovalStatus.approved
+        ? NotificationDecision.approved
+        : NotificationDecision.rejected;
+
+    setState(() {
+      _notifications = [
+        for (final n in _notifications)
+          n.id == request.notificationId
+              ? n.copyWith(decision: decision, isRead: true)
+              : n,
+      ];
+    });
+  }
+
+  /// Kebalikannya: keputusan diambil langsung dari tab Notifications →
+  /// diteruskan ke repository approval, supaya badge dan halaman Leave
+  /// Approvals tidak berbeda dengan yang tampil di sana.
+  void _onNotificationsChanged(List<AppNotification> updated) {
+    final before = {for (final n in _notifications) n.id: n};
+    setState(() => _notifications = updated);
+
+    for (final n in updated) {
+      final requestId = LeaveApprovalRequest.idFromNotificationId(n.id);
+      final decision = n.decision;
+      if (requestId == null || decision == null) continue;
+      // Sudah diputuskan sebelumnya (dan sudah tersinkron) — lewati.
+      if (before[n.id]?.decision != null) continue;
+
+      _pushLeaveDecision(requestId, decision);
+    }
+  }
+
+  Future<void> _pushLeaveDecision(
+    String requestId,
+    NotificationDecision decision,
+  ) async {
+    try {
+      await _leaveApprovalRepository.decide(
+        requestId,
+        decision: decision == NotificationDecision.approved
+            ? LeaveApprovalDecision.approve
+            : LeaveApprovalDecision.reject,
+      );
+    } catch (e, stack) {
+      AppLogger.error('Keputusan dari notifikasi gagal disinkronkan', e, stack);
+    }
+    await _loadLeaveApprovalCount();
+  }
 
   int get _itApprovalCount => ApproveRequestDemoData.items().length;
 
@@ -196,7 +286,8 @@ class _BerandaScreenState extends State<BerandaScreen> {
       .length;
 
   /// Pindah ke tab Notifications dengan filter "Action" (yang menunggu
-  /// keputusan). Dipakai banner Beranda dan item "Approvals" di menu HRIS.
+  /// keputusan — semua modul). Dipakai badan banner "Approvals waiting" di
+  /// Beranda. Approval Leave punya halaman sendiri: [_openLeaveApproval].
   void _openApprovalNotifications() {
     setState(() {
       _notificationFilter = NotificationFilter.action;
@@ -215,7 +306,7 @@ class _BerandaScreenState extends State<BerandaScreen> {
 
   /// SEMENTARA: EST belum punya tab Approve Request sendiri seperti IT
   /// (menu EST Request baru sisi requester) — untuk sekarang jatuh ke
-  /// Notifications juga, sama seperti Leave.
+  /// Notifications.
   void _openEstApproval() => _openApprovalNotifications();
 
   /// Menu utama "Online Apps" — dipush sebagai halaman baru, bukan tab,
@@ -279,9 +370,10 @@ class _BerandaScreenState extends State<BerandaScreen> {
         onEmployeeInfo: () => _openTab(MainTab.profile),
         onPayslip: _openPayslip,
         onManageTeam: _openKelolaTim,
-        onApprovals: _openApprovalNotifications,
-        approvalCount:
-            _leaveApprovalCount + _itApprovalCount + _estApprovalCount,
+        // Item ini "Leave Approvals", jadi badge-nya cuma approval Leave —
+        // bukan jumlah semua modul.
+        onApprovals: _openLeaveApproval,
+        approvalCount: _leaveApprovalCount,
       );
 
   @override
@@ -323,7 +415,7 @@ class _BerandaScreenState extends State<BerandaScreen> {
           ),
           NotifikasiScreen(
             notifications: _notifications,
-            onChanged: (updated) => setState(() => _notifications = updated),
+            onChanged: _onNotificationsChanged,
             initialFilter: _notificationFilter,
             filterRequestToken: _notificationFilterToken,
             showBack: false,
@@ -370,7 +462,7 @@ class _BerandaScreenState extends State<BerandaScreen> {
                 itCount: _itApprovalCount,
                 estCount: _estApprovalCount,
                 onTapAll: _openApprovalNotifications,
-                onTapLeave: _openApprovalNotifications,
+                onTapLeave: _openLeaveApproval,
                 onTapIt: _openItApproval,
                 onTapEst: _openEstApproval,
               ),

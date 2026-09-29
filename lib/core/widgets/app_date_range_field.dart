@@ -124,8 +124,8 @@ class _RangeCalendarSheet extends StatefulWidget {
 
 class _RangeCalendarSheetState extends State<_RangeCalendarSheet> {
   late DateTime _focusedDay = widget.initialStart ?? DateTime.now();
-  DateTime? _rangeStart = null;
-  DateTime? _rangeEnd = null;
+  DateTime? _rangeStart;
+  DateTime? _rangeEnd;
 
   @override
   void initState() {

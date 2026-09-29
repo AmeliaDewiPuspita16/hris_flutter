@@ -400,7 +400,9 @@ class _GridSection extends StatelessWidget {
         crossAxisCount: 4,
         mainAxisSpacing: 16,
         crossAxisSpacing: 12,
-        mainAxisExtent: 96,
+        // Tinggi sel harus cukup untuk ikon 56 + label 2 baris + teks "Soon"
+        // (item belum siap). 96 dulu bikin bottom overflow 14px.
+        mainAxisExtent: 112,
       ),
       itemBuilder: (_, index) => _GridTile(item: items[index]),
     );

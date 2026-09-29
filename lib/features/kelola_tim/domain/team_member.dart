@@ -1,4 +1,5 @@
 /// Padanan baris data di web "Manage Leave Request Department":
+library;
 
 class TeamMember {
   const TeamMember({

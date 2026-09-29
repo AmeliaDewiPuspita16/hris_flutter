@@ -1,4 +1,5 @@
 /// halaman list
+library;
 
 import 'package:flutter/material.dart';
 
@@ -10,11 +11,11 @@ import '../../../core/widgets/back_header.dart';
 import '../domain/payslip.dart';
 import 'slip_gaji_detail_screen.dart';
 
-/// Daftar riwayat slip gaji per bulan. 
+/// Daftar riwayat slip gaji per bulan.
 class PayslipScreen extends StatelessWidget {
   const PayslipScreen({super.key});
 
-  // dummy 
+  // dummy
   static const _year = '2026';
   static const _payslips = Payslip.dummy2026;
 

@@ -1,5 +1,6 @@
 /// Rencana kerja yang disusun tim EST untuk satu request — isi modal
 /// "Response Request" yang dibuka lewat tombol hijau "Maintenance Plan"
+library;
 
 class EstMaintenancePlan {
   const EstMaintenancePlan({

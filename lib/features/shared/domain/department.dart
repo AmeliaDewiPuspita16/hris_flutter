@@ -1,4 +1,5 @@
 /// model Department
+library;
 
 /// Satu departemen aktif — dipakai untuk mengisi dropdown, misalnya
 /// Department pada form pengumuman.

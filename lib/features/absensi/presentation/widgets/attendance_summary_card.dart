@@ -68,7 +68,7 @@ class _StatCard extends StatelessWidget {
       decoration: BoxDecoration(
         // Isi warna lembut dari warna status (tanpa border), selaras dengan
         // kartu saldo di Leave Request.
-        color: borderColor.withOpacity(0.10),
+        color: borderColor.withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
