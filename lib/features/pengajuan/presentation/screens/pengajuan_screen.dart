@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/network/api_client.dart';
+import '../../../../core/widgets/header_title_row.dart';
 import '../../../shared/domain/role.dart';
 
 import '../../data/pengajuan_repository.dart';
@@ -23,10 +24,21 @@ enum _SubmitTab { ringkasan, ajukan, status }
 /// tingkat di atas ketiga tab, supaya [AjukanTab] bisa menyisipkan hasil
 /// submit ke [LeaveHistoryBloc] yang sama yang dibaca [StatusTab] — tanpa
 /// kedua bloc itu perlu saling kenal satu sama lain.
+///
+/// Dibuka dari menu HRIS (push), bukan lagi tab bottom nav, jadi header
+/// punya tombol kembali ([showBack]).
 class PengajuanScreen extends StatelessWidget {
-  const PengajuanScreen({super.key, required this.role, this.repository});
+  const PengajuanScreen({
+    super.key,
+    required this.role,
+    this.repository,
+    this.showBack = true,
+  });
 
   final Role role;
+
+  /// Tampilkan tombol kembali di header.
+  final bool showBack;
 
   /// Diisi test; di aplikasi diambil dari [RepositoryProvider].
   final PengajuanRepository? repository;
@@ -46,15 +58,32 @@ class PengajuanScreen extends StatelessWidget {
             ..add(const LeaveHistoryStarted()),
         ),
       ],
-      child: _PengajuanView(role: role),
+      // Header hijau sampai ke balik status bar → ikon status bar terang.
+      // Diset di sini karena layar ini dibuka lewat push, di luar
+      // AnnotatedRegion milik BerandaScreen.
+      child: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: const SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.light,
+          statusBarBrightness: Brightness.dark,
+        ),
+        // Scaffold dibutuhkan sebagai ancestor Material (InkWell, dst.):
+        // layar ini di-push sebagai route sendiri, tidak lagi berada di
+        // dalam Scaffold milik BerandaScreen.
+        child: Scaffold(
+          backgroundColor: AppColors.primary,
+          body: _PengajuanView(role: role, showBack: showBack),
+        ),
+      ),
     );
   }
 }
 
 class _PengajuanView extends StatefulWidget {
-  const _PengajuanView({required this.role});
+  const _PengajuanView({required this.role, required this.showBack});
 
   final Role role;
+  final bool showBack;
 
   @override
   State<_PengajuanView> createState() => _PengajuanViewState();
@@ -148,13 +177,7 @@ class _PengajuanViewState extends State<_PengajuanView> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Padding(
-            padding: const EdgeInsets.only(bottom: 14),
-            child: Text(
-              'Leave Request',
-              style: AppTextStyles.h2.copyWith(color: Colors.white),
-            ),
-          ),
+          HeaderTitleRow(title: 'Leave Request', showBack: widget.showBack),
           Container(
             padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(

@@ -20,12 +20,18 @@ import '../widgets/notification_tile.dart';
 /// alih-alih deretan chip pil. Notifikasi yang butuh keputusan tidak lagi
 /// memakai kartu berbeda — cuma naik ke kelompok paling atas dan
 /// menumbuhkan sepasang tombol kecil di barisnya sendiri.
+///
+/// Layar ini sekarang menjadi tab di bottom nav ([showBack] = false). Karena
+/// tab tetap hidup di `IndexedStack`, ia menyalin ulang daftar dari
+/// pemanggil setiap kali [notifications] berganti (lihat [didUpdateWidget]).
 class NotifikasiScreen extends StatefulWidget {
   const NotifikasiScreen({
     super.key,
     required this.notifications,
     required this.onChanged,
     this.initialFilter = NotificationFilter.all,
+    this.showBack = true,
+    this.filterRequestToken = 0,
   });
 
   final List<AppNotification> notifications;
@@ -35,6 +41,15 @@ class NotifikasiScreen extends StatefulWidget {
   /// Beranda untuk masuk langsung ke "Action" alih-alih "All".
   final NotificationFilter initialFilter;
 
+  /// False saat dipakai sebagai tab — header tanpa tombol kembali.
+  final bool showBack;
+
+  /// Sebagai tab, layar ini dibuat sekali dan tidak dibuka ulang, jadi
+  /// [initialFilter] saja tidak cukup untuk "lompat ke Action" dari banner
+  /// Beranda. Naikkan angka ini setiap kali pemanggil ingin filter
+  /// [initialFilter] diterapkan lagi.
+  final int filterRequestToken;
+
   @override
   State<NotifikasiScreen> createState() => _NotifikasiScreenState();
 }
@@ -42,6 +57,17 @@ class NotifikasiScreen extends StatefulWidget {
 class _NotifikasiScreenState extends State<NotifikasiScreen> {
   late List<AppNotification> _items = List.of(widget.notifications);
   late NotificationFilter _filter = widget.initialFilter;
+
+  @override
+  void didUpdateWidget(NotifikasiScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!identical(oldWidget.notifications, widget.notifications)) {
+      _items = List.of(widget.notifications);
+    }
+    if (oldWidget.filterRequestToken != widget.filterRequestToken) {
+      _filter = widget.initialFilter;
+    }
+  }
 
   void _update(List<AppNotification> next) {
     setState(() => _items = next);
@@ -89,7 +115,7 @@ class _NotifikasiScreenState extends State<NotifikasiScreen> {
       backgroundColor: AppColors.card,
       appBar: BackHeader(
         title: 'Notifications',
-        onBack: () => Navigator.of(context).pop(),
+        onBack: widget.showBack ? () => Navigator.of(context).pop() : null,
         trailing: InkWell(
           onTap: _markAllRead,
           child: const Icon(
