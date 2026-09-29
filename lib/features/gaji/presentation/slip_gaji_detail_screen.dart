@@ -1,4 +1,5 @@
 /// halaman detail per bulan.
+library;
 
 import 'package:flutter/material.dart';
 
@@ -149,7 +150,7 @@ class _HeroCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.15),
+              color: Colors.white.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(6),
             ),
             child: Text(
