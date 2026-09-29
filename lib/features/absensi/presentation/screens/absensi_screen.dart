@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/network/api_client.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_card.dart';
-import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/widgets/header_title_row.dart';
 import '../../data/absensi_repository.dart';
 import '../bloc/absensi_bloc.dart';
 import '../bloc/absensi_event.dart';
@@ -19,8 +20,14 @@ import '../widgets/sync_footnote.dart';
 /// Absen tetap dilakukan lewat mesin fingerprint di kantor, sistem itu
 /// sudah tersambung ke HRIS web. Layar ini cuma menampilkan hasil sync-nya,
 /// jadi TIDAK ada tombol check-in/check-out di mobile.
+///
+/// Dibuka dari menu HRIS atau kartu jam kerja di Beranda (push), bukan lagi
+/// tab bottom nav, jadi header punya tombol kembali ([showBack]).
 class AbsensiScreen extends StatelessWidget {
-  const AbsensiScreen({super.key, this.repository});
+  const AbsensiScreen({super.key, this.repository, this.showBack = true});
+
+  /// Tampilkan tombol kembali di header.
+  final bool showBack;
 
   /// Diisi test; di aplikasi dibuat langsung dari [ApiClient] lokal — lihat
   /// catatan di [AbsensiRepository] soal kenapa belum didaftarkan di
@@ -33,13 +40,31 @@ class AbsensiScreen extends StatelessWidget {
 
     return BlocProvider(
       create: (_) => AbsensiBloc(repository: absensi)..add(const AbsensiStarted()),
-      child: const _AbsensiView(),
+      // Header hijau sampai ke balik status bar → ikon status bar terang.
+      // Diset di sini karena layar ini dibuka lewat push, di luar
+      // AnnotatedRegion milik BerandaScreen.
+      child: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: const SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.light,
+          statusBarBrightness: Brightness.dark,
+        ),
+        // Scaffold dibutuhkan sebagai ancestor Material (InkWell, dst.):
+        // layar ini di-push sebagai route sendiri, tidak lagi berada di
+        // dalam Scaffold milik BerandaScreen.
+        child: Scaffold(
+          backgroundColor: AppColors.primary,
+          body: _AbsensiView(showBack: showBack),
+        ),
+      ),
     );
   }
 }
 
 class _AbsensiView extends StatelessWidget {
-  const _AbsensiView();
+  const _AbsensiView({required this.showBack});
+
+  final bool showBack;
 
   static const _bulanIndonesia = [
     'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
@@ -133,13 +158,7 @@ class _AbsensiView extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Padding(
-            padding: const EdgeInsets.only(bottom: 14),
-            child: Text(
-              'Log Absensi',
-              style: AppTextStyles.h2.copyWith(color: Colors.white),
-            ),
-          ),
+          HeaderTitleRow(title: 'Log Absensi', showBack: showBack),
           _buildMonthNav(context, selectedMonth),
         ],
       ),

@@ -1,23 +1,39 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
-import '../../../shared/domain/role.dart';
+import '../../domain/main_tab.dart';
 
-/// Navigasi bawah Beranda. Dua tab terakhir hanya muncul untuk role tertentu.
+/// Navigasi bawah Beranda: Home, HRIS, Notifications, Profile.
+///
+/// Sama untuk semua role. Fitur yang hanya untuk role tertentu (Approvals,
+/// Manage Team, dst.) tidak lagi jadi tab sendiri, tapi item di menu HRIS
+/// (lihat `HrisMenuConfig`).
 class HomeBottomNav extends StatelessWidget {
   const HomeBottomNav({
     super.key,
-    required this.role,
-    required this.activeIndex,
+    required this.activeTab,
     required this.onChanged,
+    this.unreadCount = 0,
   });
 
-  final Role role;
-  final int activeIndex;
-  final ValueChanged<int> onChanged;
+  final MainTab activeTab;
+  final ValueChanged<MainTab> onChanged;
+
+  /// Jumlah notifikasi belum dibaca, ditampilkan sebagai badge di tab
+  /// Notifications.
+  final int unreadCount;
+
+  Widget _notificationIcon(IconData icon) {
+    return Badge(
+      isLabelVisible: unreadCount > 0,
+      label: Text(unreadCount > 9 ? '9+' : '$unreadCount'),
+      child: Icon(icon),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
+    // Urutan harus sama dengan urutan nilai [MainTab].
     final items = <BottomNavigationBarItem>[
       const BottomNavigationBarItem(
         icon: Icon(Icons.home_outlined),
@@ -25,37 +41,25 @@ class HomeBottomNav extends StatelessWidget {
         label: 'Home',
       ),
       const BottomNavigationBarItem(
-        icon: Icon(Icons.description_outlined),
-        activeIcon: Icon(Icons.description),
-        label: 'Request',
+        icon: Icon(Icons.grid_view_outlined),
+        activeIcon: Icon(Icons.grid_view),
+        label: 'HRIS',
       ),
-      const BottomNavigationBarItem(
-        icon: Icon(Icons.event_note_outlined),
-        activeIcon: Icon(Icons.event_note),
-        label: 'Attendance',
+      BottomNavigationBarItem(
+        icon: _notificationIcon(Icons.notifications_outlined),
+        activeIcon: _notificationIcon(Icons.notifications),
+        label: 'Notifications',
       ),
       const BottomNavigationBarItem(
         icon: Icon(Icons.person_outline),
         activeIcon: Icon(Icons.person),
         label: 'Profile',
       ),
-      if (role == Role.hod)
-        const BottomNavigationBarItem(
-          icon: Icon(Icons.check_circle_outline),
-          activeIcon: Icon(Icons.check_circle),
-          label: 'Approvals',
-        ),
-      if (role == Role.admin)
-        const BottomNavigationBarItem(
-          icon: Icon(Icons.groups_outlined),
-          activeIcon: Icon(Icons.groups),
-          label: 'Manage Team',
-        ),
     ];
 
     return BottomNavigationBar(
-      currentIndex: activeIndex < items.length ? activeIndex : 0,
-      onTap: onChanged,
+      currentIndex: activeTab.index,
+      onTap: (index) => onChanged(MainTab.values[index]),
       type: BottomNavigationBarType.fixed,
       selectedItemColor: AppColors.primary,
       unselectedItemColor: AppColors.textMuted,

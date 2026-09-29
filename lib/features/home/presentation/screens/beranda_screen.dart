@@ -17,7 +17,10 @@ import '../../../notifikasi/domain/notification_filter.dart';
 import '../widgets/approval_summary_banner.dart';
 import '../../../pengajuan/presentation/screens/pengajuan_screen.dart';
 import '../../../profil/presentation/screens/profil_screen.dart';
-// import '../../../gaji/presentation/gaji_screen.dart';
+import '../../../gaji/presentation/gaji_screen.dart';
+import '../../../hris_menu/domain/hris_menu_config.dart';
+import '../../../hris_menu/domain/hris_menu_item.dart';
+import '../../../hris_menu/presentation/screens/hris_menu_screen.dart';
 import '../../../notifikasi/domain/app_notification.dart';
 import '../../../notifikasi/domain/notification_category.dart';
 import '../../../notifikasi/domain/notification_demo_data.dart';
@@ -26,6 +29,7 @@ import '../../../auth/domain/auth_user.dart';
 import '../../../shared/domain/role.dart';
 import '../../domain/published_announcement.dart';
 import '../../domain/home_demo_data.dart';
+import '../../domain/main_tab.dart';
 import '../../domain/service_shortcut.dart';
 import '../widgets/activity_section.dart';
 import '../widgets/announcement_detail_sheet.dart';
@@ -41,8 +45,10 @@ import '../widgets/team_banner.dart';
 
 /// Halaman Beranda + shell navigasi utama.
 ///
-/// Home, Request (Pengajuan), Attendance (Absensi), dan Profile adalah
-/// 4 tab UTAMA yang sejajar di bottom nav
+/// Empat tab di bottom nav ([MainTab]): Home, HRIS (menu fitur kepegawaian),
+/// Notifications, dan Profile. Request (Pengajuan) dan Attendance (Absensi)
+/// bukan lagi tab — keduanya dibuka lewat push dari menu HRIS atau dari
+/// kartu di Beranda.
 class BerandaScreen extends StatefulWidget {
   const BerandaScreen({
     super.key,
@@ -66,18 +72,14 @@ class BerandaScreen extends StatefulWidget {
 }
 
 class _BerandaScreenState extends State<BerandaScreen> {
-  static const _homeTab = 0;
-  static const _pengajuanTab = 1;
-  static const _absensiTab = 2;
-  static const _profilTab = 3;
+  MainTab _activeTab = MainTab.home;
 
-  /// Indeks tab navigasi bawah. Tab 4 dipakai role HOD untuk Persetujuan.
-  ///
-  /// SEMENTARA: role HOD belum punya halaman Persetujuan sungguhan, jadi
-  /// tab ini cuma menyalakan highlight di bottom nav tanpa konten baru.
-  static const _approvalTabIndex = 4;
-
-  int _activeTab = _homeTab;
+  /// Filter awal tab Notifications. [_notificationFilterToken] dinaikkan
+  /// tiap kali kita ingin tab itu melompat ke [_notificationFilter] (mis.
+  /// dari banner "Approvals waiting"), karena tab-nya sendiri tidak dibuat
+  /// ulang saat berpindah.
+  NotificationFilter _notificationFilter = NotificationFilter.all;
+  int _notificationFilterToken = 0;
 
   /// Daftar notifikasi dipegang di sini, bukan di NotifikasiScreen, supaya
   /// titik penanda di lonceng tetap benar setelah layar itu ditutup.
@@ -125,24 +127,37 @@ class _BerandaScreenState extends State<BerandaScreen> {
     }
   }
 
-  void _openTab(int index) => setState(() => _activeTab = index);
+  void _openTab(MainTab tab) => setState(() => _activeTab = tab);
 
+  /// Lonceng di header Beranda = jalan pintas ke tab Notifications.
   void _openNotifications() {
+    setState(() {
+      _notificationFilter = NotificationFilter.all;
+      _notificationFilterToken++;
+      _activeTab = MainTab.notifications;
+    });
+  }
+
+  void _openPayslip() {
     Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => NotifikasiScreen(
-          notifications: _notifications,
-          onChanged: (updated) => setState(() => _notifications = updated),
-        ),
-      ),
+      MaterialPageRoute(builder: (_) => const PayslipScreen()),
     );
   }
 
-  // void _openPayslip() {
-  //   Navigator.of(context).push(
-  //     MaterialPageRoute(builder: (_) => const PayslipScreen()),
-  //   );
-  // }
+  /// Leave Request / Pengajuan — dibuka lewat push dari menu HRIS atau
+  /// "See all" di saldo Beranda.
+  void _openLeaveRequest() {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => PengajuanScreen(role: _role)),
+    );
+  }
+
+  /// Log Absensi — dibuka lewat push dari menu HRIS atau kartu jam kerja.
+  void _openAttendance() {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const AbsensiScreen()),
+    );
+  }
 
   void _openKelolaTim() {
     Navigator.of(context).push(
@@ -180,16 +195,14 @@ class _BerandaScreenState extends State<BerandaScreen> {
       .where((r) => r.status == EstRequestStatus.waitApprovalHod)
       .length;
 
+  /// Pindah ke tab Notifications dengan filter "Action" (yang menunggu
+  /// keputusan). Dipakai banner Beranda dan item "Approvals" di menu HRIS.
   void _openApprovalNotifications() {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => NotifikasiScreen(
-          notifications: _notifications,
-          onChanged: (updated) => setState(() => _notifications = updated),
-          initialFilter: NotificationFilter.action,
-        ),
-      ),
-    );
+    setState(() {
+      _notificationFilter = NotificationFilter.action;
+      _notificationFilterToken++;
+      _activeTab = MainTab.notifications;
+    });
   }
 
   void _openItApproval() {
@@ -220,45 +233,10 @@ class _BerandaScreenState extends State<BerandaScreen> {
   }
 
   List<ServiceShortcut> _buildServices() => [
-        // ServiceShortcut(
-        //   icon: Icons.event_available_outlined,
-        //   label: 'Leave',
-        //   color: AppColors.primaryMid,
-        //   background: AppColors.primaryLight,
-        //   onTap: () => _openTab(_pengajuanTab),
-        // ),
-        // ServiceShortcut(
-        //   icon: Icons.receipt_long_outlined,
-        //   label: 'Payslip',
-        //   color: AppColors.accent,
-        //   background: AppColors.accentBg,
-        //   onTap: _openPayslip,
-        // ),
-        // ServiceShortcut(
-        //   icon: Icons.fingerprint,
-        //   label: 'Attendance',
-        //   color: AppColors.present,
-        //   background: AppColors.presentBg,
-        //   onTap: () => _openTab(_absensiTab),
-        // ),
-        // ServiceShortcut(
-        //   icon: Icons.calendar_month_outlined,
-        //   label: 'Schedule',
-        //   color: AppColors.teal,
-        //   background: AppColors.tealBg,
-        //   onTap: () {},
-        // ),
-        // ServiceShortcut(
-        //   icon: Icons.badge_outlined,
-        //   label: 'Profile',
-        //   color: AppColors.violet,
-        //   background: AppColors.violetBg,
-        //   onTap: () => _openTab(_profilTab),
-        // ),
         ServiceShortcut(
           icon: Icons.description_outlined,
           label: 'Record',
-          subtitle: 'Attendance & Report',
+          subtitle: 'Documents & Archive',
           color: AppColors.primaryMid,
           background: AppColors.primaryLight,
           featured: true,
@@ -280,56 +258,38 @@ class _BerandaScreenState extends State<BerandaScreen> {
           background: AppColors.tealBg,
           onTap: _openOnlineApps,
         ),
+        // Pengganti kartu Dashboard: pindah ke tab HRIS (bukan push halaman
+        // baru), supaya hanya ada satu instance menu HRIS.
         ServiceShortcut(
-          icon: Icons.dashboard_outlined,
-          label: 'Dashboard',
-          subtitle: 'Monitoring & Stats',
+          icon: Icons.grid_view_outlined,
+          label: 'HRIS',
+          subtitle: 'Employee Services',
           color: AppColors.violet,
           background: AppColors.violetBg,
-          onTap: () {},
+          onTap: () => _openTab(MainTab.hris),
         ),
-        // if (_role == Role.hod)
-        //   ServiceShortcut(
-        //     icon: Icons.task_alt,
-        //     label: 'Approvals',
-        //     color: AppColors.primary,
-        //     background: AppColors.primaryLight,
-        //     onTap: _openApprovalTab,
-        //   ),
-        // if (_role == Role.admin)
-        //   // SEMENTARA
-        //   ServiceShortcut(
-        //     icon: Icons.groups_outlined,
-        //     label: 'Manage Team',
-        //     color: AppColors.primaryMid,
-        //     background: AppColors.primaryLight,
-        //     onTap: _openKelolaTim,
-        //   ),
       ];
 
-  /// Index 4 (Approvals/Manage Team) masih kasus khusus: Manage Team
-  /// (admin) tetap push halaman terpisah, Approvals (HOD) masih placeholder.
-  void _handleTabChange(int index) {
-    switch (index) {
-      // SEMENTARA
-      case _approvalTabIndex when _role == Role.admin:
-        _openKelolaTim();
-      default:
-        setState(() => _activeTab = index);
-    }
-  }
-
-  /// Index tab yang benar-benar ditampilkan di [IndexedStack]. Approvals
-  /// (index 4, HOD) masih placeholder dan jatuh balik ke tampilan Home.
-  int get _displayedTab => _activeTab > _profilTab ? _homeTab : _activeTab;
+  /// Item menu HRIS. Daftar, aturan visibilitas, dan status "siap/belum"
+  /// tiap item ada di [HrisMenuConfig]; di sini hanya menyambungkan
+  /// navigasinya.
+  List<HrisMenuItem> _buildHrisMenu() => HrisMenuConfig.items(
+        onAttendance: _openAttendance,
+        onLeaveRequest: _openLeaveRequest,
+        onEmployeeInfo: () => _openTab(MainTab.profile),
+        onPayslip: _openPayslip,
+        onManageTeam: _openKelolaTim,
+        onApprovals: _openApprovalNotifications,
+        approvalCount:
+            _leaveApprovalCount + _itApprovalCount + _estApprovalCount,
+      );
 
   @override
   Widget build(BuildContext context) {
-    // Home dan Profile sama-sama punya header hijau yang naik sampai ke balik
-    // status bar, jadi ikonnya harus terang. Request dan Attendance berlatar
-    // terang di area itu, jadi ikonnya harus gelap supaya tetap kebaca.
-    final hasDarkHeader =
-        _displayedTab == _homeTab || _displayedTab == _profilTab;
+    // Home, HRIS, dan Profile berheader hijau yang naik sampai ke balik
+    // status bar, jadi ikonnya harus terang. Notifications berheader putih,
+    // jadi ikonnya harus gelap supaya tetap kebaca.
+    final hasDarkHeader = _activeTab != MainTab.notifications;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: hasDarkHeader
@@ -352,19 +312,29 @@ class _BerandaScreenState extends State<BerandaScreen> {
       // Warna dasar ikut tab Home (dipakai saat transisi); tiap tab lain
       // membungkus kontennya sendiri dengan warna latarnya masing-masing.
       backgroundColor: AppColors.bg,
+      // Urutan children HARUS sama dengan urutan nilai [MainTab].
       body: IndexedStack(
-        index: _displayedTab,
+        index: _activeTab.index,
         children: [
           _buildHomeTab(),
-          PengajuanScreen(role: _role),
-          const AbsensiScreen(),
+          HrisMenuScreen(
+            items: _buildHrisMenu(),
+            menuContext: HrisMenuContext(role: _role, user: widget.user),
+          ),
+          NotifikasiScreen(
+            notifications: _notifications,
+            onChanged: (updated) => setState(() => _notifications = updated),
+            initialFilter: _notificationFilter,
+            filterRequestToken: _notificationFilterToken,
+            showBack: false,
+          ),
           ProfilScreen(role: _role, user: widget.user),
         ],
       ),
       bottomNavigationBar: HomeBottomNav(
-        role: _role,
-        activeIndex: _activeTab,
-        onChanged: _handleTabChange,
+        activeTab: _activeTab,
+        unreadCount: _unreadCount,
+        onChanged: _openTab,
       ),
     );
   }
@@ -389,7 +359,7 @@ class _BerandaScreenState extends State<BerandaScreen> {
               ClockStatusCard(
                 status: HomeDemoData.todayAttendance,
                 date: DateTime.now(),
-                onActionTap: () => _openTab(_absensiTab),
+                onActionTap: _openAttendance,
               ),
               // SEMENTARA: tanpa gerbang role dulu (lihat catatan di
               // ApprovalSummaryBanner) — dulu ini TeamBanner di bawah Main
@@ -412,7 +382,7 @@ class _BerandaScreenState extends State<BerandaScreen> {
               LayananSection(services: _buildServices()),
               SaldoSection(
                 balances: HomeDemoData.quotaBalancesFor(_role),
-                onSeeAll: () => _openTab(_pengajuanTab),
+                onSeeAll: _openLeaveRequest,
               ),
               AnnouncementSection(
                 announcements: _announcements,

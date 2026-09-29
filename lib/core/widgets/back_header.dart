@@ -13,7 +13,8 @@ class BackHeader extends StatelessWidget implements PreferredSizeWidget {
   });
 
   final String title;
-  final VoidCallback onBack;
+  /// Null = tanpa tombol kembali (mis. saat dipakai sebagai tab).
+  final VoidCallback? onBack;
   final Widget? trailing;
 
   @override
@@ -47,14 +48,16 @@ class BackHeader extends StatelessWidget implements PreferredSizeWidget {
           children: [
             SizedBox(
               width: 20,
-              child: InkWell(
-                onTap: onBack,
-                child: const Icon(
-                  Icons.arrow_back,
-                  size: 20,
-                  color: AppColors.primary,
-                ),
-              ),
+              child: onBack == null
+                  ? null
+                  : InkWell(
+                      onTap: onBack,
+                      child: const Icon(
+                        Icons.arrow_back,
+                        size: 20,
+                        color: AppColors.primary,
+                      ),
+                    ),
             ),
             Expanded(
               child: Text(
