@@ -1,6 +1,9 @@
 import 'app_notification.dart';
 import 'notification_category.dart';
 
+import '../../leave_approval/domain/leave_approval_demo_data.dart';
+import '../../leave_approval/domain/leave_approval_status.dart';
+import '../../pengajuan/domain/leave_type.dart';
 import '../../menu_portal/onlineapps/work_order/est_request/domain/est_request_demo_data.dart';
 import '../../menu_portal/onlineapps/work_order/est_request/domain/est_request_status.dart';
 import '../../menu_portal/onlineapps/work_order/it_request/domain/approve_request_demo_data.dart';
@@ -18,10 +21,10 @@ import '../../menu_portal/onlineapps/work_order/it_request/domain/approve_reques
 /// isi tab "Action" di sini. Begitu keduanya diganti API sungguhan,
 /// baris-baris ini tinggal diganti mapping dari response API yang sama.
 ///
-/// n1 dan n2 dipakai sebagai bucket "Leave" (2 item, sama seperti
-/// `_leaveApprovalCount` yang dihitung dari kategori ini) — belum ada
-/// pemisahan Leave vs Overtime di modul HRIS, jadi keduanya sementara
-/// masuk kategori yang sama sampai halaman approval Leave sungguhan dibuat.
+/// Entri Leave (kategori Leave & Overtime) dibangun dari
+/// [LeaveApprovalDemoData] — sumber yang sama dengan halaman Leave
+/// Approvals dan `_leaveApprovalCount` di BerandaScreen, sehingga notifikasi
+/// "Action" dan halaman approval selalu membahas pengajuan yang sama.
 class NotificationDemoData {
   NotificationDemoData._();
 
@@ -29,22 +32,23 @@ class NotificationDemoData {
     final reference = now ?? DateTime.now();
 
     return [
-      AppNotification(
-        id: 'n1',
-        category: NotificationCategory.leave,
-        title: 'Leave request from Budi Santoso',
-        body: 'Annual leave · 22–24 Sep · 3 days',
-        createdAt: reference.subtract(const Duration(minutes: 25)),
-        requiresDecision: true,
-      ),
-      AppNotification(
-        id: 'n2',
-        category: NotificationCategory.leave,
-        title: 'Overtime claim from Rina Wijaya',
-        body: '12 Sep · 18:30–21:00 · 2h 30m',
-        createdAt: reference.subtract(const Duration(hours: 2)),
-        requiresDecision: true,
-      ),
+      // Leave — DIBANGUN dari sumber yang sama dengan halaman Leave
+      // Approvals ([LeaveApprovalDemoData]), bukan ditulis ulang manual.
+      // Id-nya diturunkan dari id pengajuan (`notificationId`) supaya
+      // keputusan di halaman itu dan di tab ini bisa saling disinkronkan
+      // (lihat `BerandaScreen._syncLeaveNotification`).
+      for (final request in LeaveApprovalDemoData.requests(now: reference)
+          .where((r) => r.status == LeaveApprovalStatus.pending))
+        AppNotification(
+          id: request.notificationId,
+          category: NotificationCategory.leave,
+          title: request.type == LeaveType.lembur
+              ? 'Overtime claim from ${request.requesterName}'
+              : 'Leave request from ${request.requesterName}',
+          body: request.summaryLine,
+          createdAt: request.submittedAt,
+          requiresDecision: true,
+        ),
       // IT — sama persis dengan daftar di IT Request > tab "Approve
       // Request", supaya total di sini selalu = _itApprovalCount.
       for (final entry in ApproveRequestDemoData.items().asMap().entries)
