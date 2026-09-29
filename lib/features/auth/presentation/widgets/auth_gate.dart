@@ -60,7 +60,7 @@ class _AuthGateState extends State<AuthGate> {
           // (gmo, it media, daily-worker, ...) ke enum Role diputuskan.
           // Data pengguna sendiri sudah memakai sesi sungguhan.
           AuthStatus.authenticated => BerandaScreen(
-              role: Role.hrPublisher,
+              role: Role.hod,
               user: state.session?.user,
             ),
           _ => const LoginScreen(),

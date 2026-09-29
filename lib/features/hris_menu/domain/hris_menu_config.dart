@@ -55,6 +55,11 @@ class HrisMenuConfig {
   static bool _isHodOrAdmin(HrisMenuContext c) =>
       c.role == Role.hod || c.role == Role.admin;
 
+  /// Menyembunyikan item sepenuhnya (beda dari `isReady: false` yang tetap
+  /// tampil redup berlabel "Soon"). Dipakai untuk fitur yang belum akan
+  /// dibuat di mobile.
+  static bool _hidden(HrisMenuContext c) => false;
+
   static void _noop() {}
 
   static List<HrisMenuItem> items({
@@ -86,6 +91,9 @@ class HrisMenuConfig {
           background: AppColors.tealBg,
           onTap: _noop,
           isReady: false,
+          // Disembunyikan: jadwal shift pribadi sudah tampil per tanggal di
+          // kalender Attendance Log.
+          isVisible: _hidden,
         ),
         const HrisMenuItem(
           id: 'dept_attendance',
@@ -107,7 +115,9 @@ class HrisMenuConfig {
           background: AppColors.orangeBg,
           onTap: _noop,
           isReady: false,
-          isVisible: _isHodOrAdmin,
+          // Disembunyikan dulu: penyusunan jadwal shift tetap di web.
+          // Ganti ke `_isHodOrAdmin` kalau nanti dibuat versi lihat-saja.
+          isVisible: _hidden,
         ),
 
         // ── Leave & Time Off ───────────────────────────────────────────
@@ -177,7 +187,10 @@ class HrisMenuConfig {
           color: AppColors.primaryMid,
           background: AppColors.primaryLight,
           onTap: onManageTeam,
-          isVisible: _isHodOrAdmin,
+          // SEMENTARA: tanpa gerbang role dulu, karena role di AuthGate masih
+          // dipatok (Role.hrPublisher) sehingga item ini selalu tersembunyi.
+          // Kembalikan ke `isVisible: _isHodOrAdmin` setelah pemetaan role
+          // dari API diputuskan.
         ),
       ];
 }
