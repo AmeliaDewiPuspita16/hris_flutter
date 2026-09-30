@@ -35,21 +35,11 @@ class LoginHeader extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            ColorFiltered(
-              // Aset aslinya hijau tua — nyaris tak kelihatan di atas
-              // header hijau, jadi diputihkan lewat srcIn (aman karena
-              // latar PNG-nya transparan, beda dari bg_login.png yang
-              // opaque).
-              colorFilter: const ColorFilter.mode(
-                Colors.white,
-                BlendMode.srcIn,
-              ),
-              child: Image.asset(
-                'assets/images/bie.png',
-                height: 48,
-                fit: BoxFit.contain,
-                alignment: Alignment.centerLeft,
-              ),
+            Image.asset(
+              'assets/images/logo_white.png',
+              height: 48,
+              fit: BoxFit.contain,
+              alignment: Alignment.centerLeft,
             ),
             const SizedBox(height: 20),
             Text(

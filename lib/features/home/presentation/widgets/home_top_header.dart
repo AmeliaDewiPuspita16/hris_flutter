@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../../../auth/domain/auth_user.dart';
 import '../../../shared/domain/role.dart';
 
-/// Panel hijau di atas: avatar inisial, sapaan, jabatan, dan lonceng notifikasi.
+/// Panel hijau di atas: avatar inisial, sapaan, dan jabatan.
 ///
 /// Warnanya sengaja dibiarkan naik sampai ke balik status bar — karena itu
 /// layar pemanggilnya tidak boleh membungkus bagian ini dengan SafeArea atas,
@@ -16,8 +15,6 @@ class HomeTopHeader extends StatelessWidget {
     super.key,
     required this.role,
     this.user,
-    this.onNotificationTap,
-    this.unreadCount = 0,
   });
 
   final Role role;
@@ -25,12 +22,6 @@ class HomeTopHeader extends StatelessWidget {
   /// Pengguna yang sedang masuk. Null berarti belum ada sesi — tampilan
   /// jatuh kembali ke data demo milik [role].
   final AuthUser? user;
-
-  final VoidCallback? onNotificationTap;
-
-  /// Jumlah notifikasi belum dibaca — menentukan muncul tidaknya titik
-  /// penanda di lonceng.
-  final int unreadCount;
 
   @override
   Widget build(BuildContext context) {
@@ -46,7 +37,10 @@ class HomeTopHeader extends StatelessWidget {
       width: double.infinity,
       padding: EdgeInsets.fromLTRB(20, topInset + 14, 20, 22),
       decoration: const BoxDecoration(
-        gradient: AppColors.primaryGradient,
+        image: DecorationImage(
+          image: AssetImage('assets/images/header_bg.png'),
+          fit: BoxFit.cover,
+        ),
         borderRadius: BorderRadius.only(
           bottomLeft: Radius.circular(24),
           bottomRight: Radius.circular(24),
@@ -86,56 +80,6 @@ class HomeTopHeader extends StatelessWidget {
               ],
             ),
           ),
-          _NotificationButton(
-            onTap: onNotificationTap,
-            hasUnread: unreadCount > 0,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _NotificationButton extends StatelessWidget {
-  const _NotificationButton({this.onTap, this.hasUnread = false});
-
-  final VoidCallback? onTap;
-  final bool hasUnread;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(10),
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(9),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: const Icon(
-              Icons.notifications_outlined,
-              color: Colors.white,
-              size: 20,
-            ),
-          ),
-          // Titik penanda — hanya muncul kalau memang ada yang belum dibaca.
-          if (hasUnread)
-            Positioned(
-              top: -2,
-              right: -2,
-              child: Container(
-                width: 8,
-                height: 8,
-                decoration: const BoxDecoration(
-                  color: AppColors.accentLight,
-                  shape: BoxShape.circle,
-                ),
-              ),
-            ),
         ],
       ),
     );

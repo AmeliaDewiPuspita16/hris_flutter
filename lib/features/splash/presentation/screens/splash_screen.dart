@@ -12,7 +12,7 @@ class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
   /// Lama splash ditahan sebelum AuthGate boleh berpindah halaman.
-  static const displayDuration = Duration(seconds: 2);
+  static const displayDuration = Duration(seconds: 7);
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
@@ -72,28 +72,62 @@ class _SplashScreenState extends State<SplashScreen>
         width: double.infinity,
         height: double.infinity,
         decoration: const BoxDecoration(gradient: AppColors.heroGradient),
-        child: SafeArea(
-          child: Column(
-            children: [
-              const Spacer(flex: 2),
-              FadeTransition(
-                opacity: _fade,
-                child: ScaleTransition(scale: _scale, child: const _Brand()),
+        child: Stack(
+          children: [
+            Positioned(
+              top: 0,
+              left: 0,
+              child: Image.asset(
+                'assets/images/ornament_top_left.png',
+                width: 160,
+                fit: BoxFit.contain,
               ),
-              const Spacer(flex: 2),
-              FadeTransition(opacity: _fade, child: const _LoadingIndicator()),
-              const SizedBox(height: 48),
-              Text(
-                'v1.0.0',
-                style: TextStyle(
-                  fontFamily: AppTextStyles.fontFamily,
-                  fontSize: 12,
-                  color: Colors.white.withValues(alpha: 0.5),
+            ),
+            Positioned(
+              bottom: 0,
+              left: 0,
+              child: Image.asset(
+                'assets/images/ornament_bottom_left.png',
+                width: 200,
+                fit: BoxFit.contain,
+              ),
+            ),
+            Positioned.fill(
+              // Stack memberi constraint longgar ke child yang tidak
+              // Positioned dan menempelkannya di kiri-atas — dibungkus
+              // Positioned.fill supaya Column di dalamnya kembali melebar
+              // penuh dan bisa nge-center kontennya secara horizontal.
+              child: SafeArea(
+                child: Column(
+                  children: [
+                    const Spacer(flex: 2),
+                    FadeTransition(
+                      opacity: _fade,
+                      child: ScaleTransition(
+                        scale: _scale,
+                        child: const _Brand(),
+                      ),
+                    ),
+                    const Spacer(flex: 2),
+                    FadeTransition(
+                      opacity: _fade,
+                      child: const _LoadingIndicator(),
+                    ),
+                    const SizedBox(height: 48),
+                    Text(
+                      'v1.0.0',
+                      style: TextStyle(
+                        fontFamily: AppTextStyles.fontFamily,
+                        fontSize: 12,
+                        color: Colors.white.withValues(alpha: 0.5),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                  ],
                 ),
               ),
-              const SizedBox(height: 24),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -108,28 +142,11 @@ class _Brand extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        // Logonya hijau tua, sewarna dengan latar splash — karena itu tetap
-        // diletakkan di atas kartu putih supaya terbaca. Kartunya melebar
-        // mengikuti bentuk logo yang memanjang.
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-          decoration: BoxDecoration(
-            color: AppColors.card,
-            borderRadius: BorderRadius.circular(24),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.2),
-                blurRadius: 32,
-                offset: const Offset(0, 8),
-              ),
-            ],
-          ),
-          child: Image.asset(
-            'assets/images/bie.png',
-            width: 200,
-            fit: BoxFit.contain,
-            semanticLabel: 'Logo Bintan Industrial Estate',
-          ),
+        Image.asset(
+          'assets/images/logo_white.png',
+          width: 200,
+          fit: BoxFit.contain,
+          semanticLabel: 'Logo Bintan Industrial Estate',
         ),
         const SizedBox(height: 24),
         const Text(

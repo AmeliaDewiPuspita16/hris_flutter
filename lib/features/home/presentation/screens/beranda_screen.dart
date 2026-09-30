@@ -151,15 +151,6 @@ class _BerandaScreenState extends State<BerandaScreen> {
 
   void _openTab(MainTab tab) => setState(() => _activeTab = tab);
 
-  /// Lonceng di header Beranda = jalan pintas ke tab Notifications.
-  void _openNotifications() {
-    setState(() {
-      _notificationFilter = NotificationFilter.all;
-      _notificationFilterToken++;
-      _activeTab = MainTab.notifications;
-    });
-  }
-
   void _openPayslip() {
     Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => const PayslipScreen()),
@@ -453,8 +444,6 @@ class _BerandaScreenState extends State<BerandaScreen> {
               HomeTopHeader(
                 role: _role,
                 user: widget.user,
-                unreadCount: _unreadCount,
-                onNotificationTap: _openNotifications,
               ),
               ClockStatusCard(
                 status: HomeDemoData.todayAttendance,
