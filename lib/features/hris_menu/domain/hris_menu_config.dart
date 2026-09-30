@@ -35,7 +35,6 @@ import 'hris_menu_item.dart';
 /// 15. Overtime approval (HOD) → approvals
 /// 16. Personal Attendance Log (All + HOD) → attendance_log
 /// 17. Department Attendance Log (Admin Dep, superior, HOD) → dept_attendance
-///     (belum siap)
 /// 18. Personal work schedule/shift → work_schedule (belum siap)
 /// 19. Department work schedule/shift (Admin Dep, superior, HOD)
 ///     → dept_schedule (belum siap)
@@ -68,6 +67,7 @@ class HrisMenuConfig {
     required VoidCallback onEmployeeInfo,
     required VoidCallback onPayslip,
     required VoidCallback onManageTeam,
+    required VoidCallback onDepartmentAttendance,
     required VoidCallback onApprovals,
     int approvalCount = 0,
   }) =>
@@ -95,15 +95,14 @@ class HrisMenuConfig {
           // kalender Attendance Log.
           isVisible: _hidden,
         ),
-        const HrisMenuItem(
+        HrisMenuItem(
           id: 'dept_attendance',
           label: 'Department\nAttendance Log',
           icon: Icons.fact_check_outlined,
           group: HrisMenuGroup.attendance,
           color: AppColors.teal,
           background: AppColors.tealBg,
-          onTap: _noop,
-          isReady: false,
+          onTap: onDepartmentAttendance,
           isVisible: _isHodOrAdmin,
         ),
         const HrisMenuItem(
