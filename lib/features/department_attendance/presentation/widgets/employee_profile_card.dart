@@ -6,16 +6,11 @@ import '../../../../core/widgets/app_card.dart';
 import '../../domain/department_attendance_entry.dart';
 
 /// Kartu identitas karyawan di puncak layar detail: avatar netral, nama, dan
-/// jabatan · departemen.
+/// jabatan. Nama departemen ada di header layar.
 class EmployeeProfileCard extends StatelessWidget {
-  const EmployeeProfileCard({
-    super.key,
-    required this.entry,
-    required this.departmentName,
-  });
+  const EmployeeProfileCard({super.key, required this.entry});
 
   final DepartmentAttendanceEntry entry;
-  final String departmentName;
 
   @override
   Widget build(BuildContext context) {
@@ -56,7 +51,7 @@ class EmployeeProfileCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  '${entry.position} · $departmentName',
+                  entry.position,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: AppTextStyles.caption,

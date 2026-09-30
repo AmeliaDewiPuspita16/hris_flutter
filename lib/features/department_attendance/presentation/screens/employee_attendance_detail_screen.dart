@@ -2,15 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/app_card.dart';
-import '../../../../core/widgets/header_title_row.dart';
 import '../../../absensi/domain/attendance_day.dart';
 import '../../../absensi/domain/attendance_month.dart';
 import '../../../absensi/presentation/widgets/attendance_calendar.dart';
 import '../../../absensi/presentation/widgets/attendance_summary_card.dart';
 import '../../../absensi/presentation/widgets/day_detail_panel.dart';
 import '../../../absensi/presentation/widgets/month_year_picker_sheet.dart';
-import '../../../absensi/presentation/widgets/sync_footnote.dart';
 import '../../domain/department_attendance_entry.dart';
 import '../../domain/employee_attendance_demo_data.dart';
 import '../widgets/attendance_month_nav.dart';
@@ -18,10 +17,10 @@ import '../widgets/employee_profile_card.dart';
 
 /// Detail kehadiran satu karyawan dalam satu bulan (HOD/Admin, hanya-baca).
 ///
-/// Dibuka dari baris di [DepartmentAttendanceScreen]. Tampilannya sengaja
-/// memakai ulang komponen Log Absensi (kartu ringkasan, kalender, panel
-/// tanggal, pemilih bulan) supaya HOD melihat bentuk yang sama dengan yang
-/// dilihat karyawan.
+/// Dibuka dari baris di [DepartmentAttendanceScreen]. Isinya memakai ulang
+/// komponen Log Absensi (kartu ringkasan, kalender, panel tanggal, pemilih
+/// bulan), tapi kerangka layarnya sendiri: header seperti Department Log,
+/// pemilih bulan di dalam kartu kalender, dan tanpa catatan sinkron.
 ///
 /// SEMENTARA: data dari [EmployeeAttendanceDemoData] sampai API kehadiran per
 /// karyawan tersedia; gantilah di [_load].
@@ -152,19 +151,34 @@ class _EmployeeAttendanceDetailScreenState
         color: AppColors.primary,
         borderRadius: BorderRadius.vertical(bottom: Radius.circular(28)),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+      child: Row(
         children: [
-          const HeaderTitleRow(title: 'Attendance Detail', showBack: true),
-          AttendanceMonthNav(
-            month: _month,
-            onPrevious: _canGoPrevious
-                ? () => _goToMonth(DateTime(_month.year, _month.month - 1))
-                : null,
-            onNext: _canGoNext
-                ? () => _goToMonth(DateTime(_month.year, _month.month + 1))
-                : null,
-            onPick: _pickMonth,
+          InkWell(
+            onTap: () => Navigator.of(context).maybePop(),
+            borderRadius: BorderRadius.circular(20),
+            child: const Padding(
+              padding: EdgeInsets.all(4),
+              child: Icon(Icons.arrow_back, size: 22, color: Colors.white),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Attendance Detail',
+                  style: AppTextStyles.h2.copyWith(color: Colors.white),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  widget.departmentName,
+                  style: AppTextStyles.caption.copyWith(
+                    color: Colors.white.withOpacity(0.75),
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -175,16 +189,24 @@ class _EmployeeAttendanceDetailScreenState
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
       children: [
-        EmployeeProfileCard(
-          entry: widget.entry,
-          departmentName: widget.departmentName,
-        ),
+        EmployeeProfileCard(entry: widget.entry),
         const SizedBox(height: 12),
         AppCard(
           padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              AttendanceMonthNav(
+                month: _month,
+                onPrevious: _canGoPrevious
+                    ? () => _goToMonth(DateTime(_month.year, _month.month - 1))
+                    : null,
+                onNext: _canGoNext
+                    ? () => _goToMonth(DateTime(_month.year, _month.month + 1))
+                    : null,
+                onPick: _pickMonth,
+              ),
+              const SizedBox(height: 12),
               AttendanceSummaryCard(summary: _data.summary),
               const SizedBox(height: 16),
               AttendanceCalendar(
@@ -205,8 +227,6 @@ class _EmployeeAttendanceDetailScreenState
             child: DayDetailPanel(day: _selectedDay),
           ),
         ),
-        const SizedBox(height: 12),
-        const SyncFootnote(),
       ],
     );
   }

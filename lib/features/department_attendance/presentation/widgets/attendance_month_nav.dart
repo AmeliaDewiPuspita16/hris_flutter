@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 
-/// Pil navigasi bulan di dalam header hijau: panah bulan sebelumnya/berikutnya
-/// dan label bulan yang bisa diketuk untuk membuka pemilih bulan.
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_text_styles.dart';
+
+/// Baris pemilih bulan di dalam kartu kalender: panah bulan sebelumnya /
+/// berikutnya di kiri-kanan, dan label bulan di tengah yang bisa diketuk
+/// untuk membuka pemilih bulan.
 ///
-/// Bentuknya sama dengan navigasi bulan di Log Absensi. [onPrevious] / [onNext]
-/// null = panah mati (sudah di batas bulan yang boleh dibuka).
+/// [onPrevious] / [onNext] null = panah mati (sudah di batas bulan yang boleh
+/// dibuka).
 class AttendanceMonthNav extends StatelessWidget {
   const AttendanceMonthNav({
     super.key,
@@ -28,53 +32,46 @@ class AttendanceMonthNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.16),
-        borderRadius: BorderRadius.circular(24),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          _Arrow(
-            icon: Icons.chevron_left,
-            label: 'Previous month',
-            onTap: onPrevious,
-          ),
-          InkWell(
+    return Row(
+      children: [
+        _Arrow(
+          icon: Icons.chevron_left,
+          label: 'Previous month',
+          onTap: onPrevious,
+        ),
+        Expanded(
+          child: InkWell(
             onTap: onPick,
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(8),
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              padding: const EdgeInsets.symmetric(vertical: 8),
               child: Row(
-                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
                     _label,
-                    style: const TextStyle(
-                      fontSize: 13.5,
+                    style: AppTextStyles.body.copyWith(
+                      fontSize: 14,
                       fontWeight: FontWeight.w700,
-                      color: Colors.white,
                     ),
                   ),
                   const SizedBox(width: 4),
                   const Icon(
                     Icons.keyboard_arrow_down,
-                    size: 16,
-                    color: Colors.white,
+                    size: 18,
+                    color: AppColors.textMid,
                   ),
                 ],
               ),
             ),
           ),
-          _Arrow(
-            icon: Icons.chevron_right,
-            label: 'Next month',
-            onTap: onNext,
-          ),
-        ],
-      ),
+        ),
+        _Arrow(
+          icon: Icons.chevron_right,
+          label: 'Next month',
+          onTap: onNext,
+        ),
+      ],
     );
   }
 }
@@ -95,13 +92,14 @@ class _Arrow extends StatelessWidget {
       excludeSemantics: true,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
-        child: Padding(
-          padding: const EdgeInsets.all(7),
+        borderRadius: BorderRadius.circular(18),
+        child: SizedBox(
+          width: 36,
+          height: 36,
           child: Icon(
             icon,
-            size: 20,
-            color: Colors.white.withOpacity(onTap == null ? 0.35 : 1),
+            size: 22,
+            color: onTap == null ? AppColors.border : AppColors.textMid,
           ),
         ),
       ),
