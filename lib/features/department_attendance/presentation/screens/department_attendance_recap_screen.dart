@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/app_card.dart';
+import '../../../../core/widgets/back_header.dart';
 import '../../../absensi/presentation/widgets/month_year_picker_sheet.dart';
 import '../../domain/department_attendance_entry.dart';
 import '../../domain/department_attendance_recap.dart';
@@ -73,6 +73,14 @@ class _DepartmentAttendanceRecapScreenState
   }
 
   bool get _isCurrentMonth => _month == _lastMonth;
+
+  /// Keterangan di bawah pemilih bulan, mis. "IT & Media · 20 working days so
+  /// far". Untuk bulan lampau tanpa "so far".
+  String get _workingDaysLabel {
+    final days = _recap.workingDays;
+    return '${widget.departmentName} · $days working '
+        "${days == 1 ? 'day' : 'days'}${_isCurrentMonth ? ' so far' : ''}";
+  }
   bool get _canGoPrevious => _month.isAfter(_firstMonth);
   bool get _canGoNext => _month.isBefore(_lastMonth);
 
@@ -136,74 +144,13 @@ class _DepartmentAttendanceRecapScreenState
 
   @override
   Widget build(BuildContext context) {
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      // Header hijau naik sampai ke balik status bar, jadi ikonnya terang.
-      value: const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.light,
-        statusBarBrightness: Brightness.dark,
+    return Scaffold(
+      backgroundColor: AppColors.bg,
+      appBar: BackHeader(
+        title: 'Monthly Recap',
+        onBack: () => Navigator.of(context).maybePop(),
       ),
-      child: Scaffold(
-        backgroundColor: AppColors.primary,
-        body: SafeArea(
-          bottom: false,
-          child: ColoredBox(
-            color: AppColors.bg,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _buildHeader(),
-                Expanded(child: _buildBody()),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeader() {
-    final days = _recap.workingDays;
-    final dayLabel = '$days working ${days == 1 ? 'day' : 'days'}'
-        '${_isCurrentMonth ? ' so far' : ''}';
-
-    return Container(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 18),
-      decoration: const BoxDecoration(
-        color: AppColors.primary,
-        borderRadius: BorderRadius.vertical(bottom: Radius.circular(28)),
-      ),
-      child: Row(
-        children: [
-          InkWell(
-            onTap: () => Navigator.of(context).maybePop(),
-            borderRadius: BorderRadius.circular(20),
-            child: const Padding(
-              padding: EdgeInsets.all(4),
-              child: Icon(Icons.arrow_back, size: 22, color: Colors.white),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Monthly Recap',
-                  style: AppTextStyles.h2.copyWith(color: Colors.white),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  '${widget.departmentName} · $dayLabel',
-                  style: AppTextStyles.caption.copyWith(
-                    color: Colors.white.withValues(alpha: 0.75),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+      body: _buildBody(),
     );
   }
 
@@ -226,6 +173,8 @@ class _DepartmentAttendanceRecapScreenState
             onPick: _pickMonth,
           ),
         ),
+        const SizedBox(height: 8),
+        Center(child: Text(_workingDaysLabel, style: AppTextStyles.caption)),
         const SizedBox(height: 12),
         RecapSortChips(
           selected: _sort,
