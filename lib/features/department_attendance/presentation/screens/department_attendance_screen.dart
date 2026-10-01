@@ -10,6 +10,7 @@ import '../../domain/department_attendance_status.dart';
 import '../widgets/attendance_date_bar.dart';
 import '../widgets/attendance_status_chips.dart';
 import '../widgets/department_attendance_row.dart';
+import 'department_attendance_recap_screen.dart';
 import 'employee_attendance_detail_screen.dart';
 
 /// Layar utama Department Attendance Log (HOD/Admin, hanya-baca).
@@ -17,7 +18,7 @@ import 'employee_attendance_detail_screen.dart';
 /// Pertanyaan yang dijawab: "hari ini siapa yang masuk, siapa yang bermasalah?"
 /// — jadi layar langsung menampilkan hari ini per orang, dengan yang butuh
 /// perhatian (belum check-in, terlambat) di atas. Ketuk satu karyawan untuk
-/// detail bulannya; rekap bulanan menyusul sebagai layar terpisah.
+/// detail bulannya, atau ikon grafik di header untuk rekap bulanan.
 ///
 /// SEMENTARA: data dari [DepartmentAttendanceDemoData] sampai API kehadiran
 /// per departemen tersedia; pemanggilnya nanti diganti di [_loadEntries].
@@ -125,6 +126,19 @@ class _DepartmentAttendanceScreenState
     );
   }
 
+  void _openRecap() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => DepartmentAttendanceRecapScreen(
+          departmentName: widget.departmentName,
+          today: _today,
+          // Rekap dibuka di bulan dari tanggal yang sedang dilihat.
+          initialDate: _date,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
@@ -195,6 +209,24 @@ class _DepartmentAttendanceScreenState
                   ),
                 ),
               ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Semantics(
+            button: true,
+            label: 'Monthly recap',
+            excludeSemantics: true,
+            child: InkWell(
+              onTap: _openRecap,
+              borderRadius: BorderRadius.circular(20),
+              child: const Padding(
+                padding: EdgeInsets.all(6),
+                child: Icon(
+                  Icons.bar_chart_rounded,
+                  size: 22,
+                  color: Colors.white,
+                ),
+              ),
             ),
           ),
         ],

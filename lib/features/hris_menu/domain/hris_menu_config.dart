@@ -164,6 +164,7 @@ class HrisMenuConfig {
           color: AppColors.violet,
           background: AppColors.violetBg,
           onTap: onEmployeeInfo,
+          isReady: false,
         ),
         HrisMenuItem(
           id: 'payslip',
