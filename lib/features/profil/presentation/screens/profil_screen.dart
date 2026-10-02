@@ -15,9 +15,10 @@ import 'alamat_screen.dart';
 import 'tanggungan_screen.dart';
 
 class _CategoryItem {
-  const _CategoryItem(this.icon, this.label, this.builder);
+  const _CategoryItem(this.icon, this.label, this.subtitle, this.builder);
   final IconData icon;
   final String label;
+  final String subtitle;
   final WidgetBuilder builder;
 }
 
@@ -30,83 +31,55 @@ class ProfilScreen extends StatelessWidget {
 
   final Role role;
 
-  /// Pengguna yang sedang masuk. Null berarti belum ada sesi — hero-nya
+  /// Pengguna yang sedang masuk. Null berarti belum ada sesi — header-nya
   /// jatuh kembali ke data demo milik [role].
   final AuthUser? user;
+
+  // Avatar: foto (radius [_avatarRadius]) + celah krem + cincin hijau.
+  static const double _avatarRadius = 50;
+  static const double _avatarGap = 4;
+  static const double _avatarRingWidth = 3;
+  static const double _avatarSize =
+      (_avatarRadius + _avatarGap + _avatarRingWidth) * 2;
 
   @override
   Widget build(BuildContext context) {
     final p = EmployeeProfile.of(role);
 
     final categories = <_CategoryItem>[
-      _CategoryItem(Icons.badge_outlined, 'Data Diri', (_) => DataDiriScreen(profile: p, user: user)),
-      _CategoryItem(Icons.description_outlined, 'Kontrak Kerja', (_) => KontrakScreen(profile: p)),
-      _CategoryItem(Icons.account_balance_outlined, 'Rekening Bank', (_) => RekeningScreen(profile: p)),
-      _CategoryItem(Icons.location_on_outlined, 'Alamat', (_) => AlamatScreen(profile: p)),
-      _CategoryItem(Icons.family_restroom_outlined, 'Tanggungan', (_) => TanggunganScreen(profile: p)),
+      _CategoryItem(Icons.badge_outlined, 'Data Diri', 'Identitas dan kontak pribadi', (_) => DataDiriScreen(profile: p, user: user)),
+      _CategoryItem(Icons.description_outlined, 'Kontrak Kerja', 'Periode dan status kontrak', (_) => KontrakScreen(profile: p)),
+      _CategoryItem(Icons.account_balance_outlined, 'Rekening Bank', 'Rekening untuk pembayaran', (_) => RekeningScreen(profile: p)),
+      _CategoryItem(Icons.location_on_outlined, 'Alamat', 'Alamat domisili dan KTP', (_) => AlamatScreen(profile: p)),
+      _CategoryItem(Icons.family_restroom_outlined, 'Tanggungan', 'Anggota keluarga yang ditanggung', (_) => TanggunganScreen(profile: p)),
     ];
 
     return ColoredBox(
       color: AppColors.bg,
-      // top: false — hero hijaunya sengaja dibiarkan naik sampai ke balik
-      // status bar, jadi _buildHero yang menambahkan jarak amannya sendiri.
+      // top: false — header hijaunya sengaja dibiarkan naik sampai ke balik
+      // status bar, jadi _buildHeader yang menambahkan jarak amannya sendiri.
       child: SafeArea(
         top: false,
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _buildHero(context, p),
-              Transform.translate(
-                offset: const Offset(0, -28),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      _buildStatsCard(),
-                      const SizedBox(height: 14),
-                      const Text('DATA SAYA', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.textMuted, letterSpacing: 0.3)),
-                      const SizedBox(height: 8),
-                      AppCard(
-                        padding: const EdgeInsets.symmetric(vertical: 4),
-                        child: Column(
-                          children: List.generate(categories.length, (i) {
-                            final c = categories[i];
-                            return InkWell(
-                              onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: c.builder)),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
-                                decoration: BoxDecoration(
-                                  border: i < categories.length - 1 ? const Border(bottom: BorderSide(color: AppColors.border)) : null,
-                                ),
-                                child: Row(
-                                  children: [
-                                    Container(
-                                      width: 34,
-                                      height: 34,
-                                      alignment: Alignment.center,
-                                      decoration: const BoxDecoration(color: AppColors.neutralBg, shape: BoxShape.circle),
-                                      child: Icon(c.icon, size: 17, color: AppColors.primary),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                      child: Text(c.label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.text)),
-                                    ),
-                                    const Icon(Icons.chevron_right, size: 18, color: AppColors.textMuted),
-                                  ],
-                                ),
-                              ),
-                            );
-                          }),
-                        ),
-                      ),
-                      const SizedBox(height: 14),
-                      const SizedBox(height: 16),
-                      _buildLogoutButton(context),
-                      const SizedBox(height: 12),
+              _buildHeader(context, p),
+              const SizedBox(height: 18),
+              // Menu berupa tile terpisah, bukan satu daftar polos.
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    for (var i = 0; i < categories.length; i++) ...[
+                      if (i > 0) const SizedBox(height: 10),
+                      _buildMenuTile(context, categories[i]),
                     ],
-                  ),
+                    const SizedBox(height: 14),
+                    _buildLogoutButton(context),
+                    const SizedBox(height: 12),
+                  ],
                 ),
               ),
             ],
@@ -177,85 +150,167 @@ class ProfilScreen extends StatelessWidget {
     );
   }
 
+  /// Avatar besar di tengah dengan cincin hijau + celah krem, dan tombol
+  /// kamera putih di pojok kanan bawah.
   Widget _buildAvatar(BuildContext context, EmployeeProfile p) {
-    return GestureDetector(
-      onTap: () => _showPhotoSheet(context),
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          UserAvatar(
-            initials: user?.initials ?? p.initials,
-            photoUrl: user?.photoUrl,
-            radius: 32,
-            backgroundColor: Colors.white.withValues(alpha: 0.18),
-            fontSize: 22,
-            fontWeight: FontWeight.w800,
-          ),
-          Positioned(
-            right: -2,
-            bottom: -2,
-            child: Container(
-              width: 24,
-              height: 24,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                shape: BoxShape.circle,
-                border: Border.all(color: AppColors.primary, width: 1.5),
+    return Semantics(
+      button: true,
+      label: 'Ubah foto profil',
+      child: GestureDetector(
+        onTap: () => _showPhotoSheet(context),
+        child: SizedBox(
+          width: _avatarSize,
+          height: _avatarSize,
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(_avatarGap),
+                decoration: BoxDecoration(
+                  color: AppColors.bg,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: AppColors.primary, width: _avatarRingWidth),
+                ),
+                child: UserAvatar(
+                  initials: user?.initials ?? p.initials,
+                  photoUrl: user?.photoUrl,
+                  radius: _avatarRadius,
+                  backgroundColor: AppColors.primary,
+                  fontSize: 34,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
-              child: const Icon(Icons.photo_camera, size: 13, color: AppColors.primary),
-            ),
+              Positioned(
+                right: 0,
+                bottom: 2,
+                child: Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.22),
+                        blurRadius: 4,
+                        offset: const Offset(0, 1),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(Icons.photo_camera_outlined, size: 16, color: AppColors.primary),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
 
-  Widget _buildHero(BuildContext context, EmployeeProfile p) {
+  Widget _buildHeader(BuildContext context, EmployeeProfile p) {
     final topInset = MediaQuery.paddingOf(context).top;
+    final heroHeight = topInset + 124;
+    const half = _avatarSize / 2;
 
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.fromLTRB(20, topInset + 24, 20, 52),
-      decoration: const BoxDecoration(gradient: AppColors.primaryGradient),
-      child: Row(
-        children: [
-          _buildAvatar(context, p),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(user?.name ?? p.name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Colors.white)),
-                const SizedBox(height: 3),
-                // API tidak punya field jabatan; `section` adalah keterangan
-                // unit kerja terdekat yang tersedia.
-                Text(user?.section ?? p.title, style: const TextStyle(fontSize: 12, color: Colors.white70)),
-                const SizedBox(height: 2),
-                Text('NIP: ${user?.nik ?? p.nip}', style: const TextStyle(fontSize: 11, color: Colors.white54)),
-              ],
-            ),
+    return Column(
+      children: [
+        // Tinggi Stack sengaja memuat separuh avatar yang turun ke area
+        // krem, supaya avatar tetap bisa diketuk (hit-test tidak keluar batas).
+        SizedBox(
+          width: double.infinity,
+          height: heroHeight + half,
+          child: Stack(
+            alignment: Alignment.topCenter,
+            children: [
+              Container(
+                width: double.infinity,
+                height: heroHeight,
+                alignment: Alignment.topCenter,
+                padding: EdgeInsets.only(top: topInset + 16),
+                decoration: BoxDecoration(
+                  // Hijau muda lembut (tint dari warna utama), sudut bawah melengkung.
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      AppColors.primary.withValues(alpha: 0.22),
+                      AppColors.primary.withValues(alpha: 0.10),
+                    ],
+                  ),
+                  borderRadius: const BorderRadius.vertical(bottom: Radius.circular(36)),
+                ),
+                child: const Text(
+                  'Profil',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.primary),
+                ),
+              ),
+              Positioned(
+                top: heroHeight - half,
+                child: _buildAvatar(context, p),
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+        const SizedBox(height: 12),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Text(
+            user?.name ?? p.name,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: AppColors.text, height: 1.2),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
+          decoration: BoxDecoration(
+            color: AppColors.primary,
+            borderRadius: BorderRadius.circular(999),
+          ),
+          child: Text(
+            'NIP: ${user?.nik ?? p.nip}',
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white, letterSpacing: 0.2),
+          ),
+        ),
+      ],
     );
   }
 
-  Widget _buildStatsCard() {
-    const stats = [('2 Bln', 'Masa Kerja'), ('94%', 'Kehadiran'), ('3', 'Sisa Cuti')];
+  Widget _buildMenuTile(BuildContext context, _CategoryItem c) {
     return AppCard(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      child: Row(
-        children: stats.map((s) {
-          return Expanded(
-            child: Column(
-              children: [
-                Text(s.$1, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: AppColors.primary)),
-                const SizedBox(height: 2),
-                Text(s.$2, style: const TextStyle(fontSize: 9.5, color: AppColors.textMuted, fontWeight: FontWeight.w600)),
-              ],
-            ),
-          );
-        }).toList(),
+      padding: EdgeInsets.zero,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: c.builder)),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          child: Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(c.icon, size: 22, color: AppColors.primary),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(c.label, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.text)),
+                    const SizedBox(height: 2),
+                    Text(c.subtitle, style: const TextStyle(fontSize: 12.5, color: AppColors.textMuted)),
+                  ],
+                ),
+              ),
+              const Icon(Icons.chevron_right, size: 18, color: AppColors.textMuted),
+            ],
+          ),
+        ),
       ),
     );
   }
