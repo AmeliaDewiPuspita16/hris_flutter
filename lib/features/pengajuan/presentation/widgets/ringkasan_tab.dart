@@ -128,6 +128,14 @@ class _MonthArrow extends StatelessWidget {
 class _BalanceSummaryCard extends StatelessWidget {
   const _BalanceSummaryCard();
 
+  /// Padding vertikal sel (6 atas + 6 bawah) — tidak ikut di-scale font.
+  static const double _cellVerticalPadding = 12;
+
+  /// Perkiraan tinggi isi sel (label + angka + "of N") pada font scale 1.0,
+  /// sudah ditambah ruang aman. Ini yang di-scale mengikuti pengaturan font
+  /// sistem supaya tidak overflow.
+  static const double _cellContentHeight = 74;
+
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<LeaveBalanceBloc, LeaveBalanceState>(
@@ -147,6 +155,13 @@ class _BalanceSummaryCard extends StatelessWidget {
             ),
           );
         }
+
+        // Tinggi sel dibuat tetap (bukan rasio lebar) supaya tidak overflow
+        // di layar sempit/pendek. Isi sel ikut membesar kalau font sistem
+        // diperbesar, jadi tingginya di-scale dengan faktor yang sama
+        // (dibatasi agar tidak terlalu raksasa).
+        final textScale = MediaQuery.textScalerOf(context).scale(1.0).clamp(1.0, 1.4);
+        final cellHeight = _cellVerticalPadding + _cellContentHeight * textScale;
 
         return Container(
           padding: const EdgeInsets.all(14),
@@ -178,11 +193,11 @@ class _BalanceSummaryCard extends StatelessWidget {
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: state.balances.length,
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 2,
                   mainAxisSpacing: 6,
                   crossAxisSpacing: 6,
-                  childAspectRatio: 1.9,
+                  mainAxisExtent: cellHeight,
                 ),
                 itemBuilder: (context, index) => _BalanceCell(balance: state.balances[index]),
               ),

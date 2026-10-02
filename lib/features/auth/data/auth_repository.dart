@@ -1,8 +1,11 @@
+import 'dart:io';
+
 import '../../../core/logging/app_logger.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_config.dart';
 import '../../../core/network/api_exception.dart';
 import '../domain/auth_session.dart';
+import '../domain/auth_user.dart';
 import 'session_storage.dart';
 
 /// Pintu masuk fitur auth: tahu soal login dan sesi, tidak tahu soal HTTP.
@@ -62,6 +65,36 @@ class AuthRepository {
 
     _apiClient.setToken(session.token, tokenType: session.tokenType);
     return session;
+  }
+
+  /// Mengunggah foto profil baru, lalu memperbarui sesi tersimpan supaya
+  /// foto tetap ada setelah aplikasi dibuka ulang.
+  ///
+  /// Dari respons hanya `user` yang dipakai. Token sengaja dibiarkan yang
+  /// lama: server tidak menerbitkan sesi baru di sini, dan memasang ulang
+  /// token yang belum tentu sama justru berisiko memutus sesi berjalan.
+  Future<AuthSession> updateProfilePhoto(AuthSession current, File file) async {
+    final data = await _apiClient.postMultipart(
+      ApiConfig.uploadProfile,
+      files: {
+        'avatar': [file.path],
+      },
+    );
+
+    final rawUser = data['user'];
+    if (rawUser is! Map<String, dynamic>) {
+      throw const ApiException.server(
+        'Respons upload foto tidak dikenali. Hubungi tim IT.',
+      );
+    }
+
+    final updated = AuthSession(
+      token: current.token,
+      tokenType: current.tokenType,
+      user: AuthUser.fromJson(rawUser),
+    );
+    await _storage.write(updated);
+    return updated;
   }
 
   /// Mencabut token di server, lalu menghapus sesi tersimpan dan melepas
