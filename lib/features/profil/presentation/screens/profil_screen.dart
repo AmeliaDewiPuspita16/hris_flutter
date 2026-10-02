@@ -116,14 +116,72 @@ class ProfilScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildHero(BuildContext context, EmployeeProfile p) {
-    final topInset = MediaQuery.paddingOf(context).top;
+  // ---- Ganti foto profil (TAMPILAN SAJA) -------------------------------
+  // Belum terhubung ke kamera/galeri maupun API. Saat endpoint backend
+  // sudah ada, isi dua callback di _showPhotoSheet.
 
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.fromLTRB(20, topInset + 24, 20, 52),
-      decoration: const BoxDecoration(gradient: AppColors.primaryGradient),
-      child: Row(
+  void _toast(BuildContext context, String msg) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(msg)));
+  }
+
+  void _showPhotoSheet(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 36,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 8),
+                decoration: BoxDecoration(
+                  color: AppColors.border,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              _sheetItem(ctx, Icons.photo_camera_outlined, 'Ambil foto', () {
+                // TODO: buka kamera.
+                _toast(context, 'Fitur ganti foto belum tersedia');
+              }),
+              _sheetItem(ctx, Icons.photo_library_outlined, 'Pilih dari galeri', () {
+                // TODO: buka galeri.
+                _toast(context, 'Fitur ganti foto belum tersedia');
+              }),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _sheetItem(BuildContext ctx, IconData icon, String label, VoidCallback onTap) {
+    return ListTile(
+      leading: Icon(icon, color: AppColors.text, size: 22),
+      title: Text(
+        label,
+        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.text),
+      ),
+      onTap: () {
+        Navigator.of(ctx).pop();
+        onTap();
+      },
+    );
+  }
+
+  Widget _buildAvatar(BuildContext context, EmployeeProfile p) {
+    return GestureDetector(
+      onTap: () => _showPhotoSheet(context),
+      child: Stack(
+        clipBehavior: Clip.none,
         children: [
           UserAvatar(
             initials: user?.initials ?? p.initials,
@@ -133,6 +191,35 @@ class ProfilScreen extends StatelessWidget {
             fontSize: 22,
             fontWeight: FontWeight.w800,
           ),
+          Positioned(
+            right: -2,
+            bottom: -2,
+            child: Container(
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+                border: Border.all(color: AppColors.primary, width: 1.5),
+              ),
+              child: const Icon(Icons.photo_camera, size: 13, color: AppColors.primary),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHero(BuildContext context, EmployeeProfile p) {
+    final topInset = MediaQuery.paddingOf(context).top;
+
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.fromLTRB(20, topInset + 24, 20, 52),
+      decoration: const BoxDecoration(gradient: AppColors.primaryGradient),
+      child: Row(
+        children: [
+          _buildAvatar(context, p),
           const SizedBox(width: 14),
           Expanded(
             child: Column(
