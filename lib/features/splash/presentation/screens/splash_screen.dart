@@ -12,7 +12,7 @@ class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
   /// Lama splash ditahan sebelum AuthGate boleh berpindah halaman.
-  static const displayDuration = Duration(seconds: 7);
+  static const displayDuration = Duration(seconds: 2);
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
