@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/back_header.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_card.dart';
+import '../../../../core/widgets/profile_ui.dart';
 import '../../domain/employee_profile.dart';
 
 /// Padanan tab "Address" di web.
@@ -32,47 +32,54 @@ class _AlamatScreenState extends State<AlamatScreen> {
       backgroundColor: AppColors.bg,
       appBar: BackHeader(title: 'Alamat', onBack: () => Navigator.of(context).pop()),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 28),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             AppCard(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.fromLTRB(14, 14, 14, 18),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text('Alamat Domisili', style: AppTextStyles.label),
-                      TextButton(
+                      const TintedIcon(Icons.location_on_outlined),
+                      const SizedBox(width: 14),
+                      const Expanded(
+                        child: Text('Alamat Domisili', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.text)),
+                      ),
+                      PillButton(
+                        label: _editing ? 'Simpan' : 'Ubah',
+                        filled: _editing,
                         onPressed: () => setState(() => _editing = !_editing),
-                        style: TextButton.styleFrom(padding: EdgeInsets.zero, minimumSize: Size.zero),
-                        child: Text(_editing ? 'Simpan' : 'Ubah', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primaryMid)),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
-                  _editing
-                      ? TextField(
-                          controller: _addressCtrl,
-                          maxLines: 3,
-                          autofocus: true,
-                          style: const TextStyle(fontSize: 13),
-                          decoration: InputDecoration(
-                            contentPadding: const EdgeInsets.all(10),
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppColors.primaryMid, width: 1.5)),
-                            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: AppColors.primaryMid, width: 1.5)),
-                          ),
-                        )
-                      : Text(_addressCtrl.text, style: const TextStyle(fontSize: 13.5, color: AppColors.text, height: 1.5)),
+                  const SizedBox(height: 14),
+                  // Teks alamat sejajar dengan judul (ikon 40 + jarak 14 = 54).
+                  Padding(
+                    padding: const EdgeInsets.only(left: 54),
+                    child: _editing
+                        ? TextField(
+                            controller: _addressCtrl,
+                            maxLines: 3,
+                            autofocus: true,
+                            keyboardType: TextInputType.streetAddress,
+                            style: const TextStyle(fontSize: 14),
+                            decoration: InputDecoration(
+                              contentPadding: const EdgeInsets.all(10),
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppColors.primary, width: 1.5)),
+                              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppColors.primary, width: 1.5)),
+                              focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppColors.primary, width: 1.5)),
+                            ),
+                          )
+                        : Text(_addressCtrl.text, style: const TextStyle(fontSize: 14, color: AppColors.text, height: 1.6)),
+                  ),
                 ],
               ),
             ),
-            const Padding(
-              padding: EdgeInsets.only(top: 10),
-              child: Text('* Perubahan alamat memerlukan verifikasi Admin HR sebelum aktif.', style: TextStyle(fontSize: 10, color: AppColors.textMuted, fontStyle: FontStyle.italic)),
-            ),
+            const SizedBox(height: 10),
+            const InfoNote('Perubahan alamat memerlukan verifikasi Admin HR sebelum aktif.'),
             if (_editing) ...[
               const SizedBox(height: 16),
               AppButton(label: 'Ajukan Perubahan Alamat', onPressed: () => setState(() => _editing = false)),

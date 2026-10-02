@@ -3,6 +3,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/back_header.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/detail_field_tile.dart';
+import '../../../../core/widgets/profile_ui.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../auth/domain/auth_user.dart';
 import '../../domain/employee_profile.dart';
@@ -58,7 +59,7 @@ class _DataDiriScreenState extends State<DataDiriScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _sectionLabel('DAPAT DIUBAH'),
+            const SectionLabel('DAPAT DIUBAH'),
             const SizedBox(height: 8),
             AppCard(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
@@ -84,13 +85,13 @@ class _DataDiriScreenState extends State<DataDiriScreen> {
               ),
             ),
             const SizedBox(height: 8),
-            _noteBox('Perubahan data memerlukan verifikasi Admin HR.'),
+            const InfoNote('Perubahan data memerlukan verifikasi Admin HR.'),
             const SizedBox(height: 22),
-            Row(
+            const Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _sectionLabel('IDENTITAS'),
-                _readOnlyBadge(),
+                SectionLabel('IDENTITAS'),
+                ReadOnlyBadge(),
               ],
             ),
             const SizedBox(height: 8),
@@ -109,62 +110,9 @@ class _DataDiriScreenState extends State<DataDiriScreen> {
               ),
             ),
             const SizedBox(height: 8),
-            _noteBox('Perubahan data identitas hanya dapat dilakukan oleh HR/Admin.'),
+            const InfoNote('Perubahan data identitas hanya dapat dilakukan oleh HR/Admin.'),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _sectionLabel(String text) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 4),
-      child: Text(
-        text,
-        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.textMuted, letterSpacing: 0.6),
-      ),
-    );
-  }
-
-  /// Penanda "Hanya Baca" — pil kecil dengan ikon gembok (menggantikan emoji).
-  Widget _readOnlyBadge() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
-      decoration: BoxDecoration(
-        color: AppColors.neutralBg,
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: const Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.lock_outline, size: 11, color: AppColors.textMuted),
-          SizedBox(width: 4),
-          Text('Hanya Baca', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w600, color: AppColors.textMuted)),
-        ],
-      ),
-    );
-  }
-
-  /// Catatan kaki yang lebih terbaca (menggantikan teks miring 10px).
-  Widget _noteBox(String text) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: AppColors.primary.withValues(alpha: 0.07),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Padding(
-            padding: EdgeInsets.only(top: 1),
-            child: Icon(Icons.info_outline, size: 16, color: AppColors.primary),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(text, style: const TextStyle(fontSize: 11.5, height: 1.4, color: AppColors.textMuted)),
-          ),
-        ],
       ),
     );
   }
@@ -183,16 +131,7 @@ class _DataDiriScreenState extends State<DataDiriScreen> {
       padding: const EdgeInsets.symmetric(vertical: 10),
       child: Row(
         children: [
-          Container(
-            width: 40,
-            height: 40,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.10),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, size: 20, color: AppColors.primary),
-          ),
+          TintedIcon(icon),
           const SizedBox(width: 14),
           Expanded(
             child: Column(
@@ -219,29 +158,7 @@ class _DataDiriScreenState extends State<DataDiriScreen> {
             ),
           ),
           const SizedBox(width: 10),
-          isEditing
-              ? FilledButton(
-                  onPressed: toggle,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                    minimumSize: const Size(0, 36),
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    shape: const StadiumBorder(),
-                  ),
-                  child: const Text('Simpan', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700)),
-                )
-              : TextButton(
-                  onPressed: toggle,
-                  style: TextButton.styleFrom(
-                    backgroundColor: AppColors.primary.withValues(alpha: 0.10),
-                    foregroundColor: AppColors.primary,
-                    minimumSize: const Size(0, 36),
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    shape: const StadiumBorder(),
-                  ),
-                  child: const Text('Ubah', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700)),
-                ),
+          PillButton(label: isEditing ? 'Simpan' : 'Ubah', filled: isEditing, onPressed: toggle),
         ],
       ),
     );
