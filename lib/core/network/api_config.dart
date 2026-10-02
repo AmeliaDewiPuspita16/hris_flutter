@@ -21,6 +21,11 @@ class ApiConfig {
   static const String login = '/api/login';
   static const String logout = '/api/logout';
 
+  /// Ganti foto profil milik user yang sedang login. Multipart dengan satu
+  /// field berkas `avatar` (jpeg/jpg/png, maks 1024 KB). Responsnya
+  /// berbentuk sama dengan login: `access_token`, `token_type`, `user`.
+  static const String uploadProfile = '/api/upload_profile';
+
   /// Daftar departemen aktif — dipakai buat ngisi dropdown, misalnya di
   /// form pengumuman. Server yang urus filter `is_active` dan urutannya.
   static const String department = '/api/data/department';

@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../../core/logging/app_logger.dart';
@@ -21,6 +23,21 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   }
 
   final AuthRepository _repository;
+
+  /// Mengganti foto profil user yang sedang login.
+  ///
+  /// Melempar exception bila gagal, supaya layar pemanggil bisa menampilkan
+  /// pesannya. Bila berhasil, sesi baru langsung disiarkan lewat
+  /// [AuthSessionGranted] sehingga setiap layar yang memakai user ikut
+  /// ter-update (AuthGate membangun ulang Beranda dengan user baru).
+  Future<void> changeProfilePhoto(File file) async {
+    final current = state.session;
+    if (current == null) return;
+
+    final updated = await _repository.updateProfilePhoto(current, file);
+    if (isClosed) return;
+    add(AuthSessionGranted(updated));
+  }
 
   Future<void> _onStarted(AuthStarted event, Emitter<AuthState> emit) async {
     AuthSession? session;

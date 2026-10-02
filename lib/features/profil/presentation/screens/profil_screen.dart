@@ -1,5 +1,10 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:image_cropper/image_cropper.dart';
+import 'package:image_picker/image_picker.dart';
+import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/user_avatar.dart';
@@ -22,7 +27,7 @@ class _CategoryItem {
   final WidgetBuilder builder;
 }
 
-class ProfilScreen extends StatelessWidget {
+class ProfilScreen extends StatefulWidget {
   const ProfilScreen({
     super.key,
     required this.role,
@@ -35,12 +40,30 @@ class ProfilScreen extends StatelessWidget {
   /// jatuh kembali ke data demo milik [role].
   final AuthUser? user;
 
+  @override
+  State<ProfilScreen> createState() => _ProfilScreenState();
+}
+
+class _ProfilScreenState extends State<ProfilScreen> {
   // Avatar: foto (radius [_avatarRadius]) + celah krem + cincin hijau.
   static const double _avatarRadius = 50;
   static const double _avatarGap = 4;
   static const double _avatarRingWidth = 3;
   static const double _avatarSize =
       (_avatarRadius + _avatarGap + _avatarRingWidth) * 2;
+
+  // Batas dari server: jpeg/jpg/png, maksimal 1024 KB.
+  static const int _maxPhotoBytes = 1024 * 1024;
+
+  final _picker = ImagePicker();
+
+  /// Foto yang baru dipilih, ditampilkan langsung tanpa menunggu foto dari
+  /// server selesai dimuat. Null berarti pakai foto/inisial dari [user].
+  File? _pickedPhoto;
+  bool _uploading = false;
+
+  Role get role => widget.role;
+  AuthUser? get user => widget.user;
 
   @override
   Widget build(BuildContext context) {
@@ -89,17 +112,16 @@ class ProfilScreen extends StatelessWidget {
     );
   }
 
-  // ---- Ganti foto profil (TAMPILAN SAJA) -------------------------------
-  // Belum terhubung ke kamera/galeri maupun API. Saat endpoint backend
-  // sudah ada, isi dua callback di _showPhotoSheet.
+  // ---- Ganti foto profil -------------------------------------------------
 
-  void _toast(BuildContext context, String msg) {
+  void _toast(String msg) {
+    if (!mounted) return;
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(content: Text(msg)));
   }
 
-  void _showPhotoSheet(BuildContext context) {
+  void _showPhotoSheet() {
     showModalBottomSheet<void>(
       context: context,
       backgroundColor: Colors.white,
@@ -121,14 +143,10 @@ class ProfilScreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              _sheetItem(ctx, Icons.photo_camera_outlined, 'Ambil foto', () {
-                // TODO: buka kamera.
-                _toast(context, 'Fitur ganti foto belum tersedia');
-              }),
-              _sheetItem(ctx, Icons.photo_library_outlined, 'Pilih dari galeri', () {
-                // TODO: buka galeri.
-                _toast(context, 'Fitur ganti foto belum tersedia');
-              }),
+              _sheetItem(ctx, Icons.photo_camera_outlined, 'Ambil foto',
+                  () => _pickAndUpload(ImageSource.camera)),
+              _sheetItem(ctx, Icons.photo_library_outlined, 'Pilih dari galeri',
+                  () => _pickAndUpload(ImageSource.gallery)),
             ],
           ),
         ),
@@ -150,6 +168,134 @@ class ProfilScreen extends StatelessWidget {
     );
   }
 
+  /// Alur lengkap: pilih foto -> cek syarat server -> upload -> sesi
+  /// diperbarui lewat [AuthBloc].
+  Future<void> _pickAndUpload(ImageSource source) async {
+    // 1. Pilih. Ukuran asli dibiarkan dulu supaya user bisa meng-crop dari
+    //    foto beresolusi penuh; pengecilannya dilakukan di langkah crop.
+    final XFile? picked;
+    try {
+      picked = await _picker.pickImage(source: source);
+    } catch (_) {
+      _toast('Tidak bisa membuka kamera/galeri. Cek izin aplikasi.');
+      return;
+    }
+    if (picked == null || !mounted) return;
+
+    // 1b. Crop 1:1 (geser + zoom), seperti di WhatsApp. Hasilnya langsung
+    //     JPG 800x800, jadi hampir pasti di bawah batas 1 MB server.
+    //     Null berarti user membatalkan crop.
+    final croppedPath = await _cropSquare(picked.path);
+    if (croppedPath == null || !mounted) return;
+
+    // 2. Cek syarat server di sisi aplikasi, supaya user langsung dapat
+    //    pesan jelas tanpa menunggu upload yang pasti ditolak. Format dibaca
+    //    dari ISI berkas, bukan dari namanya: path hasil image_picker bisa
+    //    tanpa ekstensi, dan path Android memuat titik di nama package.
+    var file = File(croppedPath);
+    final ext = await _detectExtension(file);
+    if (ext == null) {
+      _toast('Format foto harus JPG atau PNG.');
+      return;
+    }
+    if (await file.length() > _maxPhotoBytes) {
+      _toast('Ukuran foto terlalu besar (maksimal 1 MB).');
+      return;
+    }
+    // Pastikan nama berkas berekstensi sesuai isinya, supaya Content-Type
+    // yang dikirim ke server benar.
+    final lower = file.path.toLowerCase();
+    final nameOk = lower.endsWith('.$ext') || (ext == 'jpg' && lower.endsWith('.jpeg'));
+    if (!nameOk) {
+      file = await file.copy(
+        '${Directory.systemTemp.path}/avatar_${DateTime.now().millisecondsSinceEpoch}.$ext',
+      );
+    }
+    if (!mounted) return;
+
+    // 3. Upload. Foto tampil dulu secara lokal; bila gagal, dikembalikan.
+    final bloc = context.read<AuthBloc>();
+    final previous = _pickedPhoto;
+    setState(() {
+      _pickedPhoto = file;
+      _uploading = true;
+    });
+
+    try {
+      await bloc.changeProfilePhoto(file);
+      if (!mounted) return;
+      setState(() => _uploading = false);
+      _toast('Foto profil diperbarui');
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _pickedPhoto = previous;
+        _uploading = false;
+      });
+      _toast(e is ApiException ? e.message : 'Gagal mengunggah foto. Coba lagi.');
+    }
+  }
+
+  /// Membuka layar crop bawaan platform dengan bingkai bulat dan rasio 1:1
+  /// terkunci. Mengembalikan path hasil crop, atau null bila dibatalkan /
+  /// gagal.
+  Future<String?> _cropSquare(String sourcePath) async {
+    try {
+      final cropped = await ImageCropper().cropImage(
+        sourcePath: sourcePath,
+        aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
+        compressFormat: ImageCompressFormat.jpg,
+        compressQuality: 85,
+        maxWidth: 800,
+        maxHeight: 800,
+        uiSettings: [
+          AndroidUiSettings(
+            toolbarTitle: 'Atur foto profil',
+            toolbarColor: AppColors.primary,
+            toolbarWidgetColor: Colors.white,
+            activeControlsWidgetColor: AppColors.primary,
+            initAspectRatio: CropAspectRatioPreset.square,
+            lockAspectRatio: true,
+            cropStyle: CropStyle.circle,
+          ),
+          IOSUiSettings(
+            title: 'Atur foto profil',
+            aspectRatioLockEnabled: true,
+            aspectRatioPickerButtonHidden: true,
+            resetAspectRatioEnabled: false,
+            cropStyle: CropStyle.circle,
+          ),
+        ],
+      );
+      return cropped?.path;
+    } catch (_) {
+      _toast('Gagal membuka layar crop foto.');
+      return null;
+    }
+  }
+
+  /// Mengenali format dari beberapa byte pertama berkas: `jpg` untuk JPEG,
+  /// `png` untuk PNG, null untuk selain itu (mis. HEIC, WebP, bukan gambar).
+  Future<String?> _detectExtension(File file) async {
+    final raf = await file.open();
+    try {
+      final head = await raf.read(8);
+      if (head.length >= 3 && head[0] == 0xFF && head[1] == 0xD8 && head[2] == 0xFF) {
+        return 'jpg';
+      }
+      if (head.length >= 8 &&
+          head[0] == 0x89 &&
+          head[1] == 0x50 &&
+          head[2] == 0x4E &&
+          head[3] == 0x47) {
+        return 'png';
+      }
+      return null;
+    } finally {
+      await raf.close();
+    }
+  }
+
   /// Avatar besar di tengah dengan cincin hijau + celah krem, dan tombol
   /// kamera putih di pojok kanan bawah.
   Widget _buildAvatar(BuildContext context, EmployeeProfile p) {
@@ -157,7 +303,8 @@ class ProfilScreen extends StatelessWidget {
       button: true,
       label: 'Ubah foto profil',
       child: GestureDetector(
-        onTap: () => _showPhotoSheet(context),
+        // Selama upload, ketukan diabaikan supaya tidak ada upload ganda.
+        onTap: _uploading ? null : _showPhotoSheet,
         child: SizedBox(
           width: _avatarSize,
           height: _avatarSize,
@@ -171,15 +318,39 @@ class ProfilScreen extends StatelessWidget {
                   shape: BoxShape.circle,
                   border: Border.all(color: AppColors.primary, width: _avatarRingWidth),
                 ),
-                child: UserAvatar(
-                  initials: user?.initials ?? p.initials,
-                  photoUrl: user?.photoUrl,
-                  radius: _avatarRadius,
-                  backgroundColor: AppColors.primary,
-                  fontSize: 34,
-                  fontWeight: FontWeight.w800,
-                ),
+                child: _pickedPhoto != null
+                    ? CircleAvatar(
+                        radius: _avatarRadius,
+                        backgroundImage: FileImage(_pickedPhoto!),
+                      )
+                    : UserAvatar(
+                        initials: user?.initials ?? p.initials,
+                        photoUrl: user?.photoUrl,
+                        radius: _avatarRadius,
+                        backgroundColor: AppColors.primary,
+                        fontSize: 34,
+                        fontWeight: FontWeight.w800,
+                      ),
               ),
+              if (_uploading)
+                Positioned.fill(
+                  child: Padding(
+                    padding: const EdgeInsets.all(_avatarGap + _avatarRingWidth),
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.35),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Center(
+                        child: SizedBox(
+                          width: 26,
+                          height: 26,
+                          child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
               Positioned(
                 right: 0,
                 bottom: 2,
