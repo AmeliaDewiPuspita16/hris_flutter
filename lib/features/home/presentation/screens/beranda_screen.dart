@@ -9,6 +9,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../data/announcement_repository.dart';
 import '../../../absensi/presentation/screens/absensi_screen.dart';
 import '../../../kelola_tim/presentation/screens/kelola_tim_screen.dart';
+import '../../../department_attendance/presentation/screens/department_attendance_screen.dart';
 import '../../../leave_approval/data/leave_approval_repository.dart';
 import '../../../leave_approval/domain/leave_approval_request.dart';
 import '../../../leave_approval/domain/leave_approval_status.dart';
@@ -176,6 +177,12 @@ class _BerandaScreenState extends State<BerandaScreen> {
       MaterialPageRoute(builder: (_) => const KelolaTimScreen()),
     );
   }
+
+  void _openDepartmentAttendance() {
+  Navigator.of(context).push(
+    MaterialPageRoute(builder: (_) => const DepartmentAttendanceScreen()),
+  );
+}
 
   Future<void> _openCreateAnnouncement() async {
     final created = await showModalBottomSheet<PublishedAnnouncement>(
@@ -363,6 +370,7 @@ class _BerandaScreenState extends State<BerandaScreen> {
         onManageTeam: _openKelolaTim,
         // Item ini "Leave Approvals", jadi badge-nya cuma approval Leave —
         // bukan jumlah semua modul.
+        onDepartmentAttendance: _openDepartmentAttendance,
         onApprovals: _openLeaveApproval,
         approvalCount: _leaveApprovalCount,
       );
