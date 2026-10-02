@@ -1,18 +1,19 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:image_cropper/image_cropper.dart';
-import 'package:image_picker/image_picker.dart';
-import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_card.dart';
-import '../../../../core/widgets/user_avatar.dart';
 import '../../../auth/domain/auth_user.dart';
 import '../../../auth/presentation/bloc/auth/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth/auth_event.dart';
 import '../../../shared/domain/role.dart';
+import '../../data/photo_picker_service.dart';
+import '../../data/profil_repository.dart';
 import '../../domain/employee_profile.dart';
+import '../bloc/photo/profil_photo_bloc.dart';
+import '../bloc/photo/profil_photo_event.dart';
+import '../bloc/photo/profil_photo_state.dart';
+import '../widgets/photo_source_sheet.dart';
+import '../widgets/profile_avatar.dart';
 import 'data_diri_screen.dart';
 import 'kontrak_screen.dart';
 import 'rekening_screen.dart';
@@ -27,11 +28,15 @@ class _CategoryItem {
   final WidgetBuilder builder;
 }
 
-class ProfilScreen extends StatefulWidget {
+/// Layar Profil. Hanya menyediakan [ProfilPhotoBloc] untuk ganti foto;
+/// tampilannya ada di [_ProfilView].
+class ProfilScreen extends StatelessWidget {
   const ProfilScreen({
     super.key,
     required this.role,
     this.user,
+    this.repository,
+    this.picker,
   });
 
   final Role role;
@@ -40,30 +45,29 @@ class ProfilScreen extends StatefulWidget {
   /// jatuh kembali ke data demo milik [role].
   final AuthUser? user;
 
+  /// Diisi test; di aplikasi diambil dari [RepositoryProvider].
+  final ProfilRepository? repository;
+
+  /// Diisi test; di aplikasi memakai [PhotoPickerService] bawaan.
+  final PhotoPickerService? picker;
+
   @override
-  State<ProfilScreen> createState() => _ProfilScreenState();
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (_) => ProfilPhotoBloc(
+        repository: repository ?? context.read<ProfilRepository>(),
+        picker: picker ?? PhotoPickerService(),
+      ),
+      child: _ProfilView(role: role, user: user),
+    );
+  }
 }
 
-class _ProfilScreenState extends State<ProfilScreen> {
-  // Avatar: foto (radius [_avatarRadius]) + celah krem + cincin hijau.
-  static const double _avatarRadius = 50;
-  static const double _avatarGap = 4;
-  static const double _avatarRingWidth = 3;
-  static const double _avatarSize =
-      (_avatarRadius + _avatarGap + _avatarRingWidth) * 2;
+class _ProfilView extends StatelessWidget {
+  const _ProfilView({required this.role, this.user});
 
-  // Batas dari server: jpeg/jpg/png, maksimal 1024 KB.
-  static const int _maxPhotoBytes = 1024 * 1024;
-
-  final _picker = ImagePicker();
-
-  /// Foto yang baru dipilih, ditampilkan langsung tanpa menunggu foto dari
-  /// server selesai dimuat. Null berarti pakai foto/inisial dari [user].
-  File? _pickedPhoto;
-  bool _uploading = false;
-
-  Role get role => widget.role;
-  AuthUser? get user => widget.user;
+  final Role role;
+  final AuthUser? user;
 
   @override
   Widget build(BuildContext context) {
@@ -77,311 +81,82 @@ class _ProfilScreenState extends State<ProfilScreen> {
       _CategoryItem(Icons.family_restroom_outlined, 'Tanggungan', 'Anggota keluarga yang ditanggung', (_) => TanggunganScreen(profile: p)),
     ];
 
-    return ColoredBox(
-      color: AppColors.bg,
-      // top: false — header hijaunya sengaja dibiarkan naik sampai ke balik
-      // status bar, jadi _buildHeader yang menambahkan jarak amannya sendiri.
-      child: SafeArea(
-        top: false,
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _buildHeader(context, p),
-              const SizedBox(height: 18),
-              // Menu berupa tile terpisah, bukan satu daftar polos.
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    for (var i = 0; i < categories.length; i++) ...[
-                      if (i > 0) const SizedBox(height: 10),
-                      _buildMenuTile(context, categories[i]),
-                    ],
-                    const SizedBox(height: 14),
-                    _buildLogoutButton(context),
-                    const SizedBox(height: 12),
-                  ],
-                ),
+    return BlocConsumer<ProfilPhotoBloc, ProfilPhotoState>(
+      listenWhen: (previous, current) => previous.status != current.status,
+      listener: _onPhotoStateChanged,
+      builder: (context, photoState) {
+        return ColoredBox(
+          color: AppColors.bg,
+          // top: false — header hijaunya sengaja dibiarkan naik sampai ke balik
+          // status bar, jadi _buildHeader yang menambahkan jarak amannya sendiri.
+          child: SafeArea(
+            top: false,
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _buildHeader(context, p, photoState),
+                  const SizedBox(height: 18),
+                  // Menu berupa tile terpisah, bukan satu daftar polos.
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        for (var i = 0; i < categories.length; i++) ...[
+                          if (i > 0) const SizedBox(height: 10),
+                          _buildMenuTile(context, categories[i]),
+                        ],
+                        const SizedBox(height: 14),
+                        _buildLogoutButton(context),
+                        const SizedBox(height: 12),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
-        ),
-      ),
-    );
-  }
-
-  // ---- Ganti foto profil -------------------------------------------------
-
-  void _toast(String msg) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(msg)));
-  }
-
-  void _showPhotoSheet() {
-    showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
-      ),
-      builder: (ctx) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 36,
-                height: 4,
-                margin: const EdgeInsets.only(bottom: 8),
-                decoration: BoxDecoration(
-                  color: AppColors.border,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              _sheetItem(ctx, Icons.photo_camera_outlined, 'Ambil foto',
-                  () => _pickAndUpload(ImageSource.camera)),
-              _sheetItem(ctx, Icons.photo_library_outlined, 'Pilih dari galeri',
-                  () => _pickAndUpload(ImageSource.gallery)),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _sheetItem(BuildContext ctx, IconData icon, String label, VoidCallback onTap) {
-    return ListTile(
-      leading: Icon(icon, color: AppColors.text, size: 22),
-      title: Text(
-        label,
-        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.text),
-      ),
-      onTap: () {
-        Navigator.of(ctx).pop();
-        onTap();
+        );
       },
     );
   }
 
-  /// Alur lengkap: pilih foto -> cek syarat server -> upload -> sesi
-  /// diperbarui lewat [AuthBloc].
-  Future<void> _pickAndUpload(ImageSource source) async {
-    // 1. Pilih. Ukuran asli dibiarkan dulu supaya user bisa meng-crop dari
-    //    foto beresolusi penuh; pengecilannya dilakukan di langkah crop.
-    final XFile? picked;
-    try {
-      picked = await _picker.pickImage(source: source);
-    } catch (_) {
-      _toast('Tidak bisa membuka kamera/galeri. Cek izin aplikasi.');
-      return;
-    }
-    if (picked == null || !mounted) return;
-
-    // 1b. Crop 1:1 (geser + zoom), seperti di WhatsApp. Hasilnya langsung
-    //     JPG 800x800, jadi hampir pasti di bawah batas 1 MB server.
-    //     Null berarti user membatalkan crop.
-    final croppedPath = await _cropSquare(picked.path);
-    if (croppedPath == null || !mounted) return;
-
-    // 2. Cek syarat server di sisi aplikasi, supaya user langsung dapat
-    //    pesan jelas tanpa menunggu upload yang pasti ditolak. Format dibaca
-    //    dari ISI berkas, bukan dari namanya: path hasil image_picker bisa
-    //    tanpa ekstensi, dan path Android memuat titik di nama package.
-    var file = File(croppedPath);
-    final ext = await _detectExtension(file);
-    if (ext == null) {
-      _toast('Format foto harus JPG atau PNG.');
-      return;
-    }
-    if (await file.length() > _maxPhotoBytes) {
-      _toast('Ukuran foto terlalu besar (maksimal 1 MB).');
-      return;
-    }
-    // Pastikan nama berkas berekstensi sesuai isinya, supaya Content-Type
-    // yang dikirim ke server benar.
-    final lower = file.path.toLowerCase();
-    final nameOk = lower.endsWith('.$ext') || (ext == 'jpg' && lower.endsWith('.jpeg'));
-    if (!nameOk) {
-      file = await file.copy(
-        '${Directory.systemTemp.path}/avatar_${DateTime.now().millisecondsSinceEpoch}.$ext',
-      );
-    }
-    if (!mounted) return;
-
-    // 3. Upload. Foto tampil dulu secara lokal; bila gagal, dikembalikan.
-    final bloc = context.read<AuthBloc>();
-    final previous = _pickedPhoto;
-    setState(() {
-      _pickedPhoto = file;
-      _uploading = true;
-    });
-
-    try {
-      await bloc.changeProfilePhoto(file);
-      if (!mounted) return;
-      setState(() => _uploading = false);
-      _toast('Foto profil diperbarui');
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _pickedPhoto = previous;
-        _uploading = false;
-      });
-      _toast(e is ApiException ? e.message : 'Gagal mengunggah foto. Coba lagi.');
+  /// Hasil ganti foto: sukses diteruskan ke [AuthBloc] (pemegang sesi),
+  /// gagal cukup ditampilkan sebagai snackbar.
+  void _onPhotoStateChanged(BuildContext context, ProfilPhotoState state) {
+    switch (state.status) {
+      case ProfilPhotoStatus.success:
+        final updated = state.user;
+        if (updated != null) {
+          context.read<AuthBloc>().add(AuthUserRefreshed(updated));
+        }
+        _toast(context, 'Foto profil diperbarui');
+      case ProfilPhotoStatus.failure:
+        _toast(context, state.errorMessage ?? 'Gagal mengganti foto profil.');
+      case ProfilPhotoStatus.initial:
+      case ProfilPhotoStatus.picking:
+      case ProfilPhotoStatus.uploading:
+        break;
     }
   }
 
-  /// Membuka layar crop bawaan platform dengan bingkai bulat dan rasio 1:1
-  /// terkunci. Mengembalikan path hasil crop, atau null bila dibatalkan /
-  /// gagal.
-  Future<String?> _cropSquare(String sourcePath) async {
-    try {
-      final cropped = await ImageCropper().cropImage(
-        sourcePath: sourcePath,
-        aspectRatio: const CropAspectRatio(ratioX: 1, ratioY: 1),
-        compressFormat: ImageCompressFormat.jpg,
-        compressQuality: 85,
-        maxWidth: 800,
-        maxHeight: 800,
-        uiSettings: [
-          AndroidUiSettings(
-            toolbarTitle: 'Atur foto profil',
-            toolbarColor: AppColors.primary,
-            toolbarWidgetColor: Colors.white,
-            activeControlsWidgetColor: AppColors.primary,
-            initAspectRatio: CropAspectRatioPreset.square,
-            lockAspectRatio: true,
-            cropStyle: CropStyle.circle,
-          ),
-          IOSUiSettings(
-            title: 'Atur foto profil',
-            aspectRatioLockEnabled: true,
-            aspectRatioPickerButtonHidden: true,
-            resetAspectRatioEnabled: false,
-            cropStyle: CropStyle.circle,
-          ),
-        ],
-      );
-      return cropped?.path;
-    } catch (_) {
-      _toast('Gagal membuka layar crop foto.');
-      return null;
-    }
+  void _toast(BuildContext context, String message) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message)));
   }
 
-  /// Mengenali format dari beberapa byte pertama berkas: `jpg` untuk JPEG,
-  /// `png` untuk PNG, null untuk selain itu (mis. HEIC, WebP, bukan gambar).
-  Future<String?> _detectExtension(File file) async {
-    final raf = await file.open();
-    try {
-      final head = await raf.read(8);
-      if (head.length >= 3 && head[0] == 0xFF && head[1] == 0xD8 && head[2] == 0xFF) {
-        return 'jpg';
-      }
-      if (head.length >= 8 &&
-          head[0] == 0x89 &&
-          head[1] == 0x50 &&
-          head[2] == 0x4E &&
-          head[3] == 0x47) {
-        return 'png';
-      }
-      return null;
-    } finally {
-      await raf.close();
-    }
+  Future<void> _onAvatarTap(BuildContext context) async {
+    final source = await showPhotoSourceSheet(context);
+    if (source == null || !context.mounted) return;
+    context.read<ProfilPhotoBloc>().add(ProfilPhotoPickRequested(source));
   }
 
-  /// Avatar besar di tengah dengan cincin hijau + celah krem, dan tombol
-  /// kamera putih di pojok kanan bawah.
-  Widget _buildAvatar(BuildContext context, EmployeeProfile p) {
-    return Semantics(
-      button: true,
-      label: 'Ubah foto profil',
-      child: GestureDetector(
-        // Selama upload, ketukan diabaikan supaya tidak ada upload ganda.
-        onTap: _uploading ? null : _showPhotoSheet,
-        child: SizedBox(
-          width: _avatarSize,
-          height: _avatarSize,
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(_avatarGap),
-                decoration: BoxDecoration(
-                  color: AppColors.bg,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: AppColors.primary, width: _avatarRingWidth),
-                ),
-                child: _pickedPhoto != null
-                    ? CircleAvatar(
-                        radius: _avatarRadius,
-                        backgroundImage: FileImage(_pickedPhoto!),
-                      )
-                    : UserAvatar(
-                        initials: user?.initials ?? p.initials,
-                        photoUrl: user?.photoUrl,
-                        radius: _avatarRadius,
-                        backgroundColor: AppColors.primary,
-                        fontSize: 34,
-                        fontWeight: FontWeight.w800,
-                      ),
-              ),
-              if (_uploading)
-                Positioned.fill(
-                  child: Padding(
-                    padding: const EdgeInsets.all(_avatarGap + _avatarRingWidth),
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.35),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Center(
-                        child: SizedBox(
-                          width: 26,
-                          height: 26,
-                          child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              Positioned(
-                right: 0,
-                bottom: 2,
-                child: Container(
-                  width: 34,
-                  height: 34,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.22),
-                        blurRadius: 4,
-                        offset: const Offset(0, 1),
-                      ),
-                    ],
-                  ),
-                  child: const Icon(Icons.photo_camera_outlined, size: 16, color: AppColors.primary),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeader(BuildContext context, EmployeeProfile p) {
+  Widget _buildHeader(BuildContext context, EmployeeProfile p, ProfilPhotoState photoState) {
     final topInset = MediaQuery.paddingOf(context).top;
     final heroHeight = topInset + 124;
-    const half = _avatarSize / 2;
+    const half = ProfileAvatar.size / 2;
 
     return Column(
       children: [
@@ -417,7 +192,14 @@ class _ProfilScreenState extends State<ProfilScreen> {
               ),
               Positioned(
                 top: heroHeight - half,
-                child: _buildAvatar(context, p),
+                child: ProfileAvatar(
+                  initials: p.initials,
+                  user: user,
+                  photo: photoState.photo,
+                  uploading: photoState.status == ProfilPhotoStatus.uploading,
+                  // Selama kamera/crop/upload berjalan, ketukan diabaikan.
+                  onTap: photoState.isBusy ? null : () => _onAvatarTap(context),
+                ),
               ),
             ],
           ),
