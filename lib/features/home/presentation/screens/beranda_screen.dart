@@ -24,7 +24,7 @@ import '../../../notifikasi/domain/notification_filter.dart';
 import '../widgets/approval_summary_banner.dart';
 import '../../../pengajuan/presentation/screens/pengajuan_screen.dart';
 import '../../../profil/presentation/screens/profil_screen.dart';
-import '../../../gaji/presentation/gaji_screen.dart';
+import '../../../gaji/presentation/screens/gaji_screen.dart';
 import '../../../hris_menu/domain/hris_menu_config.dart';
 import '../../../hris_menu/domain/hris_menu_item.dart';
 import '../../../hris_menu/presentation/screens/hris_menu_screen.dart';

@@ -1,6 +1,7 @@
-/// model Payslip, PayslipItem, PayslipStatus, plus dummy data 3 bulan.
+/// Model slip gaji. Tidak menyimpan data contoh — itu urusan lapisan data
+/// (lihat di `MockPayslipRepository`).
 ///
-/// formatRupiah() sekarang ada di `core/utils/currency_formatter.dart`.
+/// formatRupiah() ada di `core/utils/currency_formatter.dart`.
 library;
 
 // Status pembayaran slip gaji per periode.
@@ -20,11 +21,14 @@ class PayslipItem {
 }
 
 /// Slip gaji untuk satu periode (bulan).
+///
+/// Komponen pendapatan dan potongan berupa DAFTAR, bukan kolom tetap:
+/// tiap perusahaan/golongan punya komponen berbeda, jadi layar cukup
+/// menampilkan apa pun yang dikirim tanpa perlu diubah.
 class Payslip {
   const Payslip({
     required this.id,
     required this.periodLabel,
-    required this.netPay,
     required this.status,
     required this.earnings,
     required this.deductions,
@@ -37,9 +41,6 @@ class Payslip {
   /// Label periode, ex: "Agustus 2026".
   final String periodLabel;
 
-  /// Take home pay (pendapatan - potongan).
-  final int netPay;
-
   final PayslipStatus status;
 
   final List<PayslipItem> earnings;
@@ -51,55 +52,13 @@ class Payslip {
   /// Info rekening tujuan, ex: "BCA ••1234". Null kalau masih [PayslipStatus.pending].
   final String? bankInfo;
 
-  /// Data dummy
-  static const dummy2026 = [
-    Payslip(
-      id: '2026-09',
-      periodLabel: 'September 2026',
-      netPay: 8450000,
-      status: PayslipStatus.pending,
-      earnings: [
-        PayslipItem(label: 'Gaji Pokok', amount: 7500000),
-        PayslipItem(label: 'Tunjangan Jabatan', amount: 800000),
-        PayslipItem(label: 'Lembur', amount: 350000),
-      ],
-      deductions: [
-        PayslipItem(label: 'BPJS Kesehatan', amount: 100000),
-        PayslipItem(label: 'PPh 21', amount: 100000),
-      ],
-    ),
-    Payslip(
-      id: '2026-08',
-      periodLabel: 'Agustus 2026',
-      netPay: 8120000,
-      status: PayslipStatus.paid,
-      paidDate: '25 Agustus 2026',
-      bankInfo: 'BCA ••1234',
-      earnings: [
-        PayslipItem(label: 'Gaji Pokok', amount: 7500000),
-        PayslipItem(label: 'Tunjangan Jabatan', amount: 800000),
-        PayslipItem(label: 'Lembur', amount: 20000),
-      ],
-      deductions: [
-        PayslipItem(label: 'BPJS Kesehatan', amount: 100000),
-        PayslipItem(label: 'PPh 21', amount: 100000),
-      ],
-    ),
-    Payslip(
-      id: '2026-07',
-      periodLabel: 'Juli 2026',
-      netPay: 7980000,
-      status: PayslipStatus.paid,
-      paidDate: '25 Juli 2026',
-      bankInfo: 'BCA ••1234',
-      earnings: [
-        PayslipItem(label: 'Gaji Pokok', amount: 7500000),
-        PayslipItem(label: 'Tunjangan Jabatan', amount: 800000),
-      ],
-      deductions: [
-        PayslipItem(label: 'BPJS Kesehatan', amount: 100000),
-        PayslipItem(label: 'PPh 21', amount: 220000),
-      ],
-    ),
-  ];
+  int get totalEarnings => earnings.fold(0, (sum, e) => sum + e.amount);
+
+  int get totalDeductions => deductions.fold(0, (sum, e) => sum + e.amount);
+
+  /// Take home pay = pendapatan - potongan. Dihitung, bukan disimpan, supaya
+  /// tidak pernah selisih dengan rinciannya.
+  int get netPay => totalEarnings - totalDeductions;
+
+  bool get isPaid => status == PayslipStatus.paid;
 }

@@ -175,7 +175,7 @@ class HrisMenuConfig {
           background: AppColors.accentBg,
           onTap: onPayslip,
           // Ubah ke true saat data payroll dari vendor sudah tersambung.
-          isReady: false,
+          // isReady: false,
         ),
 
         // ── Team ───────────────────────────────────────────────────────
