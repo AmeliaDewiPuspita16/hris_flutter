@@ -6,7 +6,7 @@ import '../../../../../../core/widgets/app_card.dart';
 import '../../domain/indent_pending_item.dart';
 
 /// Kartu satu request di tab "Pending Vehicle Assignment" — mengemas kolom
-/// (Name, Destination, Date, Remark, With Driver, Action) jadi satu
+/// web (Name, Destination, Date, Remark, With Driver, Action) jadi satu
 /// kartu. Tombol "Assign" di kanan-bawah menggantikan kolom Action.
 class IndentPendingCard extends StatelessWidget {
   const IndentPendingCard({
@@ -31,7 +31,8 @@ class IndentPendingCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   item.name,
-                  style: AppTextStyles.body.copyWith(fontWeight: FontWeight.w600),
+                  style:
+                      AppTextStyles.body.copyWith(fontWeight: FontWeight.w600),
                 ),
               ),
               const SizedBox(width: 8),
@@ -53,28 +54,24 @@ class IndentPendingCard extends StatelessWidget {
             style: AppTextStyles.caption.copyWith(height: 1.4),
           ),
           const SizedBox(height: 10),
-          Align(
-            alignment: Alignment.centerRight,
-            child: SizedBox(
-              height: 36,
-              child: ElevatedButton.icon(
-                onPressed: onAssign,
-                icon: const Icon(Icons.directions_car_outlined, size: 16),
-                label: Text(
-                  'Assign',
-                  style: AppTextStyles.buttonText.copyWith(
-                    color: Colors.white,
-                    fontSize: 12,
-                  ),
+          SizedBox(
+            width: double.infinity,
+            height: 40,
+            child: OutlinedButton.icon(
+              onPressed: onAssign,
+              icon: const Icon(Icons.directions_car_outlined, size: 16),
+              label: Text(
+                'Assign',
+                style: AppTextStyles.buttonText.copyWith(
+                  color: AppColors.primary,
+                  fontSize: 12,
                 ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  padding: const EdgeInsets.symmetric(horizontal: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
+              ),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.primary,
+                side: const BorderSide(color: AppColors.primary, width: 1.5),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
                 ),
               ),
             ),
