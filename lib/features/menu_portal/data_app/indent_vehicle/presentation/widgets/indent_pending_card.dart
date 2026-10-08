@@ -4,6 +4,7 @@ import '../../../../../../core/theme/app_colors.dart';
 import '../../../../../../core/theme/app_text_styles.dart';
 import '../../../../../../core/widgets/app_card.dart';
 import '../../domain/indent_pending_item.dart';
+import 'indent_driver_badge.dart';
 
 /// Kartu satu request di tab "Pending Vehicle Assignment" — mengemas kolom
 /// web (Name, Destination, Date, Remark, With Driver, Action) jadi satu
@@ -36,7 +37,7 @@ class IndentPendingCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              _DriverBadge(withDriver: item.withDriver),
+              IndentDriverBadge(withDriver: item.withDriver),
             ],
           ),
           const SizedBox(height: 6),
@@ -103,36 +104,6 @@ class _InfoLine extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-/// Badge "With Driver: Yes/No" — Yes hijau, No ungu, sama seperti di web.
-class _DriverBadge extends StatelessWidget {
-  const _DriverBadge({required this.withDriver});
-
-  final bool withDriver;
-
-  @override
-  Widget build(BuildContext context) {
-    final color = withDriver ? AppColors.present : AppColors.violet;
-    final background = withDriver ? AppColors.presentBg : AppColors.violetBg;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-      decoration: BoxDecoration(
-        color: background,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        withDriver ? 'With Driver' : 'No Driver',
-        style: TextStyle(
-          fontFamily: AppTextStyles.fontFamily,
-          fontSize: 10,
-          fontWeight: FontWeight.w700,
-          color: color,
-        ),
-      ),
     );
   }
 }

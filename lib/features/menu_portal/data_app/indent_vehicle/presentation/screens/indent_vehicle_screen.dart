@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../../../../../../core/theme/app_colors.dart';
 import '../../../../../../core/theme/app_text_styles.dart';
 import '../../../../../../core/widgets/back_header.dart';
+import '../../domain/indent_approval_demo_data.dart';
+import '../../domain/indent_approval_item.dart';
 import '../../domain/indent_assign_result.dart';
 import '../../domain/indent_pending_demo_data.dart';
 import '../../domain/indent_pending_item.dart';
@@ -12,12 +14,17 @@ import '../widgets/indent_assign_sheet.dart';
 import '../widgets/indent_pending_assignment_tab.dart';
 import '../widgets/indent_request_row.dart';
 import '../widgets/indent_tab_bar.dart';
-import '../widgets/indent_tab_placeholder.dart';
+import '../widgets/indent_supervisor_approval_tab.dart';
 import 'add_indent_screen.dart';
 
-/// - Tab 0 "Pending Vehicle Assignment" (placeholder).
-/// - Tab 1 "Supervisor Approval"  (placeholder).
-/// - Tab 2 "List of User Requests"     — daftar semua request
+/// Layar "Indent Vehicle" (menu Data). Urutan dari atas: search, tab bar,
+/// lalu isi tab yang aktif.
+///
+/// - Tab 0 "Pending Vehicle Assignment" — admin driver menetapkan plat &
+///   driver lewat tombol Assign (sudah jadi).
+/// - Tab 1 "Supervisor Approval"       — atasan approve/reject request
+///   (sudah jadi). Yang di-approve diteruskan ke tab 0.
+/// - Tab 2 "List of User Requests"     — daftar semua request (sudah jadi).
 class IndentVehicleScreen extends StatefulWidget {
   const IndentVehicleScreen({super.key, this.initialTabIndex = 2});
 
@@ -41,6 +48,7 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
 
   List<IndentRequestItem> _items = IndentRequestDemoData.items();
   List<IndentPendingItem> _pending = IndentPendingDemoData.items();
+  List<IndentApprovalItem> _approvals = IndentApprovalDemoData.items();
   final _searchController = TextEditingController();
   String _query = '';
 
@@ -72,6 +80,53 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
           r.destination.toLowerCase().contains(q) ||
           r.remark.toLowerCase().contains(q);
     }).toList();
+  }
+
+  List<IndentApprovalItem> get _filteredApprovals {
+    if (_query.trim().isEmpty) return _approvals;
+
+    final q = _query.trim().toLowerCase();
+    return _approvals.where((r) {
+      return r.name.toLowerCase().contains(q) ||
+          r.destination.toLowerCase().contains(q) ||
+          r.remark.toLowerCase().contains(q);
+    }).toList();
+  }
+
+  /// Keputusan atasan. Approve → request pindah ke Pending Vehicle
+  /// Assignment (menunggu admin menetapkan kendaraan); Reject → keluar dari
+  /// daftar.
+  ///
+  /// TODO(api): kirim keputusan ke server; di web request yang ditolak
+  /// tampil di List of User Requests dan yang disetujui jadi "Approved".
+  void _decide(IndentApprovalItem item, {required bool approved}) {
+    setState(() {
+      _approvals = _approvals.where((r) => r.id != item.id).toList();
+      if (approved) {
+        _pending = [
+          ..._pending,
+          IndentPendingItem(
+            id: item.id,
+            name: item.name,
+            destination: item.destination,
+            date: item.date,
+            timeRange: item.timeRange,
+            remark: item.remark,
+            withDriver: item.withDriver,
+          ),
+        ];
+      }
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          approved
+              ? 'Request ${item.name} disetujui'
+              : 'Request ${item.name} ditolak',
+        ),
+      ),
+    );
   }
 
   /// Buka sheet Assign Vehicle. Kalau admin menekan Assign, request keluar
@@ -164,6 +219,10 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
                   IndentTabBar(
                     labels: _tabLabels,
                     activeIndex: _tabIndex,
+                    badgeCounts: {
+                      0: _pending.length,
+                      1: _approvals.length,
+                    },
                     onChanged: (i) => setState(() => _tabIndex = i),
                   ),
                 ],
@@ -179,7 +238,11 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
                     items: _filteredPending,
                     onAssign: _assign,
                   ),
-                  const IndentTabPlaceholder(title: 'Supervisor Approval'),
+                  IndentSupervisorApprovalTab(
+                    items: _filteredApprovals,
+                    onApprove: (item) => _decide(item, approved: true),
+                    onReject: (item) => _decide(item, approved: false),
+                  ),
                   _buildListOfRequests(),
                 ],
               ),
