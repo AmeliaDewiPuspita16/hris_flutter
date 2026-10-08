@@ -20,6 +20,7 @@ import '../../../menu_portal/onlineapps/work_order/est_request/domain/est_reques
 import '../../../menu_portal/onlineapps/work_order/it_request/domain/approve_request_demo_data.dart';
 import '../../../menu_portal/onlineapps/work_order/it_request/presentation/screens/it_request_screen.dart';
 import '../../../menu_portal/record/presentation/screens/record_screen.dart';
+import '../../../menu_portal/data_app/presentation/screens/data_screen.dart';
 import '../../../notifikasi/domain/notification_filter.dart';
 import '../widgets/approval_summary_banner.dart';
 import '../../../pengajuan/presentation/screens/pengajuan_screen.dart';
@@ -321,6 +322,12 @@ class _BerandaScreenState extends State<BerandaScreen> {
     );
   }
 
+  void _openData() {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const DataScreen()),
+    );
+  }
+
   List<ServiceShortcut> _buildServices() => [
         ServiceShortcut(
           icon: Icons.description_outlined,
@@ -337,7 +344,7 @@ class _BerandaScreenState extends State<BerandaScreen> {
           subtitle: 'Database & Files',
           color: AppColors.accent,
           background: AppColors.accentBg,
-          onTap: () {},
+          onTap: _openData,
         ),
         ServiceShortcut(
           icon: Icons.apps_outlined,

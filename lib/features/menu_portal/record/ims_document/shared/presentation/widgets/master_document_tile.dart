@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../../../../core/theme/app_colors.dart';
 import '../../../../../../../core/theme/app_text_styles.dart';
 import '../../../../../../../core/widgets/app_card.dart';
+import '../../../../../../../core/widgets/status_badge.dart';
 import '../../domain/master_document.dart';
 
 /// Satu baris dokumen master pada tab Manual/SOP/WI/dst.
@@ -77,12 +78,14 @@ class MasterDocumentTile extends StatelessWidget {
   }
 }
 
-/// Badge kategori/departemen dokumen ("IMS", "HSE", "EST", dst)
+/// Badge kategori/departemen dokumen ("IMS", "HSE", "EST", dst).
 ///
 /// Tab Manual semuanya "IMS" jadi satu warna cukup, tapi tab SOP (dan
 /// tab lain nanti) punya banyak departemen berbeda dalam satu list — warna
 /// dibedakan per departemen supaya gampang di-scan sekilas pas scroll,
-/// bukan warna tunggal yang monoton.
+/// bukan warna tunggal yang monoton. Tetap widget sendiri (bukan langsung
+/// `StatusBadge.custom` di tempat pemanggilan) karena logic pemetaan kode
+/// departemen → warna ini cuma relevan di sini.
 class _HierarchyBadge extends StatelessWidget {
   const _HierarchyBadge({required this.label});
 
@@ -111,22 +114,7 @@ class _HierarchyBadge extends StatelessWidget {
     final (color, background) =
         _palette[label.toUpperCase()] ?? _palette[label] ?? (AppColors.neutral, AppColors.neutralBg);
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-      decoration: BoxDecoration(
-        color: background,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontFamily: AppTextStyles.fontFamily,
-          fontSize: 10,
-          fontWeight: FontWeight.w700,
-          color: color,
-        ),
-      ),
-    );
+    return StatusBadge.custom(label: label, color: color, background: background);
   }
 }
 

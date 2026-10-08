@@ -65,8 +65,18 @@ class HseRequestCard extends StatelessWidget {
               spacing: 6,
               runSpacing: 6,
               children: [
-                for (final category in visibleCategories) _CategoryTag(label: category),
-                if (extraCount > 0) _CategoryTag(label: '+$extraCount lainnya'),
+                for (final category in visibleCategories)
+                  StatusBadge.custom(
+                    label: category,
+                    color: AppColors.textMid,
+                    background: AppColors.neutralBg,
+                  ),
+                if (extraCount > 0)
+                  StatusBadge.custom(
+                    label: '+$extraCount lainnya',
+                    color: AppColors.textMid,
+                    background: AppColors.neutralBg,
+                  ),
               ],
             ),
           ],
@@ -90,27 +100,6 @@ class HseRequestCard extends StatelessWidget {
             ],
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _CategoryTag extends StatelessWidget {
-  const _CategoryTag({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: AppColors.neutralBg,
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Text(
-        label,
-        style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w600, color: AppColors.textMid),
       ),
     );
   }
