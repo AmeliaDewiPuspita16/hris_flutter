@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_text_styles.dart';
 import '../../../../../core/widgets/back_header.dart';
+import '../../indent_vehicle/presentation/screens/indent_vehicle_screen.dart';
 import '../../domain/data_demo_data.dart';
 import '../widgets/data_tile.dart';
 
@@ -32,7 +33,9 @@ class DataScreen extends StatelessWidget {
       onFacility: () => _showComingSoon(context, 'Facility'),
       onFoodCost: () => _showComingSoon(context, 'Food Cost'),
       onGymMember: () => _showComingSoon(context, 'Gym Member'),
-      onIndentVehicle: () => _showComingSoon(context, 'Indent Vehicle'),
+      onIndentVehicle: () => Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => IndentVehicleScreen()),
+      ),
       onInfrastucture: () => _showComingSoon(context, 'Infrastucture'),
     );
 
