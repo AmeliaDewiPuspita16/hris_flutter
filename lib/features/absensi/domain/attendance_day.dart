@@ -1,3 +1,5 @@
+import '../../../core/utils/json_value.dart';
+
 /// Status kehadiran/jadwal untuk satu tanggal di kalender Log Absensi.
 enum AttendanceDayStatus {
   tepatWaktu,
@@ -30,6 +32,90 @@ class AttendanceDay {
     this.noteText,
     this.badgeLabel,
   });
+
+  /// satu entri 'days[]' dari 'GET / /api/portal/apps/hris/attendance?month=`.
+  /// Null bila tanggalnya tidak terbaca.
+  ///
+  /// server hanay mengirim tanggal yang punya data kehadiran; tanggal lain
+  /// diisi oleh [AttendanceMonth.fromJson].
+  static AttendanceDay? tryFromJson(Map<String, dynamic> json) {
+    final date = dateOrNull(json['date']);
+    if (date == null) return null;
+
+    final checkIn = dateOrNull(json['checkin'])?.toLocal();
+    final checkOut = dateOrNull(json['checkout'])?.toLocal();
+    final ongoing = checkIn != null && checkOut == null && _isToday(date);
+
+    final status = _statusFrom(
+      textOrNull(json['status']),
+      hasCheckIn: checkIn != null,
+      ongoing: ongoing,
+    );
+
+    return AttendanceDay(
+      date: DateTime(date.year, date.month, date.day),
+      status: status,
+      // `shift` sejauh ini selalu null di respons; bentuk isinya belum
+      // diketahui. Dibaca sebagai teks bila suatu saat terisi string.
+      shiftCode: textOrNull(json['shift']),
+      timeText: _timeText(checkIn, checkOut, ongoing: ongoing),
+      badgeLabel: switch (status) {
+        AttendanceDayStatus.tepatWaktu => 'Tepat waktu',
+        AttendanceDayStatus.terlambat => 'Terlambat',
+        AttendanceDayStatus.lembur => 'Lembur',
+        _ => null,
+      },
+    );
+  }
+
+  /// Hanya "present" yang pernah terlihat di respons. "late", "overtime",
+  /// "holiday", dan "off" adalah DUGAAN nama status; sesuaikan begitu
+  /// backend memastikan daftar statusnya. Status yang tidak dikenal dianggap
+  /// hadir kalau ada jam masuk, selain itu dianggap belum ada data.
+  static AttendanceDayStatus _statusFrom(
+    String? raw, {
+    required bool hasCheckIn,
+    required bool ongoing,
+  }) {
+    if (ongoing) return AttendanceDayStatus.berlangsung;
+
+    switch (raw?.toLowerCase()) {
+      case 'present':
+        return AttendanceDayStatus.tepatWaktu;
+      case 'late':
+        return AttendanceDayStatus.terlambat;
+      case 'overtime':
+        return AttendanceDayStatus.lembur;
+      case 'holiday':
+      case 'off':
+        return AttendanceDayStatus.liburHari;
+    }
+    return hasCheckIn
+        ? AttendanceDayStatus.tepatWaktu
+        : AttendanceDayStatus.terjadwal;
+  }
+
+  static String? _timeText(
+    DateTime? checkIn,
+    DateTime? checkOut, {
+    required bool ongoing,
+  }) {
+    if (checkIn == null) return null;
+    if (checkOut != null) return '${_hhmm(checkIn)} – ${_hhmm(checkOut)}';
+    return ongoing
+        ? '${_hhmm(checkIn)} — Berlangsung'
+        : '${_hhmm(checkIn)} – belum ada data pulang';
+  }
+
+  static bool _isToday(DateTime date) {
+    final now = DateTime.now();
+    return date.year == now.year && date.month == now.month && date.day == now.day;
+  }
+
+  static String _hhmm(DateTime t) =>
+      '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
+
+
 
   /// Tanggal kalender (bagian jam diabaikan).
   final DateTime date;

@@ -46,7 +46,8 @@ class DayDetailPanel extends StatelessWidget {
   Widget _buildScheduledOnly(AttendanceDay day) {
     if (day.shiftCode == null) {
       return const Text(
-        'Hari libur terjadwal.',
+        // 'Hari libur bersama',
+        'Belum ada data absensi atau jadwal untuk tanggal ini.',
         style: TextStyle(fontSize: 13, color: AppColors.textMuted),
       );
     }

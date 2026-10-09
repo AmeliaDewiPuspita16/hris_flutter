@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../../core/network/api_client.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/header_title_row.dart';
@@ -29,14 +28,13 @@ class AbsensiScreen extends StatelessWidget {
   /// Tampilkan tombol kembali di header.
   final bool showBack;
 
-  /// Diisi test; di aplikasi dibuat langsung dari [ApiClient] lokal — lihat
-  /// catatan di [AbsensiRepository] soal kenapa belum didaftarkan di
-  /// main.dart (masih dummy, API HRIS belum tersedia).
+  /// Diisi test; di aplikasi diambil dari RepositoryProvider (main.dart)
+  /// supaya memakai ApiClient yng sudah membawa token login.
   final AbsensiRepository? repository;
 
   @override
   Widget build(BuildContext context) {
-    final absensi = repository ?? AbsensiRepository(apiClient: ApiClient());
+    final absensi = repository ?? context.read<AbsensiRepository>();
 
     return BlocProvider(
       create: (_) => AbsensiBloc(repository: absensi)..add(const AbsensiStarted()),
