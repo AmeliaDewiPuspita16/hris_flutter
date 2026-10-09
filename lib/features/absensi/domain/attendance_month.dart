@@ -33,18 +33,28 @@ class AttendanceMonth {
             ),
     ];
 
-    final summary = data['summary'];
+    final raw = data['summary'];
+    final fromServer = raw is Map<String, dynamic>
+        ? AttendanceSummary.fromJson(raw)
+        : const AttendanceSummary(present: 0, late: 0, overtimeHrs: 0);
+
+    // "Terlambat" dihitung dari hari-hari di atas (aturan: jam masuk lewat
+    // jam mulai shift), bukan memakai `late_days` dari server, supaya angkanya
+    // sama dengan kalender. Hadir dan lembur tetap dari server.
+    final lateDays =
+        days.where((d) => d.status == AttendanceDayStatus.terlambat).length;
+
     return AttendanceMonth(
       days: days,
-      summary: summary is Map<String, dynamic>
-          ? AttendanceSummary.fromJson(summary)
-          : const AttendanceSummary(present: 0, late: 0, overtimeHrs: 0),
+      summary: AttendanceSummary(
+        present: fromServer.present,
+        late: lateDays,
+        overtimeHrs: fromServer.overtimeHrs,
+      )
     );
   }
 
   static String _key(DateTime d) => '${d.year}-${d.month}-${d.day}';
-
-
 
   /// Satu entri per tanggal dalam bulan, urut dari tanggal 1 sampai akhir
   /// bulan (termasuk tanggal yang belum terjadi)
