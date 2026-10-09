@@ -8,6 +8,7 @@ import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../data/announcement_repository.dart';
 import '../../../absensi/presentation/screens/absensi_screen.dart';
+import '../../../absensi/data/absensi_repository.dart';
 import '../../../kelola_tim/presentation/screens/kelola_tim_screen.dart';
 import '../../../department_attendance/presentation/screens/department_attendance_screen.dart';
 import '../../../leave_approval/data/leave_approval_repository.dart';
@@ -20,6 +21,7 @@ import '../../../menu_portal/onlineapps/work_order/est_request/domain/est_reques
 import '../../../menu_portal/onlineapps/work_order/it_request/domain/approve_request_demo_data.dart';
 import '../../../menu_portal/onlineapps/work_order/it_request/presentation/screens/it_request_screen.dart';
 import '../../../menu_portal/record/presentation/screens/record_screen.dart';
+import '../../../menu_portal/data_app/presentation/screens/data_screen.dart';
 import '../../../notifikasi/domain/notification_filter.dart';
 import '../widgets/approval_summary_banner.dart';
 import '../../../pengajuan/presentation/screens/pengajuan_screen.dart';
@@ -33,6 +35,7 @@ import '../../../notifikasi/domain/notification_demo_data.dart';
 import '../../../notifikasi/presentation/screens/notifikasi_screen.dart';
 import '../../../auth/domain/auth_user.dart';
 import '../../../shared/domain/role.dart';
+import '../../domain/attendance_status.dart';
 import '../../domain/published_announcement.dart';
 import '../../domain/home_demo_data.dart';
 import '../../domain/main_tab.dart';
@@ -104,6 +107,11 @@ class _BerandaScreenState extends State<BerandaScreen> {
   bool _loadingAnnouncements = true;
   String? _announcementsError;
 
+    /// Jadwal & absensi hari ini dari server. Null selama belum berhasil dimuat.
+  AttendanceStatus? _todayAttendance;
+  bool _loadingAttendance = true;
+  String? _attendanceError;
+
   /// Repository approval Leave — satu instance untuk seluruh Beranda.
   late final LeaveApprovalRepository _leaveApprovalRepository =
       widget.leaveApprovalRepository ??
@@ -122,6 +130,7 @@ class _BerandaScreenState extends State<BerandaScreen> {
     super.initState();
     _loadAnnouncements();
     _loadLeaveApprovalCount();
+    _loadTodayAttendance();
   }
 
   Future<void> _loadAnnouncements() async {
@@ -145,6 +154,29 @@ class _BerandaScreenState extends State<BerandaScreen> {
       setState(() {
         _announcementsError = e.message;
         _loadingAnnouncements = false;
+      });
+    }
+  }
+
+    Future<void> _loadTodayAttendance() async {
+    setState(() {
+      _loadingAttendance = true;
+      _attendanceError = null;
+    });
+
+    try {
+      final status = await context.read<AbsensiRepository>().fetchToday();
+
+      if (!mounted) return;
+      setState(() {
+        _todayAttendance = status;
+        _loadingAttendance = false;
+      });
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _attendanceError = e.message;
+        _loadingAttendance = false;
       });
     }
   }
@@ -321,6 +353,12 @@ class _BerandaScreenState extends State<BerandaScreen> {
     );
   }
 
+  void _openData() {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const DataScreen()),
+    );
+  }
+
   List<ServiceShortcut> _buildServices() => [
         ServiceShortcut(
           icon: Icons.description_outlined,
@@ -337,7 +375,7 @@ class _BerandaScreenState extends State<BerandaScreen> {
           subtitle: 'Database & Files',
           color: AppColors.accent,
           background: AppColors.accentBg,
-          onTap: () {},
+          onTap: _openData,
         ),
         ServiceShortcut(
           icon: Icons.apps_outlined,
@@ -446,9 +484,12 @@ class _BerandaScreenState extends State<BerandaScreen> {
                 user: widget.user,
               ),
               ClockStatusCard(
-                status: HomeDemoData.todayAttendance,
+                status: _todayAttendance,
+                isLoading: _loadingAttendance,
+                errorMessage: _attendanceError,
                 date: DateTime.now(),
                 onActionTap: _openAttendance,
+                onRetry: _loadTodayAttendance,
               ),
               // SEMENTARA: tanpa gerbang role dulu (lihat catatan di
               // ApprovalSummaryBanner) — dulu ini TeamBanner di bawah Main

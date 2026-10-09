@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import '../../../../../../../core/theme/app_colors.dart';
 import '../../../../../../../core/theme/app_text_styles.dart';
 import '../../../../../../../core/widgets/app_card.dart';
+import '../../../../../../../core/widgets/status_badge.dart';
 import '../../domain/est_request_item.dart';
-import '../../domain/est_request_type.dart';
 
 /// Satu baris di layar "EST Work Order" — mengemas kolom tabel web (Name,
 /// Dept, Type Request, Location, Description, Date, Status) jadi satu kartu
@@ -39,7 +39,11 @@ class EstRequestRow extends StatelessWidget {
           const SizedBox(height: 8),
           Row(
             children: [
-              _TypeTag(type: item.type),
+              StatusBadge.custom(
+                label: item.type.label,
+                color: AppColors.textMuted,
+                background: AppColors.neutralBg,
+              ),
               const SizedBox(width: 6),
               Expanded(
                 child: Row(
@@ -107,32 +111,6 @@ class _StatusPill extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _TypeTag extends StatelessWidget {
-  const _TypeTag({required this.type});
-
-  final EstRequestType type;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-      decoration: BoxDecoration(
-        color: AppColors.neutralBg,
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Text(
-        type.label,
-        style: const TextStyle(
-          fontFamily: AppTextStyles.fontFamily,
-          fontSize: 9.5,
-          fontWeight: FontWeight.w700,
-          color: AppColors.textMid,
-        ),
       ),
     );
   }
