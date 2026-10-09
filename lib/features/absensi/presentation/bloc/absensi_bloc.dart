@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/logging/app_logger.dart';
+import '../../../../core/network/api_exception.dart';
 import '../../data/absensi_repository.dart';
 import '../../domain/attendance_day.dart';
 import 'absensi_event.dart';
@@ -35,7 +36,7 @@ class AbsensiBloc extends Bloc<AbsensiEvent, AbsensiState> {
     AbsensiMonthChanged event,
     Emitter<AbsensiState> emit,
   ) async {
-    emit(state.copyWith(selectedMonth: event.month));
+    emit(state.copyWith(selectedMonth: event.month, days: const []));
     await _load(event.month, emit);
   }
 
@@ -52,11 +53,22 @@ class AbsensiBloc extends Bloc<AbsensiEvent, AbsensiState> {
     try {
       final result = await _repository.fetchMonth(month);
 
+      // Pengguna sudah pindah bulan saat menunggu: buang hasil ini.
+      if (state.selectedMonth.year != month.year ||
+          state.selectedMonth.month != month.month) {
+        return;
+      }
+
       emit(state.copyWith(
         status: AbsensiStatus.success,
         days: result.days,
         summary: result.summary,
         selectedDate: _defaultSelectedDate(month, result.days),
+      ));
+    } on ApiException catch (e) {
+      emit(state.copyWith(
+        status: AbsensiStatus.failure,
+        errorMessage: e.message,
       ));
     } catch (e, stack) {
       AppLogger.error('Log absensi gagal dimuat', e, stack);

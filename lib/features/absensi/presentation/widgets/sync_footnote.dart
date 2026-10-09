@@ -12,8 +12,12 @@ class SyncFootnote extends StatelessWidget {
     return const Padding(
       padding: EdgeInsets.symmetric(horizontal: 4),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.info_outline, size: 13, color: AppColors.textMuted),
+          Padding(
+            padding: EdgeInsets.only(top: 1),
+            child: Icon(Icons.info_outline, size: 13, color: AppColors.textMuted),
+          ),
           SizedBox(width: 6),
           Expanded(
             child: Text(
