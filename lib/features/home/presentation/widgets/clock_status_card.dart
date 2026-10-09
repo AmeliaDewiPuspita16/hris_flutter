@@ -11,14 +11,23 @@ class ClockStatusCard extends StatelessWidget {
     required this.status,
     required this.date,
     required this.onActionTap,
+    this.isLoading = false,
+    this.errorMessage,
+    this.onRetry,
   });
 
-  final AttendanceStatus status;
+  /// Null selama data belum berhasil dimuat (sedang loading atau gagal).
+  final AttendanceStatus? status;
   final DateTime date;
   final VoidCallback onActionTap;
+  final bool isLoading;
+  final String? errorMessage;
+  final VoidCallback? onRetry;
 
   @override
   Widget build(BuildContext context) {
+    final loaded = status;
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
       child: Column(
@@ -26,7 +35,8 @@ class ClockStatusCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.calendar_today_outlined, size: 14, color: AppColors.textMid),
+              const Icon(Icons.calendar_today_outlined,
+                  size: 14, color: AppColors.textMid),
               const SizedBox(width: 8),
               Text(
                 DateFormatter.fullDate(date),
@@ -40,74 +50,139 @@ class ClockStatusCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 10),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(16),
-            child: SizedBox(
-              height: 190,
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  Image.asset('assets/images/drone.png', fit: BoxFit.cover),
-                  const Positioned(bottom: -30, left: -30, child: _CornerGlow()),
-                  DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.centerLeft,
-                        end: Alignment.centerRight,
-                        colors: [
-                          AppColors.primary,
-                          AppColors.primary,
-                          AppColors.primary.withValues(alpha: 0),
-                        ],
-                        stops: const [0, 0.42, 0.85],
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(18),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _ShiftBadge(label: status.shiftLabel),
-                        const SizedBox(height: 12),
-                        Text(
-                          status.shiftTime.replaceAll('–', ' – '),
-                          style: const TextStyle(
-                            fontFamily: AppTextStyles.fontFamily,
-                            fontSize: 26,
-                            fontWeight: FontWeight.w800,
-                            color: Colors.white,
-                            height: 1,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            Icon(Icons.location_on_outlined, size: 14, color: Colors.white.withValues(alpha: 0.85)),
-                            const SizedBox(width: 4),
-                            Text(
-                              status.location,
-                              style: TextStyle(
-                                fontFamily: AppTextStyles.fontFamily,
-                                fontSize: 12.5,
-                                color: Colors.white.withValues(alpha: 0.85),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const Spacer(),
-                        Divider(height: 1, color: Colors.white.withValues(alpha: 0.2)),
-                        const SizedBox(height: 12),
-                        _StatusRow(status: status, onActionTap: onActionTap),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
+          if (loaded != null)
+            _buildCard(loaded)
+          else
+            _CardPlaceholder(
+              isLoading: isLoading,
+              errorMessage: errorMessage,
+              onRetry: onRetry,
+            )
         ],
       ),
+    );
+  }
+
+  /// kartu hijau berisi jadwal. Isinya sama seperti sebelumnya, hanya
+  /// dipindah ke method supaya bisa diganti placeholder saat data belum ada.
+  Widget _buildCard(AttendanceStatus status) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: SizedBox(
+        height: 190,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            Image.asset('assets/images/drone.png', fit: BoxFit.cover),
+            const Positioned(bottom: -30, left: -30, child: _CornerGlow()),
+            DecoratedBox(
+                decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+                colors: [
+                  AppColors.primary,
+                  AppColors.primary,
+                  AppColors.primary.withValues(alpha: 0),
+                ],
+                stops: const [0, 0.42, 0.85],
+              ),
+            )),
+            Padding(
+              padding: const EdgeInsets.all(18),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _ShiftBadge(label: status.shiftLabel),
+                  const SizedBox(height: 12),
+                  Text(
+                    status.shiftTime.replaceAll('–', ' – '),
+                    style: const TextStyle(
+                      fontFamily: AppTextStyles.fontFamily,
+                      fontSize: 26,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                      height: 1,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Icon(Icons.location_on_outlined,
+                          size: 14,
+                          color: Colors.white.withValues(alpha: 0.85)),
+                      const SizedBox(width: 4),
+                      Text(
+                        status.location,
+                        style: TextStyle(
+                          fontFamily: AppTextStyles.fontFamily,
+                          fontSize: 12.5,
+                          color: Colors.white.withValues(alpha: 0.85),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const Spacer(),
+                  Divider(
+                      height: 1, color: Colors.white.withValues(alpha: 0.2)),
+                  const SizedBox(height: 12),
+                  _StatusRow(status: status, onActionTap: onActionTap),
+                ],
+              ),
+            )
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Pengganti kartu hijau selama data belum ada: spinner saat memuat, atau
+/// pesan galat dengan tombol coba lagi. Tingginya sama (190) supaya layout
+/// Beranda tidak melompat saat datanya datang.
+class _CardPlaceholder extends StatelessWidget {
+  const _CardPlaceholder({
+    required this.isLoading,
+    this.errorMessage,
+    this.onRetry,
+  });
+
+  final bool isLoading;
+  final String? errorMessage;
+  final VoidCallback? onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 190,
+      width: double.infinity,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: isLoading
+          ? const SizedBox(
+              width: 24,
+              height: 24,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          : Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Text(
+                    errorMessage ?? 'Gagal memuat jadwal hari ini.',
+                    textAlign: TextAlign.center,
+                    style: AppTextStyles.caption,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                TextButton(onPressed: onRetry, child: const Text('Coba lagi')),
+              ],
+            ),
     );
   }
 }
@@ -238,7 +313,8 @@ class _StatusRow extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.access_time_rounded, size: 15, color: AppColors.primary),
+              const Icon(Icons.access_time_rounded,
+                  size: 15, color: AppColors.primary),
               const SizedBox(width: 6),
               Text(
                 status.actionLabel,
@@ -249,7 +325,8 @@ class _StatusRow extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 2),
-              const Icon(Icons.chevron_right, size: 16, color: AppColors.primary),
+              const Icon(Icons.chevron_right,
+                  size: 16, color: AppColors.primary),
             ],
           ),
         ),

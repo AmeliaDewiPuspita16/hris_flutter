@@ -5,6 +5,7 @@ import 'package:intl/date_symbol_data_local.dart';
 
 import 'core/network/api_client.dart';
 import 'core/theme/app_colors.dart';
+import 'features/absensi/data/absensi_repository.dart';
 import 'features/auth/data/auth_repository.dart';
 import 'features/auth/data/session_storage.dart';
 import 'features/auth/presentation/bloc/auth/auth_bloc.dart';
@@ -41,6 +42,7 @@ Future<void> main() async {
       procurementRepository: ProcurementRepository(apiClient: apiClient),
       itRequestRepository: ItRequestRepository(apiClient: apiClient),
       profilRepository: ProfilRepository(apiClient: apiClient),
+      absensiRepository: AbsensiRepository(apiClient: apiClient),
     ),
   );
 }
@@ -54,6 +56,7 @@ class MyApp extends StatelessWidget {
     ProcurementRepository? procurementRepository,
     ItRequestRepository? itRequestRepository,
     ProfilRepository? profilRepository,
+        AbsensiRepository? absensiRepository,
   })  : departmentRepository = departmentRepository ??
             DepartmentRepository(apiClient: ApiClient()),
         announcementRepository = announcementRepository ??
@@ -63,7 +66,9 @@ class MyApp extends StatelessWidget {
         itRequestRepository = itRequestRepository ??
             ItRequestRepository(apiClient: ApiClient()),
         profilRepository = profilRepository ??
-            ProfilRepository(apiClient: ApiClient());
+            ProfilRepository(apiClient: ApiClient()),
+        absensiRepository = absensiRepository ??
+            AbsensiRepository(apiClient: ApiClient());
 
   final AuthRepository authRepository;
   final DepartmentRepository departmentRepository;
@@ -71,6 +76,7 @@ class MyApp extends StatelessWidget {
   final ProcurementRepository procurementRepository;
   final ItRequestRepository itRequestRepository;
   final ProfilRepository profilRepository;
+  final AbsensiRepository absensiRepository;
 
   @override
   Widget build(BuildContext context) {
@@ -86,6 +92,7 @@ class MyApp extends StatelessWidget {
         RepositoryProvider.value(value: procurementRepository),
         RepositoryProvider.value(value: itRequestRepository),
         RepositoryProvider.value(value: profilRepository),
+        RepositoryProvider.value(value: absensiRepository),
       ],
       child: BlocProvider(
         create: (_) =>

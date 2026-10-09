@@ -50,4 +50,12 @@ class ApiConfig {
   /// `meta` bersebelahan dengan `data`, jadi harus diambil lewat
   /// [ApiClient.getEnvelope].
   static const String itRequest = '/api/portal/apps/it_request';
+
+
+  // --------------------------------- HRIS ----------------------------
+
+  /// HRIS attendance. satu endpoint dua pemakai: 'today_schedule' untuk
+  /// kartu jam kerja di BEranda, sedangkan 'month/summary/days' itu untuk
+  /// layar Log Absensi (belum disambungkan)
+  static const String attendance = '/api/portal/apps/hris/attendance';
 }

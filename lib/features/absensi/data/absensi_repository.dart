@@ -1,4 +1,7 @@
 import '../../../core/network/api_client.dart';
+import '../../../core/network/api_config.dart';
+import '../../../core/network/api_exception.dart';
+import '../../home/domain/attendance_status.dart';
 import '../domain/attendance_day.dart';
 import '../domain/attendance_month.dart';
 import '../domain/attendance_summary.dart';
@@ -19,7 +22,6 @@ import '../domain/attendance_summary.dart';
 class AbsensiRepository {
   AbsensiRepository({required ApiClient apiClient}) : _apiClient = apiClient;
 
-  // ignore: unused_field
   final ApiClient _apiClient;
 
   static const _simulatedLatency = Duration(milliseconds: 500);
@@ -29,6 +31,21 @@ class AbsensiRepository {
     'B': '16:00–00:00',
     'C': '00:00–08:00',
   };
+
+  /// jadwal & absensi hari ini, untuk kartu jam kerja di Beranda
+  ///
+  /// melempar [ApiException] bila gagal.
+  Future<AttendanceStatus> fetchToday() async {
+    final data = await _apiClient.get(ApiConfig.attendance);
+
+    final schedule = data['today_schedule'];
+    if (schedule is! Map<String, dynamic>) {
+      throw const ApiException.server(
+          'Jadwal hari ini tidak ditemukan pada respons server.');
+    }
+
+    return AttendanceStatus.fromJson(schedule);
+  }
 
   /// Jadwal + realisasi untuk seluruh tanggal di [month], dalam satu
   /// panggilan (selalu ditampilkan bersamaan di kalender, jadi lebih pas
@@ -117,10 +134,11 @@ class AbsensiRepository {
       default:
         // Sabtu & Minggu dianggap hari libur terjadwal; hari kerja lain
         // dapat shift bergilir sebagai contoh.
-        final isWeekend =
-            date.weekday == DateTime.saturday || date.weekday == DateTime.sunday;
+        final isWeekend = date.weekday == DateTime.saturday ||
+            date.weekday == DateTime.sunday;
         if (isWeekend) {
-          return AttendanceDay(date: date, status: AttendanceDayStatus.terjadwal);
+          return AttendanceDay(
+              date: date, status: AttendanceDayStatus.terjadwal);
         }
         const rotation = ['A', 'A', 'B', 'B', 'C'];
         final code = rotation[date.day % rotation.length];
