@@ -11,10 +11,12 @@ import '../../domain/indent_pending_item.dart';
 import '../../domain/indent_request_demo_data.dart';
 import '../../domain/indent_request_item.dart';
 import '../widgets/indent_assign_sheet.dart';
+import '../widgets/indent_feedback_banner.dart';
+import '../widgets/indent_feedback_sheet.dart';
 import '../widgets/indent_pending_assignment_tab.dart';
 import '../widgets/indent_request_row.dart';
-import '../widgets/indent_tab_bar.dart';
 import '../widgets/indent_supervisor_approval_tab.dart';
+import '../widgets/indent_tab_bar.dart';
 import 'add_indent_screen.dart';
 
 /// Layar "Indent Vehicle" (menu Data). Urutan dari atas: search, tab bar,
@@ -160,9 +162,94 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
     );
   }
 
+  /// Request pertama yang sudah selesai tapi belum diberi feedback (null =
+  /// tidak ada). Selama ini ada, tombol Add Indent diblokir.
+  IndentRequestItem? get _pendingFeedback {
+    for (final r in _items) {
+      if (r.needsFeedback) return r;
+    }
+    return null;
+  }
+
+  /// buka sheet feedback; kalau dikirim, reting disimpan ke item.
+  ///
+  /// TODO (api) : kirim rating + catatan ke server (endpoint belum ada). Catatan
+  /// juga belum diismpan di model, tambahkan field-nya bila API menyediakan.
+  Future<void> _giveFeedback(IndentRequestItem item) async {
+    final result = await showModalBottomSheet<({int rating, String? note})>(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (_) => IndentFeedbackSheet(item: item));
+
+    if (result == null || !mounted) return;
+
+    setState(() {
+      _items = [
+        for (final r in _items)
+          if (r.id == item.id) r.copyWith(rating: result.rating) else r,
+      ];
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Terima kasih atas feedback Anda')),
+    );
+  }
+
+  /// Hapus request milik sendiri. Hanya bisa selama belum di-approve
+  /// (tombolnya memang cuma muncul untuk [IndentRequestItem.canModify]).
+  ///
+  /// TODO(api): panggil endpoint hapus (belum ada). Server juga harus
+  /// menolak kalau request sudah di-approve (dobel pengaman).
+  Future<void> _deleteIndent(IndentRequestItem item) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Hapus request?'),
+        content: Text(
+          'Request ke ${item.destination} pada ${item.date} akan dihapus '
+          'dan tidak bisa dikembalikan.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Batal'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Hapus',
+                style: TextStyle(color: AppColors.rejected)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    setState(() {
+      _items = _items.where((r) => r.id != item.id).toList();
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Request dihapus')),
+    );
+  }
+
   /// Buka form Add Indent; kalau disubmit, request baru ditaruh paling atas
   /// di List of User Requests (status On Waiting).
   Future<void> _addIndent() async {
+    if (_pendingFeedback != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Beri feedback untuk perjalanan yang sudah selesai '
+              'sebelum mengajukan request baru.'),
+        ),
+      );
+      // pastikan banner-nya kelihatan
+      setState(() => _tabIndex = 2);
+      return;
+    }
+
     final newItem = await Navigator.of(context).push<IndentRequestItem>(
       MaterialPageRoute(builder: (_) => const AddIndentScreen()),
     );
@@ -194,7 +281,7 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
       // FAB oranye di kanan-bawah, sama pola dengan IT Request, HSE, dan EST.
       // Cuma muncul di tab List of User Requests — tab lain (assign &
       // approval) bukan tempat membuat request baru.
-      floatingActionButton: _tabIndex == 2
+      floatingActionButton: _tabIndex == 2 && _pendingFeedback == null
           ? FloatingActionButton(
               onPressed: _addIndent,
               backgroundColor: AppColors.orange,
@@ -261,7 +348,8 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
       decoration: InputDecoration(
         hintText: 'Search request...',
         hintStyle: AppTextStyles.body.copyWith(color: AppColors.textMuted),
-        prefixIcon: const Icon(Icons.search, size: 19, color: AppColors.textMuted),
+        prefixIcon:
+            const Icon(Icons.search, size: 19, color: AppColors.textMuted),
         filled: true,
         fillColor: Colors.white,
         contentPadding: const EdgeInsets.symmetric(vertical: 4),
@@ -282,10 +370,17 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
   }
 
   Widget _buildListOfRequests() {
-    final results = _filtered;
+    // Item yang menunggu feedback ditaruh paling atas supaya langsung
+    // terlihat; urutan item lain tidak berubah (sort Dart bersifat stabil
+    // jika memakai pola ini).
+    final results = [
+      ..._filtered.where((r) => r.needsFeedback),
+      ..._filtered.where((r) => !r.needsFeedback),
+    ];
 
     if (results.isEmpty) {
-      return Center(child: Text('Tidak ada data', style: AppTextStyles.bodyMuted));
+      return Center(
+          child: Text('Tidak ada data', style: AppTextStyles.bodyMuted));
     }
 
     return ListView.separated(
@@ -293,7 +388,20 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 88),
       itemCount: results.length,
       separatorBuilder: (_, __) => const SizedBox(height: 10),
-      itemBuilder: (context, index) => IndentRequestRow(item: results[index]),
+      itemBuilder: (context, index) {
+        final item = results[index];
+        if (item.needsFeedback) {
+          return IndentFeedbackBanner(
+            item: item,
+            onGiveFeedback: () => _giveFeedback(item),
+          );
+        }
+        return IndentRequestRow(
+          item: item,
+          onDelete: () => _deleteIndent(item),
+          // onEdit: diisi di langkah 3.
+        );
+      },
     );
   }
 }

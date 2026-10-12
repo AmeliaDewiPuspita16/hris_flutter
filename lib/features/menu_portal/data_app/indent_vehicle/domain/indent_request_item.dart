@@ -50,4 +50,40 @@ class IndentRequestItem {
   /// membedakan "tanpa driver" dari "driver belum ditunjuk" saat [driver]
   /// masih null.
   final bool withDriver;
+
+  /// True kalau perjalanan sudah selesai tapi request belum memberi
+  /// rating. Selama ada item seperti ini, requester belum boleh
+  /// mengajukan request baru
+  bool get needsFeedback =>
+      status == IndentProgressStatus.done && rating == null;
+
+  /// boleh diedit/dihapus requester selama atasan belum meng-approve.
+  bool get canModify => approve == IndentApproveStatus.onWaiting;
+
+  IndentRequestItem copyWith({
+    String? name,
+    String? destination,
+    String? date,
+    String? timeRange,
+    String? remark,
+    IndentApproveStatus? approve,
+    IndentProgressStatus? status,
+    int? rating,
+    bool? withDriver,
+  }) {
+    return IndentRequestItem(
+      id: id,
+      name: name ?? this.name,
+      destination: destination ?? this.destination,
+      date: date ?? this.date,
+      timeRange: timeRange ?? this.timeRange,
+      remark: remark ?? this.remark,
+      approve: approve ?? this.approve,
+      status: status ?? this.status,
+      vehicle: vehicle,
+      driver: driver,
+      rating: rating ?? this.rating,
+      withDriver: withDriver ?? this.withDriver,
+    );
+  }
 }
