@@ -17,6 +17,7 @@ import '../widgets/indent_pending_assignment_tab.dart';
 import '../widgets/indent_request_row.dart';
 import '../widgets/indent_supervisor_approval_tab.dart';
 import '../widgets/indent_tab_bar.dart';
+import '../widgets/indent_delete_dialog.dart';
 import 'add_indent_screen.dart';
 
 /// Layar "Indent Vehicle" (menu Data). Urutan dari atas: search, tab bar,
@@ -196,35 +197,38 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
     );
   }
 
+    /// Edit request milik sendiri (selama belum di-approve). Form Add Indent
+  /// dipakai ulang dalam mode edit; hasilnya menggantikan item lama.
+  ///
+  /// TODO(api): kirim perubahan ke endpoint update (belum ada). Server juga
+  /// harus menolak kalau request sudah di-approve.
+  Future<void> _editIndent(IndentRequestItem item) async {
+    final updated = await Navigator.of(context).push<IndentRequestItem>(
+      MaterialPageRoute(builder: (_) => AddIndentScreen(initialItem: item)),
+    );
+
+    if (updated == null || !mounted) return;
+
+    setState(() {
+      _items = [
+        for (final r in _items)
+          if (r.id == updated.id) updated else r,
+      ];
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Request updated')),
+    );
+  }
+
   /// Hapus request milik sendiri. Hanya bisa selama belum di-approve
   /// (tombolnya memang cuma muncul untuk [IndentRequestItem.canModify]).
   ///
   /// TODO(api): panggil endpoint hapus (belum ada). Server juga harus
   /// menolak kalau request sudah di-approve (dobel pengaman).
   Future<void> _deleteIndent(IndentRequestItem item) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Hapus request?'),
-        content: Text(
-          'Request ke ${item.destination} pada ${item.date} akan dihapus '
-          'dan tidak bisa dikembalikan.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Batal'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Hapus',
-                style: TextStyle(color: AppColors.rejected)),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed != true || !mounted) return;
+    final confirmed = await IndentDeleteDialog.show(context, item);
+    if (!confirmed || !mounted) return;
 
     setState(() {
       _items = _items.where((r) => r.id != item.id).toList();
@@ -399,7 +403,7 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
         return IndentRequestRow(
           item: item,
           onDelete: () => _deleteIndent(item),
-          // onEdit: diisi di langkah 3.
+          onEdit: () => _editIndent(item),
         );
       },
     );

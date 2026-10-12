@@ -18,7 +18,11 @@ import '../widgets/indent_driver_choice.dart';
 /// disubmit, atau null kalau ditutup tanpa submit. Validasi lewat snackbar.
 /// Belum terhubung ke API.
 class AddIndentScreen extends StatefulWidget {
-  const AddIndentScreen({super.key});
+  const AddIndentScreen({super.key, this.initialItem});
+
+  /// Diisi untuk mode edit: form terisi data lama dan hasilnya adalah item
+  /// yang sama (id tetap) dengan field yang sudah diubah. Null = mode tambah.
+  final IndentRequestItem? initialItem;
 
   @override
   State<AddIndentScreen> createState() => _AddIndentScreenState();
@@ -34,6 +38,23 @@ class _AddIndentScreenState extends State<AddIndentScreen> {
   /// Default "dengan driver" karena mayoritas request memakai driver; user
   /// tinggal ganti kalau tidak perlu.
   bool _withDriver = true;
+
+  bool get _isEdit => widget.initialItem != null;
+
+  @override
+  void initState() {
+    super.initState();
+    final item = widget.initialItem;
+    if (item == null) return;
+
+    _date = _parseDate(item.date);
+    final range = _parseTimeRange(item.timeRange);
+    _from = range.$1;
+    _until = range.$2;
+    _destinationController.text = item.destination;
+    _remarkController.text = item.remark;
+    _withDriver = item.withDriver;
+  }
 
   @override
   void dispose() {
@@ -52,6 +73,32 @@ class _AddIndentScreenState extends State<AddIndentScreen> {
   /// 'HH:mm' — dipakai menyusun timeRange untuk item di list.
   String _formatTime(TimeOfDay t) => '${_two(t.hour)}:${_two(t.minute)}';
 
+  /// 'dd-MM-yyyy' -> DateTime. Null kalau formatnya tidak dikenali.
+  DateTime? _parseDate(String s) {
+    final p = s.split('-');
+    if (p.length != 3) return null;
+    final d = int.tryParse(p[0]);
+    final m = int.tryParse(p[1]);
+    final y = int.tryParse(p[2]);
+    if (d == null || m == null || y == null) return null;
+    return DateTime(y, m, d);
+  }
+
+  /// '01:00:00 s/d 14:30:00' -> (dari, sampai).
+  (TimeOfDay?, TimeOfDay?) _parseTimeRange(String s) {
+    final parts = s.split(' s/d ');
+    if (parts.length != 2) return (null, null);
+    return (_parseTime(parts[0]), _parseTime(parts[1]));
+  }
+
+  TimeOfDay? _parseTime(String s) {
+    final p = s.trim().split(':');
+    if (p.length < 2) return null;
+    final h = int.tryParse(p[0]);
+    final m = int.tryParse(p[1]);
+    if (h == null || m == null) return null;
+    return TimeOfDay(hour: h, minute: m);
+  }
 
   // --- submit ---------------------------------------------------------------
 
@@ -76,24 +123,39 @@ class _AddIndentScreenState extends State<AddIndentScreen> {
   void _submit() {
     final error = _validate();
     if (error != null) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(error)));
       return;
     }
 
-    final item = IndentRequestItem(
-      id: 'indent-${DateTime.now().microsecondsSinceEpoch}',
-      // TODO: ambil dari sesi auth begitu tersambung — sama seperti catatan
-      // requesterName di AddEstRequestScreen.
-      name: 'Anda',
-      destination: _destinationController.text.trim(),
-      date: _formatDate(_date!),
-      // Format list: 'HH:mm:00 s/d HH:mm:00' (detik selalu 00 dari picker).
-      timeRange: '${_formatTime(_from!)}:00 s/d ${_formatTime(_until!)}:00',
-      remark: _remarkController.text.trim(),
-      approve: IndentApproveStatus.onWaiting,
-      status: IndentProgressStatus.onWaiting,
-      withDriver: _withDriver,
-    );
+    // Format list: 'HH:mm:00 s/d HH:mm:00' (detik selalu 00 dari picker).
+    final timeRange =
+        '${_formatTime(_from!)}:00 s/d ${_formatTime(_until!)}:00';
+
+    final initial = widget.initialItem;
+    final item = initial != null
+        // Mode edit: id, status, kendaraan, dan driver tetap; cuma isian
+        // dari form yang diganti.
+        ? initial.copyWith(
+            destination: _destinationController.text.trim(),
+            date: _formatDate(_date!),
+            timeRange: timeRange,
+            remark: _remarkController.text.trim(),
+            withDriver: _withDriver,
+          )
+        : IndentRequestItem(
+            id: 'indent-${DateTime.now().microsecondsSinceEpoch}',
+            // TODO: ambil dari sesi auth begitu tersambung — sama seperti
+            // catatan requesterName di AddEstRequestScreen.
+            name: 'Anda',
+            destination: _destinationController.text.trim(),
+            date: _formatDate(_date!),
+            timeRange: timeRange,
+            remark: _remarkController.text.trim(),
+            approve: IndentApproveStatus.onWaiting,
+            status: IndentProgressStatus.onWaiting,
+            withDriver: _withDriver,
+          );
 
     Navigator.of(context).pop(item);
   }
@@ -123,7 +185,7 @@ class _AddIndentScreenState extends State<AddIndentScreen> {
     return Scaffold(
       backgroundColor: AppColors.bg,
       appBar: BackHeader(
-        title: 'Add Indent',
+        title: _isEdit ? 'Edit Indent' : 'Add Indent',
         onBack: () => Navigator.of(context).pop(),
       ),
       body: ListView(
@@ -135,7 +197,7 @@ class _AddIndentScreenState extends State<AddIndentScreen> {
             label: 'Date Indent',
             value: _date,
             required: true,
-            onChanged: (date) => setState(() => _date = date ),
+            onChanged: (date) => setState(() => _date = date),
           ),
           const SizedBox(height: 18),
           // From & Until berdampingan: terbaca sebagai satu rentang waktu.
@@ -143,18 +205,16 @@ class _AddIndentScreenState extends State<AddIndentScreen> {
             children: [
               Expanded(
                 child: AppTimeField(
-                  label: 'From',
-                  value: _from,
-                  onChanged: (time) => setState(() => _from = time)
-                ),
+                    label: 'From',
+                    value: _from,
+                    onChanged: (time) => setState(() => _from = time)),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: AppTimeField(
-                  label: 'Until',
-                  value: _until,
-                  onChanged: (time) => setState(() => _until = time)
-                ),
+                    label: 'Until',
+                    value: _until,
+                    onChanged: (time) => setState(() => _until = time)),
               ),
             ],
           ),
@@ -164,7 +224,8 @@ class _AddIndentScreenState extends State<AddIndentScreen> {
             controller: _destinationController,
             textCapitalization: TextCapitalization.words,
             style: AppTextStyles.body,
-            decoration: _fieldDecoration('Contoh: Pelabuhan Speed Tanjung Uban'),
+            decoration:
+                _fieldDecoration('Contoh: Pelabuhan Speed Tanjung Uban'),
           ),
           const SizedBox(height: 18),
           const FieldLabelRow(label: 'Remark to go', required: true),
@@ -190,10 +251,11 @@ class _AddIndentScreenState extends State<AddIndentScreen> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10)),
               ),
               child: Text(
-                'Submit request',
+                _isEdit ? 'Save changes' : 'Submit request',
                 style: AppTextStyles.buttonText.copyWith(color: Colors.white),
               ),
             ),
