@@ -12,10 +12,23 @@ import '../../domain/indent_request_item.dart';
 /// Urutan di kartu: siapa & mau ke mana (utama) → kapan & untuk apa →
 /// kendaraan & driver → dua badge status (+ bintang kalau sudah Done).
 class IndentRequestRow extends StatelessWidget {
-  const IndentRequestRow({super.key, required this.item, this.onTap});
+  const IndentRequestRow({
+    super.key,
+    required this.item,
+    this.onTap,
+    this.onEdit,
+    this.onDelete,
+  });
 
   final IndentRequestItem item;
   final VoidCallback? onTap;
+
+  /// Menu Edit / Delete cuma muncul selama request belum di-approve
+  /// ([IndentRequestItem.canModify]) dan callback-nya diisi.
+  final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
+
+  bool get _showMenu => item.canModify && (onEdit != null || onDelete != null);
 
   @override
   Widget build(BuildContext context) {
@@ -26,9 +39,18 @@ class IndentRequestRow extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Baris 1: nama
-          Text(
-            item.name,
-            style: AppTextStyles.body.copyWith(fontWeight: FontWeight.w600),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Text(
+                  item.name,
+                  style:
+                      AppTextStyles.body.copyWith(fontWeight: FontWeight.w600),
+                ),
+              ),
+              if (_showMenu) _ActionMenu(onEdit: onEdit, onDelete: onDelete),
+            ],
           ),
           const SizedBox(height: 6),
 
@@ -68,7 +90,9 @@ class IndentRequestRow extends StatelessWidget {
                 child: _InfoLine(
                   icon: Icons.person_outline,
                   text: item.driver ??
-                      (item.withDriver ? 'Driver belum ditunjuk' : 'Tanpa driver'),
+                      (item.withDriver
+                          ? 'Driver belum ditunjuk'
+                          : 'Tanpa driver'),
                 ),
               ),
             ],
@@ -94,6 +118,86 @@ class IndentRequestRow extends StatelessWidget {
               const Spacer(),
               if (item.rating != null) _Stars(rating: item.rating!),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+enum _RowAction { edit, delete }
+
+class _ActionMenu extends StatelessWidget {
+  const _ActionMenu({this.onEdit, this.onDelete});
+
+  final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 28,
+      height: 24,
+      child: PopupMenuButton<_RowAction>(
+        padding: EdgeInsets.zero,
+        tooltip: 'Opsi',
+        icon: const Icon(Icons.more_vert, size: 20, color: AppColors.textMuted),
+        // Putih polos + hilangkan tint hijau bawaan Material 3.
+        color: AppColors.card,
+        surfaceTintColor: Colors.transparent,
+        elevation: 4,
+        shadowColor: Colors.black26,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+          side: const BorderSide(color: AppColors.border),
+        ),
+        // Default lebar minimum menu 112px; dikecilkan supaya pas.
+        constraints: const BoxConstraints(minWidth: 0),
+        onSelected: (action) {
+          switch (action) {
+            case _RowAction.edit:
+              onEdit?.call();
+            case _RowAction.delete:
+              onDelete?.call();
+          }
+        },
+        itemBuilder: (_) => [
+          if (onEdit != null)
+            _item(_RowAction.edit, Icons.edit_outlined, 'Edit', AppColors.text),
+          if (onDelete != null)
+            _item(
+              _RowAction.delete,
+              Icons.delete_outline,
+              'Hapus',
+              AppColors.hseRequest,
+            ),
+        ],
+      ),
+    );
+  }
+
+  PopupMenuItem<_RowAction> _item(
+    _RowAction value,
+    IconData icon,
+    String label,
+    Color color,
+  ) {
+    return PopupMenuItem(
+      value: value,
+      height: 38,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 16, color: color),
+          const SizedBox(width: 8),
+          Text(
+            label,
+            style: AppTextStyles.caption.copyWith(
+              fontSize: 12.5,
+              fontWeight: FontWeight.w600,
+              color: color,
+            ),
           ),
         ],
       ),

@@ -51,7 +51,7 @@ class IndentRequestDemoData {
           approve: IndentApproveStatus.approved,
           status: IndentProgressStatus.done,
           driver: 'Febri Rivanov',
-          rating: 5,
+          // rating: 5,   // dikosongkan supaya banner feedback muncul di demo
         ),
         IndentRequestItem(
           id: 'indent-28',

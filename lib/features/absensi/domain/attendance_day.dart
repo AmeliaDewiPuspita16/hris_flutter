@@ -33,6 +33,11 @@ class AttendanceDay {
     this.badgeLabel,
   });
 
+  /// Toleransi keterlambatan. Jam masuk dianggap terlambat bila lewat jam
+  /// mulai shift ditambah toleransi ini (dibandingkan sampai menit).
+  /// Sekarang 0: lewat sedetik di menit berikutnya sudah terlambat.
+  static const lateGrace = Duration.zero;
+
   /// satu entri 'days[]' dari 'GET / /api/portal/apps/hris/attendance?month=`.
   /// Null bila tanggalnya tidak terbaca.
   ///
@@ -42,26 +47,36 @@ class AttendanceDay {
     final date = dateOrNull(json['date']);
     if (date == null) return null;
 
+    final day = DateTime(date.year, date.month, date.day);
     final checkIn = dateOrNull(json['checkin'])?.toLocal();
     final checkOut = dateOrNull(json['checkout'])?.toLocal();
     final ongoing = checkIn != null && checkOut == null && _isToday(date);
+    final shift = _parseShift(textOrNull(json['shift']));
 
-    final status = _statusFrom(
+    /// terlambat dihitung di sini, bukan memakai status server: server
+    /// mengirim "present" (dan late_days 0) walau jam masuklewat jam shift.
+    /// tanpa jam shift (mis. 'shift' null) keterlambatan tidak bisa dihitung.
+    final lateMinutes = _lateMinutes(day, checkIn, shift?.range);
+
+    var status = _statusFrom(
       textOrNull(json['status']),
       hasCheckIn: checkIn != null,
       ongoing: ongoing,
     );
+    if (status == AttendanceDayStatus.tepatWaktu && lateMinutes > 0) {
+      status = AttendanceDayStatus.terlambat;
+    }
 
     return AttendanceDay(
-      date: DateTime(date.year, date.month, date.day),
+      date: day,
       status: status,
-      // `shift` sejauh ini selalu null di respons; bentuk isinya belum
-      // diketahui. Dibaca sebagai teks bila suatu saat terisi string.
-      shiftCode: textOrNull(json['shift']),
+      shiftCode: shift?.code,
+      shiftTimeRange: shift?.range,
       timeText: _timeText(checkIn, checkOut, ongoing: ongoing),
       badgeLabel: switch (status) {
         AttendanceDayStatus.tepatWaktu => 'Tepat waktu',
-        AttendanceDayStatus.terlambat => 'Terlambat',
+        AttendanceDayStatus.terlambat =>
+          lateMinutes > 0 ? 'Telat ${lateMinutes}m' : 'Terlambat',
         AttendanceDayStatus.lembur => 'Lembur',
         _ => null,
       },
@@ -95,6 +110,50 @@ class AttendanceDay {
         : AttendanceDayStatus.terjadwal;
   }
 
+  /// menit keterlambatan terhadap jam mulai shift; 0 bila tepat waktu atau
+  /// tidak bisa dihitung (tanpa jam masuk atau jam shift).
+  ///
+  /// Jam masuk dipotong ke menit: 08:00:06 dianggap 08:00, belum terlambat.
+  static int _lateMinutes(DateTime day, DateTime? checkIn, String? range) {
+    if (checkIn == null || range == null) return 0;
+
+    final match = RegExp(r'^\s*(\d{1,2}):(\d{2})').firstMatch(range);
+    if (match == null) return 0;
+
+    final start = DateTime(
+      day.year,
+      day.month,
+      day.day,
+      int.parse(match.group(1)!),
+      int.parse(match.group(2)!),
+    );
+    final arrived = DateTime(
+      checkIn.year,
+      checkIn.month,
+      checkIn.day,
+      checkIn.hour,
+      checkIn.minute,
+    );
+
+    final delay = arrived.difference(start) - lateGrace;
+    return delay.isNegative ? 0 : delay.inMinutes;
+  }
+
+  /// Server mengirim shift sebagai teks, mis. "N (08:00-17:00)". Dipecah jadi
+  /// kode ("N") dan rentang jam ("08:00–17:00"). Teks yang polanya lain
+  /// dipakai utuh sebagai kode, tanpa rentang jam.
+  static ({String code, String? range})? _parseShift(String? raw) {
+    if (raw == null) return null;
+
+    final match = RegExp(r'^\s*(\S+?)\s*\((.+)\)\s*$').firstMatch(raw);
+    if (match == null) return (code: raw.trim(), range: null);
+
+    return (
+      code: match.group(1)!,
+      range: match.group(2)!.replaceAll('-', '–'),
+    );
+  }
+
   static String? _timeText(
     DateTime? checkIn,
     DateTime? checkOut, {
@@ -109,24 +168,25 @@ class AttendanceDay {
 
   static bool _isToday(DateTime date) {
     final now = DateTime.now();
-    return date.year == now.year && date.month == now.month && date.day == now.day;
+    return date.year == now.year &&
+        date.month == now.month &&
+        date.day == now.day;
   }
 
   static String _hhmm(DateTime t) =>
       '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
-
-
 
   /// Tanggal kalender (bagian jam diabaikan).
   final DateTime date;
 
   final AttendanceDayStatus status;
 
-  /// Kode shift terjadwal, mis. "A", "B", "C". Null untuk hari libur atau
+  /// Kode shift terjadwal, mis. "A", "B", "C", "N". Null untuk hari libur atau
   /// tanggal yang belum ada jadwalnya.
   final String? shiftCode;
 
-  /// Rentang jam shift, mis. "07:00–16:00". Null bila [shiftCode] null.
+  /// Rentang jam shift, mis. "08:00–17:00". Null bila [shiftCode] null atau
+  /// teks shift dari server tidak memuat jam.
   final String? shiftTimeRange;
 
   /// Jam masuk–pulang hasil realisasi, mis. "06:55 – 16:00". Hanya terisi
@@ -144,5 +204,7 @@ class AttendanceDay {
   bool get isScheduledOnly => status == AttendanceDayStatus.terjadwal;
 
   bool isSameDay(DateTime other) =>
-      date.year == other.year && date.month == other.month && date.day == other.day;
+      date.year == other.year &&
+      date.month == other.month &&
+      date.day == other.day;
 }

@@ -78,7 +78,9 @@ class DayDetailPanel extends StatelessWidget {
         if (day.shiftCode != null) ...[
           const SizedBox(height: 2),
           Text(
-            'Shift ${day.shiftCode} · ${day.shiftTimeRange}',
+            day.shiftTimeRange == null
+                ? 'Shift ${day.shiftCode}'
+                : 'Shift ${day.shiftCode} · ${day.shiftTimeRange}',
             style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
           ),
         ],
