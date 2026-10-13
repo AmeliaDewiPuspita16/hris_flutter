@@ -10,6 +10,7 @@ import '../bloc/absensi_bloc.dart';
 import '../bloc/absensi_event.dart';
 import '../bloc/absensi_state.dart';
 import '../widgets/attendance_calendar.dart';
+import '../widgets/attendance_shimmer.dart';
 import '../widgets/attendance_summary_card.dart';
 import '../widgets/day_detail_panel.dart';
 import '../widgets/month_year_picker_sheet.dart';
@@ -218,10 +219,7 @@ class _AbsensiView extends StatelessWidget {
 
   Widget _buildBody(BuildContext context, AbsensiState state) {
     if (state.status == AbsensiStatus.loading && state.days.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 32),
-        child: Center(child: CircularProgressIndicator()),
-      );
+      return const AttendanceShimmer();
     }
 
     if (state.status == AbsensiStatus.failure && state.days.isEmpty) {

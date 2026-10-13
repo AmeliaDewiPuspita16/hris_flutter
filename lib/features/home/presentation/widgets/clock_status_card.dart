@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shimmer/shimmer.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
@@ -137,9 +138,9 @@ class ClockStatusCard extends StatelessWidget {
   }
 }
 
-/// Pengganti kartu hijau selama data belum ada: spinner saat memuat, atau
-/// pesan galat dengan tombol coba lagi. Tingginya sama (190) supaya layout
-/// Beranda tidak melompat saat datanya datang.
+/// Pengganti kartu hijau selama data belum ada: skeleton shimmer saat
+/// memuat, atau pesan galat dengan tombol coba lagi. Tingginya sama (190)
+/// supaya layout Beranda tidak melompat saat datanya datang.
 class _CardPlaceholder extends StatelessWidget {
   const _CardPlaceholder({
     required this.isLoading,
@@ -163,11 +164,7 @@ class _CardPlaceholder extends StatelessWidget {
         border: Border.all(color: AppColors.border),
       ),
       child: isLoading
-          ? const SizedBox(
-              width: 24,
-              height: 24,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            )
+          ? const SizedBox.expand(child: _CardShimmer())
           : Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -183,6 +180,73 @@ class _CardPlaceholder extends StatelessWidget {
                 TextButton(onPressed: onRetry, child: const Text('Coba lagi')),
               ],
             ),
+    );
+  }
+}
+
+/// Skeleton shimmer berbentuk layout kartu asli (badge, jam shift, lokasi,
+/// divider, baris status & tombol), ditampilkan selagi [_CardPlaceholder]
+/// menunggu data absensi hari ini.
+class _CardShimmer extends StatelessWidget {
+  const _CardShimmer();
+
+  @override
+  Widget build(BuildContext context) {
+    return Shimmer.fromColors(
+      baseColor: AppColors.border,
+      highlightColor: AppColors.bg,
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _ShimmerBox(width: 110, height: 22, borderRadius: 20),
+            const SizedBox(height: 14),
+            _ShimmerBox(width: 160, height: 24, borderRadius: 6),
+            const SizedBox(height: 10),
+            _ShimmerBox(width: 100, height: 12, borderRadius: 4),
+            const Spacer(),
+            _ShimmerBox(width: double.infinity, height: 1, borderRadius: 0),
+            const SizedBox(height: 14),
+            Row(
+              children: [
+                const _ShimmerBox(width: 12, height: 12, borderRadius: 6),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _ShimmerBox(width: double.infinity, height: 13),
+                ),
+                const SizedBox(width: 12),
+                _ShimmerBox(width: 90, height: 34, borderRadius: 20),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Kotak abu-abu polos, dasar bentuk setiap bagian [_CardShimmer].
+class _ShimmerBox extends StatelessWidget {
+  const _ShimmerBox({
+    required this.width,
+    required this.height,
+    this.borderRadius = 6,
+  });
+
+  final double width;
+  final double height;
+  final double borderRadius;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: width,
+      height: height,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(borderRadius),
+      ),
     );
   }
 }
