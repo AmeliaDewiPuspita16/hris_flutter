@@ -193,7 +193,7 @@ class _LoadingIndicator extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         Text(
-          'Memuat...',
+          'Loading...',
           style: TextStyle(
             fontFamily: AppTextStyles.fontFamily,
             fontSize: 12,
