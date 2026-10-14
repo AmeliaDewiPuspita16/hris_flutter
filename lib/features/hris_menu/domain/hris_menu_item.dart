@@ -7,7 +7,7 @@ import '../../shared/domain/role.dart';
 /// kelompok tanpa item yang terlihat otomatis tidak ditampilkan.
 enum HrisMenuGroup {
   attendance('Attendance'),
-  leave('Leave & Time Off'),
+  leave('Leave & Overtime'),
   employee('Employee'),
   team('Team');
 

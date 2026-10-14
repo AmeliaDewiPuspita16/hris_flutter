@@ -25,6 +25,7 @@ import '../../../menu_portal/data_app/presentation/screens/data_screen.dart';
 import '../../../notifikasi/domain/notification_filter.dart';
 import '../widgets/approval_summary_banner.dart';
 import '../../../pengajuan/presentation/screens/pengajuan_screen.dart';
+import '../../../overtime_request/presentation/screens/overtime_request_screen.dart';
 import '../../../profil/presentation/screens/profil_screen.dart';
 import '../../../gaji/presentation/screens/gaji_screen.dart';
 import '../../../hris_menu/domain/hris_menu_config.dart';
@@ -194,6 +195,13 @@ class _BerandaScreenState extends State<BerandaScreen> {
   void _openLeaveRequest() {
     Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => PengajuanScreen(role: _role)),
+    );
+  }
+
+  /// Overtime Request — dibuka lewat push dari menu HRIS.
+  void _openOvertimeRequest() {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const OvertimeRequestScreen()),
     );
   }
 
@@ -403,6 +411,7 @@ class _BerandaScreenState extends State<BerandaScreen> {
   List<HrisMenuItem> _buildHrisMenu() => HrisMenuConfig.items(
         onAttendance: _openAttendance,
         onLeaveRequest: _openLeaveRequest,
+        onOvertimeRequest: _openOvertimeRequest,
         onEmployeeInfo: () => _openTab(MainTab.profile),
         onPayslip: _openPayslip,
         onManageTeam: _openKelolaTim,

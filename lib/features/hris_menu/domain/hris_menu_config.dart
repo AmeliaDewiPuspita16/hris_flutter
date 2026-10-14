@@ -19,19 +19,19 @@ import 'hris_menu_item.dart';
 ///     supaya tidak ada dua tempat untuk hal yang sama.
 ///  3. Pay Slip → payslip (belum siap, data payroll dari vendor belum ada)
 ///  4. Leave balance (view semua; edit oleh HOD & Admin Dep) → saldo di
-///     leave_request (view); edit oleh HOD/Admin → leave_balance_edit
-///     (belum siap, belum ada layarnya)
+///     leave_request (view); edit saldo belum punya layar dan tidak ada di
+///     menu (item "Leave Balance (Edit)" digantikan overtime_request)
 ///  5. Annual Leave request → leave_request
 ///  6. Leave approval (HOD) → approvals
 ///  7. Leave permission (edit & view) → leave_request
-///  8. Medical check balance (edit oleh HOD & Admin Dep) → leave_balance_edit
+///  8. Medical check balance (edit oleh HOD & Admin Dep) → belum ada layarnya
 ///  9. Medical check request → leave_request
 /// 10. Off in lieu balance (edit oleh HOD & Admin Dep, Executive ke atas)
-///     → leave_balance_edit
+///     → belum ada layarnya
 /// 11. Off in lieu request (Executive ke atas) → leave_request
 /// 12. Off in lieu approval (HOD) → approvals
-/// 13. Overtime balance (edit oleh HOD & Admin Dep, Non-Executive) → leave_balance_edit
-/// 14. Overtime request (edit & view, Non-Executive) → leave_request
+/// 13. Overtime balance (edit oleh HOD & Admin Dep, Non-Executive) → belum ada layarnya
+/// 14. Overtime request (edit & view, Non-Executive) → overtime_request
 /// 15. Overtime approval (HOD) → approvals
 /// 16. Personal Attendance Log (All + HOD) → attendance_log
 /// 17. Department Attendance Log (Admin Dep, superior, HOD) → dept_attendance
@@ -39,10 +39,14 @@ import 'hris_menu_item.dart';
 /// 19. Department work schedule/shift (Admin Dep, superior, HOD)
 ///     → dept_schedule (belum siap)
 ///
-/// Item nomor 4–15 sengaja digabung jadi satu layar [leave_request]
-/// (Summary/Submit/Status) karena semuanya satu alur yang sama; jenisnya
-/// (Annual Leave, Permission, Medical Check, Off in Lieu, Overtime)
-/// dibedakan di dalam layar itu sendiri lewat `LeaveType`, bukan di menu.
+/// Cuti/izin (nomor 4–12) digabung jadi satu layar [leave_request]
+/// (Summary/Submit/Status) karena satu alur yang sama; jenisnya (Annual
+/// Leave, Permission, Medical Check, Off in Lieu) dibedakan di dalam layar
+/// itu lewat `LeaveType`, bukan di menu.
+///
+/// Overtime (13–14) punya layar sendiri, [overtime_request], dengan pola tab
+/// yang sama (Summary/Submit/Status). Sumber datanya beda: realisasi lembur
+/// dari absensi (`GET .../hris/overtime`), bukan data cuti.
 class HrisMenuConfig {
   HrisMenuConfig._();
 
@@ -64,6 +68,7 @@ class HrisMenuConfig {
   static List<HrisMenuItem> items({
     required VoidCallback onAttendance,
     required VoidCallback onLeaveRequest,
+    required VoidCallback onOvertimeRequest,
     required VoidCallback onEmployeeInfo,
     required VoidCallback onPayslip,
     required VoidCallback onManageTeam,
@@ -120,12 +125,13 @@ class HrisMenuConfig {
         ),
 
         // ── Leave & Time Off ───────────────────────────────────────────
-        // Satu pintu untuk Annual Leave, Permission, Medical Check,
-        // Off in Lieu, dan Overtime — jenisnya dibedakan di dalam layar,
-        // bukan di menu. Lihat catatan di komentar kelas.
+        // Satu pintu untuk Annual Leave, Permission, Medical Check, dan
+        // Off in Lieu — jenisnya dibedakan di dalam layar, bukan di menu.
+        // Overtime punya pintu sendiri (overtime_request). Lihat catatan di
+        // komentar kelas.
         HrisMenuItem(
           id: 'leave_request',
-          label: 'Leave & Time Off',
+          label: 'Leave Request',
           icon: Icons.event_available_outlined,
           group: HrisMenuGroup.leave,
           color: AppColors.accent,
@@ -143,16 +149,18 @@ class HrisMenuConfig {
           isVisible: _isHod,
           badgeCount: approvalCount,
         ),
-        const HrisMenuItem(
-          id: 'leave_balance_edit',
-          label: 'Leave Balance\n(Edit)',
-          icon: Icons.edit_calendar_outlined,
+        HrisMenuItem(
+          id: 'overtime_request',
+          label: 'Overtime\nRequest',
+          icon: Icons.more_time_outlined,
           group: HrisMenuGroup.leave,
           color: AppColors.violet,
           background: AppColors.violetBg,
-          onTap: _noop,
-          isReady: false,
-          isVisible: _isHodOrAdmin,
+          onTap: onOvertimeRequest,
+          // SEMENTARA tanpa gerbang role: requirement-nya hanya untuk
+          // Non-Executive, tapi role di AuthGate masih dipatok sehingga
+          // item ini akan selalu tersembunyi. Pasang aturan role setelah
+          // pemetaan role dari API diputuskan.
         ),
 
         // ── Employee ───────────────────────────────────────────────────
