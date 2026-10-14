@@ -163,15 +163,6 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
     );
   }
 
-  /// Request pertama yang sudah selesai tapi belum diberi feedback (null =
-  /// tidak ada). Selama ini ada, tombol Add Indent diblokir.
-  IndentRequestItem? get _pendingFeedback {
-    for (final r in _items) {
-      if (r.needsFeedback) return r;
-    }
-    return null;
-  }
-
   /// buka sheet feedback; kalau dikirim, reting disimpan ke item.
   ///
   /// TODO (api) : kirim rating + catatan ke server (endpoint belum ada). Catatan
@@ -242,18 +233,6 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
   /// Buka form Add Indent; kalau disubmit, request baru ditaruh paling atas
   /// di List of User Requests (status On Waiting).
   Future<void> _addIndent() async {
-    if (_pendingFeedback != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Beri feedback untuk perjalanan yang sudah selesai '
-              'sebelum mengajukan request baru.'),
-        ),
-      );
-      // pastikan banner-nya kelihatan
-      setState(() => _tabIndex = 2);
-      return;
-    }
-
     final newItem = await Navigator.of(context).push<IndentRequestItem>(
       MaterialPageRoute(builder: (_) => const AddIndentScreen()),
     );
@@ -285,7 +264,7 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
       // FAB oranye di kanan-bawah, sama pola dengan IT Request, HSE, dan EST.
       // Cuma muncul di tab List of User Requests — tab lain (assign &
       // approval) bukan tempat membuat request baru.
-      floatingActionButton: _tabIndex == 2 && _pendingFeedback == null
+      floatingActionButton: _tabIndex == 2
           ? FloatingActionButton(
               onPressed: _addIndent,
               backgroundColor: AppColors.orange,

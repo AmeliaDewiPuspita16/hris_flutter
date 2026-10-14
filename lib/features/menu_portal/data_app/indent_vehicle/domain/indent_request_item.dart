@@ -52,8 +52,8 @@ class IndentRequestItem {
   final bool withDriver;
 
   /// True kalau perjalanan sudah selesai tapi request belum memberi
-  /// rating. Selama ada item seperti ini, requester belum boleh
-  /// mengajukan request baru
+  /// rating. Dipakai untuk menampilkan banner feedback; tidak memblokir
+  /// pengajuan request baru.
   bool get needsFeedback =>
       status == IndentProgressStatus.done && rating == null;
 

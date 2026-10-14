@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../../../core/theme/app_colors.dart';
 import '../../../../../../core/theme/app_text_styles.dart';
+import '../../../../../../core/widgets/app_card.dart';
 import '../../../../../../core/widgets/app_date_field.dart';
 import '../../../../../../core/widgets/app_time_field.dart';
 import '../../../../../../core/widgets/back_header.dart';
@@ -188,62 +189,126 @@ class _AddIndentScreenState extends State<AddIndentScreen> {
         title: _isEdit ? 'Edit Indent' : 'Add Indent',
         onBack: () => Navigator.of(context).pop(),
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-        children: [
-          // Tanggal & jam memakai AppDateField / AppTimeField dari core —
-          // sama dengan form Pengajuan cuti & izin, label sudah ada di dalam widget-nya.
-          AppDateField(
-            label: 'Date Indent',
-            value: _date,
-            required: true,
-            onChanged: (date) => setState(() => _date = date),
-          ),
-          const SizedBox(height: 18),
-          // From & Until berdampingan: terbaca sebagai satu rentang waktu.
-          Row(
-            children: [
-              Expanded(
-                child: AppTimeField(
-                    label: 'From',
-                    value: _from,
-                    onChanged: (time) => setState(() => _from = time)),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: AppTimeField(
-                    label: 'Until',
-                    value: _until,
-                    onChanged: (time) => setState(() => _until = time)),
-              ),
-            ],
-          ),
-          const SizedBox(height: 18),
-          const FieldLabelRow(label: 'Destination', required: true),
-          TextField(
-            controller: _destinationController,
-            textCapitalization: TextCapitalization.words,
-            style: AppTextStyles.body,
-            decoration:
-                _fieldDecoration('Contoh: Pelabuhan Speed Tanjung Uban'),
-          ),
-          const SizedBox(height: 18),
-          const FieldLabelRow(label: 'Remark to go', required: true),
-          TextField(
-            controller: _remarkController,
-            minLines: 3,
-            maxLines: null,
-            style: AppTextStyles.body,
-            decoration: _fieldDecoration('Keperluan perjalanan'),
-          ),
-          const SizedBox(height: 18),
-          const FieldLabelRow(label: 'With driver', required: true),
-          IndentDriverChoice(
-            withDriver: _withDriver,
-            onChanged: (v) => setState(() => _withDriver = v),
-          ),
-          const SizedBox(height: 22),
-          SizedBox(
+      // Tombol submit dipasang di bawah layar (bukan ikut scroll) supaya
+      // selalu terlihat dan tidak ada ruang kosong di bawah form.
+      bottomNavigationBar: _buildSubmitBar(),
+      // Ketuk area kosong untuk menutup keyboard.
+      body: GestureDetector(
+        behavior: HitTestBehavior.translucent,
+        onTap: () => FocusScope.of(context).unfocus(),
+        child: ListView(
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+          children: [
+            // Field dikelompokkan jadi 3 kartu (jadwal, perjalanan, driver)
+            // supaya form tidak terbaca sebagai satu daftar panjang.
+            _FormSection(
+              icon: Icons.event_outlined,
+              title: 'Jadwal',
+              children: [
+                // Tanggal & jam memakai AppDateField / AppTimeField dari
+                // core — sama dengan form Pengajuan cuti & izin, label
+                // sudah ada di dalam widget-nya.
+                AppDateField(
+                  label: 'Date Indent',
+                  value: _date,
+                  required: true,
+                  onChanged: (date) => setState(() => _date = date),
+                ),
+                // From & Until berdampingan: terbaca sebagai satu rentang
+                // waktu.
+                Row(
+                  children: [
+                    Expanded(
+                      child: AppTimeField(
+                        label: 'From',
+                        value: _from,
+                        required: true,
+                        onChanged: (time) => setState(() => _from = time),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: AppTimeField(
+                        label: 'Until',
+                        value: _until,
+                        required: true,
+                        onChanged: (time) => setState(() => _until = time),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            _FormSection(
+              icon: Icons.place_outlined,
+              title: 'Perjalanan',
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const FieldLabelRow(label: 'Destination', required: true),
+                    TextField(
+                      controller: _destinationController,
+                      textCapitalization: TextCapitalization.words,
+                      textInputAction: TextInputAction.next,
+                      style: AppTextStyles.body,
+                      decoration: _fieldDecoration(
+                          'Contoh: Pelabuhan Speed Tanjung Uban'),
+                    ),
+                  ],
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const FieldLabelRow(label: 'Remark to go', required: true),
+                    TextField(
+                      controller: _remarkController,
+                      minLines: 3,
+                      maxLines: null,
+                      textCapitalization: TextCapitalization.sentences,
+                      style: AppTextStyles.body,
+                      decoration: _fieldDecoration('Keperluan perjalanan'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            _FormSection(
+              icon: Icons.directions_car_outlined,
+              title: 'Driver',
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const FieldLabelRow(label: 'With driver', required: true),
+                    IndentDriverChoice(
+                      withDriver: _withDriver,
+                      onChanged: (v) => setState(() => _withDriver = v),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSubmitBar() {
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(top: BorderSide(color: AppColors.border)),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+          child: SizedBox(
             width: double.infinity,
             height: 48,
             child: ElevatedButton(
@@ -251,6 +316,7 @@ class _AddIndentScreenState extends State<AddIndentScreen> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
+                elevation: 0,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10)),
               ),
@@ -260,6 +326,52 @@ class _AddIndentScreenState extends State<AddIndentScreen> {
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Kartu putih berisi satu kelompok field: ikon + judul di atas, lalu
+/// field-nya dengan jarak seragam antar field.
+class _FormSection extends StatelessWidget {
+  const _FormSection({
+    required this.icon,
+    required this.title,
+    required this.children,
+  });
+
+  final IconData icon;
+  final String title;
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return AppCard(
+      padding: const EdgeInsets.fromLTRB(14, 14, 14, 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 28,
+                height: 28,
+                decoration: BoxDecoration(
+                  color: AppColors.primaryLight,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(icon, size: 16, color: AppColors.primary),
+              ),
+              const SizedBox(width: 10),
+              Text(title, style: AppTextStyles.sectionTitle),
+            ],
+          ),
+          const SizedBox(height: 14),
+          for (var i = 0; i < children.length; i++) ...[
+            if (i > 0) const SizedBox(height: 16),
+            children[i],
+          ],
         ],
       ),
     );
