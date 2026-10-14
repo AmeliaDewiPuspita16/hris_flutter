@@ -3,10 +3,16 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../domain/photo_source.dart';
 
-/// Bottom sheet "Ambil foto / Pilih dari galeri". Mengembalikan pilihan
-/// user, atau null bila sheet ditutup tanpa memilih.
-Future<PhotoSource?> showPhotoSourceSheet(BuildContext context) {
-  return showModalBottomSheet<PhotoSource>(
+/// Bottom sheet "Lihat foto profil / Ambil foto / Pilih dari galeri".
+/// Mengembalikan pilihan user, atau null bila sheet ditutup tanpa memilih.
+///
+/// [hasPhoto] menentukan apakah tile "Lihat foto profil" ditampilkan — tidak
+/// ada gunanya menawarkan itu kalau user belum punya foto sama sekali.
+Future<PhotoSheetAction?> showPhotoSourceSheet(
+  BuildContext context, {
+  required bool hasPhoto,
+}) {
+  return showModalBottomSheet<PhotoSheetAction>(
     context: context,
     backgroundColor: Colors.white,
     shape: const RoundedRectangleBorder(
@@ -27,15 +33,21 @@ Future<PhotoSource?> showPhotoSourceSheet(BuildContext context) {
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
+            if (hasPhoto)
+              _SourceTile(
+                icon: Icons.visibility_outlined,
+                label: 'Lihat foto profil',
+                onTap: () => Navigator.of(ctx).pop(PhotoSheetAction.view),
+              ),
             _SourceTile(
               icon: Icons.photo_camera_outlined,
               label: 'Ambil foto',
-              onTap: () => Navigator.of(ctx).pop(PhotoSource.camera),
+              onTap: () => Navigator.of(ctx).pop(PhotoSheetAction.camera),
             ),
             _SourceTile(
               icon: Icons.photo_library_outlined,
               label: 'Pilih dari galeri',
-              onTap: () => Navigator.of(ctx).pop(PhotoSource.gallery),
+              onTap: () => Navigator.of(ctx).pop(PhotoSheetAction.gallery),
             ),
           ],
         ),

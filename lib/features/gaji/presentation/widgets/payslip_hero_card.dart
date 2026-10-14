@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/widgets/status_badge.dart';
 import '../../domain/payslip.dart';
 import 'payslip_amount_format.dart';
 
@@ -44,7 +43,8 @@ class PayslipHeroCard extends StatelessWidget {
                   children: [
                     const Text(
                       'Take Home Pay',
-                      style: TextStyle(fontSize: 11, color: AppColors.bannerAccent),
+                      style: TextStyle(
+                          fontSize: 11, color: AppColors.bannerAccent),
                     ),
                     const SizedBox(height: 2),
                     Text(
@@ -59,7 +59,8 @@ class PayslipHeroCard extends StatelessWidget {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(6),
@@ -79,7 +80,8 @@ class PayslipHeroCard extends StatelessWidget {
             const SizedBox(height: 12),
             Text(
               identityText,
-              style: const TextStyle(fontSize: 11, color: AppColors.bannerAccent),
+              style:
+                  const TextStyle(fontSize: 11, color: AppColors.bannerAccent),
             ),
           ],
         ],

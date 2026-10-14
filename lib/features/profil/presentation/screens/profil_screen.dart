@@ -9,6 +9,7 @@ import '../../../shared/domain/role.dart';
 import '../../data/photo_picker_service.dart';
 import '../../data/profil_repository.dart';
 import '../../domain/employee_profile.dart';
+import '../../domain/photo_source.dart';
 import '../bloc/photo/profil_photo_bloc.dart';
 import '../bloc/photo/profil_photo_event.dart';
 import '../bloc/photo/profil_photo_state.dart';
@@ -16,6 +17,7 @@ import '../widgets/photo_source_sheet.dart';
 import '../widgets/profile_avatar.dart';
 import 'data_diri_screen.dart';
 import 'kontrak_screen.dart';
+import 'profile_photo_viewer_screen.dart';
 import 'rekening_screen.dart';
 import 'alamat_screen.dart';
 import 'tanggungan_screen.dart';
@@ -147,10 +149,24 @@ class _ProfilView extends StatelessWidget {
       ..showSnackBar(SnackBar(content: Text(message)));
   }
 
-  Future<void> _onAvatarTap(BuildContext context) async {
-    final source = await showPhotoSourceSheet(context);
-    if (source == null || !context.mounted) return;
-    context.read<ProfilPhotoBloc>().add(ProfilPhotoPickRequested(source));
+  Future<void> _onAvatarTap(BuildContext context, ProfilPhotoState photoState) async {
+    final hasPhoto = photoState.photo != null || user?.photoUrl != null;
+    final action = await showPhotoSourceSheet(context, hasPhoto: hasPhoto);
+    if (action == null || !context.mounted) return;
+
+    switch (action) {
+      case PhotoSheetAction.view:
+        Navigator.of(context).push(MaterialPageRoute(
+          builder: (_) => ProfilePhotoViewerScreen(
+            localPhoto: photoState.photo,
+            photoUrl: photoState.photo == null ? user?.photoUrl : null,
+          ),
+        ));
+      case PhotoSheetAction.camera:
+        context.read<ProfilPhotoBloc>().add(const ProfilPhotoPickRequested(PhotoSource.camera));
+      case PhotoSheetAction.gallery:
+        context.read<ProfilPhotoBloc>().add(const ProfilPhotoPickRequested(PhotoSource.gallery));
+    }
   }
 
   Widget _buildHeader(BuildContext context, EmployeeProfile p, ProfilPhotoState photoState) {
@@ -173,21 +189,21 @@ class _ProfilView extends StatelessWidget {
                 height: heroHeight,
                 alignment: Alignment.topCenter,
                 padding: EdgeInsets.only(top: topInset + 16),
-                decoration: BoxDecoration(
-                  // Hijau muda lembut (tint dari warna utama), sudut bawah melengkung.
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      AppColors.primary.withValues(alpha: 0.22),
-                      AppColors.primary.withValues(alpha: 0.10),
-                    ],
+                decoration: const BoxDecoration(
+                  // Sama dengan header Beranda (HomeTopHeader), supaya kedua
+                  // layar terasa satu identitas visual.
+                  image: DecorationImage(
+                    image: AssetImage('assets/images/header_bg.png'),
+                    fit: BoxFit.cover,
                   ),
-                  borderRadius: const BorderRadius.vertical(bottom: Radius.circular(36)),
+                  borderRadius: BorderRadius.only(
+                    bottomLeft: Radius.circular(24),
+                    bottomRight: Radius.circular(24),
+                  ),
                 ),
                 child: const Text(
                   'Profil',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.primary),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Colors.white),
                 ),
               ),
               Positioned(
@@ -198,7 +214,7 @@ class _ProfilView extends StatelessWidget {
                   photo: photoState.photo,
                   uploading: photoState.status == ProfilPhotoStatus.uploading,
                   // Selama kamera/crop/upload berjalan, ketukan diabaikan.
-                  onTap: photoState.isBusy ? null : () => _onAvatarTap(context),
+                  onTap: photoState.isBusy ? null : () => _onAvatarTap(context, photoState),
                 ),
               ),
             ],

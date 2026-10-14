@@ -23,6 +23,7 @@ dependencies:
   # Membuka lampiran PR (berkas maupun tautan) di aplikasi bawaan perangkat.
   url_launcher: ^6.3.1
   image_cropper: ^12.2.1
+  shimmer: ^3.0.0
 
 dev_dependencies:
   flutter_test:
