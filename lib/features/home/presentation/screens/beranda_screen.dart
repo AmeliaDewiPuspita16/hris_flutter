@@ -15,6 +15,8 @@ import '../../../leave_approval/data/leave_approval_repository.dart';
 import '../../../leave_approval/domain/leave_approval_request.dart';
 import '../../../leave_approval/domain/leave_approval_status.dart';
 import '../../../leave_approval/presentation/screens/leave_approval_screen.dart';
+import '../../../menu_portal/data_app/indent_vehicle/domain/indent_approval_demo_data.dart';
+import '../../../menu_portal/data_app/indent_vehicle/presentation/screens/indent_vehicle_screen.dart';
 import '../../../menu_portal/onlineapps/presentation/screens/online_apps_screen.dart';
 import '../../../menu_portal/onlineapps/work_order/est_request/domain/est_request_demo_data.dart';
 import '../../../menu_portal/onlineapps/work_order/est_request/domain/est_request_status.dart';
@@ -323,6 +325,10 @@ class _BerandaScreenState extends State<BerandaScreen> {
       .where((r) => r.status == EstRequestStatus.waitApprovalHod)
       .length;
 
+  /// Request Indent Vehicle yang menunggu keputusan atasan (tab "Supervisor
+  /// Approval"). Masih dari data demo, sama seperti IT/EST.
+  int get _indentApprovalCount => IndentApprovalDemoData.items().length;
+
   /// Pindah ke tab Notifications dengan filter "Action" (yang menunggu
   /// keputusan — semua modul). Dipakai badan banner "Approvals waiting" di
   /// Beranda. Approval Leave punya halaman sendiri: [_openLeaveApproval].
@@ -338,6 +344,15 @@ class _BerandaScreenState extends State<BerandaScreen> {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => const ItRequestScreen(initialTabIndex: 1),
+      ),
+    );
+  }
+
+  /// Buka Indent Vehicle langsung di tab 1 "Supervisor Approval".
+  void _openIndentApproval() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => IndentVehicleScreen(initialTabIndex: 1),
       ),
     );
   }
@@ -505,13 +520,43 @@ class _BerandaScreenState extends State<BerandaScreen> {
               // Menu, dipindah ke sini (pola awal HRIS: di bawah header, di
               // atas Main Menu) sekaligus digabung 3 modul.
               ApprovalSummaryBanner(
-                leaveCount: _leaveApprovalCount,
-                itCount: _itApprovalCount,
-                estCount: _estApprovalCount,
                 onTapAll: _openApprovalNotifications,
-                onTapLeave: _openLeaveApproval,
-                onTapIt: _openItApproval,
-                onTapEst: _openEstApproval,
+                // Modul baru yang butuh approval tinggal ditambah di sini;
+                // kalau lebih dari 3, banner otomatis bisa digeser.
+                entries: [
+                  ApprovalSummaryEntry(
+                    label: 'Leave',
+                    count: _leaveApprovalCount,
+                    icon: Icons.beach_access_outlined,
+                    color: AppColors.teal,
+                    background: AppColors.tealBg,
+                    onTap: _openLeaveApproval,
+                  ),
+                  ApprovalSummaryEntry(
+                    label: 'IT',
+                    count: _itApprovalCount,
+                    icon: Icons.computer_outlined,
+                    color: AppColors.itRequest,
+                    background: AppColors.itRequestBg,
+                    onTap: _openItApproval,
+                  ),
+                  ApprovalSummaryEntry(
+                    label: 'EST',
+                    count: _estApprovalCount,
+                    icon: Icons.engineering_outlined,
+                    color: AppColors.estRequest,
+                    background: AppColors.estRequestBg,
+                    onTap: _openEstApproval,
+                  ),
+                  ApprovalSummaryEntry(
+                    label: 'Indent',
+                    count: _indentApprovalCount,
+                    icon: Icons.directions_car_outlined,
+                    color: AppColors.violet,
+                    background: AppColors.violetBg,
+                    onTap: _openIndentApproval,
+                  ),
+                ],
               ),
               //PendingRequestCard(
               //  count: 2,
