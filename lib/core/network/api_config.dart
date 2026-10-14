@@ -51,6 +51,7 @@ class ApiConfig {
   /// [ApiClient.getEnvelope].
   static const String itRequest = '/api/portal/apps/it_request';
 
+
   // --------------------------------- HRIS ----------------------------
 
   /// HRIS attendance. satu endpoint dua pemakai: 'today_schedule' untuk
@@ -58,9 +59,12 @@ class ApiConfig {
   /// layar Log Absensi (belum disambungkan)
   static const String attendance = '/api/portal/apps/hris/attendance';
 
-  static const String overtime = '/api/portal/apps/hris/overtime';
-
   /// HRIS status pengajuan cuti milik user yang login (tab Status di layar
   /// Pengajuan). `data` berupa list, jadi diambil lewat [ApiClient.getList].
   static const String leaveStatus = '/api/portal/apps/hris/leave/status';
+
+  /// Realisasi lembur per bulan (`?month=YYYY-MM`): total jam + menit lembur
+  /// per tanggal, dihitung dari check-in/out absensi. Dipakai Log Absensi
+  /// dan, nanti, tab Summary di Overtime Request.
+  static const String overtime = '/api/portal/apps/hris/overtime';
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../domain/attendance_day.dart';
+import '../../domain/overtime_text.dart';
 
 /// Panel yang menampilkan detail satu tanggal terpilih dari
 /// [AttendanceCalendar] — jam kerja/realisasi, shift, dan badge status.
@@ -84,9 +85,23 @@ class DayDetailPanel extends StatelessWidget {
             style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
           ),
         ],
-        if (day.badgeLabel != null) ...[
+        if (day.badgeLabel != null || day.hasOvertime) ...[
           const SizedBox(height: 8),
-          _StatusBadge(status: day.status, label: day.badgeLabel!),
+          // Lembur jadi badge tambahan di samping status (Tepat waktu /
+          // Terlambat), bukan menggantikannya.
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              if (day.badgeLabel != null)
+                _StatusBadge(status: day.status, label: day.badgeLabel!),
+              if (day.hasOvertime)
+                _StatusBadge(
+                  status: AttendanceDayStatus.lembur,
+                  label: 'Lembur ${overtimeDurationText(day.overtimeMinutes)}',
+                ),
+            ],
+          ),
         ],
       ],
     );

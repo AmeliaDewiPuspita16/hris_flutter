@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../domain/attendance_summary.dart';
+import '../../domain/overtime_text.dart';
 
 /// Kartu ringkasan (Hadir / Terlambat / Jam Lembur) di puncak Log Absensi.
 ///
@@ -37,7 +38,7 @@ class AttendanceSummaryCard extends StatelessWidget {
         const SizedBox(width: 8),
         Expanded(
           child: _StatCard(
-            value: '${summary.overtimeHrs}j',
+            value: overtimeHoursText(summary.overtimeHrs),
             label: 'Jam Lembur',
             valueColor: AppColors.text,
             borderColor: AppColors.overtime,

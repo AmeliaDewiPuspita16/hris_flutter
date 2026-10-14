@@ -21,6 +21,15 @@ int amountOrZero(dynamic value) => switch (value) {
       _ => 0,
     };
 
+/// Bilangan desimal (mis. jam kerja 4.5), 0 bila kosong/bentuknya lain.
+///
+/// Beda dari [amountOrZero], yang membulatkan ke int.
+double doubleOrZero(dynamic value) => switch (value) {
+      num() => value.toDouble(),
+      String() => double.tryParse(value) ?? 0.0,
+      _ => 0.0,
+    };
+
 /// Bilangan bulat, atau [fallback] bila bentuknya lain.
 int intOr(dynamic value, int fallback) => value is int ? value : fallback;
 

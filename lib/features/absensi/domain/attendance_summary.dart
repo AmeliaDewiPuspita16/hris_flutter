@@ -8,19 +8,22 @@ class AttendanceSummary {
     required this.overtimeHrs,
   });
 
-  /// membaca objek 'Summary' dari respons attendance.
+  /// membaca objek 'summary' dari respons attendance.
   ///
-  /// 'overtime_hours' dibulatkan karena model ini menyimpan int. kalau
-  /// nanti server mengirim jam pecahan (mis. 4,5) dan ingin ditampilkan
-  /// apa adanya, ubah [overtimeHrs] jadi double
+  /// 'overtime_hours' di endpoint ini hanya perkiraan: nilai akuratnya
+  /// (jam pecahan, mis. 4,5) datang dari endpoint overtime dan menimpanya di
+  /// [AttendanceMonth.fromJson]. Angka ini jadi cadangan saat endpoint
+  /// overtime gagal dimuat.
   factory AttendanceSummary.fromJson(Map<String, dynamic> json) {
     return AttendanceSummary(
-        present: amountOrZero(json['present_days']),
-        late: amountOrZero(json['late_days']),
-        overtimeHrs: amountOrZero(json['overtime_hours']));
+      present: amountOrZero(json['present_days']),
+      late: amountOrZero(json['late_days']),
+      overtimeHrs: doubleOrZero(json['overtime_hours']),
+    );
   }
 
   final int present;
   final int late;
-  final int overtimeHrs;
+  /// Total jam lembur sebulan, bisa pecahan (mis. 4.5).
+  final double overtimeHrs;
 }

@@ -1,3 +1,4 @@
+import '../../../core/logging/app_logger.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_config.dart';
 import '../../../core/network/api_exception.dart';
@@ -38,11 +39,33 @@ class AbsensiRepository {
   /// Realisasi + ringkasan untuk seluruh tanggal di [month], dalam satu
   /// panggilan (selalu ditampilkan bersamaan di kalender).
   ///
-  /// Melempar [ApiException] bila gagal.
+  /// Data lembur diambil dari endpoint terpisah dan dimuat bersamaan. Itu
+  /// pelengkap: bila gagal, absensi tetap tampil (lihat [_fetchOvertime]).
+  ///
+  /// Melempar [ApiException] bila data absensinya yang gagal.
   Future<AttendanceMonth> fetchMonth(DateTime month) async {
     final key = '${month.year}-${month.month.toString().padLeft(2, '0')}';
-    final data = await _apiClient.get('${ApiConfig.attendance}?month=$key');
 
-    return AttendanceMonth.fromJson(data, month: month);
+    // Keduanya dimulai dulu baru ditunggu, supaya berjalan paralel.
+    final attendanceRequest = _apiClient.get('${ApiConfig.attendance}?month=$key');
+    final overtimeRequest = _fetchOvertime(key);
+
+    final data = await attendanceRequest;
+    final overtime = await overtimeRequest;
+
+    return AttendanceMonth.fromJson(data, month: month, overtime: overtime);
+  }
+
+  /// Lembur sebulan; null bila gagal. Tidak pernah melempar, karena
+  /// kegagalan lembur tidak boleh membuat seluruh Log Absensi gagal.
+  Future<Map<String, dynamic>?> _fetchOvertime(String monthKey) async {
+    try {
+      return await _apiClient.get('${ApiConfig.overtime}?month=$monthKey');
+    } on ApiException catch (e) {
+      AppLogger.info('Data lembur $monthKey tidak dimuat: ${e.message}');
+    } catch (e, stack) {
+      AppLogger.error('Data lembur $monthKey gagal dimuat', e, stack);
+    }
+    return null;
   }
 }

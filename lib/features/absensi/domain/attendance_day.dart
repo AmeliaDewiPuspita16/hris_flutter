@@ -31,6 +31,7 @@ class AttendanceDay {
     this.timeText,
     this.noteText,
     this.badgeLabel,
+    this.overtimeMinutes = 0,
   });
 
   /// Toleransi keterlambatan. Jam masuk dianggap terlambat bila lewat jam
@@ -200,6 +201,25 @@ class AttendanceDay {
   /// itu belum punya hasil final (terjadwal/berlangsung) atau tidak relevan
   /// (hari libur).
   final String? badgeLabel;
+
+  /// Lama lembur hari itu dalam menit, dari endpoint overtime. 0 = tidak ada
+  /// lembur. Sengaja terpisah dari [status]: hari yang terlambat pun bisa
+  /// lembur, jadi lembur tampil sebagai keterangan tambahan, bukan status.
+  final int overtimeMinutes;
+
+  bool get hasOvertime => overtimeMinutes > 0;
+
+  /// Salinan hari ini dengan [overtimeMinutes] terisi.
+  AttendanceDay withOvertime(int minutes) => AttendanceDay(
+        date: date,
+        status: status,
+        shiftCode: shiftCode,
+        shiftTimeRange: shiftTimeRange,
+        timeText: timeText,
+        noteText: noteText,
+        badgeLabel: badgeLabel,
+        overtimeMinutes: minutes,
+      );
 
   bool get isScheduledOnly => status == AttendanceDayStatus.terjadwal;
 
