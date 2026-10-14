@@ -12,6 +12,7 @@ import 'features/auth/presentation/bloc/auth/auth_bloc.dart';
 import 'features/auth/presentation/bloc/auth/auth_event.dart';
 import 'features/auth/presentation/widgets/auth_gate.dart';
 import 'features/home/data/announcement_repository.dart';
+import 'features/home/data/approvals_waiting_repository.dart';
 import 'features/menu_portal/onlineapps/procurement/data/procurement_repository.dart';
 import 'features/menu_portal/onlineapps/work_order/it_request/data/it_request_repository.dart';
 import 'features/overtime_request/data/overtime_repository.dart';
@@ -47,6 +48,7 @@ Future<void> main() async {
       absensiRepository: AbsensiRepository(apiClient: apiClient),
       pengajuanRepository: PengajuanRepository(apiClient: apiClient),
       overtimeRepository: OvertimeRepository(apiClient: apiClient),
+      approvalsWaitingRepository: ApprovalsWaitingRepository(apiClient: apiClient),
     ),
   );
 }
@@ -63,6 +65,7 @@ class MyApp extends StatelessWidget {
     AbsensiRepository? absensiRepository,
     PengajuanRepository? pengajuanRepository,
     OvertimeRepository? overtimeRepository,
+    ApprovalsWaitingRepository? approvalsWaitingRepository,
   })  : departmentRepository = departmentRepository ??
             DepartmentRepository(apiClient: ApiClient()),
         announcementRepository = announcementRepository ??
@@ -78,7 +81,9 @@ class MyApp extends StatelessWidget {
         pengajuanRepository = pengajuanRepository ??
             PengajuanRepository(apiClient: ApiClient()),
         overtimeRepository = overtimeRepository ??
-            OvertimeRepository(apiClient: ApiClient());
+            OvertimeRepository(apiClient: ApiClient()),
+        approvalsWaitingRepository = approvalsWaitingRepository ??
+            ApprovalsWaitingRepository(apiClient: ApiClient());
 
   final AuthRepository authRepository;
   final DepartmentRepository departmentRepository;
@@ -89,6 +94,7 @@ class MyApp extends StatelessWidget {
   final AbsensiRepository absensiRepository;
   final PengajuanRepository pengajuanRepository;
   final OvertimeRepository overtimeRepository;
+  final ApprovalsWaitingRepository approvalsWaitingRepository;
 
   @override
   Widget build(BuildContext context) {
@@ -107,6 +113,7 @@ class MyApp extends StatelessWidget {
         RepositoryProvider.value(value: absensiRepository),
         RepositoryProvider.value(value: pengajuanRepository),
         RepositoryProvider.value(value: overtimeRepository),
+        RepositoryProvider.value(value: approvalsWaitingRepository),
       ],
       child: BlocProvider(
         create: (_) =>

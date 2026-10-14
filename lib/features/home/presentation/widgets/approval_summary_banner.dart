@@ -1,150 +1,262 @@
 import 'package:flutter/material.dart';
+import 'package:shimmer/shimmer.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/app_card.dart';
 
-/// Banner ringkasan approval yang masih menunggu, digabung dari 3 modul:
-/// Leave (HRIS), IT Request, EST Request — ditempatkan di bawah header dan
-/// di atas "Main Menu", mengikuti pola awal HRIS.
+/// Banner ringkasan approval yang masih menunggu, digabung dari 5 modul:
+/// Leave (HRIS), IT Request, EST Work Order, Indent Vehicle, eProcurement —
+/// ditempatkan di bawah header dan di atas "Main Menu", mengikuti pola awal
+/// HRIS.
 ///
 /// Dua zona ketuk:
 /// - Badan banner (ikon + judul) → [onTapAll], dimaksudkan membuka
 ///   Notifications tab "Action" — cakupannya semua hal yang butuh
-///   keputusan, tidak cuma 3 modul ini.
-/// - Tiap tag warna → [onTapLeave]/[onTapIt]/[onTapEst], dimaksudkan
-///   membuka halaman approval modul itu langsung kalau sudah tersedia
-///   (baru IT yang punya tab Approve Request sungguhan sekarang; Leave &
-///   EST untuk sementara jatuh ke Notifications juga sampai halaman
-///   approval masing-masing dibuat).
+///   keputusan, tidak cuma modul-modul ini.
+/// - Tiap tag warna → `onTap...` masing-masing, dimaksudkan membuka halaman
+///   approval modul itu langsung kalau sudah tersedia (baru IT yang punya
+///   tab Approve Request sungguhan sekarang; yang lain untuk sementara
+///   jatuh ke Notifications juga sampai halaman approval masing-masing
+///   dibuat).
 ///
 /// SEMENTARA: ditampilkan tanpa gerbang role — pemetaan HOD per-departemen
-/// (HOD IT vs HOD Estate vs HOD lain) dari API belum ada, sama seperti
-/// catatan role di auth_gate.dart. Sembunyikan lewat [visible]=false kalau
-/// totalnya 0.
+/// dari API belum ada, sama seperti catatan role di auth_gate.dart.
+/// Sembunyikan otomatis kalau totalnya 0 (dan bukan sedang [isLoading]).
 class ApprovalSummaryBanner extends StatelessWidget {
   const ApprovalSummaryBanner({
     super.key,
+    required this.isLoading,
     required this.leaveCount,
     required this.itCount,
     required this.estCount,
+    required this.indentVehicleCount,
+    required this.eprocurementCount,
     required this.onTapAll,
     required this.onTapLeave,
     required this.onTapIt,
     required this.onTapEst,
+    required this.onTapIndentVehicle,
+    required this.onTapEprocurement,
   });
+
+  /// True selagi ringkasan IT/EST/Indent Vehicle/eProcurement masih diambil
+  /// dari server — banner menampilkan skeleton shimmer, bukan isi asli,
+  /// supaya tidak "lompat" dari kosong ke terisi.
+  final bool isLoading;
 
   final int leaveCount;
   final int itCount;
   final int estCount;
+  final int indentVehicleCount;
+  final int eprocurementCount;
 
   final VoidCallback onTapAll;
   final VoidCallback onTapLeave;
   final VoidCallback onTapIt;
   final VoidCallback onTapEst;
+  final VoidCallback onTapIndentVehicle;
+  final VoidCallback onTapEprocurement;
 
-  int get _total => leaveCount + itCount + estCount;
+  int get _total =>
+      leaveCount + itCount + estCount + indentVehicleCount + eprocurementCount;
 
   @override
   Widget build(BuildContext context) {
-    if (_total == 0) return const SizedBox.shrink();
+    if (!isLoading && _total == 0) return const SizedBox.shrink();
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
       child: AppCard(
         padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            InkWell(
-              onTap: onTapAll,
-              borderRadius: BorderRadius.circular(8),
-              child: Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: Row(
+        child: isLoading ? const _BannerShimmer() : _buildContent(),
+      ),
+    );
+  }
+
+  List<_ModuleTag> get _tags => [
+        _ModuleTag(
+          label: 'Leave',
+          count: leaveCount,
+          icon: Icons.beach_access_outlined,
+          color: AppColors.teal,
+          background: AppColors.tealBg,
+          onTap: onTapLeave,
+        ),
+        _ModuleTag(
+          label: 'IT',
+          count: itCount,
+          icon: Icons.computer_outlined,
+          color: AppColors.itRequest,
+          background: AppColors.itRequestBg,
+          onTap: onTapIt,
+        ),
+        _ModuleTag(
+          label: 'EST',
+          count: estCount,
+          icon: Icons.engineering_outlined,
+          color: AppColors.estRequest,
+          background: AppColors.estRequestBg,
+          onTap: onTapEst,
+        ),
+        _ModuleTag(
+          label: 'Indent Vehicle',
+          count: indentVehicleCount,
+          icon: Icons.directions_car_outlined,
+          color: AppColors.orange,
+          background: AppColors.orangeBg,
+          onTap: onTapIndentVehicle,
+        ),
+        _ModuleTag(
+          label: 'eProcurement',
+          count: eprocurementCount,
+          icon: Icons.trending_up_outlined,
+          color: AppColors.accent,
+          background: AppColors.accentBg,
+          onTap: onTapEprocurement,
+        ),
+      ];
+
+  Widget _buildContent() {
+    final tags = _tags;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        InkWell(
+          onTap: onTapAll,
+          borderRadius: BorderRadius.circular(8),
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Row(
+              children: [
+                Stack(
+                  clipBehavior: Clip.none,
                   children: [
-                    Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        Container(
-                          width: 40,
-                          height: 40,
-                          decoration: const BoxDecoration(
-                            color: AppColors.primaryLight,
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.notifications_none_rounded,
-                            size: 20,
-                            color: AppColors.primary,
-                          ),
-                        ),
-                        Positioned(
-                          top: -4,
-                          right: -4,
-                          child: _CountBadge(count: _total),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Approvals waiting',
-                            style: AppTextStyles.body.copyWith(fontWeight: FontWeight.w700),
-                          ),
-                          Text(
-                            'Tap for all in Notifications',
-                            style: AppTextStyles.caption,
-                          ),
-                        ],
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: const BoxDecoration(
+                        color: AppColors.primaryLight,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.notifications_none_rounded,
+                        size: 20,
+                        color: AppColors.primary,
                       ),
                     ),
-                    const Icon(Icons.chevron_right, size: 18, color: AppColors.textMuted),
+                    Positioned(
+                      top: -4,
+                      right: -4,
+                      child: _CountBadge(count: _total),
+                    ),
                   ],
                 ),
-              ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Approvals waiting',
+                        style: AppTextStyles.body.copyWith(fontWeight: FontWeight.w700),
+                      ),
+                      Text(
+                        'Tap for all in Notifications',
+                        style: AppTextStyles.caption,
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(Icons.chevron_right, size: 18, color: AppColors.textMuted),
+              ],
             ),
-            Row(
+          ),
+        ),
+        // Digulir horizontal, bukan dipaksa muat satu baris — sama seperti
+        // "Main Menu" ([LayananSection]) — supaya kartu tidak sempit terus
+        // bisa nambah modul lagi nanti tanpa pecah layout.
+        SizedBox(
+          height: 54,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: tags.length,
+            separatorBuilder: (context, index) => const SizedBox(width: 8),
+            itemBuilder: (context, index) => SizedBox(width: 140, child: tags[index]),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Skeleton shimmer berbentuk layout isi banner asli (ikon + judul, lalu
+/// baris tag modul yang bisa digulir), ditampilkan selagi
+/// [ApprovalSummaryBanner.isLoading].
+class _BannerShimmer extends StatelessWidget {
+  const _BannerShimmer();
+
+  @override
+  Widget build(BuildContext context) {
+    return Shimmer.fromColors(
+      baseColor: AppColors.border,
+      highlightColor: AppColors.bg,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Row(
               children: [
+                const _ShimmerBox(width: 40, height: 40, borderRadius: 20),
+                const SizedBox(width: 12),
                 Expanded(
-                  child: _ModuleTag(
-                    label: 'Leave',
-                    count: leaveCount,
-                    icon: Icons.beach_access_outlined,
-                    color: AppColors.teal,
-                    background: AppColors.tealBg,
-                    onTap: onTapLeave,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: _ModuleTag(
-                    label: 'IT',
-                    count: itCount,
-                    icon: Icons.computer_outlined,
-                    color: AppColors.itRequest,
-                    background: AppColors.itRequestBg,
-                    onTap: onTapIt,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: _ModuleTag(
-                    label: 'EST',
-                    count: estCount,
-                    icon: Icons.engineering_outlined,
-                    color: AppColors.estRequest,
-                    background: AppColors.estRequestBg,
-                    onTap: onTapEst,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: const [
+                      _ShimmerBox(width: 130, height: 14, borderRadius: 4),
+                      SizedBox(height: 6),
+                      _ShimmerBox(width: 160, height: 11, borderRadius: 4),
+                    ],
                   ),
                 ),
               ],
             ),
-          ],
-        ),
+          ),
+          SizedBox(
+            height: 54,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: 5,
+              separatorBuilder: (context, index) => const SizedBox(width: 8),
+              itemBuilder: (context, index) =>
+                  const SizedBox(width: 140, child: _ShimmerBox(height: 54, borderRadius: 12)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Kotak abu-abu polos, dasar bentuk setiap bagian [_BannerShimmer].
+class _ShimmerBox extends StatelessWidget {
+  const _ShimmerBox({required this.height, this.width, this.borderRadius = 6});
+
+  final double? width;
+  final double height;
+  final double borderRadius;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: width,
+      height: height,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(borderRadius),
       ),
     );
   }
@@ -183,10 +295,9 @@ class _CountBadge extends StatelessWidget {
   }
 }
 
-/// Tile per modul (Leave/IT/EST), masing-masing dengan warna & ikon khasnya
-/// sendiri (selaras dengan [NotificationCategory]) supaya gampang dibedakan
-/// sekilas, dengan badge angka merah di pojok sebagai penanda "perlu
-/// direspons".
+/// Tile per modul, masing-masing dengan warna & ikon khasnya sendiri supaya
+/// gampang dibedakan sekilas, dengan badge angka merah di pojok sebagai
+/// penanda "perlu direspons".
 class _ModuleTag extends StatelessWidget {
   const _ModuleTag({
     required this.label,
@@ -225,6 +336,8 @@ class _ModuleTag extends StatelessWidget {
                 Expanded(
                   child: Text(
                     label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontFamily: AppTextStyles.fontFamily,
                       fontSize: 13,

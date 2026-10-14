@@ -67,4 +67,13 @@ class ApiConfig {
   /// per tanggal, dihitung dari check-in/out absensi. Dipakai Log Absensi
   /// dan, nanti, tab Summary di Overtime Request.
   static const String overtime = '/api/portal/apps/hris/overtime';
+
+  // ------------------------------ Notifications ------------------------
+
+  /// Ringkasan jumlah approval yang masih menunggu, dipecah per modul
+  /// (`it_request`, `est_work_order`, `indent_vehicle`, `eprocurement`) —
+  /// dipakai banner "Approvals waiting" di Beranda. Leave TIDAK termasuk di
+  /// sini; jumlahnya dari [leaveStatus]/`LeaveApprovalRepository` sendiri.
+  static const String approvalsWaiting =
+      '/api/portal/apps/notifications/approvals-waiting';
 }
