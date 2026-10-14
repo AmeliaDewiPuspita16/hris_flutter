@@ -71,7 +71,7 @@ class MyApp extends StatelessWidget {
         profilRepository = profilRepository ??
             ProfilRepository(apiClient: ApiClient()),
         absensiRepository = absensiRepository ??
-            AbsensiRepository(apiClient: ApiClient());
+            AbsensiRepository(apiClient: ApiClient()),
         pengajuanRepository = pengajuanRepository ??
             PengajuanRepository(apiClient: ApiClient());
 
