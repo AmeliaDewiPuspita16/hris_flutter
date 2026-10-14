@@ -29,11 +29,12 @@ class AttendanceStatus {
 
   /// Kalimat status di baris bawah kartu.
   String get statusText => isClockedIn
-      ? 'Clocked in $clockInTime · $workedDuration'
-      : 'You have not clocked in yet';
+      ? 'Checked in $clockInTime · $workedDuration'
+      : 'You have not checked in yet';
 
-  /// Label tombol — menyesuaikan apakah sudah absen masuk atau belum.
-  String get actionLabel => isClockedIn ? 'Clock out' : 'Clock in';
+  /// Label tombol — hanya membuka Attendance Log (absen tetap lewat
+  /// fingerprint), jadi labelnya selalu sama.
+  String get actionLabel => 'View log';
   /// lokasi belum ada di API, jadi sementara tetap sttais seperti
   /// sebelumnya. Ganti kalau backend sudah menyediakannya.
   static const defaultLocation = 'Plant 2 · Gate A';
@@ -45,7 +46,7 @@ class AttendanceStatus {
   /// - `started` sengaja belum dipakai.
   /// - `checked_in_at` / `checked_out_at` saat ini selalu null karena datanya
   ///   belum tersedia di server, bukan karena karyawannya belum absen. Selama
-  ///   itu kartu selalu menampilkan "You have not clocked in yet". Format
+  ///   itu kartu selalu menampilkan "You have not checked in yet". Format
   ///   isinya belum pernah terlihat, jadi nilai yang tidak bisa dibaca
   ///   dianggap null.
   factory AttendanceStatus.fromJson(Map<String, dynamic> json) {

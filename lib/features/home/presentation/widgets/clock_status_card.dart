@@ -330,7 +330,7 @@ class _StatusRow extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      'Clocked in at ${status.clockInTime}',
+                      'Checked in at ${status.clockInTime}',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
@@ -353,7 +353,7 @@ class _StatusRow extends StatelessWidget {
                   ],
                 )
               : const Text(
-                  'You have not clocked in yet',
+                  'You have not checked in yet',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
@@ -377,7 +377,7 @@ class _StatusRow extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.access_time_rounded,
+              const Icon(Icons.history_rounded,
                   size: 15, color: AppColors.primary),
               const SizedBox(width: 6),
               Text(

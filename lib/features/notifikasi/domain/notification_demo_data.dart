@@ -82,7 +82,7 @@ class NotificationDemoData {
       AppNotification(
         id: 'n4',
         category: NotificationCategory.attendance,
-        title: 'You forgot to clock out yesterday',
+        title: 'You forgot to check out yesterday',
         body: 'Shift ended 17:00 at Plant 2 · Gate A',
         createdAt: reference.subtract(const Duration(days: 1, hours: 3)),
       ),
