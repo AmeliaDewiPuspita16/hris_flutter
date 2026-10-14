@@ -375,7 +375,7 @@ class _RecentSummaryRow extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
-            StatusBadge(status: entry.status),
+            StatusBadge(status: entry.status, label: entry.statusLabel),
           ],
         ),
       ),

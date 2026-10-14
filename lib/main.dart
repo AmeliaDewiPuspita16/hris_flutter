@@ -14,6 +14,7 @@ import 'features/auth/presentation/widgets/auth_gate.dart';
 import 'features/home/data/announcement_repository.dart';
 import 'features/menu_portal/onlineapps/procurement/data/procurement_repository.dart';
 import 'features/menu_portal/onlineapps/work_order/it_request/data/it_request_repository.dart';
+import 'features/pengajuan/data/pengajuan_repository.dart';
 import 'features/profil/data/profil_repository.dart';
 import 'features/shared/data/department_repository.dart';
 
@@ -43,6 +44,7 @@ Future<void> main() async {
       itRequestRepository: ItRequestRepository(apiClient: apiClient),
       profilRepository: ProfilRepository(apiClient: apiClient),
       absensiRepository: AbsensiRepository(apiClient: apiClient),
+      pengajuanRepository: PengajuanRepository(apiClient: apiClient),
     ),
   );
 }
@@ -56,7 +58,8 @@ class MyApp extends StatelessWidget {
     ProcurementRepository? procurementRepository,
     ItRequestRepository? itRequestRepository,
     ProfilRepository? profilRepository,
-        AbsensiRepository? absensiRepository,
+    AbsensiRepository? absensiRepository,
+    PengajuanRepository? pengajuanRepository,
   })  : departmentRepository = departmentRepository ??
             DepartmentRepository(apiClient: ApiClient()),
         announcementRepository = announcementRepository ??
@@ -69,6 +72,8 @@ class MyApp extends StatelessWidget {
             ProfilRepository(apiClient: ApiClient()),
         absensiRepository = absensiRepository ??
             AbsensiRepository(apiClient: ApiClient());
+        pengajuanRepository = pengajuanRepository ??
+            PengajuanRepository(apiClient: ApiClient());
 
   final AuthRepository authRepository;
   final DepartmentRepository departmentRepository;
@@ -77,6 +82,7 @@ class MyApp extends StatelessWidget {
   final ItRequestRepository itRequestRepository;
   final ProfilRepository profilRepository;
   final AbsensiRepository absensiRepository;
+  final PengajuanRepository pengajuanRepository;
 
   @override
   Widget build(BuildContext context) {
@@ -93,6 +99,7 @@ class MyApp extends StatelessWidget {
         RepositoryProvider.value(value: itRequestRepository),
         RepositoryProvider.value(value: profilRepository),
         RepositoryProvider.value(value: absensiRepository),
+        RepositoryProvider.value(value: pengajuanRepository),
       ],
       child: BlocProvider(
         create: (_) =>

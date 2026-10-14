@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/network/api_client.dart';
 import '../../../../core/widgets/header_title_row.dart';
 import '../../../shared/domain/role.dart';
 
@@ -45,34 +44,39 @@ class PengajuanScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final pengajuan = repository ?? PengajuanRepository(apiClient: ApiClient());
+    final pengajuan = repository ?? context.read<PengajuanRepository>();
 
-    return MultiBlocProvider(
-      providers: [
-        BlocProvider(
-          create: (_) => LeaveBalanceBloc(repository: pengajuan, role: role)
-            ..add(const LeaveBalanceStarted()),
-        ),
-        BlocProvider(
-          create: (_) => LeaveHistoryBloc(repository: pengajuan)
-            ..add(const LeaveHistoryStarted()),
-        ),
-      ],
-      // Header hijau sampai ke balik status bar → ikon status bar terang.
-      // Diset di sini karena layar ini dibuka lewat push, di luar
-      // AnnotatedRegion milik BerandaScreen.
-      child: AnnotatedRegion<SystemUiOverlayStyle>(
-        value: const SystemUiOverlayStyle(
-          statusBarColor: Colors.transparent,
-          statusBarIconBrightness: Brightness.light,
-          statusBarBrightness: Brightness.dark,
-        ),
-        // Scaffold dibutuhkan sebagai ancestor Material (InkWell, dst.):
-        // layar ini di-push sebagai route sendiri, tidak lagi berada di
-        // dalam Scaffold milik BerandaScreen.
-        child: Scaffold(
-          backgroundColor: AppColors.primary,
-          body: _PengajuanView(role: role, showBack: showBack),
+    // Repository juga disediakan ke subpohon ini karena AjukanTab mengambilnya
+    // lewat context — supaya tetap jalan saat [repository] diisi dari test.
+    return RepositoryProvider.value(
+      value: pengajuan,
+      child: MultiBlocProvider(
+        providers: [
+          BlocProvider(
+            create: (_) => LeaveBalanceBloc(repository: pengajuan, role: role)
+              ..add(const LeaveBalanceStarted()),
+          ),
+          BlocProvider(
+            create: (_) => LeaveHistoryBloc(repository: pengajuan)
+              ..add(const LeaveHistoryStarted()),
+          ),
+        ],
+        // Header hijau sampai ke balik status bar → ikon status bar terang.
+        // Diset di sini karena layar ini dibuka lewat push, di luar
+        // AnnotatedRegion milik BerandaScreen.
+        child: AnnotatedRegion<SystemUiOverlayStyle>(
+          value: const SystemUiOverlayStyle(
+            statusBarColor: Colors.transparent,
+            statusBarIconBrightness: Brightness.light,
+            statusBarBrightness: Brightness.dark,
+          ),
+          // Scaffold dibutuhkan sebagai ancestor Material (InkWell, dst.):
+          // layar ini di-push sebagai route sendiri, tidak lagi berada di
+          // dalam Scaffold milik BerandaScreen.
+          child: Scaffold(
+            backgroundColor: AppColors.primary,
+            body: _PengajuanView(role: role, showBack: showBack),
+          ),
         ),
       ),
     );

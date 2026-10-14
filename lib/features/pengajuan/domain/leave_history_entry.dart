@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/utils/date_formatter.dart';
+import '../../../core/utils/json_value.dart';
 import '../../../core/widgets/status_badge.dart';
+import 'leave_type.dart';
 
 /// satu baris riwayat pengajuan cuti/izin/lembur pada tab status.
 class LeaveHistoryEntry {
@@ -13,9 +16,86 @@ class LeaveHistoryEntry {
     required this.requestDate,
     required this.status,
     required this.note,
+    this.statusLabel,
     this.reason,
     this.photoUrl,
   });
+
+  /// Memetakan satu item `data` dari `GET .../hris/leave/status`.
+  ///
+  /// Contoh item:
+  /// ```json
+  /// { "type": "Cuti Tahunan", "start_date": "2026-08-26",
+  ///   "end_date": "2026-08-28", "description": "Pulang kampung",
+  ///   "status_code": "CO", "status_label": "Disetujui" }
+  /// ```
+  ///
+  /// Respons tidak punya `id`, jadi [id] dibuat dari [index] + tanggal mulai.
+  /// Mengembalikan null bila `start_date` kosong/tidak valid — baris tanpa
+  /// tanggal tidak bisa ditampilkan ataupun diurutkan.
+  static LeaveHistoryEntry? fromApi(
+    Map<String, dynamic> json, {
+    required int index,
+  }) {
+    final start = dateOrNull(json['start_date']);
+    if (start == null) return null;
+    final end = dateOrNull(json['end_date']) ?? start;
+
+    final rawType = textOrNull(json['type']) ?? 'Cuti';
+    final leaveType = LeaveTypeX.fromApiName(rawType);
+
+    final code = textOrNull(json['status_code']);
+    final label = textOrNull(json['status_label']);
+    final mapped = _mapStatus(code, label);
+
+    return LeaveHistoryEntry(
+      id: 'LV-$index-${json['start_date']}',
+      // Jenis yang dikenal memakai label aplikasi supaya filter jenis di tab
+      // Status cocok; yang belum dikenal tampil apa adanya.
+      type: leaveType?.label ?? rawType,
+      typeColor: leaveType?.color ?? const Color(0xFF607D8B),
+      typeBackground: leaveType?.background ?? const Color(0xFFECEFF1),
+      date: _describeRange(start, end),
+      requestDate: start,
+      status: mapped.status,
+      statusLabel: mapped.label,
+      note: label ?? code ?? '-',
+      reason: textOrNull(json['description']),
+    );
+  }
+
+  /// Kode status HRIS → [AppStatus].
+  ///
+  /// Baru dua kode yang artinya pasti (dari dokumen vendor):
+  /// - `CO` Complete → disetujui
+  /// - `DR` Draft/routing dokumen → menunggu
+  ///
+  /// Kode lain (termasuk `OEZ_RELEASE`, masih ditanyakan ke vendor) sengaja
+  /// dibuat netral dengan teks mentah dari server, supaya tidak keliru tampil
+  /// sebagai Disetujui/Ditolak. Tambahkan case baru di sini setelah ada
+  /// jawaban vendor.
+  static ({AppStatus status, String? label}) _mapStatus(
+    String? code,
+    String? label,
+  ) {
+    switch (code?.toUpperCase()) {
+      case 'CO':
+        return (status: AppStatus.present, label: null);
+      case 'DR':
+        return (status: AppStatus.pending, label: null);
+    }
+    return (status: AppStatus.neutral, label: label ?? code);
+  }
+
+  static String _describeRange(DateTime start, DateTime end) {
+    final from = DateFormatter.shortDateID(start);
+    final isSameDay = start.year == end.year &&
+        start.month == end.month &&
+        start.day == end.day;
+    if (isSameDay) return from;
+
+    return '$from – ${DateFormatter.shortDateID(end)}';
+  }
 
   final String id;
   final String type;
@@ -32,6 +112,12 @@ class LeaveHistoryEntry {
   final DateTime requestDate;
 
   final AppStatus status;
+
+  /// Teks badge pengganti label bawaan [status]. Null untuk status yang
+  /// sudah punya label bawaan (Disetujui/Menunggu/Ditolak); terisi untuk
+  /// status netral yang kodenya belum dikenal, mis. "OEZ_RELEASE".
+  final String? statusLabel;
+
   final String note;
 
   /// Alasan yang diisi user waktu submit — ditampilkan di detail view yang

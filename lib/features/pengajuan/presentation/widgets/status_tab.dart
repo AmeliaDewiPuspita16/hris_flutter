@@ -317,7 +317,7 @@ class _StatusTabState extends State<StatusTab> {
                             ),
                           ),
                         ),
-                        StatusBadge(status: history.status),
+                        StatusBadge(status: history.status, label: history.statusLabel),
                       ],
                     ),
                     const SizedBox(height: 6),

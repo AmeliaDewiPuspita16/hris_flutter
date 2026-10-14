@@ -123,7 +123,7 @@ class NeedOptionCatalog {
     ),
     NeedOption(
       id: 'hardware',
-      label: 'Computer/IT hardware (laptop, PC, printer, mouse)',
+      label: 'Computer/IT hardware',
       requestCategoryCode: 'perangkat_komputer_req',
       fieldKind: NeedFieldKind.checkboxGroup,
       checkboxLabels: ['Laptop', 'PC', 'Printer', 'Mouse'],
@@ -166,22 +166,22 @@ class NeedOptionCatalog {
   static const _media = <NeedOption>[
     NeedOption(
       id: 'design',
-      label: 'Design (poster, banner, streamer, logo)',
+      label: 'Design',
       requestCategoryCode: 'desain_req',
     ),
     NeedOption(
       id: 'documentation',
-      label: 'Documentation (photo/video)',
+      label: 'Documentation',
       requestCategoryCode: 'dokumentasi_req',
     ),
     NeedOption(
       id: 'printing',
-      label: 'Printing (ID card, certificate)',
+      label: 'Printing',
       requestCategoryCode: 'printing_req',
     ),
     NeedOption(
       id: 'social_media',
-      label: 'Social media content (Instagram, WhatsApp)',
+      label: 'Social media content',
       requestCategoryCode: 'social_media_req',
     ),
     NeedOption(

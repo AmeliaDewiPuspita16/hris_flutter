@@ -99,6 +99,36 @@ extension LeaveTypeX on LeaveType {
     return null;
   }
 
+  /// Cari jenis dari nama yang dikirim HRIS (mis. "Cuti Tahunan"). Label
+  /// tampilan aplikasi berbahasa Inggris ("Annual Leave"), jadi nama dari API
+  /// harus dipetakan dulu supaya ikon, warna, dan filter jenis tetap cocok.
+  ///
+  /// Mengembalikan null bila namanya belum dikenal.
+  static LeaveType? fromApiName(String name) {
+    switch (name.trim().toLowerCase()) {
+      case 'cuti tahunan':
+      case 'annual leave':
+        return LeaveType.cutiTahunan;
+
+      case 'izin':
+      case 'permission':
+        return LeaveType.izin;
+
+      case 'lembur':
+      case 'overtime':
+        return LeaveType.lembur;
+
+      case 'cuti pengganti':
+      case 'off in lieu':
+        return LeaveType.cutiPengganti;
+
+      case 'cek kesehatan':
+      case 'medical check':
+        return LeaveType.cekKesehatan;
+    }
+    return null;
+  }
+
   /// Lembur pribadi hanya untuk Non-Executive.
   static bool showPersonalLembur(Role role) {
     return role == Role.nonExecutive;

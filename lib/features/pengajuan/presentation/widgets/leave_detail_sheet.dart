@@ -55,7 +55,7 @@ class _LeaveDetailSheet extends StatelessWidget {
                   style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: entry.typeColor),
                 ),
               ),
-              StatusBadge(status: entry.status),
+              StatusBadge(status: entry.status, label: entry.statusLabel),
             ],
           ),
           const SizedBox(height: 12),

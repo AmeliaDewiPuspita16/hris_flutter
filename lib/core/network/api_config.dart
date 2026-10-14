@@ -58,4 +58,8 @@ class ApiConfig {
   /// kartu jam kerja di BEranda, sedangkan 'month/summary/days' itu untuk
   /// layar Log Absensi (belum disambungkan)
   static const String attendance = '/api/portal/apps/hris/attendance';
+
+  /// HRIS status pengajuan cuti milik user yang login (tab Status di layar
+  /// Pengajuan). `data` berupa list, jadi diambil lewat [ApiClient.getList].
+  static const String leaveStatus = '/api/portal/apps/hris/leave/status';
 }

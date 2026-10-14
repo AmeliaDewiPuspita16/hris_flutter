@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/logging/app_logger.dart';
 import '../../../core/network/api_client.dart';
+import '../../../core/network/api_config.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../core/widgets/status_badge.dart';
@@ -12,18 +14,17 @@ import '../domain/leave_type.dart';
 /// Sumber data cuti/izin/lembur: saldo, riwayat, dan pengiriman pengajuan
 /// baru.
 ///
-/// BELUM ada endpoint HRIS untuk modul ini — ketiga method di bawah
-/// mengembalikan data dummy lewat `Future.delayed` supaya UI (loading state,
-/// tombol submit, dst) sudah bisa diuji sekarang. [ApiClient] sudah
-/// disuntik lebih dulu (pola sama dengan repository lain, mis.
-/// `DepartmentRepository`) supaya saat endpoint-nya siap, hanya isi ketiga
-/// method ini yang perlu diganti jadi `_apiClient.getList(...)` /
-/// `.post(...)` — tidak ada screen, bloc, atau widget yang perlu ikut
-/// berubah.
+/// Yang sudah terhubung ke HRIS: [fetchHistory]
+/// (`GET /api/portal/apps/hris/leave/status`).
+///
+/// [fetchBalances] dan [submitLeaveRequest] BELUM punya endpoint — keduanya
+/// masih mengembalikan data dummy lewat `Future.delayed` supaya UI (loading
+/// state, tombol submit, dst) tetap bisa diuji. Saat endpoint-nya siap, cukup
+/// isi method itu pakai `_apiClient.getList(...)` / `.post(...)`; tidak ada
+/// screen, bloc, atau widget yang perlu ikut berubah.
 class PengajuanRepository {
   PengajuanRepository({required ApiClient apiClient}) : _apiClient = apiClient;
 
-  // ignore: unused_field
   final ApiClient _apiClient;
 
   static const _simulatedLatency = Duration(milliseconds: 500);
@@ -91,87 +92,30 @@ class PengajuanRepository {
     ];
   }
 
-  /// Riwayat pengajuan, terbaru lebih dulu.
+  /// Riwayat pengajuan milik user yang login, terbaru lebih dulu.
   ///
-  /// [requestDate] dibuat relatif ke `DateTime.now()` (bukan tanggal tetap)
-  /// supaya dua entri pertama selalu jatuh di bulan berjalan — dipakai tab
-  /// Ringkasan untuk demo filter "riwayat bulan ini" tanpa perlu backend.
+  /// Data dari HRIS (`GET /api/portal/apps/hris/leave/status`). Baris yang
+  /// bentuknya tidak valid dilewati, bukan menggagalkan seluruh daftar.
+  ///
+  /// Melempar [ApiException] bila gagal.
   Future<List<LeaveHistoryEntry>> fetchHistory() async {
-    await Future.delayed(_simulatedLatency);
+    final rows = await _apiClient.getList(ApiConfig.leaveStatus);
 
-    final now = DateTime.now();
-    DateTime monthsAgo(int months, int day) {
-      final target = DateTime(now.year, now.month - months, 1);
-      return DateTime(target.year, target.month, day.clamp(1, 28));
+    final entries = <LeaveHistoryEntry>[];
+    for (var i = 0; i < rows.length; i++) {
+      final row = rows[i];
+      final entry =
+          row is Map<String, dynamic> ? LeaveHistoryEntry.fromApi(row, index: i) : null;
+
+      if (entry == null) {
+        AppLogger.info('Riwayat cuti: baris #$i dilewati (bentuk tidak valid)');
+        continue;
+      }
+      entries.add(entry);
     }
 
-    return [
-      LeaveHistoryEntry(
-        id: 'PGJ-006',
-        type: 'Annual Leave',
-        typeColor: LeaveType.cutiTahunan.color,
-        typeBackground: LeaveType.cutiTahunan.background,
-        date: '${DateFormatter.shortDateID(monthsAgo(0, now.day.clamp(3, 26) - 2))} – ${DateFormatter.shortDateID(monthsAgo(0, now.day.clamp(3, 26)))}',
-        requestDate: monthsAgo(0, now.day.clamp(3, 26) - 2),
-        status: AppStatus.present,
-        note: 'Approved by Dewi Kusumaa',
-        reason: 'Family trip to Bandung, sudah dijadwalkan dari awal bulan.',
-      ),
-      LeaveHistoryEntry(
-        id: 'PGJ-005',
-        type: 'Permission',
-        typeColor: LeaveType.izin.color,
-        typeBackground: LeaveType.izin.background,
-        date: '${DateFormatter.shortDateID(monthsAgo(0, (now.day - 10).clamp(1, 25)))} · Half Day',
-        requestDate: monthsAgo(0, (now.day - 10).clamp(1, 25)),
-        status: AppStatus.pending,
-        note: 'Menunggu persetujuan',
-        reason: 'Urus dokumen keluarga di kelurahan.',
-      ),
-      LeaveHistoryEntry(
-        id: 'PGJ-004',
-        type: 'Medical Check',
-        typeColor: LeaveType.cekKesehatan.color,
-        typeBackground: LeaveType.cekKesehatan.background,
-        date: DateFormatter.shortDateID(monthsAgo(1, 10)),
-        requestDate: monthsAgo(1, 10),
-        status: AppStatus.present,
-        note: 'Approved',
-        reason: 'Medical check-up tahunan wajib perusahaan.',
-      ),
-      LeaveHistoryEntry(
-        id: 'PGJ-003',
-        type: 'MC/Sick',
-        typeColor: const Color(0xFF607D8B),
-        typeBackground: const Color(0xFFECEFF1),
-        date: '${DateFormatter.shortDateID(monthsAgo(1, 5))} – ${DateFormatter.shortDateID(monthsAgo(1, 6))}',
-        requestDate: monthsAgo(1, 5),
-        status: AppStatus.rejected,
-        note: 'Rejected: Incomplete doctor\'s note',
-        reason: 'Demam tinggi, istirahat sesuai anjuran dokter.',
-        photoUrl: 'surat_dokter.jpg',
-      ),
-      LeaveHistoryEntry(
-        id: 'PGJ-002',
-        type: 'Overtime',
-        typeColor: LeaveType.lembur.color,
-        typeBackground: LeaveType.lembur.background,
-        date: '${DateFormatter.shortDateID(monthsAgo(2, 28))} · 18:30–20:45',
-        requestDate: monthsAgo(2, 28),
-        status: AppStatus.present,
-        note: 'Disetujui',
-      ),
-      LeaveHistoryEntry(
-        id: 'PGJ-001',
-        type: 'Annual Leave',
-        typeColor: LeaveType.cutiTahunan.color,
-        typeBackground: LeaveType.cutiTahunan.background,
-        date: '${DateFormatter.shortDateID(monthsAgo(3, 1))} – ${DateFormatter.shortDateID(monthsAgo(3, 3))}',
-        requestDate: monthsAgo(3, 1),
-        status: AppStatus.present,
-        note: 'Disetujui',
-      ),
-    ];
+    entries.sort((a, b) => b.requestDate.compareTo(a.requestDate));
+    return entries;
   }
 
   /// Mengirim pengajuan baru, mengembalikan baris riwayat yang siap
