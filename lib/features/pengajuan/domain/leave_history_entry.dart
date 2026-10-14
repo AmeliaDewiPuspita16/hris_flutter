@@ -59,32 +59,54 @@ class LeaveHistoryEntry {
       requestDate: start,
       status: mapped.status,
       statusLabel: mapped.label,
-      note: label ?? code ?? '-',
+      note: mapped.note,
       reason: textOrNull(json['description']),
     );
   }
 
-  /// Kode status HRIS → [AppStatus].
+  /// Kode status HRIS → [AppStatus] + teks tampilan (bahasa Inggris, sama
+  /// seperti sisa layar Pengajuan).
   ///
-  /// Baru dua kode yang artinya pasti (dari dokumen vendor):
-  /// - `CO` Complete → disetujui
-  /// - `DR` Draft/routing dokumen → menunggu
+  /// Teks SENGAJA tidak diambil dari `status_label` server, karena server
+  /// mengirimnya berbahasa Indonesia ("Disetujui").
   ///
-  /// Kode lain (termasuk `OEZ_RELEASE`, masih ditanyakan ke vendor) sengaja
-  /// dibuat netral dengan teks mentah dari server, supaya tidak keliru tampil
-  /// sebagai Disetujui/Ditolak. Tambahkan case baru di sini setelah ada
-  /// jawaban vendor.
-  static ({AppStatus status, String? label}) _mapStatus(
+  /// Kode yang artinya sudah pasti (dari dokumen/jawaban vendor):
+  /// - `CO` Complete → Approved
+  /// - `OEZ_RELEASE` Release: pengajuan baru disubmit, menunggu persetujuan
+  ///   → Pending
+  /// - `DR` Draft: belum disubmit, jadi bukan "pending" → netral, "Draft"
+  ///
+  /// Kode penolakan belum diketahui. Kode lain sengaja dibuat netral dengan
+  /// teks mentah dari server, supaya tidak keliru tampil sebagai
+  /// Approved/Rejected. Tambahkan case baru di sini setelah ada jawaban
+  /// vendor.
+  static ({AppStatus status, String label, String note}) _mapStatus(
     String? code,
     String? label,
   ) {
     switch (code?.toUpperCase()) {
       case 'CO':
-        return (status: AppStatus.present, label: null);
+        return (
+          status: AppStatus.present,
+          label: 'Approved',
+          note: 'Approved',
+        );
+      case 'OEZ_RELEASE':
+        return (
+          status: AppStatus.pending,
+          label: 'Pending',
+          note: 'Waiting for approval',
+        );
       case 'DR':
-        return (status: AppStatus.pending, label: null);
+        return (
+          status: AppStatus.neutral,
+          label: 'Draft',
+          note: 'Draft, not submitted yet',
+        );
     }
-    return (status: AppStatus.neutral, label: label ?? code);
+
+    final raw = label ?? code ?? '-';
+    return (status: AppStatus.neutral, label: raw, note: raw);
   }
 
   static String _describeRange(DateTime start, DateTime end) {
@@ -113,9 +135,9 @@ class LeaveHistoryEntry {
 
   final AppStatus status;
 
-  /// Teks badge pengganti label bawaan [status]. Null untuk status yang
-  /// sudah punya label bawaan (Disetujui/Menunggu/Ditolak); terisi untuk
-  /// status netral yang kodenya belum dikenal, mis. "OEZ_RELEASE".
+  /// Teks badge pengganti label bawaan [status] (yang berbahasa Indonesia:
+  /// "Disetujui"/"Menunggu"). Dari HRIS selalu terisi berbahasa Inggris,
+  /// mis. "Approved", "Pending", "Draft"; null berarti pakai label bawaan.
   final String? statusLabel;
 
   final String note;
