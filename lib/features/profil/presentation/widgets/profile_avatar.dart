@@ -6,7 +6,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../../../auth/domain/auth_user.dart';
 
-/// Avatar besar di tengah dengan cincin hijau + celah krem, tombol kamera
+/// Avatar besar di tengah dengan cincin putih + celah krem, tombol kamera
 /// putih di pojok kanan bawah, dan lapisan spinner selama upload.
 ///
 /// Hanya menggambar; tidak tahu soal bloc. Foto lokal [photo] (bila ada)
@@ -56,7 +56,10 @@ class ProfileAvatar extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: AppColors.bg,
                   shape: BoxShape.circle,
-                  border: Border.all(color: AppColors.primary, width: _ringWidth),
+                  // Putih, bukan primary — avatar ini sebagian menumpuk di
+                  // header hijau tua (lihat ProfilScreen), jadi cincinnya
+                  // perlu kontras di situ, bukan menyatu dengan warnanya.
+                  border: Border.all(color: Colors.white, width: _ringWidth),
                 ),
                 child: photo != null
                     ? CircleAvatar(radius: _radius, backgroundImage: FileImage(photo!))
