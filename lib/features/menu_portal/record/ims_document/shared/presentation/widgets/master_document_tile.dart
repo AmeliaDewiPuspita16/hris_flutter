@@ -8,11 +8,16 @@ import '../../domain/master_document.dart';
 
 /// Satu baris dokumen master pada tab Manual/SOP/WI/dst.
 ///
-/// - "Download" langsung jalan begitu di-tap (sama seperti web — tidak ada
-///   pratinjau isi berkas dulu).
+/// Dokumen tidak diunduh di aplikasi — kedua aksi ("Unduh di Web" dan
+/// "Obsolete") hanya mengarahkan user ke website IMS, karena file diberi
+/// cap dan butuh approval saat diunduh. Itu sebabnya ikon di kanan baris
+/// berupa ikon tautan keluar, bukan chevron.
+///
+/// - "Unduh di Web" langsung memanggil [onDownload]; konfirmasi
+///   pengalihannya ditangani pemanggil (lihat `DocumentListTab`).
 /// - "Obsolete" munculin dialog konfirmasi dulu (padanan modal "Dokumen
 ///   Obsolete" di web) sebelum [onObsolete] dipanggil, supaya orang sadar
-///   dokumen yang mau di-download sudah tidak berlaku.
+///   dokumen yang dibuka sudah tidak berlaku.
 class MasterDocumentTile extends StatelessWidget {
   const MasterDocumentTile({
     super.key,
@@ -61,7 +66,7 @@ class MasterDocumentTile extends StatelessWidget {
           const SizedBox(height: 10),
           _FileActionRow(
             icon: Icons.file_download_outlined,
-            label: 'Download',
+            label: 'Unduh di Web',
             onTap: () => onDownload(document),
             showDivider: document.obsoleteUrl != null,
           ),
@@ -118,8 +123,9 @@ class _HierarchyBadge extends StatelessWidget {
   }
 }
 
-/// Satu baris aksi berkas (Download / Obsolete) — padanan `PrAttachmentTile`:
-/// ikon + label di kiri, chevron kecil di kanan, seluruh baris bisa di-tap.
+/// Satu baris aksi berkas (Unduh di Web / Obsolete) — padanan
+/// `PrAttachmentTile`: ikon + label di kiri, ikon tautan keluar di kanan
+/// (menandakan user dibawa ke website), seluruh baris bisa di-tap.
 /// Menggantikan tombol solid oranye selebar kartu di versi sebelumnya.
 class _FileActionRow extends StatelessWidget {
   const _FileActionRow({
@@ -161,7 +167,8 @@ class _FileActionRow extends StatelessWidget {
                   ),
                 ),
               ),
-              const Icon(Icons.chevron_right, size: 18, color: AppColors.textMuted),
+              const Icon(Icons.open_in_new_rounded,
+                  size: 16, color: AppColors.textMuted),
             ],
           ),
         ),
@@ -170,11 +177,11 @@ class _FileActionRow extends StatelessWidget {
   }
 }
 
-/// Dialog konfirmasi sebelum download dokumen obsolete — padanan modal
+/// Dialog konfirmasi sebelum membuka dokumen obsolete di website — padanan modal
 /// "Dokumen Obsolete" di web (ikon seru bulat, judul, dua paragraf
 /// peringatan, tombol "Batal" & "Ya, Download").
 ///
-/// Return `true` kalau orang menekan "Ya, Download", `false` untuk "Batal"
+/// Return `true` kalau orang menekan "Lanjut ke Web", `false` untuk "Batal"
 /// atau dialog ditutup dengan cara lain (tap di luar, tombol back).
 Future<bool> _confirmObsoleteDownload(BuildContext context) async {
   final confirmed = await showDialog<bool>(
@@ -210,7 +217,7 @@ Future<bool> _confirmObsoleteDownload(BuildContext context) async {
               text: TextSpan(
                 style: AppTextStyles.body.copyWith(fontSize: 12.5, color: AppColors.textMid, height: 1.5),
                 children: const [
-                  TextSpan(text: 'Dokumen yang akan Anda download adalah '),
+                  TextSpan(text: 'Dokumen yang akan Anda buka adalah '),
                   TextSpan(
                     text: 'dokumen yang sudah tidak berlaku (obsolete)',
                     style: TextStyle(fontWeight: FontWeight.w700),
@@ -255,9 +262,9 @@ Future<bool> _confirmObsoleteDownload(BuildContext context) async {
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                       elevation: 0,
                     ),
-                    icon: const Icon(Icons.file_download_outlined, size: 16),
+                    icon: const Icon(Icons.open_in_new_rounded, size: 16),
                     label: const Text(
-                      'Ya, Download',
+                      'Lanjut ke Web',
                       style: TextStyle(fontFamily: AppTextStyles.fontFamily, fontWeight: FontWeight.w700, fontSize: 13),
                     ),
                   ),

@@ -7,6 +7,8 @@ import '../../domain/master_document.dart';
 import '../bloc/master_document_list_bloc.dart';
 import '../bloc/master_document_list_event.dart';
 import '../bloc/master_document_list_state.dart';
+import '../../data/ims_web_links.dart';
+import 'ims_web_download_dialog.dart';
 import 'master_document_tile.dart';
 
 /// Isi satu tab dokumen (Manual, SOP, dst) — daftar dokumen dari [fetcher]
@@ -63,8 +65,8 @@ class DocumentListTab extends StatelessWidget {
 
               return MasterDocumentTile(
                 document: document,
-                onDownload: (doc) => _showDummyAction(context, 'Mengunduh ${doc.docNo}'),
-                onObsolete: (doc) => _showDummyAction(context, 'Membuka versi obsolete ${doc.docNo}'),
+                onDownload: (doc) => _download(context, doc),
+                onObsolete: (doc) => _openOnWeb(context, doc.obsoleteUrl ?? doc.downloadUrl),
               );
             },
           );
@@ -91,9 +93,24 @@ class DocumentListTab extends StatelessWidget {
         .toList(growable: false);
   }
 
-  void _showDummyAction(BuildContext context, String message) {
+  /// Dokumen tidak diunduh di aplikasi: tampilkan penjelasan dulu, lalu
+  /// arahkan ke website IMS kalau user setuju.
+  Future<void> _download(BuildContext context, MasterDocument doc) async {
+    final confirmed = await showImsWebDownloadDialog(context);
+    if (!confirmed || !context.mounted) return;
+    await _openOnWeb(context, doc.downloadUrl);
+  }
+
+  /// Buka [url] di browser; kasih tahu user kalau gagal.
+  ///
+  /// TODO(api): [MasterDocument.downloadUrl] / `obsoleteUrl` masih dummy,
+  /// jadi sementara jatuh ke `ImsWebLinks.documentsPage`.
+  Future<void> _openOnWeb(BuildContext context, String url) async {
+    final opened = await ImsWebLinks.open(url);
+    if (opened || !context.mounted) return;
+
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('$message (dummy, belum tersambung ke berkas asli)')),
+      const SnackBar(content: Text('Tidak dapat membuka website IMS.')),
     );
   }
 }

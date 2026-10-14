@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../../../../core/theme/app_colors.dart';
+import '../../../../../../../core/theme/app_text_styles.dart';
 import '../../../../../../../core/widgets/app_text_field.dart';
 import '../../domain/master_document.dart';
 import 'document_list_tab.dart';
@@ -64,6 +66,12 @@ class _DocumentTabbedViewState extends State<DocumentTabbedView> {
           onChanged: (index) => setState(() => _tabIndex = index),
         ),
         const SizedBox(height: 12),
+        // Catatan di muka: dokumen tidak bisa diunduh di aplikasi, jadi user
+        // tahu sebelum menekan tombolnya.
+        const Padding(
+          padding: EdgeInsets.fromLTRB(16, 0, 16, 4),
+          child: _WebDownloadNote(),
+        ),
         Expanded(
           child: DocumentListTab(
             // Ganti key tiap pindah tab supaya BlocProvider di dalamnya
@@ -75,6 +83,43 @@ class _DocumentTabbedViewState extends State<DocumentTabbedView> {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Catatan kecil: unduh dokumen hanya lewat website IMS.
+class _WebDownloadNote extends StatelessWidget {
+  const _WebDownloadNote();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: AppColors.primaryLight,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Padding(
+            padding: EdgeInsets.only(top: 1),
+            child: Icon(Icons.info_outline_rounded,
+                size: 16, color: AppColors.primary),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'Dokumen hanya dapat diunduh melalui website IMS '
+              '(memerlukan approval).',
+              style: AppTextStyles.caption.copyWith(
+                color: AppColors.primary,
+                height: 1.4,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
