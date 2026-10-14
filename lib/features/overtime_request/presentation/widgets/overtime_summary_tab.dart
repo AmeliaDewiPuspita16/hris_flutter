@@ -1,101 +1,151 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../domain/overtime_day.dart';
 import '../../domain/overtime_format.dart';
+import '../../domain/overtime_month.dart';
+import '../bloc/summary/overtime_summary_bloc.dart';
+import '../bloc/summary/overtime_summary_event.dart';
+import '../bloc/summary/overtime_summary_state.dart';
 
-/// Tab "Summary" — lembur yang sudah terjadi bulan ini (realisasi dari
-/// absensi): total jam, jumlah hari, dan daftar per hari.
-class OvertimeSummaryTab extends StatefulWidget {
-  const OvertimeSummaryTab({super.key, required this.days});
-
-  /// Semua hari lembur yang diketahui; difilter per bulan di sini.
-  final List<OvertimeDay> days;
-
-  @override
-  State<OvertimeSummaryTab> createState() => _OvertimeSummaryTabState();
-}
-
-class _OvertimeSummaryTabState extends State<OvertimeSummaryTab> {
-  late DateTime _month = DateTime(DateTime.now().year, DateTime.now().month);
-
-  bool get _isCurrentMonth {
-    final now = DateTime.now();
-    return _month.year == now.year && _month.month == now.month;
-  }
-
-  void _shiftMonth(int delta) {
-    setState(() => _month = DateTime(_month.year, _month.month + delta));
-  }
-
-  List<OvertimeDay> get _daysInMonth {
-    final result = [
-      for (final day in widget.days)
-        if (day.date.year == _month.year && day.date.month == _month.month) day,
-    ];
-    result.sort((a, b) => a.date.compareTo(b.date));
-    return result;
-  }
+/// Tab "Summary" — lembur yang sudah terjadi pada bulan terpilih (realisasi
+/// dari absensi, `GET .../hris/overtime`): total jam, jumlah hari, dan
+/// daftar per hari. Datanya dimuat [OvertimeSummaryBloc].
+class OvertimeSummaryTab extends StatelessWidget {
+  const OvertimeSummaryTab({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final days = _daysInMonth;
-    final totalMinutes = days.fold<int>(0, (sum, day) => sum + day.minutes);
+    return BlocBuilder<OvertimeSummaryBloc, OvertimeSummaryState>(
+      builder: (context, state) {
+        final bloc = context.read<OvertimeSummaryBloc>();
+        final now = DateTime.now();
+        final isCurrentMonth =
+            state.month.year == now.year && state.month.month == now.month;
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _TotalsCard(totalMinutes: totalMinutes, dayCount: days.length),
-          const SizedBox(height: 20),
-          Row(
+        void goTo(int delta) => bloc.add(OvertimeSummaryMonthChanged(
+              DateTime(state.month.year, state.month.month + delta),
+            ));
+
+        return SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _MonthArrow(icon: Icons.chevron_left, onTap: () => _shiftMonth(-1)),
-              SizedBox(
-                width: 130,
-                child: Text(
-                  DateFormat('MMMM yyyy', 'en_US').format(_month),
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.text,
-                  ),
-                ),
+              _MonthNav(
+                month: state.month,
+                onPrevious: () => goTo(-1),
+                onNext: isCurrentMonth ? null : () => goTo(1),
               ),
-              _MonthArrow(
-                icon: Icons.chevron_right,
-                onTap: _isCurrentMonth ? null : () => _shiftMonth(1),
-              ),
+              const SizedBox(height: 12),
+              _buildBody(context, state),
             ],
           ),
-          const SizedBox(height: 10),
-          if (days.isEmpty)
-            const _EmptyMonth()
-          else
-            AppCard(
-              padding: const EdgeInsets.symmetric(horizontal: 14),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  for (var i = 0; i < days.length; i++) ...[
-                    if (i > 0) const Divider(height: 1, color: AppColors.border),
-                    _DayRow(day: days[i]),
-                  ],
+        );
+      },
+    );
+  }
+
+  Widget _buildBody(BuildContext context, OvertimeSummaryState state) {
+    switch (state.status) {
+      case OvertimeSummaryStatus.initial:
+      case OvertimeSummaryStatus.loading:
+        return const Padding(
+          padding: EdgeInsets.symmetric(vertical: 48),
+          child: Center(child: CircularProgressIndicator()),
+        );
+
+      case OvertimeSummaryStatus.failure:
+        return _ErrorState(
+          message: state.errorMessage ?? 'Failed to load overtime.',
+          onRetry: () => context
+              .read<OvertimeSummaryBloc>()
+              .add(const OvertimeSummaryRetried()),
+        );
+
+      case OvertimeSummaryStatus.success:
+        final data = state.data;
+        if (data == null) return const _EmptyMonth();
+
+        return _Content(data: data);
+    }
+  }
+}
+
+class _Content extends StatelessWidget {
+  const _Content({required this.data});
+
+  final OvertimeMonth data;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _TotalsCard(
+          totalMinutes: data.totalMinutes,
+          dayCount: data.daysWithOvertime,
+        ),
+        const SizedBox(height: 16),
+        if (data.days.isEmpty)
+          const _EmptyMonth()
+        else
+          AppCard(
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                for (var i = 0; i < data.days.length; i++) ...[
+                  if (i > 0) const Divider(height: 1, color: AppColors.border),
+                  _DayRow(day: data.days[i]),
                 ],
-              ),
+              ],
             ),
-          const SizedBox(height: 12),
-          const Text(
-            'Overtime is calculated from your attendance log, based on the '
-            'time you check out after your shift ends.',
-            style: TextStyle(fontSize: 11, color: AppColors.textMuted, height: 1.4),
           ),
-        ],
-      ),
+        const SizedBox(height: 12),
+        const Text(
+          'Overtime is calculated from your attendance log, based on the '
+          'time you check out after your shift ends.',
+          style: TextStyle(fontSize: 11, color: AppColors.textMuted, height: 1.4),
+        ),
+      ],
+    );
+  }
+}
+
+class _MonthNav extends StatelessWidget {
+  const _MonthNav({
+    required this.month,
+    required this.onPrevious,
+    required this.onNext,
+  });
+
+  final DateTime month;
+  final VoidCallback onPrevious;
+  final VoidCallback? onNext;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        _MonthArrow(icon: Icons.chevron_left, onTap: onPrevious),
+        SizedBox(
+          width: 130,
+          child: Text(
+            DateFormat('MMMM yyyy', 'en_US').format(month),
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: AppColors.text,
+            ),
+          ),
+        ),
+        _MonthArrow(icon: Icons.chevron_right, onTap: onNext),
+      ],
     );
   }
 }
@@ -210,6 +260,17 @@ class _DayRow extends StatelessWidget {
 
   final OvertimeDay day;
 
+  String get _detail {
+    final checkIn = day.checkIn;
+    final checkOut = day.checkOut;
+
+    final times = checkIn != null && checkOut != null
+        ? '${formatClock(checkIn)} – ${formatClock(checkOut)}'
+        : '-';
+
+    return day.shift == null ? times : '$times · Shift ${day.shift}';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -231,7 +292,7 @@ class _DayRow extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  '${formatClock(day.checkIn)} – ${formatClock(day.checkOut)} · Shift ${day.shift}',
+                  _detail,
                   style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
                 ),
               ],
@@ -277,6 +338,43 @@ class _EmptyMonth extends StatelessWidget {
               fontWeight: FontWeight.w600,
               color: AppColors.textMuted,
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ErrorState extends StatelessWidget {
+  const _ErrorState({required this.message, required this.onRetry});
+
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 32),
+      child: Column(
+        children: [
+          const Icon(Icons.cloud_off_outlined, size: 32, color: AppColors.textMuted),
+          const SizedBox(height: 12),
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
+          ),
+          const SizedBox(height: 12),
+          OutlinedButton(
+            onPressed: onRetry,
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.primary,
+              side: const BorderSide(color: AppColors.primary),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            child: const Text('Try again'),
           ),
         ],
       ),

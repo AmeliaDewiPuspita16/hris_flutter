@@ -1,39 +1,15 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/widgets/status_badge.dart';
-import 'overtime_day.dart';
 import 'overtime_request_entry.dart';
 
-/// Data dummy untuk membangun tampilan Overtime Request lebih dulu.
-/// Dibuat relatif ke bulan ini supaya selalu ada isi di Summary.
+/// Data dummy pengajuan lembur untuk tab Submit/Status.
 ///
-/// Ganti dengan repository + bloc saat endpoint tersambung:
-/// - [days]     → `GET /api/portal/apps/hris/overtime` (realisasi)
-/// - [requests] → endpoint pengajuan lembur (belum ada)
+/// Realisasi lembur (tab Summary) sudah dari API lewat `OvertimeRepository`.
+/// [requests] diganti repository + bloc setelah endpoint pengajuan lembur
+/// tersedia (belum ada).
 class OvertimeDemoData {
   OvertimeDemoData._();
-
-  static const _shift = 'N (08:00–17:00)';
-
-  static List<OvertimeDay> days() {
-    final now = DateTime.now();
-
-    OvertimeDay day(int d, int inH, int inM, int outH, int outM, int minutes) {
-      return OvertimeDay(
-        date: DateTime(now.year, now.month, d),
-        minutes: minutes,
-        checkIn: DateTime(now.year, now.month, d, inH, inM),
-        checkOut: DateTime(now.year, now.month, d, outH, outM),
-        shift: _shift,
-      );
-    }
-
-    return [
-      day(3, 7, 52, 18, 30, 90),
-      day(5, 8, 0, 18, 0, 60),
-      day(10, 8, 5, 19, 0, 120),
-    ];
-  }
 
   static List<OvertimeRequestEntry> requests() {
     final now = DateTime.now();

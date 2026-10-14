@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/header_title_row.dart';
-import '../../domain/overtime_day.dart';
+import '../../data/overtime_repository.dart';
 import '../../domain/overtime_demo_data.dart';
 import '../../domain/overtime_request_entry.dart';
+import '../bloc/summary/overtime_summary_bloc.dart';
+import '../bloc/summary/overtime_summary_event.dart';
 import '../widgets/overtime_status_tab.dart';
 import '../widgets/overtime_submit_tab.dart';
 import '../widgets/overtime_summary_tab.dart';
@@ -19,13 +22,21 @@ enum _OvertimeTab { summary, submit, status }
 /// - Submit : form pengajuan lembur.
 /// - Status : riwayat pengajuan lembur.
 ///
-/// MASIH TAMPILAN SAJA: datanya dummy dari [OvertimeDemoData] dan pengajuan
-/// baru hanya disimpan di memori. Saat API tersambung, ganti dengan
-/// repository + bloc seperti `PengajuanRepository`.
+/// Yang sudah tersambung ke API: tab Summary (realisasi lembur, lewat
+/// [OvertimeSummaryBloc]). Tab Submit dan Status masih lokal — datanya
+/// dummy dari [OvertimeDemoData] dan pengajuan baru hanya disimpan di
+/// memori, sampai endpoint pengajuan lembur tersedia.
 class OvertimeRequestScreen extends StatefulWidget {
-  const OvertimeRequestScreen({super.key, this.showBack = true});
+  const OvertimeRequestScreen({
+    super.key,
+    this.showBack = true,
+    this.repository,
+  });
 
   final bool showBack;
+
+  /// Diisi test; di aplikasi diambil dari [RepositoryProvider].
+  final OvertimeRepository? repository;
 
   @override
   State<OvertimeRequestScreen> createState() => _OvertimeRequestScreenState();
@@ -34,7 +45,6 @@ class OvertimeRequestScreen extends StatefulWidget {
 class _OvertimeRequestScreenState extends State<OvertimeRequestScreen> {
   _OvertimeTab _tab = _OvertimeTab.summary;
 
-  final List<OvertimeDay> _days = OvertimeDemoData.days();
   final List<OvertimeRequestEntry> _requests = OvertimeDemoData.requests();
 
   void _handleSubmit(OvertimeRequestEntry entry) {
@@ -50,6 +60,16 @@ class _OvertimeRequestScreenState extends State<OvertimeRequestScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final repository = widget.repository ?? context.read<OvertimeRepository>();
+
+    return BlocProvider(
+      create: (_) => OvertimeSummaryBloc(repository: repository)
+        ..add(const OvertimeSummaryStarted()),
+      child: _buildScaffold(),
+    );
+  }
+
+  Widget _buildScaffold() {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
@@ -70,7 +90,7 @@ class _OvertimeRequestScreenState extends State<OvertimeRequestScreen> {
                   _buildHeader(),
                   Expanded(
                     child: switch (_tab) {
-                      _OvertimeTab.summary => OvertimeSummaryTab(days: _days),
+                      _OvertimeTab.summary => const OvertimeSummaryTab(),
                       _OvertimeTab.submit =>
                         OvertimeSubmitTab(onSubmit: _handleSubmit),
                       _OvertimeTab.status =>
