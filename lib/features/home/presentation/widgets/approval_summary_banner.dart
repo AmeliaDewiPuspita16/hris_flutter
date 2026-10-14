@@ -1,69 +1,58 @@
 import 'package:flutter/material.dart';
+import 'package:shimmer/shimmer.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/app_card.dart';
 
-/// Satu modul yang punya approval menunggu (Leave, IT, EST, Indent, dst) —
-/// jadi satu tag warna di [ApprovalSummaryBanner]. Modul baru cukup
-/// ditambah ke daftar `entries`, tanpa mengubah banner-nya.
-class ApprovalSummaryEntry {
-  const ApprovalSummaryEntry({
-    required this.label,
-    required this.count,
-    required this.icon,
-    required this.color,
-    required this.background,
-    required this.onTap,
-  });
-
-  final String label;
-  final int count;
-  final IconData icon;
-  final Color color;
-  final Color background;
-  final VoidCallback onTap;
-}
-
-/// Banner ringkasan approval yang masih menunggu, digabung dari semua modul
-/// yang butuh keputusan (sekarang Leave, IT Request, EST Request, Indent
-/// Vehicle) — ditempatkan di bawah header dan di atas "Main Menu", mengikuti
-/// pola awal HRIS.
-///
-/// Sampai 3 modul tag dibagi rata selebar kartu; lebih dari 3 jadi satu baris
-/// yang bisa digeser ke samping. Di mode geser lebar tiap tag mengikuti
-/// panjang labelnya (`fitContent`), jadi label selalu terbaca penuh dan tag
-/// yang terpotong di tepi kartu jadi petunjuk bahwa masih bisa digeser.
+/// Banner ringkasan approval yang masih menunggu, digabung dari 3 modul:
+/// Leave (HRIS), IT Request, EST Request — ditempatkan di bawah header dan
+/// di atas "Main Menu", mengikuti pola awal HRIS.
 ///
 /// Dua zona ketuk:
 /// - Badan banner (ikon + judul) → [onTapAll], dimaksudkan membuka
 ///   Notifications tab "Action" — cakupannya semua hal yang butuh
 ///   keputusan, tidak cuma 3 modul ini.
-/// - Tiap tag warna → `onTap` milik [ApprovalSummaryEntry]-nya, dimaksudkan
+/// - Tiap tag warna → [onTapLeave]/[onTapIt]/[onTapEst], dimaksudkan
 ///   membuka halaman approval modul itu langsung kalau sudah tersedia
-///   (yang belum punya halaman approval sendiri untuk sementara jatuh ke
-///   Notifications).
+///   (baru IT yang punya tab Approve Request sungguhan sekarang; Leave &
+///   EST untuk sementara jatuh ke Notifications juga sampai halaman
+///   approval masing-masing dibuat).
 ///
 /// SEMENTARA: ditampilkan tanpa gerbang role — pemetaan HOD per-departemen
-/// (HOD IT vs HOD Estate vs HOD lain) dari API belum ada, sama seperti
-/// catatan role di auth_gate.dart. Sembunyikan lewat [visible]=false kalau
-/// totalnya 0.
+/// dari API belum ada, sama seperti catatan role di auth_gate.dart.
+/// Sembunyikan otomatis kalau totalnya 0 (dan bukan sedang [isLoading]).
 class ApprovalSummaryBanner extends StatelessWidget {
   const ApprovalSummaryBanner({
     super.key,
-    required this.entries,
+    required this.leaveCount,
+    required this.itCount,
+    required this.estCount,
     required this.onTapAll,
+    required this.onTapLeave,
+    required this.onTapIt,
+    required this.onTapEst,
   });
 
-  final List<ApprovalSummaryEntry> entries;
+  /// True selagi ringkasan IT/EST/Indent Vehicle/eProcurement masih diambil
+  /// dari server — banner menampilkan skeleton shimmer, bukan isi asli,
+  /// supaya tidak "lompat" dari kosong ke terisi.
+  final bool isLoading;
+
+  final int leaveCount;
+  final int itCount;
+  final int estCount;
 
   final VoidCallback onTapAll;
+  final VoidCallback onTapLeave;
+  final VoidCallback onTapIt;
+  final VoidCallback onTapEst;
 
-  int get _total => entries.fold(0, (sum, e) => sum + e.count);
+  int get _total => leaveCount + itCount + estCount;
 
   @override
   Widget build(BuildContext context) {
-    if (_total == 0) return const SizedBox.shrink();
+    if (!isLoading && _total == 0) return const SizedBox.shrink();
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
@@ -123,7 +112,42 @@ class ApprovalSummaryBanner extends StatelessWidget {
                 ),
               ),
             ),
-            _ModuleTagRow(entries: entries),
+            Row(
+              children: [
+                Expanded(
+                  child: _ModuleTag(
+                    label: 'Leave',
+                    count: leaveCount,
+                    icon: Icons.beach_access_outlined,
+                    color: AppColors.teal,
+                    background: AppColors.tealBg,
+                    onTap: onTapLeave,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _ModuleTag(
+                    label: 'IT',
+                    count: itCount,
+                    icon: Icons.computer_outlined,
+                    color: AppColors.itRequest,
+                    background: AppColors.itRequestBg,
+                    onTap: onTapIt,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _ModuleTag(
+                    label: 'EST',
+                    count: estCount,
+                    icon: Icons.engineering_outlined,
+                    color: AppColors.estRequest,
+                    background: AppColors.estRequestBg,
+                    onTap: onTapEst,
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
       ),
@@ -213,7 +237,7 @@ class _CountBadge extends StatelessWidget {
   }
 }
 
-/// Tile per modul (Leave/IT/EST/Indent), masing-masing dengan warna & ikon khasnya
+/// Tile per modul (Leave/IT/EST), masing-masing dengan warna & ikon khasnya
 /// sendiri (selaras dengan [NotificationCategory]) supaya gampang dibedakan
 /// sekilas, dengan badge angka merah di pojok sebagai penanda "perlu
 /// direspons".
@@ -273,7 +297,17 @@ class _ModuleTag extends StatelessWidget {
               children: [
                 Icon(icon, size: 18, color: color),
                 const SizedBox(width: 6),
-                if (fitContent) labelText else Expanded(child: labelText),
+                Expanded(
+                  child: Text(
+                    label,
+                    style: TextStyle(
+                      fontFamily: AppTextStyles.fontFamily,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.text,
+                    ),
+                  ),
+                ),
                 const SizedBox(width: 6),
                 _CountBadge(count: count),
               ],

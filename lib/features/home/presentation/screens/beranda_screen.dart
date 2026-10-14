@@ -7,6 +7,8 @@ import '../../../../core/network/api_client.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../data/announcement_repository.dart';
+import '../../data/approvals_waiting_repository.dart';
+import '../../domain/approvals_waiting_summary.dart';
 import '../../../absensi/presentation/screens/absensi_screen.dart';
 import '../../../absensi/data/absensi_repository.dart';
 import '../../../kelola_tim/presentation/screens/kelola_tim_screen.dart';
@@ -18,9 +20,6 @@ import '../../../leave_approval/presentation/screens/leave_approval_screen.dart'
 import '../../../menu_portal/data_app/indent_vehicle/domain/indent_approval_demo_data.dart';
 import '../../../menu_portal/data_app/indent_vehicle/presentation/screens/indent_vehicle_screen.dart';
 import '../../../menu_portal/onlineapps/presentation/screens/online_apps_screen.dart';
-import '../../../menu_portal/onlineapps/work_order/est_request/domain/est_request_demo_data.dart';
-import '../../../menu_portal/onlineapps/work_order/est_request/domain/est_request_status.dart';
-import '../../../menu_portal/onlineapps/work_order/it_request/domain/approve_request_demo_data.dart';
 import '../../../menu_portal/onlineapps/work_order/it_request/presentation/screens/it_request_screen.dart';
 import '../../../menu_portal/record/presentation/screens/record_screen.dart';
 import '../../../menu_portal/data_app/presentation/screens/data_screen.dart';
@@ -68,6 +67,7 @@ class BerandaScreen extends StatefulWidget {
     this.user,
     this.announcementRepository,
     this.leaveApprovalRepository,
+    this.approvalsWaitingRepository,
   });
 
   final Role role;
@@ -84,6 +84,11 @@ class BerandaScreen extends StatefulWidget {
   /// badge di Beranda/menu HRIS dan halaman approval membaca data yang
   /// sama. Diisi manual di test; kalau tidak, dibuat dari [ApiClient].
   final LeaveApprovalRepository? leaveApprovalRepository;
+
+  /// Ringkasan approval menunggu untuk IT/EST/Indent Vehicle/eProcurement
+  /// (banner "Approvals waiting"). Diisi manual di test; kalau tidak, dibuat
+  /// dari [ApiClient].
+  final ApprovalsWaitingRepository? approvalsWaitingRepository;
 
   @override
   State<BerandaScreen> createState() => _BerandaScreenState();
@@ -124,6 +129,23 @@ class _BerandaScreenState extends State<BerandaScreen> {
   /// [_leaveApprovalRepository] (BUKAN dihitung dari notifikasi).
   int _leaveApprovalCount = 0;
 
+  /// Repository ringkasan approval IT/EST/Indent Vehicle/eProcurement.
+  ///
+  /// Fallback-nya SENGAJA lewat [RepositoryProvider] ([context.read]), BUKAN
+  /// `ApprovalsWaitingRepository(apiClient: ApiClient())` — endpoint ini
+  /// butuh token login. [ApiClient] baru yang dibuat langsung di sini tidak
+  /// pernah di-setToken, jadi requestnya terkirim tanpa Authorization dan
+  /// gagal diam-diam (balik ke [ApprovalsWaitingSummary.empty], semua
+  /// kategori kelihatan 0 walau di server datanya ada).
+  late final ApprovalsWaitingRepository _approvalsWaitingRepository =
+      widget.approvalsWaitingRepository ??
+          context.read<ApprovalsWaitingRepository>();
+
+  /// Ringkasan approval menunggu dari [_approvalsWaitingRepository]. Leave
+  /// TIDAK termasuk di sini — itu [_leaveApprovalCount] sendiri.
+  ApprovalsWaitingSummary _approvalsWaiting = ApprovalsWaitingSummary.empty;
+  bool _loadingApprovalsWaiting = true;
+
   Role get _role => widget.role;
 
   int get _unreadCount => _notifications.where((n) => !n.isRead).length;
@@ -134,6 +156,7 @@ class _BerandaScreenState extends State<BerandaScreen> {
     _loadAnnouncements();
     _loadLeaveApprovalCount();
     _loadTodayAttendance();
+    _loadApprovalsWaiting();
   }
 
   Future<void> _loadAnnouncements() async {
@@ -316,18 +339,25 @@ class _BerandaScreenState extends State<BerandaScreen> {
     await _loadLeaveApprovalCount();
   }
 
-  int get _itApprovalCount => ApproveRequestDemoData.items().length;
+  Future<void> _loadApprovalsWaiting() async {
+    try {
+      final summary = await _approvalsWaitingRepository.fetchSummary();
+      if (!mounted) return;
+      setState(() {
+        _approvalsWaiting = summary;
+        _loadingApprovalsWaiting = false;
+      });
+    } catch (e, stack) {
+      AppLogger.error('Ringkasan approvals waiting gagal dimuat', e, stack);
+      if (!mounted) return;
+      setState(() => _loadingApprovalsWaiting = false);
+    }
+  }
 
-  /// Dianggap "butuh approval HOD" kalau statusnya [EstRequestStatus.
-  /// waitApprovalHosd] — belum ada tab Approve Request sungguhan untuk EST
-  /// seperti IT, jadi ini juga masih perkiraan dari data demo.
-  int get _estApprovalCount => EstRequestDemoData.items()
-      .where((r) => r.status == EstRequestStatus.waitApprovalHod)
-      .length;
-
-  /// Request Indent Vehicle yang menunggu keputusan atasan (tab "Supervisor
-  /// Approval"). Masih dari data demo, sama seperti IT/EST.
-  int get _indentApprovalCount => IndentApprovalDemoData.items().length;
+  int get _itApprovalCount => _approvalsWaiting.itRequest;
+  int get _estApprovalCount => _approvalsWaiting.estWorkOrder;
+  int get _indentVehicleApprovalCount => _approvalsWaiting.indentVehicle;
+  int get _eprocurementApprovalCount => _approvalsWaiting.eprocurement;
 
   /// Pindah ke tab Notifications dengan filter "Action" (yang menunggu
   /// keputusan — semua modul). Dipakai badan banner "Approvals waiting" di
@@ -361,6 +391,12 @@ class _BerandaScreenState extends State<BerandaScreen> {
   /// (menu EST Request baru sisi requester) — untuk sekarang jatuh ke
   /// Notifications.
   void _openEstApproval() => _openApprovalNotifications();
+
+  /// SEMENTARA: Indent Vehicle & eProcurement juga belum punya tampilan
+  /// approval khusus HOD — untuk sekarang jatuh ke Notifications juga, sama
+  /// seperti EST di atas.
+  void _openIndentVehicleApproval() => _openApprovalNotifications();
+  void _openEprocurementApproval() => _openApprovalNotifications();
 
   /// Menu utama "Online Apps" — dipush sebagai halaman baru, bukan tab,
   /// jadi bottom nav Beranda tidak ikut tampil di sana.
@@ -520,43 +556,18 @@ class _BerandaScreenState extends State<BerandaScreen> {
               // Menu, dipindah ke sini (pola awal HRIS: di bawah header, di
               // atas Main Menu) sekaligus digabung 3 modul.
               ApprovalSummaryBanner(
+                isLoading: _loadingApprovalsWaiting,
+                leaveCount: _leaveApprovalCount,
+                itCount: _itApprovalCount,
+                estCount: _estApprovalCount,
+                indentVehicleCount: _indentVehicleApprovalCount,
+                eprocurementCount: _eprocurementApprovalCount,
                 onTapAll: _openApprovalNotifications,
-                // Modul baru yang butuh approval tinggal ditambah di sini;
-                // kalau lebih dari 3, banner otomatis bisa digeser.
-                entries: [
-                  ApprovalSummaryEntry(
-                    label: 'Leave',
-                    count: _leaveApprovalCount,
-                    icon: Icons.beach_access_outlined,
-                    color: AppColors.teal,
-                    background: AppColors.tealBg,
-                    onTap: _openLeaveApproval,
-                  ),
-                  ApprovalSummaryEntry(
-                    label: 'IT',
-                    count: _itApprovalCount,
-                    icon: Icons.computer_outlined,
-                    color: AppColors.itRequest,
-                    background: AppColors.itRequestBg,
-                    onTap: _openItApproval,
-                  ),
-                  ApprovalSummaryEntry(
-                    label: 'EST',
-                    count: _estApprovalCount,
-                    icon: Icons.engineering_outlined,
-                    color: AppColors.estRequest,
-                    background: AppColors.estRequestBg,
-                    onTap: _openEstApproval,
-                  ),
-                  ApprovalSummaryEntry(
-                    label: 'Indent',
-                    count: _indentApprovalCount,
-                    icon: Icons.directions_car_outlined,
-                    color: AppColors.violet,
-                    background: AppColors.violetBg,
-                    onTap: _openIndentApproval,
-                  ),
-                ],
+                onTapLeave: _openLeaveApproval,
+                onTapIt: _openItApproval,
+                onTapEst: _openEstApproval,
+                onTapIndentVehicle: _openIndentVehicleApproval,
+                onTapEprocurement: _openEprocurementApproval,
               ),
               //PendingRequestCard(
               //  count: 2,
