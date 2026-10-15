@@ -1,3 +1,4 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -19,9 +20,14 @@ import 'features/overtime_request/data/overtime_repository.dart';
 import 'features/pengajuan/data/pengajuan_repository.dart';
 import 'features/profil/data/profil_repository.dart';
 import 'features/shared/data/department_repository.dart';
+import 'firebase_options.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Wajib diinisialisasi sebelum runApp() supaya plugin Firebase lain
+  // (messaging, analytics, dll.) bisa dipakai di seluruh app.
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   // Wajib dipanggil sebelum runApp() supaya package:intl (dipakai internal
   // oleh Material DatePicker & month_picker_dialog) punya data locale
