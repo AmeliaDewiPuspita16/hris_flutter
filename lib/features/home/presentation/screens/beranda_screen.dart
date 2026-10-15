@@ -17,7 +17,6 @@ import '../../../leave_approval/data/leave_approval_repository.dart';
 import '../../../leave_approval/domain/leave_approval_request.dart';
 import '../../../leave_approval/domain/leave_approval_status.dart';
 import '../../../leave_approval/presentation/screens/leave_approval_screen.dart';
-import '../../../menu_portal/data_app/indent_vehicle/domain/indent_approval_demo_data.dart';
 import '../../../menu_portal/data_app/indent_vehicle/presentation/screens/indent_vehicle_screen.dart';
 import '../../../menu_portal/onlineapps/presentation/screens/online_apps_screen.dart';
 import '../../../menu_portal/onlineapps/work_order/it_request/presentation/screens/it_request_screen.dart';
@@ -115,7 +114,7 @@ class _BerandaScreenState extends State<BerandaScreen> {
   bool _loadingAnnouncements = true;
   String? _announcementsError;
 
-    /// Jadwal & absensi hari ini dari server. Null selama belum berhasil dimuat.
+  /// Jadwal & absensi hari ini dari server. Null selama belum berhasil dimuat.
   AttendanceStatus? _todayAttendance;
   bool _loadingAttendance = true;
   String? _attendanceError;
@@ -184,7 +183,7 @@ class _BerandaScreenState extends State<BerandaScreen> {
     }
   }
 
-    Future<void> _loadTodayAttendance() async {
+  Future<void> _loadTodayAttendance() async {
     setState(() {
       _loadingAttendance = true;
       _attendanceError = null;
@@ -244,10 +243,10 @@ class _BerandaScreenState extends State<BerandaScreen> {
   }
 
   void _openDepartmentAttendance() {
-  Navigator.of(context).push(
-    MaterialPageRoute(builder: (_) => const DepartmentAttendanceScreen()),
-  );
-}
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const DepartmentAttendanceScreen()),
+    );
+  }
 
   Future<void> _openCreateAnnouncement() async {
     final created = await showModalBottomSheet<PublishedAnnouncement>(

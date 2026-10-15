@@ -1,10 +1,12 @@
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
 import 'core/network/api_client.dart';
+import 'core/notifications/notification_service.dart';
 import 'core/theme/app_colors.dart';
 import 'features/absensi/data/absensi_repository.dart';
 import 'features/auth/data/auth_repository.dart';
@@ -28,6 +30,15 @@ Future<void> main() async {
   // Wajib diinisialisasi sebelum runApp() supaya plugin Firebase lain
   // (messaging, analytics, dll.) bisa dipakai di seluruh app.
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  // Didaftarkan sebelum runApp() supaya pesan FCM yang datang saat app
+  // di-background/terminated tetap tertangani. Harus merujuk top-level
+  // function (lih. notification_service.dart), bukan closure/method.
+  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+
+  // Minta izin notifikasi + siapkan local notifications untuk foreground.
+  // Dipanggil sekali di sini supaya berlaku untuk seluruh siklus hidup app.
+  await NotificationService().init();
 
   // Wajib dipanggil sebelum runApp() supaya package:intl (dipakai internal
   // oleh Material DatePicker & month_picker_dialog) punya data locale
