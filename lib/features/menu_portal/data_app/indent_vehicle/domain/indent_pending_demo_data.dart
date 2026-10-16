@@ -52,14 +52,4 @@ class IndentPendingDemoData {
           withDriver: true,
         ),
       ];
-
-  /// Isi dropdown "Driver" di popup Assign Vehicle.
-  static const drivers = [
-    'Arief Pratama',
-    'Moh Yogi',
-    'Febri Rivanov',
-    'M Saragih',
-    'Nizar',
-    'Suko',
-  ];
 }

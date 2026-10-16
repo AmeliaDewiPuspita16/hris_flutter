@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../../../core/network/api_exception.dart';
 import '../../../../../../core/theme/app_colors.dart';
 import '../../../../../../core/theme/app_text_styles.dart';
 import '../../../../../../core/widgets/field_label_row.dart';
+import '../../data/indent_vehicle_repository.dart';
+import '../../domain/indent_driver.dart';
 import '../../domain/indent_assign_result.dart';
-import '../../domain/indent_pending_demo_data.dart';
 import '../../domain/indent_pending_item.dart';
 
 /// Bottom sheet "Assign Vehicle", dibuka lewat
@@ -27,7 +30,44 @@ class IndentAssignSheet extends StatefulWidget {
 
 class _IndentAssignSheetState extends State<IndentAssignSheet> {
   final _plateController = TextEditingController();
-  String? _driver;
+
+  late final IndentVehicleRepository _repository;
+
+  List<IndentDriver> _drivers = const [];
+  bool _loadingDrivers = false;
+  String? _driversError;
+  IndentDriver? _driver;
+
+  @override
+  void initState() {
+    super.initState();
+    _repository = context.read<IndentVehicleRepository>();
+    // driver hanya dibutuhkan kalau request ini memakai driver.
+    if (widget.item.withDriver) _loadDrivers();
+  }
+
+  Future<void> _loadDrivers() async {
+    setState(() {
+      _loadingDrivers = true;
+      _driversError = null;
+      _driver = null; // pilihan lama tidak valid lagi untuk list yang baru
+    });
+
+    try {
+      final drivers = await _repository.fetchDrivers();
+      if (!mounted) return;
+      setState(() {
+        _drivers = drivers;
+        _loadingDrivers = false;
+      });
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _loadingDrivers = false;
+        _driversError = e.message;
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -44,7 +84,7 @@ class _IndentAssignSheetState extends State<IndentAssignSheet> {
     Navigator.of(context).pop(
       IndentAssignResult(
         plateNumber: _plateController.text.trim().toUpperCase(),
-        driver: widget.item.withDriver ? _driver : null,
+        driver: widget.item.withDriver ? _driver?.name : null,
       ),
     );
   }
@@ -117,23 +157,51 @@ class _IndentAssignSheetState extends State<IndentAssignSheet> {
               if (widget.item.withDriver) ...[
                 const SizedBox(height: 16),
                 const FieldLabelRow(label: 'Driver', required: true),
-                DropdownButtonFormField<String>(
-                  value: _driver,
-                  isExpanded: true,
-                  icon: const Icon(
-                    Icons.keyboard_arrow_down,
-                    color: AppColors.textMuted,
+                  if (_loadingDrivers)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 14),
+                    child: Center(
+                      child: SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2.2),
+                      ),
+                    ),
+                  )
+                else if (_driversError != null)
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          _driversError!,
+                          style: AppTextStyles.caption
+                              .copyWith(color: AppColors.rejected),
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: _loadDrivers,
+                        child: const Text('Coba lagi'),
+                      ),
+                    ],
+                  )
+                else
+                  DropdownButtonFormField<IndentDriver>(
+                    value: _driver,
+                    isExpanded: true,
+                    icon: const Icon(
+                      Icons.keyboard_arrow_down,
+                      color: AppColors.textMuted,
+                    ),
+                    dropdownColor: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                    style: AppTextStyles.body,
+                    decoration: _decoration('-- Select Driver --'),
+                    items: [
+                      for (final d in _drivers)
+                        DropdownMenuItem(value: d, child: Text(d.name)),
+                    ],
+                    onChanged: (v) => setState(() => _driver = v),
                   ),
-                  dropdownColor: Colors.white,
-                  borderRadius: BorderRadius.circular(10),
-                  style: AppTextStyles.body,
-                  decoration: _decoration('-- Select Driver --'),
-                  items: [
-                    for (final d in IndentPendingDemoData.drivers)
-                      DropdownMenuItem(value: d, child: Text(d)),
-                  ],
-                  onChanged: (v) => setState(() => _driver = v),
-                ),
               ],
               const SizedBox(height: 20),
               SizedBox(
@@ -150,7 +218,8 @@ class _IndentAssignSheetState extends State<IndentAssignSheet> {
                   ),
                   child: Text(
                     'Assign',
-                    style: AppTextStyles.buttonText.copyWith(color: Colors.white),
+                    style:
+                        AppTextStyles.buttonText.copyWith(color: Colors.white),
                   ),
                 ),
               ),

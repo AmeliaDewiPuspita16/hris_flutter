@@ -52,14 +52,14 @@ class RecordScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final items = RecordDemoData.items(
-      onCompanyProfile: () => _showComingSoon(context, 'Company Profile'),
-      onContract: () => _showComingSoon(context, 'Contract'),
-      onEngineeringDrawing: () => _showComingSoon(context, 'Engineering Drawing'),
+      // null = belum siap: tile tampil redup & tidak bisa diketuk.
+      onCompanyProfile: null,
+      onContract: null,
+      onEngineeringDrawing: null,
       onImsDocument: () => _openImsDocument(context),
-      onLicensePermitCertificate: () =>
-          _showComingSoon(context, 'License, Permit and Certificate'),
-      onNewsClipping: () => _showComingSoon(context, 'News Clipping'),
-      onPhotoVideo: () => _showComingSoon(context, 'Photo & Video'),
+      onLicensePermitCertificate: null,
+      onNewsClipping: null,
+      onPhotoVideo: null,
     );
 
     return Scaffold(

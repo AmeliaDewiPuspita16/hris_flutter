@@ -13,30 +13,24 @@ import '../widgets/data_tile.dart';
 class DataScreen extends StatelessWidget {
   const DataScreen({super.key});
 
-  /// Placeholder untuk kategori yang belum punya halamannya sendiri.
-  void _showComingSoon(BuildContext context, String label) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('$label belum tersedia')),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final items = DataDemoData.items(
-      onAwardRecognition: () => _showComingSoon(context, 'Award & Recognition'),
-      onBudgetDepartment: () => _showComingSoon(context, 'Budget Department'),
-      onCatalogKitchen: () => _showComingSoon(context, 'Catalog Kitchen'),
-      onDailyWorker: () => _showComingSoon(context, 'Daily Worker'),
-      onDormitoryBie: () => _showComingSoon(context, 'Dormitory BIE'),
-      onEstProjectMonitoring: () => _showComingSoon(context, 'EST Project Monitoring'),
-      onExportImport: () => _showComingSoon(context, 'Export Import'),
-      onFacility: () => _showComingSoon(context, 'Facility'),
-      onFoodCost: () => _showComingSoon(context, 'Food Cost'),
-      onGymMember: () => _showComingSoon(context, 'Gym Member'),
+      // null = belum siap: tile tampil redup & tidak bisa diketuk.
+      onAwardRecognition: null,
+      onBudgetDepartment: null,
+      onCatalogKitchen: null,
+      onDailyWorker: null,
+      onDormitoryBie: null,
+      onEstProjectMonitoring: null,
+      onExportImport: null,
+      onFacility: null,
+      onFoodCost: null,
+      onGymMember: null,
       onIndentVehicle: () => Navigator.of(context).push(
         MaterialPageRoute(builder: (_) => IndentVehicleScreen()),
       ),
-      onInfrastucture: () => _showComingSoon(context, 'Infrastucture'),
+      onInfrastucture: null,
     );
 
     return Scaffold(

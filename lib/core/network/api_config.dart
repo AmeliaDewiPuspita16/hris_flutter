@@ -51,6 +51,10 @@ class ApiConfig {
   /// [ApiClient.getEnvelope].
   static const String itRequest = '/api/portal/apps/it_request';
 
+  /// Daftar driver untuk dropdown Asign Vehicle (role admin driver).
+  /// Responnya array polos, bukan amplop {data: ...}
+  static const String indentDrivers = '/api/indent/admin/list_driver';
+
 
   // --------------------------------- HRIS ----------------------------
 

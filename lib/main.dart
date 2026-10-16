@@ -15,6 +15,7 @@ import 'features/home/data/announcement_repository.dart';
 import 'features/home/data/approvals_waiting_repository.dart';
 import 'features/menu_portal/onlineapps/procurement/data/procurement_repository.dart';
 import 'features/menu_portal/onlineapps/work_order/it_request/data/it_request_repository.dart';
+import 'features/menu_portal/data_app/indent_vehicle/data/indent_vehicle_repository.dart';
 import 'features/overtime_request/data/overtime_repository.dart';
 import 'features/pengajuan/data/pengajuan_repository.dart';
 import 'features/profil/data/profil_repository.dart';
@@ -44,11 +45,13 @@ Future<void> main() async {
       announcementRepository: AnnouncementRepository(apiClient: apiClient),
       procurementRepository: ProcurementRepository(apiClient: apiClient),
       itRequestRepository: ItRequestRepository(apiClient: apiClient),
+      indentVehicleRepository: IndentVehicleRepository(apiClient: apiClient),
       profilRepository: ProfilRepository(apiClient: apiClient),
       absensiRepository: AbsensiRepository(apiClient: apiClient),
       pengajuanRepository: PengajuanRepository(apiClient: apiClient),
       overtimeRepository: OvertimeRepository(apiClient: apiClient),
-      approvalsWaitingRepository: ApprovalsWaitingRepository(apiClient: apiClient),
+      approvalsWaitingRepository:
+          ApprovalsWaitingRepository(apiClient: apiClient),
     ),
   );
 }
@@ -61,6 +64,7 @@ class MyApp extends StatelessWidget {
     AnnouncementRepository? announcementRepository,
     ProcurementRepository? procurementRepository,
     ItRequestRepository? itRequestRepository,
+    IndentVehicleRepository? indentVehicleRepository,
     ProfilRepository? profilRepository,
     AbsensiRepository? absensiRepository,
     PengajuanRepository? pengajuanRepository,
@@ -72,16 +76,18 @@ class MyApp extends StatelessWidget {
             AnnouncementRepository(apiClient: ApiClient()),
         procurementRepository = procurementRepository ??
             ProcurementRepository(apiClient: ApiClient()),
-        itRequestRepository = itRequestRepository ??
-            ItRequestRepository(apiClient: ApiClient()),
-        profilRepository = profilRepository ??
-            ProfilRepository(apiClient: ApiClient()),
-        absensiRepository = absensiRepository ??
-            AbsensiRepository(apiClient: ApiClient()),
-        pengajuanRepository = pengajuanRepository ??
-            PengajuanRepository(apiClient: ApiClient()),
-        overtimeRepository = overtimeRepository ??
-            OvertimeRepository(apiClient: ApiClient()),
+        itRequestRepository =
+            itRequestRepository ?? ItRequestRepository(apiClient: ApiClient()),
+        indentVehicleRepository = indentVehicleRepository ??
+            IndentVehicleRepository(apiClient: ApiClient()),
+        profilRepository =
+            profilRepository ?? ProfilRepository(apiClient: ApiClient()),
+        absensiRepository =
+            absensiRepository ?? AbsensiRepository(apiClient: ApiClient()),
+        pengajuanRepository =
+            pengajuanRepository ?? PengajuanRepository(apiClient: ApiClient()),
+        overtimeRepository =
+            overtimeRepository ?? OvertimeRepository(apiClient: ApiClient()),
         approvalsWaitingRepository = approvalsWaitingRepository ??
             ApprovalsWaitingRepository(apiClient: ApiClient());
 
@@ -90,6 +96,7 @@ class MyApp extends StatelessWidget {
   final AnnouncementRepository announcementRepository;
   final ProcurementRepository procurementRepository;
   final ItRequestRepository itRequestRepository;
+  final IndentVehicleRepository indentVehicleRepository;
   final ProfilRepository profilRepository;
   final AbsensiRepository absensiRepository;
   final PengajuanRepository pengajuanRepository;
@@ -109,6 +116,7 @@ class MyApp extends StatelessWidget {
         RepositoryProvider.value(value: announcementRepository),
         RepositoryProvider.value(value: procurementRepository),
         RepositoryProvider.value(value: itRequestRepository),
+        RepositoryProvider.value(value: indentVehicleRepository),
         RepositoryProvider.value(value: profilRepository),
         RepositoryProvider.value(value: absensiRepository),
         RepositoryProvider.value(value: pengajuanRepository),

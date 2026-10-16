@@ -17,13 +17,6 @@ import '../widgets/online_app_tile.dart';
 class OnlineAppsScreen extends StatelessWidget {
   const OnlineAppsScreen({super.key});
 
-  /// Placeholder untuk app yang belum punya halamannya sendiri.
-  void _showComingSoon(BuildContext context, String label) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('$label belum tersedia')),
-    );
-  }
-
   /// "Work Order" punya 2 sub-pilihan (IT / EST Request), jadi tampil lewat
   /// bottom sheet dulu sebelum pindah ke halaman yang sesuai.
   Future<void> _openWorkOrder(BuildContext context) async {
@@ -51,13 +44,14 @@ class OnlineAppsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final items = OnlineAppsDemoData.items(
-      onInventory: () => _showComingSoon(context, 'Inventory'),
-      onMeterReading: () => _showComingSoon(context, 'Meter Reading'),
-      onReservation: () => _showComingSoon(context, 'Reservation'),
+      // null = belum siap: tile tampil redup & tidak bisa diketuk.
+      onInventory: null,
+      onMeterReading: null,
+      onReservation: null,
       onProcurement: () => Navigator.of(context).push(
         MaterialPageRoute(builder: (_) => const ProcurementPage()),
       ),
-      onTenantFeedback: () => _showComingSoon(context, 'Tenant Feedback'),
+      onTenantFeedback: null,
       onWorkOrder: () => _openWorkOrder(context),
       onHseWorkRequest: () => Navigator.of(context).push(
         MaterialPageRoute(builder: (_) => HseWorkRequestListScreen()),

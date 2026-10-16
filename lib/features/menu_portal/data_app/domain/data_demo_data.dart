@@ -11,18 +11,18 @@ class DataDemoData {
   DataDemoData._();
 
   static List<DataItem> items({
-    required VoidCallback onAwardRecognition,
-    required VoidCallback onBudgetDepartment,
-    required VoidCallback onCatalogKitchen,
-    required VoidCallback onDailyWorker,
-    required VoidCallback onDormitoryBie,
-    required VoidCallback onEstProjectMonitoring,
-    required VoidCallback onExportImport,
-    required VoidCallback onFacility,
-    required VoidCallback onFoodCost,
-    required VoidCallback onGymMember,
-    required VoidCallback onIndentVehicle,
-    required VoidCallback onInfrastucture,
+    required VoidCallback? onAwardRecognition,
+    required VoidCallback? onBudgetDepartment,
+    required VoidCallback? onCatalogKitchen,
+    required VoidCallback? onDailyWorker,
+    required VoidCallback? onDormitoryBie,
+    required VoidCallback? onEstProjectMonitoring,
+    required VoidCallback? onExportImport,
+    required VoidCallback? onFacility,
+    required VoidCallback? onFoodCost,
+    required VoidCallback? onGymMember,
+    required VoidCallback? onIndentVehicle,
+    required VoidCallback? onInfrastucture,
   }) =>
       [
         DataItem(

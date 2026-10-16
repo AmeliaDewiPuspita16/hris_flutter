@@ -28,7 +28,10 @@ class MenuListTile extends StatelessWidget {
   final Color color;
   final Color background;
   final Widget subtitle;
-  final VoidCallback onTap;
+
+  /// Null = menu belum siap; pemanggil membungkus tile dengan `NotReady`
+  /// supaya tampil redup. Tanpa [onTap], chevron tetap ditampilkan.
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
