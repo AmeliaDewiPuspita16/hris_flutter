@@ -353,6 +353,17 @@ class _BerandaScreenState extends State<BerandaScreen> {
     }
   }
 
+  /// Dipanggil saat tab Home ditarik ke bawah (pull-to-refresh). Keempat
+  /// permintaan independen, jadi dijalankan bersamaan alih-alih berurutan.
+  /// Setiap _load... sudah menangani error-nya sendiri, jadi di sini cukup
+  /// ditunggu semuanya selesai.
+  Future<void> _refreshHome() => Future.wait([
+        _loadAnnouncements(),
+        _loadTodayAttendance(),
+        _loadLeaveApprovalCount(),
+        _loadApprovalsWaiting(),
+      ]);
+
   int get _itApprovalCount => _approvalsWaiting.itRequest;
   int get _estApprovalCount => _approvalsWaiting.estWorkOrder;
   int get _indentVehicleApprovalCount => _approvalsWaiting.indentVehicle;
@@ -534,77 +545,85 @@ class _BerandaScreenState extends State<BerandaScreen> {
       // supaya warna hijaunya tidak terpotong garis putih di atas.
       child: SafeArea(
         top: false,
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              HomeTopHeader(
-                role: _role,
-                user: widget.user,
-              ),
-              ClockStatusCard(
-                status: _todayAttendance,
-                isLoading: _loadingAttendance,
-                errorMessage: _attendanceError,
-                date: DateTime.now(),
-                onActionTap: _openAttendance,
-                onRetry: _loadTodayAttendance,
-              ),
-              // SEMENTARA: tanpa gerbang role dulu (lihat catatan di
-              // ApprovalSummaryBanner) — dulu ini TeamBanner di bawah Main
-              // Menu, dipindah ke sini (pola awal HRIS: di bawah header, di
-              // atas Main Menu) sekaligus digabung 3 modul.
-              ApprovalSummaryBanner(
-                isLoading: _loadingApprovalsWaiting,
-                leaveCount: _leaveApprovalCount,
-                itCount: _itApprovalCount,
-                estCount: _estApprovalCount,
-                indentVehicleCount: _indentVehicleApprovalCount,
-                eprocurementCount: _eprocurementApprovalCount,
-                onTapAll: _openApprovalNotifications,
-                onTapLeave: _openLeaveApproval,
-                onTapIt: _openItApproval,
-                onTapEst: _openEstApproval,
-                onTapIndentVehicle: _openIndentVehicleApproval,
-                onTapEprocurement: _openEprocurementApproval,
-              ),
-              //PendingRequestCard(
-              //  count: 2,
-              //  description: 'Overtime · Business Trip',
-              //  onTap: () => _openTab(_pengajuanTab),
-              //),
-              LayananSection(services: _buildServices()),
-              SaldoSection(
-                balances: HomeDemoData.quotaBalancesFor(_role),
-                onSeeAll: _openLeaveRequest,
-              ),
-              AnnouncementSection(
-                announcements: _announcements,
-                isLoading: _loadingAnnouncements,
-                errorMessage: _announcementsError,
-                onRetry: _loadAnnouncements,
-                onTapAnnouncement: (announcement) =>
-                    AnnouncementDetailSheet.show(context, announcement),
-                // Izin hr-announcement-post: role hrga dan admin. Selama
-                // belum ada sesi (mis. saat pratinjau), jatuh ke role demo.
-                canCreate: widget.user?.canPublishAnnouncement ??
-                    (_role == Role.hrPublisher),
-                onCreateTap: _openCreateAnnouncement,
-              ),
-              if (_role == Role.admin)
-                // SEMENTARA
-                TeamBanner(
-                  icon: Icons.groups_outlined,
-                  iconColor: AppColors.primaryMid,
-                  iconBackground: AppColors.primaryLight,
-                  title: 'Manage Department Team',
-                  subtitle: '18 employees · Update leave balance',
-                  onTap: _openKelolaTim,
+        child: RefreshIndicator(
+          onRefresh: _refreshHome,
+          color: AppColors.primary,
+          child: SingleChildScrollView(
+            // Tanpa ini, tarikan ke bawah tidak terdeteksi saat kontennya
+            // lebih pendek dari tinggi layar (mis. layar besar atau role
+            // dengan sedikit menu) karena tidak ada overscroll untuk ditarik.
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                HomeTopHeader(
+                  role: _role,
+                  user: widget.user,
                 ),
-              const ActivitySection(
-                activities: HomeDemoData.recentActivities,
-              ),
-            ],
+                ClockStatusCard(
+                  status: _todayAttendance,
+                  isLoading: _loadingAttendance,
+                  errorMessage: _attendanceError,
+                  date: DateTime.now(),
+                  onActionTap: _openAttendance,
+                  onRetry: _loadTodayAttendance,
+                ),
+                // SEMENTARA: tanpa gerbang role dulu (lihat catatan di
+                // ApprovalSummaryBanner) — dulu ini TeamBanner di bawah Main
+                // Menu, dipindah ke sini (pola awal HRIS: di bawah header, di
+                // atas Main Menu) sekaligus digabung 3 modul.
+                ApprovalSummaryBanner(
+                  isLoading: _loadingApprovalsWaiting,
+                  leaveCount: _leaveApprovalCount,
+                  itCount: _itApprovalCount,
+                  estCount: _estApprovalCount,
+                  indentVehicleCount: _indentVehicleApprovalCount,
+                  eprocurementCount: _eprocurementApprovalCount,
+                  onTapAll: _openApprovalNotifications,
+                  onTapLeave: _openLeaveApproval,
+                  onTapIt: _openItApproval,
+                  onTapEst: _openEstApproval,
+                  onTapIndentVehicle: _openIndentVehicleApproval,
+                  onTapEprocurement: _openEprocurementApproval,
+                ),
+                //PendingRequestCard(
+                //  count: 2,
+                //  description: 'Overtime · Business Trip',
+                //  onTap: () => _openTab(_pengajuanTab),
+                //),
+                LayananSection(services: _buildServices()),
+                SaldoSection(
+                  balances: HomeDemoData.quotaBalancesFor(_role),
+                  onSeeAll: _openLeaveRequest,
+                ),
+                AnnouncementSection(
+                  announcements: _announcements,
+                  isLoading: _loadingAnnouncements,
+                  errorMessage: _announcementsError,
+                  onRetry: _loadAnnouncements,
+                  onTapAnnouncement: (announcement) =>
+                      AnnouncementDetailSheet.show(context, announcement),
+                  // Izin hr-announcement-post: role hrga dan admin. Selama
+                  // belum ada sesi (mis. saat pratinjau), jatuh ke role demo.
+                  canCreate: widget.user?.canPublishAnnouncement ??
+                      (_role == Role.hrPublisher),
+                  onCreateTap: _openCreateAnnouncement,
+                ),
+                if (_role == Role.admin)
+                  // SEMENTARA
+                  TeamBanner(
+                    icon: Icons.groups_outlined,
+                    iconColor: AppColors.primaryMid,
+                    iconBackground: AppColors.primaryLight,
+                    title: 'Manage Department Team',
+                    subtitle: '18 employees · Update leave balance',
+                    onTap: _openKelolaTim,
+                  ),
+                const ActivitySection(
+                  activities: HomeDemoData.recentActivities,
+                ),
+              ],
+            ),
           ),
         ),
       ),
