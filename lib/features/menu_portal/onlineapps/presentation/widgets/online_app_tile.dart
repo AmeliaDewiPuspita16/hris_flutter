@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_text_styles.dart';
+import '../../../../../core/widgets/not_ready.dart';
 import '../../../shared/presentation/widgets/menu_list_tile.dart';
 import '../../domain/online_app_item.dart';
 
@@ -15,18 +16,21 @@ class OnlineAppTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MenuListTile(
-      icon: item.icon,
-      label: item.label,
-      color: item.color,
-      background: item.background,
-      onTap: item.onTap,
-      subtitle: Text(
-        item.department,
-        style: AppTextStyles.caption.copyWith(
-          color: AppColors.textMuted
-        ),
-      )
+    return NotReady(
+      isReady: item.isReady,
+      child: MenuListTile(
+        icon: item.icon,
+        label: item.label,
+        color: item.color,
+        background: item.background,
+        onTap: item.onTap,
+        subtitle: Text(
+          item.department,
+          style: AppTextStyles.caption.copyWith(
+            color: AppColors.textMuted
+          ),
+        )
+      ),
     );
   }
 }

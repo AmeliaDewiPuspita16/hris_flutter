@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../../core/widgets/not_ready.dart';
 import '../../../shared/presentation/widgets/menu_list_tile.dart';
 import '../../../shared/presentation/widgets/owner_badge_row.dart';
 import '../../domain/data_item.dart';
@@ -15,13 +16,16 @@ class DataTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MenuListTile(
-      icon: item.icon,
-      label: item.label,
-      color: item.color,
-      background: item.background,
-      onTap: item.onTap,
-      subtitle: OwnerBadgeRow(owners: item.owners),
+    return NotReady(
+      isReady: item.isReady,
+      child: MenuListTile(
+        icon: item.icon,
+        label: item.label,
+        color: item.color,
+        background: item.background,
+        onTap: item.onTap,
+        subtitle: OwnerBadgeRow(owners: item.owners),
+      ),
     );
   }
 }

@@ -12,13 +12,13 @@ class OnlineAppsDemoData {
   OnlineAppsDemoData._();
 
   static List<OnlineAppItem> items({
-    required VoidCallback onInventory,
-    required VoidCallback onMeterReading,
-    required VoidCallback onReservation,
-    required VoidCallback onProcurement,
-    required VoidCallback onTenantFeedback,
-    required VoidCallback onWorkOrder,
-    required VoidCallback onHseWorkRequest,
+    required VoidCallback? onInventory,
+    required VoidCallback? onMeterReading,
+    required VoidCallback? onReservation,
+    required VoidCallback? onProcurement,
+    required VoidCallback? onTenantFeedback,
+    required VoidCallback? onWorkOrder,
+    required VoidCallback? onHseWorkRequest,
   }) =>
       [
         OnlineAppItem(

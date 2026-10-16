@@ -168,6 +168,52 @@ class ApiClient {
     ).then((envelope) => _expectList(envelope['data'], 'GET', uri));
   }
 
+
+    /// GET untuk endpoint yang badan respons-nya langsung berupa array, tanpa
+  /// amplop — mis. `GET /api/indent/admin/list_driver`. Kalau server ternyata
+  /// membungkusnya `{data: [...]}`, isinya tetap diambil.
+  Future<List<dynamic>> getRawList(
+    String path, {
+    bool authenticated = true,
+  }) async {
+    final uri = _uriFor(path);
+    AppLogger.info('GET $uri');
+
+    final response = await _sendRaw(
+      'GET',
+      uri,
+      () => _httpClient.get(
+        uri,
+        headers: _headers(authenticated: authenticated),
+      ),
+    );
+
+    final status = response.statusCode;
+    if (status < 200 || status >= 300) {
+      // Galat tetap lewat jalur lama supaya jenis & pesannya konsisten
+      // (401 -> unauthorized, 422 -> badRequest, dst.). Baris ini selalu
+      // melempar; `throw` di bawahnya hanya untuk memuaskan compiler.
+      _unwrap(response);
+      throw const ApiException.server();
+    }
+
+    Object? decoded;
+    try {
+      decoded = jsonDecode(response.body);
+    } on FormatException {
+      decoded = null;
+    }
+
+    if (decoded is List) return decoded;
+    if (decoded is Map<String, dynamic> && decoded['data'] is List) {
+      return decoded['data'] as List<dynamic>;
+    }
+
+    _logShapeMismatch('GET', uri, 'list', decoded);
+    throw const ApiException.server();
+  }
+
+
   /// Badan request untuk keperluan log, dengan field rahasia disamarkan.
   /// Password tidak boleh pernah sampai ke console atau berkas log.
   String _redactedBody(Map<String, dynamic>? body) {
@@ -201,7 +247,7 @@ class ApiClient {
 
   /// Menjalankan request lalu menerjemahkan setiap cara gagalnya menjadi
   /// [ApiException].
-  Future<Map<String, dynamic>> _send(
+  Future<http.Response> _sendRaw(
     String method,
     Uri uri,
     Future<http.Response> Function() request,
@@ -229,8 +275,16 @@ class ApiClient {
       AppLogger.info('$method $uri -> $status ${_truncate(response.body)}');
     }
 
-    return _unwrap(response);
+    return response;
   }
+
+  /// kirim, lalu buka amplop {code,status,data}.
+  Future<Map<String, dynamic>> _send(
+    String method,
+    Uri uri,
+    Future<http.Response> Function() request,
+  ) async =>
+      _unwrap(await _sendRaw(method, uri, request));
 
   static String _truncate(String body, [int max = 500]) =>
       body.length <= max ? body : '${body.substring(0, max)}…';
@@ -283,7 +337,7 @@ class ApiClient {
     // {code, status, message, data}, sementara endpoint data referensi seperti
     // `GET /api/data/department` hanya mengirim {data}. Karena itu `status`
     // hanya diperiksa kalau memang dikirim — ketiadaannya bukan tanda gagal.
-    if (envelope.containsKey('status') && envelope['status'] != 'success') {
+     if (envelope.containsKey('status') && !_isSuccessStatus(envelope['status'])) {
       AppLogger.info(
         'Amplop menandai gagal: ${_truncate(response.body)}',
       );
@@ -302,6 +356,11 @@ class ApiClient {
 
     return envelope;
   }
+
+    /// `status` di amplop bisa berupa kata 'success' (login, dll.) atau angka
+  /// HTTP seperti 200 (Indent Vehicle). Keduanya berarti sukses.
+  bool _isSuccessStatus(dynamic status) =>
+      status == 'success' || (status is num && status >= 200 && status < 300);
 
   /// Memastikan `data` berbentuk objek, untuk [post] dan [get].
   Map<String, dynamic> _expectMap(dynamic data, String method, Uri uri) {

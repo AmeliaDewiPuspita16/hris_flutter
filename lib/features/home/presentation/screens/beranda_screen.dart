@@ -388,15 +388,6 @@ class _BerandaScreenState extends State<BerandaScreen> {
     );
   }
 
-  /// Buka Indent Vehicle langsung di tab 1 "Supervisor Approval".
-  void _openIndentApproval() {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => IndentVehicleScreen(initialTabIndex: 1),
-      ),
-    );
-  }
-
   /// SEMENTARA: EST belum punya tab Approve Request sendiri seperti IT
   /// (menu EST Request baru sisi requester) — untuk sekarang jatuh ke
   /// Notifications.

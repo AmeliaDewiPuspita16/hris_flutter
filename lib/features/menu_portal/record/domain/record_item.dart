@@ -23,5 +23,9 @@ class RecordItem {
   final Color color;
   final Color background;
 
-  final VoidCallback onTap;
+  /// Null = fitur belum siap: tile tampil redup dan tidak bisa diketuk
+  /// (aturan sama dengan `isReady` di menu HRIS, tanpa label "Soon").
+  final VoidCallback? onTap;
+
+  bool get isReady => onTap != null;
 }

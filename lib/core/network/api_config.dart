@@ -51,6 +51,15 @@ class ApiConfig {
   /// [ApiClient.getEnvelope].
   static const String itRequest = '/api/portal/apps/it_request';
 
+  /// Daftar driver untuk dropdown Asign Vehicle (role admin driver).
+  /// Responnya array polos, bukan amplop {data: ...}
+  static const String indentDrivers = '/api/indent/admin/list_driver';
+
+  /// Daftar SEMUA indent (semua user) untuk tab "List of User Requests"
+  /// Respons dibungkus {message, status, data: [...]} dengan 'status
+  /// berupa angka 200 (bukan kata 'success')
+  static const String indent = '/api/indent';
+
 
   // --------------------------------- HRIS ----------------------------
 

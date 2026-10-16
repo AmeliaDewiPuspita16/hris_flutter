@@ -11,13 +11,13 @@ class RecordDemoData {
   RecordDemoData._();
 
   static List<RecordItem> items({
-    required VoidCallback onCompanyProfile,
-    required VoidCallback onContract,
-    required VoidCallback onEngineeringDrawing,
-    required VoidCallback onImsDocument,
-    required VoidCallback onLicensePermitCertificate,
-    required VoidCallback onNewsClipping,
-    required VoidCallback onPhotoVideo,
+    required VoidCallback? onCompanyProfile,
+    required VoidCallback? onContract,
+    required VoidCallback? onEngineeringDrawing,
+    required VoidCallback? onImsDocument,
+    required VoidCallback? onLicensePermitCertificate,
+    required VoidCallback? onNewsClipping,
+    required VoidCallback? onPhotoVideo,
   }) =>
       [
         RecordItem(
