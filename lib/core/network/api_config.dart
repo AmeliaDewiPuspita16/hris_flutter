@@ -55,6 +55,11 @@ class ApiConfig {
   /// Responnya array polos, bukan amplop {data: ...}
   static const String indentDrivers = '/api/indent/admin/list_driver';
 
+  /// Daftar SEMUA indent (semua user) untuk tab "List of User Requests"
+  /// Respons dibungkus {message, status, data: [...]} dengan 'status
+  /// berupa angka 200 (bukan kata 'success')
+  static const String indent = '/api/indent';
+
 
   // --------------------------------- HRIS ----------------------------
 

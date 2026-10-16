@@ -1,15 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../../../core/theme/app_colors.dart';
 import '../../../../../../core/theme/app_text_styles.dart';
+import '../../../../../../core/widgets/app_error_view.dart';
 import '../../../../../../core/widgets/back_header.dart';
+import '../../../../../auth/presentation/bloc/auth/auth_bloc.dart';
+import '../../data/indent_vehicle_repository.dart';
 import '../../domain/indent_approval_demo_data.dart';
 import '../../domain/indent_approval_item.dart';
 import '../../domain/indent_assign_result.dart';
 import '../../domain/indent_pending_demo_data.dart';
 import '../../domain/indent_pending_item.dart';
-import '../../domain/indent_request_demo_data.dart';
 import '../../domain/indent_request_item.dart';
+import '../bloc/list/indent_request_list_bloc.dart';
+import '../bloc/list/indent_request_list_event.dart';
+import '../bloc/list/indent_request_list_state.dart';
 import '../widgets/indent_assign_sheet.dart';
 import '../widgets/indent_feedback_banner.dart';
 import '../widgets/indent_feedback_sheet.dart';
@@ -49,23 +55,39 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
 
   late int _tabIndex = widget.initialTabIndex;
 
-  List<IndentRequestItem> _items = IndentRequestDemoData.items();
+  // Daftar "List of User Requests" dipegang bloc (data dari API). Dibuat di
+  // sini, bukan lewat BlocProvider, supaya handler di State ini bisa
+  // memakainya langsung.
+  late final IndentRequestListBloc _requestBloc;
+
   List<IndentPendingItem> _pending = IndentPendingDemoData.items();
   List<IndentApprovalItem> _approvals = IndentApprovalDemoData.items();
   final _searchController = TextEditingController();
   String _query = '';
 
   @override
+  void initState() {
+    super.initState();
+    final user = context.read<AuthBloc>().state.session?.user;
+    _requestBloc = IndentRequestListBloc(
+      repository: context.read<IndentVehicleRepository>(),
+      currentUserId: user?.id,
+      currentUserName: user?.name,
+    )..add(const IndentRequestListStarted());
+  }
+
+  @override
   void dispose() {
+    _requestBloc.close();
     _searchController.dispose();
     super.dispose();
   }
 
-  List<IndentRequestItem> get _filtered {
-    if (_query.trim().isEmpty) return _items;
+  List<IndentRequestItem> _filterRequests(List<IndentRequestItem> items) {
+    if (_query.trim().isEmpty) return items;
 
     final q = _query.trim().toLowerCase();
-    return _items.where((r) {
+    return items.where((r) {
       return r.name.toLowerCase().contains(q) ||
           r.destination.toLowerCase().contains(q) ||
           r.remark.toLowerCase().contains(q) ||
@@ -176,12 +198,9 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
 
     if (result == null || !mounted) return;
 
-    setState(() {
-      _items = [
-        for (final r in _items)
-          if (r.id == item.id) r.copyWith(rating: result.rating) else r,
-      ];
-    });
+    _requestBloc.add(
+      IndentRequestLocalUpdated(item.copyWith(rating: result.rating)),
+    );
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Terima kasih atas feedback Anda')),
@@ -200,12 +219,7 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
 
     if (updated == null || !mounted) return;
 
-    setState(() {
-      _items = [
-        for (final r in _items)
-          if (r.id == updated.id) updated else r,
-      ];
-    });
+    _requestBloc.add(IndentRequestLocalUpdated(updated));
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Request updated')),
@@ -221,9 +235,7 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
     final confirmed = await IndentDeleteDialog.show(context, item);
     if (!confirmed || !mounted) return;
 
-    setState(() {
-      _items = _items.where((r) => r.id != item.id).toList();
-    });
+    _requestBloc.add(IndentRequestLocalRemoved(item.id));
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Request dihapus')),
@@ -239,8 +251,8 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
 
     if (newItem == null || !mounted) return;
 
+    _requestBloc.add(IndentRequestLocalAdded(newItem));
     setState(() {
-      _items = [newItem, ..._items];
       // Pastikan hasilnya langsung kelihatan, dan kosongkan search supaya
       // request baru tidak tersaring.
       _tabIndex = 2;
@@ -353,38 +365,77 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
   }
 
   Widget _buildListOfRequests() {
-    // Item yang menunggu feedback ditaruh paling atas supaya langsung
-    // terlihat; urutan item lain tidak berubah (sort Dart bersifat stabil
-    // jika memakai pola ini).
-    final results = [
-      ..._filtered.where((r) => r.needsFeedback),
-      ..._filtered.where((r) => !r.needsFeedback),
-    ];
+    return BlocBuilder<IndentRequestListBloc, IndentRequestListState>(
+      bloc: _requestBloc,
+      builder: (context, state) {
+        if (state.isFirstLoad) {
+          return const Center(child: CircularProgressIndicator());
+        }
 
-    if (results.isEmpty) {
-      return Center(
-          child: Text('Tidak ada data', style: AppTextStyles.bodyMuted));
-    }
-
-    return ListView.separated(
-      // Padding bawah ekstra (88) supaya baris terakhir tidak tertutup FAB.
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 88),
-      itemCount: results.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 10),
-      itemBuilder: (context, index) {
-        final item = results[index];
-        if (item.needsFeedback) {
-          return IndentFeedbackBanner(
-            item: item,
-            onGiveFeedback: () => _giveFeedback(item),
+        if (state.status == IndentRequestListStatus.failure) {
+          return AppErrorView(
+            message: state.errorMessage ?? 'Gagal memuat daftar request.',
+            onRetry: () => _requestBloc.add(const IndentRequestListRefreshed()),
           );
         }
-        return IndentRequestRow(
-          item: item,
-          onDelete: () => _deleteIndent(item),
-          onEdit: () => _editIndent(item),
+
+        final filtered = _filterRequests(state.items);
+
+        // Item yang menunggu feedback ditaruh paling atas supaya langsung
+        // terlihat; urutan item lain tidak berubah (sort Dart bersifat
+        // stabil jika memakai pola ini).
+        final results = [
+          ...filtered.where((r) => r.needsFeedback),
+          ...filtered.where((r) => !r.needsFeedback),
+        ];
+
+        return RefreshIndicator(
+          onRefresh: _refreshRequests,
+          child: results.isEmpty
+              // ListView (bukan Center saja) supaya tarik-untuk-refresh
+              // tetap bisa dipakai saat daftar kosong.
+              ? ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  children: [
+                    const SizedBox(height: 120),
+                    Center(
+                      child: Text('Tidak ada data',
+                          style: AppTextStyles.bodyMuted),
+                    ),
+                  ],
+                )
+              : ListView.separated(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  // Padding bawah ekstra (88) supaya baris terakhir tidak
+                  // tertutup FAB.
+                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 88),
+                  itemCount: results.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 10),
+                  itemBuilder: (context, index) {
+                    final item = results[index];
+                    if (item.needsFeedback) {
+                      return IndentFeedbackBanner(
+                        item: item,
+                        onGiveFeedback: () => _giveFeedback(item),
+                      );
+                    }
+                    return IndentRequestRow(
+                      item: item,
+                      onDelete: () => _deleteIndent(item),
+                      onEdit: () => _editIndent(item),
+                    );
+                  },
+                ),
         );
       },
     );
+  }
+
+  /// Menunggu sampai muat ulang selesai supaya indikator tarik-refresh
+  /// berhenti tepat saat datanya sudah datang.
+  Future<void> _refreshRequests() async {
+    _requestBloc.add(const IndentRequestListRefreshed());
+    await _requestBloc.stream
+        .firstWhere((s) => s.status != IndentRequestListStatus.loading);
   }
 }

@@ -212,7 +212,7 @@ class ApiClient {
     _logShapeMismatch('GET', uri, 'list', decoded);
     throw const ApiException.server();
   }
-  
+
 
   /// Badan request untuk keperluan log, dengan field rahasia disamarkan.
   /// Password tidak boleh pernah sampai ke console atau berkas log.
@@ -337,7 +337,7 @@ class ApiClient {
     // {code, status, message, data}, sementara endpoint data referensi seperti
     // `GET /api/data/department` hanya mengirim {data}. Karena itu `status`
     // hanya diperiksa kalau memang dikirim — ketiadaannya bukan tanda gagal.
-    if (envelope.containsKey('status') && envelope['status'] != 'success') {
+     if (envelope.containsKey('status') && !_isSuccessStatus(envelope['status'])) {
       AppLogger.info(
         'Amplop menandai gagal: ${_truncate(response.body)}',
       );
@@ -356,6 +356,11 @@ class ApiClient {
 
     return envelope;
   }
+
+    /// `status` di amplop bisa berupa kata 'success' (login, dll.) atau angka
+  /// HTTP seperti 200 (Indent Vehicle). Keduanya berarti sukses.
+  bool _isSuccessStatus(dynamic status) =>
+      status == 'success' || (status is num && status >= 200 && status < 300);
 
   /// Memastikan `data` berbentuk objek, untuk [post] dan [get].
   Map<String, dynamic> _expectMap(dynamic data, String method, Uri uri) {
