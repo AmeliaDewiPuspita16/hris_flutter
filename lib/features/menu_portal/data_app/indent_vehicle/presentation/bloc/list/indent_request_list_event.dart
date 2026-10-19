@@ -25,7 +25,7 @@ class IndentRequestListNextPageRequested extends IndentRequestListEvent {
 /// SEMENTARA — aksi di bawah ini masih lokal (belum tersambung ke API),
 /// jadi layar yang menjalankannya memberi tahu Bloc supaya tampilan ikut
 /// berubah. Dihapus satu per satu begitu endpoint-nya disambungkan
-/// (feedback, hapus request), karena nanti cukup memuat ulang daftar.
+/// (feedback), karena nanti cukup memuat ulang daftar.
 /// Tambah dan edit request sudah tersambung: layar langsung memicu
 /// [IndentRequestListRefreshed] setelah form berhasil menyimpan.
 
@@ -36,7 +36,8 @@ class IndentRequestLocalUpdated extends IndentRequestListEvent {
   final IndentRequestItem item;
 }
 
-/// Request yang dihapus dari daftar.
+/// Request yang sudah dihapus di server; dibuang dari daftar tanpa memuat
+/// ulang supaya posisi scroll tetap.
 class IndentRequestLocalRemoved extends IndentRequestListEvent {
   const IndentRequestLocalRemoved(this.id);
 

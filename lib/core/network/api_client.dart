@@ -89,7 +89,8 @@ class ApiClient {
 
         if (fields != null) request.fields.addAll(fields);
 
-        for (final entry in files?.entries ?? const <MapEntry<String, List<String>>>[]) {
+        for (final entry
+            in files?.entries ?? const <MapEntry<String, List<String>>>[]) {
           for (final filePath in entry.value) {
             request.files.add(
               await http.MultipartFile.fromPath(entry.key, filePath),
@@ -168,8 +169,7 @@ class ApiClient {
     ).then((envelope) => _expectList(envelope['data'], 'GET', uri));
   }
 
-
-    /// GET untuk endpoint yang badan respons-nya langsung berupa array, tanpa
+  /// GET untuk endpoint yang badan respons-nya langsung berupa array, tanpa
   /// amplop — mis. `GET /api/indent/admin/list_driver`. Kalau server ternyata
   /// membungkusnya `{data: [...]}`, isinya tetap diambil.
   Future<List<dynamic>> getRawList(
@@ -213,6 +213,51 @@ class ApiClient {
     throw const ApiException.server();
   }
 
+  /// DELETE tanpa mengharapkan isi: dipakai endpoint yang membalas ringkas,
+  /// mis. `DELETE /api/indent/{id}` -> `{"message":"success","status":200,
+  /// "data":true}`. Yang dicek hanya keberhasilannya; `data` boleh bentuk apa
+  /// saja. Melempar [ApiException] bila gagal.
+  Future<void> delete(
+    String path, {
+    bool authenticated = true,
+  }) async {
+    final uri = _uriFor(path);
+    AppLogger.info('DELETE $uri');
+
+    final response = await _sendRaw(
+      'DELETE',
+      uri,
+      () => _httpClient.delete(
+        uri,
+        headers: _headers(authenticated: authenticated),
+      ),
+    );
+
+    final status = response.statusCode;
+    if (status < 200 || status >= 300) {
+      // Galat lewat jalur yang sama dengan request lain (401, 404, 422, ...).
+      // Baris ini selalu melempar; `throw` di bawahnya hanya untuk compiler.
+      _unwrap(response);
+      throw const ApiException.server();
+    }
+
+    // HTTP 2xx tapi amplopnya bisa tetap mengabarkan gagal, mis.
+    // {"message":"Indent not found","status":404}.
+    final envelope = _decode(response.body);
+    if (envelope != null &&
+        envelope.containsKey('status') &&
+        !_isSuccessStatus(envelope['status'])) {
+      AppLogger.info('Amplop menandai gagal: ${_truncate(response.body)}');
+      throw ApiException(
+        ApiErrorKind.server,
+        _messageFrom(envelope) ?? const ApiException.server().message,
+      );
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Pembantu internal (private)
+  // ---------------------------------------------------------------------------
 
   /// Badan request untuk keperluan log, dengan field rahasia disamarkan.
   /// Password tidak boleh pernah sampai ke console atau berkas log.
@@ -222,9 +267,8 @@ class ApiClient {
     const secretKeys = {'password', 'password_confirmation', 'token'};
     final safe = {
       for (final entry in body.entries)
-        entry.key: secretKeys.contains(entry.key.toLowerCase())
-            ? '***'
-            : entry.value,
+        entry.key:
+            secretKeys.contains(entry.key.toLowerCase()) ? '***' : entry.value,
     };
     return jsonEncode(safe);
   }
@@ -278,7 +322,7 @@ class ApiClient {
     return response;
   }
 
-  /// kirim, lalu buka amplop {code,status,data}.
+  /// Kirim, lalu buka amplop {code,status,data}.
   Future<Map<String, dynamic>> _send(
     String method,
     Uri uri,
@@ -286,7 +330,7 @@ class ApiClient {
   ) async =>
       _unwrap(await _sendRaw(method, uri, request));
 
-  static String _truncate(String body, [int max = 500]) =>
+  String _truncate(String body, [int max = 500]) =>
       body.length <= max ? body : '${body.substring(0, max)}…';
 
   /// Memeriksa amplop respons, atau melempar [ApiException] yang sesuai.
@@ -337,7 +381,8 @@ class ApiClient {
     // {code, status, message, data}, sementara endpoint data referensi seperti
     // `GET /api/data/department` hanya mengirim {data}. Karena itu `status`
     // hanya diperiksa kalau memang dikirim — ketiadaannya bukan tanda gagal.
-     if (envelope.containsKey('status') && !_isSuccessStatus(envelope['status'])) {
+    if (envelope.containsKey('status') &&
+        !_isSuccessStatus(envelope['status'])) {
       AppLogger.info(
         'Amplop menandai gagal: ${_truncate(response.body)}',
       );
@@ -357,7 +402,7 @@ class ApiClient {
     return envelope;
   }
 
-    /// `status` di amplop bisa berupa kata 'success' (login, dll.) atau angka
+  /// `status` di amplop bisa berupa kata 'success' (login, dll.) atau angka
   /// HTTP seperti 200 (Indent Vehicle). Keduanya berarti sukses.
   bool _isSuccessStatus(dynamic status) =>
       status == 'success' || (status is num && status >= 200 && status < 300);

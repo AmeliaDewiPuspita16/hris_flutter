@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../../../core/logging/app_logger.dart';
+import '../../../../../../core/network/api_exception.dart';
 import '../../../../../../core/theme/app_colors.dart';
 import '../../../../../../core/theme/app_text_styles.dart';
 import '../../../../../../core/widgets/app_error_view.dart';
@@ -232,20 +234,41 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
     );
   }
 
-  /// Hapus request milik sendiri. Hanya bisa selama belum di-approve
-  /// (tombolnya memang cuma muncul untuk [IndentRequestItem.canModify]).
-  ///
-  /// TODO(api): panggil endpoint hapus (belum ada). Server juga harus
-  /// menolak kalau request sudah di-approve (dobel pengaman).
+  /// Hapus request milik sendiri. Setelah user mengonfirmasi, permintaan
+  /// dikirim ke server; baris baru dibuang dari daftar kalau server sukses.
   Future<void> _deleteIndent(IndentRequestItem item) async {
     final confirmed = await IndentDeleteDialog.show(context, item);
     if (!confirmed || !mounted) return;
 
-    _requestBloc.add(IndentRequestLocalRemoved(item.id));
+    final id = int.tryParse(item.id);
+    if (id == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Request ini belum tersimpan di server.')),
+      );
+      return;
+    }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Request dihapus')),
-    );
+    try {
+      await context.read<IndentVehicleRepository>().deleteIndent(id);
+      if (!mounted) return;
+
+      // Server sudah menghapus; buang dari daftar tanpa memuat ulang supaya
+      // posisi scroll tidak lompat.
+      _requestBloc.add(IndentRequestLocalRemoved(item.id));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Request dihapus')),
+      );
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(e.message)));
+    } catch (e, stack) {
+      AppLogger.error('Hapus indent gagal karena galat tak terduga', e, stack);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Terjadi kesalahan tak terduga. Coba lagi.')),
+      );
+    }
   }
 
   /// Buka form Add Indent; kalau tersimpan di server, daftar dimuat ulang

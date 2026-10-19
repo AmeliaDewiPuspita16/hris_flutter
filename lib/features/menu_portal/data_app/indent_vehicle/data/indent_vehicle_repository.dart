@@ -1,3 +1,5 @@
+import 'package:http/http.dart';
+
 import '../../../../../core/logging/app_logger.dart';
 import '../../../../../core/network/api_client.dart';
 import '../../../../../core/network/api_config.dart';
@@ -124,6 +126,13 @@ class IndentVehicleRepository {
     );
   }
 
+  /// Menghapus request milik sendiri — `DELETE /api/indent/{id}`.
+  ///
+  /// TODO(api): belum diketahui apakah server menolak hapus pada request yang
+  /// sudah di-approve; sementara pembatasannya hanya di aplikasi.
+  Future<void> deleteIndent(int id) =>
+      _apiClient.delete('${ApiConfig.indent}/$id');
+
   /// id driver -> nama; kosong bila gagal. Tidak pernah melempar, karena
   /// kegagalan daftar driver tidak boleh membuat seluruh list request gagal.
   /// Hasil kosong akibat gagal tidak disimpan, jadi dicoba lagi lain kali.
@@ -135,7 +144,8 @@ class IndentVehicleRepository {
       final drivers = await fetchDrivers();
       return _driverNamesCache = {for (final d in drivers) d.id: d.name};
     } on ApiException catch (e) {
-      AppLogger.info('Daftar driver tidak dimuat untuk list indent: ${e.message}');
+      AppLogger.info(
+          'Daftar driver tidak dimuat untuk list indent: ${e.message}');
     } catch (e, stack) {
       AppLogger.error('Daftar driver gagal dimuat untuk list indent', e, stack);
     }
