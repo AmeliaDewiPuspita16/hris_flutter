@@ -1,10 +1,9 @@
-import 'package:http/http.dart';
-
 import '../../../../../core/logging/app_logger.dart';
 import '../../../../../core/network/api_client.dart';
 import '../../../../../core/network/api_config.dart';
 import '../../../../../core/network/api_exception.dart';
 import '../../../../../core/network/page_meta.dart';
+import '../domain/indent_approval_item.dart';
 import '../domain/indent_driver.dart';
 import '../domain/indent_request_item.dart';
 import '../domain/indent_request_page.dart';
@@ -133,6 +132,40 @@ class IndentVehicleRepository {
   Future<void> deleteIndent(int id) =>
       _apiClient.delete('${ApiConfig.indent}/$id');
 
+  /// Request yang menunggu keputusan atasan — `GET /api/list_hod_approve`
+  /// (array polos). Server sendiri yang membatasi: hanya untuk role `hod`,
+  /// hanya departemennya, dan hanya `approval_hod = 0`. Untuk akun lain
+  /// server membalas 404 ("No Authentication user"), jadi pemanggil sebaiknya
+  /// hanya memanggil ini untuk HOD.
+  ///
+  /// Melempar [ApiException] bila gagal.
+  Future<List<IndentApprovalItem>> fetchApprovals() async {
+    final rows = await _apiClient.getRawList(ApiConfig.indentHodList);
+
+    final items = <IndentApprovalItem>[];
+    for (final row in rows.whereType<Map<String, dynamic>>()) {
+      try {
+        items.add(IndentApprovalItem.fromJson(row));
+      } on FormatException catch (e) {
+        AppLogger.info('Melewati approval yang tidak bisa dibaca: $e');
+      }
+    }
+    return items;
+  }
+
+  /// HOD menyetujui request — `POST /api/indent/vehicle/approve_hod`. Setelah
+  /// ini request masuk ke antrean admin (Pending Vehicle Assignment).
+  Future<void> approveByHod(String id) =>
+      _apiClient.postRaw(ApiConfig.indentHodApprove, body: {'id': _idBody(id)});
+
+  /// HOD menolak request — `POST /api/indent/vehicle/reject_hod`. Request
+  /// tetap berstatus 0; penolakannya ditandai `approval_hod = 2`.
+  Future<void> rejectByHod(String id) =>
+      _apiClient.postRaw(ApiConfig.indentHodReject, body: {'id': _idBody(id)});
+
+  /// Server memakai id angka; id di layar berupa teks.
+  Object _idBody(String id) => int.tryParse(id) ?? id;
+
   /// id driver -> nama; kosong bila gagal. Tidak pernah melempar, karena
   /// kegagalan daftar driver tidak boleh membuat seluruh list request gagal.
   /// Hasil kosong akibat gagal tidak disimpan, jadi dicoba lagi lain kali.
@@ -144,8 +177,7 @@ class IndentVehicleRepository {
       final drivers = await fetchDrivers();
       return _driverNamesCache = {for (final d in drivers) d.id: d.name};
     } on ApiException catch (e) {
-      AppLogger.info(
-          'Daftar driver tidak dimuat untuk list indent: ${e.message}');
+      AppLogger.info('Daftar driver tidak dimuat untuk list indent: ${e.message}');
     } catch (e, stack) {
       AppLogger.error('Daftar driver gagal dimuat untuk list indent', e, stack);
     }

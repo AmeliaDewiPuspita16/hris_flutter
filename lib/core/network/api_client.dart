@@ -213,6 +213,38 @@ class ApiClient {
     throw const ApiException.server();
   }
 
+    /// POST untuk endpoint yang TIDAK memakai amplop respons — badannya
+  /// langsung baris model, mis. `approve_hod` dan `reject_hod`. Respons
+  /// itu memuat `"status": 0` (status indent), yang bila dibuka seperti
+  /// amplop dianggap gagal. Di sini hanya status HTTP yang diperiksa;
+  /// isi respons tidak dipakai.
+  Future<void> postRaw(
+    String path, {
+    Map<String, dynamic>? body,
+    bool authenticated = true,
+  }) async {
+    final uri = _uriFor(path);
+    AppLogger.info('POST $uri ${_redactedBody(body)}');
+
+    final response = await _sendRaw(
+      'POST',
+      uri,
+      () => _httpClient.post(
+        uri,
+        headers: _headers(authenticated: authenticated),
+        body: jsonEncode(body ?? const <String, dynamic>{}),
+      ),
+    );
+
+    final status = response.statusCode;
+    if (status < 200 || status >= 300) {
+      // Galat tetap lewat jalur lama supaya jenis & pesannya konsisten.
+      // Baris ini selalu melempar; `throw` di bawahnya hanya untuk compiler.
+      _unwrap(response);
+      throw const ApiException.server();
+    }
+  }
+
   /// DELETE tanpa mengharapkan isi: dipakai endpoint yang membalas ringkas,
   /// mis. `DELETE /api/indent/{id}` -> `{"message":"success","status":200,
   /// "data":true}`. Yang dicek hanya keberhasilannya; `data` boleh bentuk apa

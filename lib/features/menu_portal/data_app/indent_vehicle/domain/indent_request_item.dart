@@ -1,5 +1,6 @@
 import '../../../../../core/utils/json_value.dart';
 import 'indent_approve_status.dart';
+import 'indent_json.dart';
 import 'indent_progress_status.dart';
 
 /// Satu baris di tabel "List of User Requests" (web: kolom No, Name,
@@ -123,80 +124,50 @@ class IndentRequestItem {
     int? currentUserId,
     Map<int, String> driverNames = const {},
   }) {
-    final id = _asInt(json['id']);
+    final id = indentInt(json['id']);
     if (id == null) throw const FormatException('Indent tanpa id');
 
-    final userId = _asInt(json['id_user']);
+    final userId = indentInt(json['id_user']);
     final isMine = currentUserId != null && userId == currentUserId;
 
     // id_driver 0 = belum ada driver yang ditunjuk. Kalau ada tapi namanya
     // tidak ketemu di daftar driver, tampilkan id-nya daripada kosong yang
     // menyesatkan ("belum ditunjuk").
-    final idDriver = _asInt(json['id_driver']) ?? 0;
+    final idDriver = indentInt(json['id_driver']) ?? 0;
     final driverName = idDriver > 0
         ? (driverNames[idDriver] ?? 'Driver #$idDriver')
         : null;
 
-    final rating = _asInt(json['rating']);
+    final rating = indentInt(json['rating']);
 
     return IndentRequestItem(
       id: '$id',
       name: textOrNull(json['name']) ??
           (userId == null ? '-' : 'User #$userId'),
       destination: textOrNull(json['tujuan']) ?? '-',
-      date: _formatDate(json['tanggal_pemakaian']),
-      timeRange: '${textOrNull(json['jam_pergi']) ?? '--:--'}'
-          ' s/d ${textOrNull(json['jam_pulang']) ?? '--:--'}',
+      date: indentDate(json['tanggal_pemakaian']),
+      timeRange: indentTimeRange(json),
       remark: textOrNull(json['keperluan']) ?? '-',
       vehicle: textOrNull(json['kendaraan']),
       driver: driverName,
       rating: rating != null && rating > 0 ? rating : null,
       approve: _approveFrom(json['approval_hod']),
       status: _progressFrom(json['status']),
-      withDriver: _withDriverFrom(json['driver']),
+      withDriver: indentWithDriver(json['driver']),
       isMine: isMine,
     );
   }
 
-  /// '2024-12-01' -> '01-12-2024' (format yang dipakai layar ini). Kalau
-  /// bukan tanggal ISO, teks aslinya dipakai apa adanya.
-  static String _formatDate(dynamic value) {
-    final date = dateOrNull(value);
-    if (date == null) return textOrNull(value) ?? '-';
-
-    String two(int n) => n.toString().padLeft(2, '0');
-    return '${two(date.day)}-${two(date.month)}-${date.year}';
-  }
-
-  static IndentApproveStatus _approveFrom(dynamic value) => switch (_asInt(value)) {
+  static IndentApproveStatus _approveFrom(dynamic value) => switch (indentInt(value)) {
         1 => IndentApproveStatus.approved,
         2 => IndentApproveStatus.rejected,
         _ => IndentApproveStatus.onWaiting,
       };
 
-  static IndentProgressStatus _progressFrom(dynamic value) => switch (_asInt(value)) {
+  static IndentProgressStatus _progressFrom(dynamic value) => switch (indentInt(value)) {
         1 => IndentProgressStatus.onProgress,
         3 => IndentProgressStatus.done,
         5 => IndentProgressStatus.cancelled,
         _ => IndentProgressStatus.onWaiting,
       };
-
-  /// Field `driver` di baris mentah berupa angka (1 = pakai driver).
-  static bool _withDriverFrom(dynamic value) => switch (value) {
-        bool() => value,
-        num() => value != 0,
-        String() =>
-          value.isNotEmpty &&
-              value != '0' &&
-              value.toLowerCase() != 'tanpa driver',
-        _ => true,
-      };
-
-  /// Server kadang mengirim angka sebagai teks; keduanya diterima.
-  static int? _asInt(dynamic value) {
-    if (value is int) return value;
-    if (value is num) return value.toInt();
-    if (value is String) return int.tryParse(value);
-    return null;
-  }
 }

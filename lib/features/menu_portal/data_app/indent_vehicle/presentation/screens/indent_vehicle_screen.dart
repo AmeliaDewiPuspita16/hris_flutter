@@ -9,12 +9,14 @@ import '../../../../../../core/widgets/app_error_view.dart';
 import '../../../../../../core/widgets/back_header.dart';
 import '../../../../../auth/presentation/bloc/auth/auth_bloc.dart';
 import '../../data/indent_vehicle_repository.dart';
-import '../../domain/indent_approval_demo_data.dart';
 import '../../domain/indent_approval_item.dart';
 import '../../domain/indent_assign_result.dart';
 import '../../domain/indent_pending_demo_data.dart';
 import '../../domain/indent_pending_item.dart';
 import '../../domain/indent_request_item.dart';
+import '../bloc/approval/indent_approval_bloc.dart';
+import '../bloc/approval/indent_approval_event.dart';
+import '../bloc/approval/indent_approval_state.dart';
 import '../bloc/list/indent_request_list_bloc.dart';
 import '../bloc/list/indent_request_list_event.dart';
 import '../bloc/list/indent_request_list_state.dart';
@@ -32,10 +34,10 @@ import 'add_indent_screen.dart';
 /// lalu isi tab yang aktif.
 ///
 /// - Tab 0 "Pending Vehicle Assignment" — admin driver menetapkan plat &
-///   driver lewat tombol Assign (sudah jadi).
-/// - Tab 1 "Supervisor Approval"       — atasan approve/reject request
-///   (sudah jadi). Yang di-approve diteruskan ke tab 0.
-/// - Tab 2 "List of User Requests"     — daftar semua request (sudah jadi).
+///   driver lewat tombol Assign (tampilan jadi, masih data demo).
+/// - Tab 1 "Supervisor Approval"       — atasan (role `hod`) approve/reject
+///   request lewat API. Yang di-approve masuk ke antrean admin di server.
+/// - Tab 2 "List of User Requests"     — daftar semua request, dari API.
 class IndentVehicleScreen extends StatefulWidget {
   const IndentVehicleScreen({super.key, this.initialTabIndex = 2});
 
@@ -64,7 +66,10 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
   final _requestScrollController = ScrollController();
 
   List<IndentPendingItem> _pending = IndentPendingDemoData.items();
-  List<IndentApprovalItem> _approvals = IndentApprovalDemoData.items();
+  // Tab Supervisor Approval juga dipegang bloc. Hanya dimulai untuk akun
+  // berperan `hod`: server membalas 404 untuk akun lain.
+  late final IndentApprovalBloc _approvalBloc;
+  late final bool _isHod;
   final _searchController = TextEditingController();
   String _query = '';
 
@@ -77,11 +82,18 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
       currentUserId: user?.id,
     )..add(const IndentRequestListStarted());
     _requestScrollController.addListener(_onRequestScroll);
+
+    _isHod = user?.hasRole('hod') ?? false;
+    _approvalBloc = IndentApprovalBloc(
+      repository: context.read<IndentVehicleRepository>(),
+    );
+    if (_isHod) _approvalBloc.add(const IndentApprovalStarted());
   }
 
   @override
   void dispose() {
     _requestBloc.close();
+    _approvalBloc.close();
     _requestScrollController
       ..removeListener(_onRequestScroll)
       ..dispose();
@@ -113,51 +125,47 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
     }).toList();
   }
 
-  List<IndentApprovalItem> get _filteredApprovals {
-    if (_query.trim().isEmpty) return _approvals;
+  List<IndentApprovalItem> _filterApprovals(List<IndentApprovalItem> items) {
+    if (_query.trim().isEmpty) return items;
 
     final q = _query.trim().toLowerCase();
-    return _approvals.where((r) {
+    return items.where((r) {
       return r.name.toLowerCase().contains(q) ||
           r.destination.toLowerCase().contains(q) ||
           r.remark.toLowerCase().contains(q);
     }).toList();
   }
 
-  /// Keputusan atasan. Approve → request pindah ke Pending Vehicle
-  /// Assignment (menunggu admin menetapkan kendaraan); Reject → keluar dari
-  /// daftar.
-  ///
-  /// TODO(api): kirim keputusan ke server; di web request yang ditolak
-  /// tampil di List of User Requests dan yang disetujui jadi "Approved".
-  void _decide(IndentApprovalItem item, {required bool approved}) {
-    setState(() {
-      _approvals = _approvals.where((r) => r.id != item.id).toList();
-      if (approved) {
-        _pending = [
-          ..._pending,
-          IndentPendingItem(
-            id: item.id,
-            name: item.name,
-            destination: item.destination,
-            date: item.date,
-            timeRange: item.timeRange,
-            remark: item.remark,
-            withDriver: item.withDriver,
+  /// Keputusan atasan, dikirim ke server lewat [IndentApprovalBloc]. Ada
+  /// dialog konfirmasi karena keputusan tidak bisa dibatalkan dari
+  /// aplikasi. Hasilnya (berhasil/gagal) ditampilkan oleh BlocListener di
+  /// [build]. Di server, request yang di-approve masuk ke antrean admin
+  /// (tab Pending Vehicle Assignment milik admin), bukan ke tab ini.
+  Future<void> _decide(
+    IndentApprovalItem item, {
+    required bool approved,
+  }) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(approved ? 'Setujui request?' : 'Tolak request?'),
+        content: Text('${item.name} — ${item.destination}'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Batal'),
           ),
-        ];
-      }
-    });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          approved
-              ? 'Request ${item.name} disetujui'
-              : 'Request ${item.name} ditolak',
-        ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(approved ? 'Setujui' : 'Tolak'),
+          ),
+        ],
       ),
     );
+
+    if (confirmed != true || !mounted) return;
+
+    _approvalBloc.add(IndentApprovalDecided(item: item, approved: approved));
   }
 
   /// Buka sheet Assign Vehicle. Kalau admin menekan Assign, request keluar
@@ -316,7 +324,22 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
               child: const Icon(Icons.add),
             )
           : null,
-      body: SafeArea(
+      body: BlocListener<IndentApprovalBloc, IndentApprovalState>(
+        bloc: _approvalBloc,
+        listenWhen: (previous, current) =>
+            current.notice != null &&
+            !identical(previous.notice, current.notice),
+        listener: (context, state) {
+          final notice = state.notice!;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(notice.message)),
+          );
+          // Approve/reject mengubah kolom Approve di List of User Requests.
+          if (!notice.isError) {
+            _requestBloc.add(const IndentRequestListRefreshed());
+          }
+        },
+        child: SafeArea(
         top: false,
         child: Column(
           children: [
@@ -329,14 +352,17 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
                 children: [
                   _buildSearchField(),
                   const SizedBox(height: 12),
-                  IndentTabBar(
-                    labels: _tabLabels,
-                    activeIndex: _tabIndex,
-                    badgeCounts: {
-                      0: _pending.length,
-                      1: _approvals.length,
-                    },
-                    onChanged: (i) => setState(() => _tabIndex = i),
+                  BlocBuilder<IndentApprovalBloc, IndentApprovalState>(
+                    bloc: _approvalBloc,
+                    builder: (context, approvalState) => IndentTabBar(
+                      labels: _tabLabels,
+                      activeIndex: _tabIndex,
+                      badgeCounts: {
+                        0: _pending.length,
+                        1: approvalState.items.length,
+                      },
+                      onChanged: (i) => setState(() => _tabIndex = i),
+                    ),
                   ),
                 ],
               ),
@@ -351,17 +377,14 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
                     items: _filteredPending,
                     onAssign: _assign,
                   ),
-                  IndentSupervisorApprovalTab(
-                    items: _filteredApprovals,
-                    onApprove: (item) => _decide(item, approved: true),
-                    onReject: (item) => _decide(item, approved: false),
-                  ),
+                  _buildSupervisorApproval(),
                   _buildListOfRequests(),
                 ],
               ),
             ),
           ],
         ),
+      ),
       ),
     );
   }
@@ -393,6 +416,42 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
         ),
       ),
     );
+  }
+
+  Widget _buildSupervisorApproval() {
+    return BlocBuilder<IndentApprovalBloc, IndentApprovalState>(
+      bloc: _approvalBloc,
+      builder: (context, state) {
+        if (state.isFirstLoad) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (state.status == IndentApprovalStatus.failure) {
+          return AppErrorView(
+            message: state.errorMessage ?? 'Gagal memuat daftar approval.',
+            onRetry: () => _approvalBloc.add(const IndentApprovalRefreshed()),
+          );
+        }
+
+        return IndentSupervisorApprovalTab(
+          items: _filterApprovals(state.items),
+          busyIds: state.busyIds,
+          onRefresh: _refreshApprovals,
+          onApprove: (item) => _decide(item, approved: true),
+          onReject: (item) => _decide(item, approved: false),
+        );
+      },
+    );
+  }
+
+  /// Tarik-untuk-refresh tab approval. Akun non-HOD tidak memanggil server
+  /// sama sekali (server membalas 404 untuk mereka).
+  Future<void> _refreshApprovals() async {
+    if (!_isHod) return;
+
+    _approvalBloc.add(const IndentApprovalRefreshed());
+    await _approvalBloc.stream
+        .firstWhere((s) => s.status != IndentApprovalStatus.loading);
   }
 
   Widget _buildListOfRequests() {
