@@ -118,7 +118,7 @@ class ApprovalSummaryBanner extends StatelessWidget {
       ];
 
   Widget _buildContent() {
-    final tags = _tags;
+    final tags = _tags.where((tag) => tag.count > 0).toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -271,6 +271,8 @@ class _CountBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (count <= 0) return const SizedBox.shrink();
+
     return Container(
       constraints: const BoxConstraints(minWidth: 18),
       height: 18,
@@ -346,8 +348,10 @@ class _ModuleTag extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(width: 6),
-                _CountBadge(count: count),
+                if (count > 0) ...[
+                  const SizedBox(width: 6),
+                  _CountBadge(count: count),
+                ],
               ],
             ),
             Icon(Icons.chevron_right, size: 14, color: color.withValues(alpha: 0.6)),
