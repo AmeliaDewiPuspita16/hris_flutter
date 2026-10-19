@@ -59,14 +59,14 @@ class IndentRequestItem {
   /// request yang baru dibuat lewat form tetap dianggap milik sendiri.
   final bool isMine;
 
-  /// True kalau perjalanan sudah selesai tapi request belum memberi
-  /// rating. Dipakai untuk menampilkan banner feedback; tidak memblokir
-  /// pengajuan request baru.
+  /// True kalau perjalanan sudah selesai tapi request MILIK SENDIRI belum
+  /// memberi rating. Dipakai untuk menampilkan banner feedback; tidak
+  /// memblokir pengajuan request baru.
   bool get needsFeedback =>
       isMine && status == IndentProgressStatus.done && rating == null;
 
   /// boleh diedit/dihapus requester selama atasan belum meng-approve.
-  bool get canModify => approve == IndentApproveStatus.onWaiting;
+  bool get canModify => isMine && approve == IndentApproveStatus.onWaiting;
 
   IndentRequestItem copyWith({
     String? name,
@@ -96,31 +96,31 @@ class IndentRequestItem {
     );
   }
 
-  /// Memetakan satu objek di 'data' milik 'GET /api/indent'
+  /// Memetakan satu objek di `data.data` milik `GET /api/indent`
+  /// (respons berpaginasi):
   ///
   /// ```json
-  /// { "id": 27, "id_user": 11, "tanggal_pemakaian": "2024-12-01",
-  ///   "jam_pergi": "06:30:00", "jam_pulang": "15:00:00",
-  ///   "tujuan": "...", "keperluan": "...", "kendaraan": "BP 1729 FB",
-  ///   "driver": 1, "id_driver": 143, "rating": 5,
-  ///   "status": 3, "approval_hod": 1, ... }
+  /// { "id": 4666, "id_user": 121, "tanggal_pemakaian": "2026-10-16",
+  ///   "jam_pergi": "13:45:00", "jam_pulang": "14:45:00",
+  ///   "tujuan": "...", "keperluan": "...", "kendaraan": "BP 1512 FB",
+  ///   "driver": 1, "id_driver": 113, "rating": 0,
+  ///   "status": 1, "approval_hod": 1, "name": "Mahyuddin", ... }
   /// ```
   ///
-  /// Endpoint ini mengirim baris mentah dari database, jadi:
-  /// - tidak ada nama peminta (cuma `id_user`) — kalau backend nanti
-  ///   menambahkan `name`, otomatis terpakai tanpa ubah kode di sini;
-  /// - tidak ada nama driver (cuma `id_driver`) — dicocokkan lewat
-  ///   [driverNames] (id driver -> nama, dari list_driver);
-  /// - `driver` berisi angka penanda "With Driver" (bukan nama).
+  /// Catatan membaca field-nya:
+  /// - `name` = nama peminta;
+  /// - tidak ada nama driver, cuma `id_driver` (null bila belum ditunjuk) —
+  ///   dicocokkan lewat [driverNames] (id driver -> nama, dari list_driver);
+  /// - `driver` berisi angka penanda "With Driver" (bukan nama);
+  /// - `rating` 0 = belum diberi rating.
   ///
-  /// [currentUserId] / [currentUserName] dipakai untuk menandai request
-  /// milik sendiri ([isMine]) dan mengisi namanya.
+  /// [currentUserId] dipakai untuk menandai request milik sendiri
+  /// ([isMine]).
   ///
   /// Melempar [FormatException] bila `id` tidak ada.
   factory IndentRequestItem.fromJson(
     Map<String, dynamic> json, {
     int? currentUserId,
-    String? currentUserName,
     Map<int, String> driverNames = const {},
   }) {
     final id = _asInt(json['id']);
@@ -142,7 +142,6 @@ class IndentRequestItem {
     return IndentRequestItem(
       id: '$id',
       name: textOrNull(json['name']) ??
-          (isMine ? textOrNull(currentUserName) : null) ??
           (userId == null ? '-' : 'User #$userId'),
       destination: textOrNull(json['tujuan']) ?? '-',
       date: _formatDate(json['tanggal_pemakaian']),

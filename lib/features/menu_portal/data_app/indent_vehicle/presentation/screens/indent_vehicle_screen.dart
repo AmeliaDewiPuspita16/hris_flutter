@@ -59,6 +59,7 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
   // sini, bukan lewat BlocProvider, supaya handler di State ini bisa
   // memakainya langsung.
   late final IndentRequestListBloc _requestBloc;
+  final _requestScrollController = ScrollController();
 
   List<IndentPendingItem> _pending = IndentPendingDemoData.items();
   List<IndentApprovalItem> _approvals = IndentApprovalDemoData.items();
@@ -72,13 +73,16 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
     _requestBloc = IndentRequestListBloc(
       repository: context.read<IndentVehicleRepository>(),
       currentUserId: user?.id,
-      currentUserName: user?.name,
     )..add(const IndentRequestListStarted());
+    _requestScrollController.addListener(_onRequestScroll);
   }
 
   @override
   void dispose() {
     _requestBloc.close();
+    _requestScrollController
+      ..removeListener(_onRequestScroll)
+      ..dispose();
     _searchController.dispose();
     super.dispose();
   }
@@ -405,13 +409,29 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
                   ],
                 )
               : ListView.separated(
+                  controller: _requestScrollController,
                   physics: const AlwaysScrollableScrollPhysics(),
                   // Padding bawah ekstra (88) supaya baris terakhir tidak
                   // tertutup FAB.
                   padding: const EdgeInsets.fromLTRB(16, 4, 16, 88),
-                  itemCount: results.length,
+                  // +1 untuk spinner kecil di dasar saat halaman berikutnya
+                  // sedang dimuat.
+                  itemCount: results.length + (state.loadingMore ? 1 : 0),
                   separatorBuilder: (_, __) => const SizedBox(height: 10),
                   itemBuilder: (context, index) {
+                    if (index == results.length) {
+                      return const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 12),
+                        child: Center(
+                          child: SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        ),
+                      );
+                    }
+
                     final item = results[index];
                     if (item.needsFeedback) {
                       return IndentFeedbackBanner(
@@ -429,6 +449,17 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
         );
       },
     );
+  }
+
+  /// Dekat dasar daftar -> minta halaman berikutnya. Bloc sendiri yang
+  /// menolak bila sedang memuat atau sudah halaman terakhir.
+  void _onRequestScroll() {
+    if (!_requestScrollController.hasClients) return;
+
+    final position = _requestScrollController.position;
+    if (position.maxScrollExtent - position.pixels < 300) {
+      _requestBloc.add(const IndentRequestListNextPageRequested());
+    }
   }
 
   /// Menunggu sampai muat ulang selesai supaya indikator tarik-refresh

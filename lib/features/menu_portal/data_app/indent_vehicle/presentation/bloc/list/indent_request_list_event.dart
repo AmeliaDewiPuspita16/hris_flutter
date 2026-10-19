@@ -15,6 +15,13 @@ class IndentRequestListRefreshed extends IndentRequestListEvent {
   const IndentRequestListRefreshed();
 }
 
+/// Pengguna menggulir sampai dekat dasar daftar — muat halaman berikutnya.
+/// Diabaikan Bloc kalau sedang memuat atau sudah halaman terakhir, jadi
+/// layar boleh mengirimnya berulang tanpa khawatir.
+class IndentRequestListNextPageRequested extends IndentRequestListEvent {
+  const IndentRequestListNextPageRequested();
+}
+
 /// SEMENTARA — aksi di bawah ini masih lokal (belum tersambung ke API),
 /// jadi layar yang menjalankannya memberi tahu Bloc supaya tampilan ikut
 /// berubah. Dihapus satu per satu begitu endpoint-nya disambungkan
