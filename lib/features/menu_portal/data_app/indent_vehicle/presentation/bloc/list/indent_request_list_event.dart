@@ -25,16 +25,11 @@ class IndentRequestListNextPageRequested extends IndentRequestListEvent {
 /// SEMENTARA — aksi di bawah ini masih lokal (belum tersambung ke API),
 /// jadi layar yang menjalankannya memberi tahu Bloc supaya tampilan ikut
 /// berubah. Dihapus satu per satu begitu endpoint-nya disambungkan
-/// (tambah, edit, hapus request), karena nanti cukup memuat ulang daftar.
+/// (feedback, hapus request), karena nanti cukup memuat ulang daftar.
+/// Tambah dan edit request sudah tersambung: layar langsung memicu
+/// [IndentRequestListRefreshed] setelah form berhasil menyimpan.
 
-/// Request baru dari form Add Indent, disisipkan di puncak daftar.
-class IndentRequestLocalAdded extends IndentRequestListEvent {
-  const IndentRequestLocalAdded(this.item);
-
-  final IndentRequestItem item;
-}
-
-/// Request yang diedit atau diberi rating; menggantikan item ber-id sama.
+/// Request yang diberi rating; menggantikan item ber-id sama.
 class IndentRequestLocalUpdated extends IndentRequestListEvent {
   const IndentRequestLocalUpdated(this.item);
 

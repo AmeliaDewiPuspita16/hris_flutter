@@ -82,6 +82,48 @@ class IndentVehicleRepository {
     return IndentRequestPage(items: items, meta: PageMeta.fromJson(data));
   }
 
+  /// Membuat request indent baru, atau memperbarui yang sudah ada bila [id]
+  /// diisi — `POST /api/indent/vehicle/store` melayani keduanya (server
+  /// membaca `id_recuitment`; ejaan itu memang begitu di API).
+  ///
+  /// [departureTime] dan [returnTime] berformat 'HH:mm'. Tanggal dikirim
+  /// 'YYYY-MM-DD' (format permintaan; berbeda dari format tampilan di layar).
+  ///
+  /// [withDriver] dikirim sebagai 1 atau 0, sama dengan nilai kolom `driver`
+  /// yang terbaca di `GET /api/indent`. Dokumen API memberi contoh nama
+  /// driver, tapi data asli berisi 0/1 — kalau server ternyata menolak,
+  /// inilah satu-satunya baris yang perlu diubah.
+  ///
+  /// Isi respons tidak dipakai: layar memuat ulang daftar supaya yang
+  /// tampil selalu data server (lengkap dengan nama dan status).
+  ///
+  /// Melempar [ApiException] bila gagal, termasuk galat validasi (pesan dari
+  /// field yang salah pertama).
+  Future<void> saveIndent({
+    int? id,
+    required DateTime date,
+    required String departureTime,
+    required String returnTime,
+    required String destination,
+    required String purpose,
+    required bool withDriver,
+  }) async {
+    String two(int n) => n.toString().padLeft(2, '0');
+
+    await _apiClient.post(
+      ApiConfig.indentStore,
+      body: {
+        'tanggal': '${date.year}-${two(date.month)}-${two(date.day)}',
+        'jam_pergi': departureTime,
+        'jam_pulang': returnTime,
+        'tujuan': destination,
+        'keperluan': purpose,
+        'driver': withDriver ? 1 : 0,
+        if (id != null) 'id_recuitment': id,
+      },
+    );
+  }
+
   /// id driver -> nama; kosong bila gagal. Tidak pernah melempar, karena
   /// kegagalan daftar driver tidak boleh membuat seluruh list request gagal.
   /// Hasil kosong akibat gagal tidak disimpan, jadi dicoba lagi lain kali.

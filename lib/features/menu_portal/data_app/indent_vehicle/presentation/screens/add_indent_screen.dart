@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../../../core/logging/app_logger.dart';
+import '../../../../../../core/network/api_exception.dart';
 import '../../../../../../core/theme/app_colors.dart';
 import '../../../../../../core/theme/app_text_styles.dart';
 import '../../../../../../core/widgets/app_card.dart';
@@ -7,22 +10,24 @@ import '../../../../../../core/widgets/app_date_field.dart';
 import '../../../../../../core/widgets/app_time_field.dart';
 import '../../../../../../core/widgets/back_header.dart';
 import '../../../../../../core/widgets/field_label_row.dart';
-import '../../domain/indent_approve_status.dart';
-import '../../domain/indent_progress_status.dart';
+import '../../data/indent_vehicle_repository.dart';
 import '../../domain/indent_request_item.dart';
 import '../widgets/indent_driver_choice.dart';
 
 /// Layar "+ Add Indent" — form pengajuan kendaraan.
 ///
-/// Pola sama dengan `AddEstRequestScreen`: dibuka lewat Navigator.push,
-/// mengembalikan [IndentRequestItem] baru lewat Navigator.pop kalau berhasil
-/// disubmit, atau null kalau ditutup tanpa submit. Validasi lewat snackbar.
-/// Belum terhubung ke API.
+/// Dibuka lewat Navigator.push. Validasi lewat snackbar. Tombol submit
+/// mengirim ke server lewat [IndentVehicleRepository.saveIndent] (tambah
+/// maupun edit), menampilkan loading, dan pesan galat server lewat snackbar.
+///
+/// Hasilnya lewat Navigator.pop: `true` bila tersimpan di server, null bila
+/// ditutup tanpa menyimpan. Layar pemanggil lalu memuat ulang daftar.
 class AddIndentScreen extends StatefulWidget {
   const AddIndentScreen({super.key, this.initialItem});
 
-  /// Diisi untuk mode edit: form terisi data lama dan hasilnya adalah item
-  /// yang sama (id tetap) dengan field yang sudah diubah. Null = mode tambah.
+  /// Diisi untuk mode edit: form terisi data lama, dan id-nya dikirim ke
+  /// server supaya baris itu diperbarui, bukan dibuat baru. Null = mode
+  /// tambah.
   final IndentRequestItem? initialItem;
 
   @override
@@ -39,6 +44,10 @@ class _AddIndentScreenState extends State<AddIndentScreen> {
   /// Default "dengan driver" karena mayoritas request memakai driver; user
   /// tinggal ganti kalau tidak perlu.
   bool _withDriver = true;
+
+  /// True selama permintaan ke server berjalan: tombol dikunci supaya
+  /// ketukan ganda tidak membuat request dobel.
+  bool _submitting = false;
 
   bool get _isEdit => widget.initialItem != null;
 
@@ -68,10 +77,7 @@ class _AddIndentScreenState extends State<AddIndentScreen> {
 
   String _two(int n) => n.toString().padLeft(2, '0');
 
-  /// 'dd-MM-yyyy' — format yang sama dengan data di list.
-  String _formatDate(DateTime d) => '${_two(d.day)}-${_two(d.month)}-${d.year}';
-
-  /// 'HH:mm' — dipakai menyusun timeRange untuk item di list.
+  /// 'HH:mm' — format jam yang diminta API.
   String _formatTime(TimeOfDay t) => '${_two(t.hour)}:${_two(t.minute)}';
 
   /// 'dd-MM-yyyy' -> DateTime. Null kalau formatnya tidak dikenali.
@@ -121,7 +127,9 @@ class _AddIndentScreenState extends State<AddIndentScreen> {
     return null;
   }
 
-  void _submit() {
+  Future<void> _submit() async {
+    if (_submitting) return;
+
     final error = _validate();
     if (error != null) {
       ScaffoldMessenger.of(context)
@@ -129,36 +137,34 @@ class _AddIndentScreenState extends State<AddIndentScreen> {
       return;
     }
 
-    // Format list: 'HH:mm:00 s/d HH:mm:00' (detik selalu 00 dari picker).
-    final timeRange =
-        '${_formatTime(_from!)}:00 s/d ${_formatTime(_until!)}:00';
-
-    final initial = widget.initialItem;
-    final item = initial != null
-        // Mode edit: id, status, kendaraan, dan driver tetap; cuma isian
-        // dari form yang diganti.
-        ? initial.copyWith(
+    setState(() => _submitting = true);
+    try {
+      await context.read<IndentVehicleRepository>().saveIndent(
+            // Mode edit mengirim id yang sama, jadi server memperbarui baris
+            // itu. Mode tambah: id null.
+            id: int.tryParse(widget.initialItem?.id ?? ''),
+            date: _date!,
+            departureTime: _formatTime(_from!),
+            returnTime: _formatTime(_until!),
             destination: _destinationController.text.trim(),
-            date: _formatDate(_date!),
-            timeRange: timeRange,
-            remark: _remarkController.text.trim(),
-            withDriver: _withDriver,
-          )
-        : IndentRequestItem(
-            id: 'indent-${DateTime.now().microsecondsSinceEpoch}',
-            // TODO: ambil dari sesi auth begitu tersambung — sama seperti
-            // catatan requesterName di AddEstRequestScreen.
-            name: 'Anda',
-            destination: _destinationController.text.trim(),
-            date: _formatDate(_date!),
-            timeRange: timeRange,
-            remark: _remarkController.text.trim(),
-            approve: IndentApproveStatus.onWaiting,
-            status: IndentProgressStatus.onWaiting,
+            purpose: _remarkController.text.trim(),
             withDriver: _withDriver,
           );
-
-    Navigator.of(context).pop(item);
+      if (!mounted) return;
+      Navigator.of(context).pop(true);
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(e.message)));
+    } catch (e, stack) {
+      AppLogger.error('Simpan indent gagal karena galat tak terduga', e, stack);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Terjadi kesalahan tak terduga. Coba lagi.')),
+      );
+    } finally {
+      if (mounted) setState(() => _submitting = false);
+    }
   }
 
   InputDecoration _fieldDecoration(String hint) => InputDecoration(
@@ -312,18 +318,31 @@ class _AddIndentScreenState extends State<AddIndentScreen> {
             width: double.infinity,
             height: 48,
             child: ElevatedButton(
-              onPressed: _submit,
+              onPressed: _submitting ? null : _submit,
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
+                // Tetap hijau saat loading (tombol dikunci, bukan abu-abu).
+                disabledBackgroundColor: AppColors.primary,
+                disabledForegroundColor: Colors.white,
                 elevation: 0,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10)),
               ),
-              child: Text(
-                _isEdit ? 'Save changes' : 'Submit request',
-                style: AppTextStyles.buttonText.copyWith(color: Colors.white),
-              ),
+              child: _submitting
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : Text(
+                      _isEdit ? 'Save changes' : 'Submit request',
+                      style:
+                          AppTextStyles.buttonText.copyWith(color: Colors.white),
+                    ),
             ),
           ),
         ),

@@ -60,6 +60,8 @@ class ApiConfig {
   /// berupa angka 200 (bukan kata 'success')
   static const String indent = '/api/indent';
 
+  /// Buat indent baru, atau perbarui yang ada bila `id_recuitment` dikirim.
+  static const String indentStore = '/api/indent/vehicle/store';
 
   // --------------------------------- HRIS ----------------------------
 

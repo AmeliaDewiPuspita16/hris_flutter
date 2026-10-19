@@ -23,7 +23,6 @@ class IndentRequestListBloc
     on<IndentRequestListStarted>(_onLoad);
     on<IndentRequestListRefreshed>(_onLoad);
     on<IndentRequestListNextPageRequested>(_onNextPage);
-    on<IndentRequestLocalAdded>(_onLocalAdded);
     on<IndentRequestLocalUpdated>(_onLocalUpdated);
     on<IndentRequestLocalRemoved>(_onLocalRemoved);
   }
@@ -127,13 +126,6 @@ class IndentRequestListBloc
       AppLogger.error('Halaman berikutnya gagal tak terduga', e, stack);
       emit(state.copyWith(loadingMore: false));
     }
-  }
-
-  void _onLocalAdded(
-    IndentRequestLocalAdded event,
-    Emitter<IndentRequestListState> emit,
-  ) {
-    emit(state.copyWith(items: [event.item, ...state.items]));
   }
 
   void _onLocalUpdated(

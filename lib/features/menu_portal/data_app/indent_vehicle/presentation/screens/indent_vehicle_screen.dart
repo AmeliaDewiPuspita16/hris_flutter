@@ -211,19 +211,21 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
     );
   }
 
-    /// Edit request milik sendiri (selama belum di-approve). Form Add Indent
-  /// dipakai ulang dalam mode edit; hasilnya menggantikan item lama.
+  /// Edit request milik sendiri (selama belum di-approve). Form Add Indent
+  /// dipakai ulang dalam mode edit; form sendiri yang mengirim perubahan ke
+  /// server dan menutup diri dengan `true` bila tersimpan, lalu daftar
+  /// dimuat ulang.
   ///
-  /// TODO(api): kirim perubahan ke endpoint update (belum ada). Server juga
-  /// harus menolak kalau request sudah di-approve.
+  /// TODO(api): server juga harus menolak edit pada request yang sudah
+  /// di-approve; sekarang pembatasannya hanya di aplikasi.
   Future<void> _editIndent(IndentRequestItem item) async {
-    final updated = await Navigator.of(context).push<IndentRequestItem>(
+    final saved = await Navigator.of(context).push<bool>(
       MaterialPageRoute(builder: (_) => AddIndentScreen(initialItem: item)),
     );
 
-    if (updated == null || !mounted) return;
+    if (saved != true || !mounted) return;
 
-    _requestBloc.add(IndentRequestLocalUpdated(updated));
+    _requestBloc.add(const IndentRequestListRefreshed());
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Request updated')),
@@ -246,16 +248,18 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
     );
   }
 
-  /// Buka form Add Indent; kalau disubmit, request baru ditaruh paling atas
-  /// di List of User Requests (status On Waiting).
+  /// Buka form Add Indent; kalau tersimpan di server, daftar dimuat ulang
+  /// dan request baru muncul paling atas di List of User Requests (status
+  /// On Waiting).
   Future<void> _addIndent() async {
-    final newItem = await Navigator.of(context).push<IndentRequestItem>(
+    final saved = await Navigator.of(context).push<bool>(
       MaterialPageRoute(builder: (_) => const AddIndentScreen()),
     );
 
-    if (newItem == null || !mounted) return;
+    if (saved != true || !mounted) return;
 
-    _requestBloc.add(IndentRequestLocalAdded(newItem));
+    // Muat ulang dari server: request baru (id terbesar) muncul paling atas.
+    _requestBloc.add(const IndentRequestListRefreshed());
     setState(() {
       // Pastikan hasilnya langsung kelihatan, dan kosongkan search supaya
       // request baru tidak tersaring.
