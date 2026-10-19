@@ -72,5 +72,18 @@
 		     Tanpa kunci ini, iOS menutup paksa aplikasi begitu galeri dibuka. -->
 		<key>NSPhotoLibraryUsageDescription</key>
 		<string>Aplikasi memerlukan akses galeri untuk melampirkan foto pada pengumuman.</string>
+		<!-- Dibutuhkan image_picker saat mengambil foto profil langsung dari
+		     kamera (PhotoPickerService). Tanpa kunci ini, iOS menutup paksa
+		     aplikasi begitu kamera dibuka. -->
+		<key>NSCameraUsageDescription</key>
+		<string>Aplikasi memerlukan akses kamera untuk mengambil foto profil.</string>
+		<!-- Dibutuhkan supaya push notification FCM bisa diterima & diproses
+		     (termasuk silent/data-only push) saat app di background.
+		     Capability "Push Notifications" & "Background Modes" di Xcode
+		     masih wajib diaktifkan manual (lih. catatan setelah publish). -->
+		<key>UIBackgroundModes</key>
+		<array>
+			<string>remote-notification</string>
+		</array>
 	</dict>
 </plist>

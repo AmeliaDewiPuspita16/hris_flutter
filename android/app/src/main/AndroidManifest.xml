@@ -4,6 +4,12 @@
          mencantumkannya di sini. -->
     <uses-permission android:name="android.permission.INTERNET"/>
 
+    <!-- Wajib di Android 13+ (API 33) supaya push notification FCM bisa
+         tampil. Tanpa ini, notifikasi diam-diam tidak muncul di Android 13+
+         walau user belum pernah diminta izin. Diminta runtime lewat
+         FirebaseMessaging.requestPermission() di NotificationService. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+
     <application
         android:label="hris_mobile"
         android:name="${applicationName}"
@@ -43,6 +49,17 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+
+        <!-- Channel & ikon default untuk notifikasi FCM yang datang saat app
+             di background/terminated (kode Dart belum sempat jalan, jadi
+             channel id harus sudah diketahui dari manifest). Id-nya samakan
+             dengan _androidChannel di NotificationService. -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="high_importance_channel" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@mipmap/ic_launcher" />
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

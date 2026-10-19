@@ -18,15 +18,26 @@ class AuthRepository {
 
   /// Menukar kredensial dengan sesi baru, menyimpannya, lalu memasang
   /// token-nya ke [ApiClient].
+  ///
+  /// [fcmToken] dikirim bareng kredensial supaya backend bisa mengaitkan
+  /// device token push notification ini dengan user yang baru login. Null
+  /// kalau Firebase Messaging belum siap/gagal ambil token — login tetap
+  /// jalan seperti biasa, hanya saja push notification belum aktif untuk
+  /// device ini sampai token berhasil didapat (mis. setelah restart app).
   Future<AuthSession> login({
     required String email,
     required String password,
+    String? fcmToken,
   }) async {
     final Map<String, dynamic> data;
     try {
       data = await _apiClient.post(
         ApiConfig.login,
-        body: {'email': email, 'password': password},
+        body: {
+          'email': email,
+          'password': password,
+          if (fcmToken != null) 'fcm_token': fcmToken,
+        },
         // Token lama tidak relevan di sini, dan bisa saja sudah kedaluwarsa.
         authenticated: false,
       );

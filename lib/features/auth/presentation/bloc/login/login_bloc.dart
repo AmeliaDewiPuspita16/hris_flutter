@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../../core/logging/app_logger.dart';
 import '../../../../../core/network/api_exception.dart';
+import '../../../../../core/notifications/notification_service.dart';
 import '../../../data/auth_repository.dart';
 import 'login_event.dart';
 import 'login_state.dart';
@@ -11,14 +12,18 @@ import 'login_state.dart';
 /// Berumur pendek — hidup bersama LoginScreen. Status sesi jangka panjang
 /// dipegang AuthBloc.
 class LoginBloc extends Bloc<LoginEvent, LoginState> {
-  LoginBloc({required AuthRepository repository})
-      : _repository = repository,
+  LoginBloc({
+    required AuthRepository repository,
+    NotificationService? notificationService,
+  })  : _repository = repository,
+        _notificationService = notificationService ?? NotificationService(),
         super(const LoginState()) {
     on<LoginSubmitted>(_onSubmitted);
     on<LoginReset>(_onReset);
   }
 
   final AuthRepository _repository;
+  final NotificationService _notificationService;
 
   Future<void> _onSubmitted(
     LoginSubmitted event,
@@ -31,9 +36,15 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
     emit(const LoginState(status: LoginStatus.loading));
 
     try {
+      // Diambil di sini, bukan dari UI, supaya LoginScreen tidak perlu tahu
+      // apa-apa soal push notification. Null-nya (permission ditolak,
+      // simulator tanpa APNs, dll.) tidak menggagalkan login — lih.
+      // AuthRepository.login.
+      final fcmToken = await _notificationService.getToken();
       final session = await _repository.login(
         email: event.email,
         password: event.password,
+        fcmToken: fcmToken,
       );
       emit(LoginState(status: LoginStatus.success, session: session));
     } on ApiException catch (e) {
