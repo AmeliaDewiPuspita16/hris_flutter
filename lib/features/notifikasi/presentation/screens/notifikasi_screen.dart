@@ -32,6 +32,7 @@ class NotifikasiScreen extends StatefulWidget {
     this.initialFilter = NotificationFilter.all,
     this.showBack = true,
     this.filterRequestToken = 0,
+    this.onAssign,
   });
 
   final List<AppNotification> notifications;
@@ -49,6 +50,11 @@ class NotifikasiScreen extends StatefulWidget {
   /// Beranda. Naikkan angka ini setiap kali pemanggil ingin filter
   /// [initialFilter] diterapkan lagi.
   final int filterRequestToken;
+
+  /// Dipanggil saat tombol "Assign" di notifikasi bertipe assign ditekan.
+  /// Pemanggil yang membuka sheet dan mengirim ke server; hasilnya kembali
+  /// lewat [notifications]/[onChanged] seperti keputusan biasa.
+  final ValueChanged<AppNotification>? onAssign;
 
   @override
   State<NotifikasiScreen> createState() => _NotifikasiScreenState();
@@ -139,6 +145,7 @@ class _NotifikasiScreenState extends State<NotifikasiScreen> {
                     pending: pending,
                     rest: rest,
                     onDecide: _decide,
+                    onAssign: widget.onAssign,
                     onRead: _markRead,
                     onDismiss: _dismiss,
                   ),
@@ -154,6 +161,7 @@ class _NotificationList extends StatelessWidget {
     required this.pending,
     required this.rest,
     required this.onDecide,
+    required this.onAssign,
     required this.onRead,
     required this.onDismiss,
   });
@@ -161,6 +169,7 @@ class _NotificationList extends StatelessWidget {
   final List<AppNotification> pending;
   final List<AppNotification> rest;
   final void Function(String id, NotificationDecision decision) onDecide;
+  final ValueChanged<AppNotification>? onAssign;
   final ValueChanged<String> onRead;
   final ValueChanged<String> onDismiss;
 
@@ -187,6 +196,7 @@ class _NotificationList extends StatelessWidget {
               notification: item,
               onTap: () => onRead(item.id),
               onDecide: (decision) => onDecide(item.id, decision),
+              onAssign: onAssign == null ? null : () => onAssign!(item),
             ),
         ],
         for (final entry in _grouped.entries) ...[

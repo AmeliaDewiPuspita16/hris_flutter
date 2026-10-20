@@ -21,6 +21,7 @@ class NotificationTile extends StatelessWidget {
     required this.notification,
     required this.onTap,
     this.onDecide,
+    this.onAssign,
   });
 
   final AppNotification notification;
@@ -30,11 +31,17 @@ class NotificationTile extends StatelessWidget {
   /// baris ini tampil sebagai notifikasi informasi biasa.
   final ValueChanged<NotificationDecision>? onDecide;
 
+  /// Diisi hanya untuk notifikasi bertipe [NotificationActionType.assign]:
+  /// menggantikan pasangan Approve/Reject dengan satu tombol "Assign".
+  final VoidCallback? onAssign;
+
   @override
   Widget build(BuildContext context) {
     final category = notification.category;
     final isUnread = !notification.isRead;
-    final showActions = onDecide != null && notification.needsAction;
+    final isAssign = notification.actionType == NotificationActionType.assign;
+    final showActions = notification.needsAction &&
+        (isAssign ? onAssign != null : onDecide != null);
 
     // Kalau sudah diputuskan, hasil keputusannya yang ditampilkan — detail
     // permintaannya sudah tidak relevan lagi.
@@ -89,19 +96,28 @@ class NotificationTile extends StatelessWidget {
                     const SizedBox(height: 10),
                     Row(
                       children: [
-                        _DecisionButton(
-                          label: 'Approve',
-                          filled: true,
-                          onTap: () =>
-                              onDecide!(NotificationDecision.approved),
-                        ),
-                        const SizedBox(width: 8),
-                        _DecisionButton(
-                          label: 'Reject',
-                          filled: false,
-                          onTap: () =>
-                              onDecide!(NotificationDecision.rejected),
-                        ),
+                        if (isAssign)
+                          _DecisionButton(
+                            label: 'Assign',
+                            filled: true,
+                            icon: Icons.directions_car_outlined,
+                            onTap: onAssign!,
+                          )
+                        else ...[
+                          _DecisionButton(
+                            label: 'Approve',
+                            filled: true,
+                            onTap: () =>
+                                onDecide!(NotificationDecision.approved),
+                          ),
+                          const SizedBox(width: 8),
+                          _DecisionButton(
+                            label: 'Reject',
+                            filled: false,
+                            onTap: () =>
+                                onDecide!(NotificationDecision.rejected),
+                          ),
+                        ],
                       ],
                     ),
                   ],
@@ -147,11 +163,13 @@ class _DecisionButton extends StatelessWidget {
     required this.label,
     required this.filled,
     required this.onTap,
+    this.icon,
   });
 
   final String label;
   final bool filled;
   final VoidCallback onTap;
+  final IconData? icon;
 
   @override
   Widget build(BuildContext context) {
@@ -169,14 +187,27 @@ class _DecisionButton extends StatelessWidget {
             color: filled ? AppColors.primary : AppColors.border,
           ),
         ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontFamily: AppTextStyles.fontFamily,
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: filled ? Colors.white : AppColors.textMid,
-          ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (icon != null) ...[
+              Icon(
+                icon,
+                size: 14,
+                color: filled ? Colors.white : AppColors.textMid,
+              ),
+              const SizedBox(width: 6),
+            ],
+            Text(
+              label,
+              style: TextStyle(
+                fontFamily: AppTextStyles.fontFamily,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: filled ? Colors.white : AppColors.textMid,
+              ),
+            ),
+          ],
         ),
       ),
     );
