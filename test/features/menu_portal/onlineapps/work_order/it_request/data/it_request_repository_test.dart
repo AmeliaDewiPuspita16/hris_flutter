@@ -85,4 +85,45 @@ void main() {
       );
     });
   });
+
+  group('respond', () {
+    test('mengirim note ke endpoint respond dengan id request', () async {
+      final h = build(body: {
+        'data': itRequestDetail(id: 123, statusCode: 'progress', statusLabel: 'On Progress'),
+      });
+
+      await h.repository.respond(123, note: 'Scheduling the installation.');
+
+      expect(h.requested.single.path, '/api/portal/apps/it_request/123/respond');
+    });
+
+    test('memetakan rincian terbaru (status berubah jadi on progress)', () async {
+      final h = build(body: {
+        'data': itRequestDetail(id: 123, statusCode: 'progress', statusLabel: 'On Progress'),
+      });
+
+      final detail = await h.repository.respond(123, note: 'Scheduling the installation.');
+
+      expect(detail.id, 123);
+      expect(detail.status.code, 'progress');
+    });
+
+    test('meneruskan galat validasi (note kosong) sebagai ApiException', () async {
+      final h = build(
+        body: const {
+          'message': 'The note field is required.',
+          'errors': {
+            'note': ['Please write a response before updating the status.'],
+          },
+        },
+        statusCode: 422,
+      );
+
+      expect(
+        () => h.repository.respond(123, note: ''),
+        throwsA(isA<ApiException>()),
+      );
+    });
+  });
+
 }

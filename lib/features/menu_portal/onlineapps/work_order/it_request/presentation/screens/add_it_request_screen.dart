@@ -26,14 +26,6 @@ import '../widgets/new_employee_subform.dart';
 import '../widgets/request_category_selector.dart';
 import '../widgets/support_type_selector.dart';
 
-/// Membuka galeri dan mengembalikan gambar yang dipilih, atau null kalau
-/// dibatalkan.
-///
-/// Disuntik lewat konstruktor supaya test bisa menggantinya tanpa perlu
-/// plugin galeri sungguhan — pola sama dengan `PhotoPicker` di form
-/// pengumuman.
-typedef AttachmentPicker = Future<ItRequestAttachment?> Function();
-
 /// Layar "+ Add Request" — dibuka dari [ItFormAndMediaTab].
 ///
 /// Sengaja dibuat sebagai halaman penuh, bukan bottom sheet, karena

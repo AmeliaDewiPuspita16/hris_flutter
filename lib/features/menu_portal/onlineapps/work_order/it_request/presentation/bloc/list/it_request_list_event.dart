@@ -33,6 +33,18 @@ class ItRequestLocalItemAdded extends ItRequestListEvent {
   final ItRequestItem item;
 }
 
+/// Item di daftar berubah lewat aksi tim IT (respond/complete lewat
+/// [ItRequestRespondSheet]/[ItRequestCompleteSheet] di layar detail) — kedua
+/// sheet itu sudah memanggil `ItRequestRepository.respond`/`complete`
+/// sendiri, jadi [detail] di sini rincian TERBARU dari server. Beda dari
+/// [ItRequestFeedbackGiven]: tidak menyentuh `summary.awaitingRating`, cuma
+/// mengganti item yang id-nya cocok.
+class ItRequestLocalItemUpdated extends ItRequestListEvent {
+  const ItRequestLocalItemUpdated(this.detail);
+
+  final ItRequestDetail detail;
+}
+
 /// User berhasil mengirim rating lewat bottom sheet feedback —
 /// [ItRequestFeedbackSheet] sudah memanggil `ItRequestRepository.submitRating`
 /// sendiri (pola sama dengan `AddItRequestScreen`/[ItRequestLocalItemAdded]),

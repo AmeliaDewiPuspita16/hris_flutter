@@ -14,6 +14,7 @@ class ItRequestDetailBloc extends Bloc<ItRequestDetailEvent, ItRequestDetailStat
       : _repository = repository,
         super(const ItRequestDetailState()) {
     on<ItRequestDetailRequested>(_onRequested);
+    on<ItRequestDetailUpdated>(_onUpdated);
   }
 
   final ItRequestRepository _repository;
@@ -41,5 +42,15 @@ class ItRequestDetailBloc extends Bloc<ItRequestDetailEvent, ItRequestDetailStat
         ),
       );
     }
+  }
+
+  void _onUpdated(
+    ItRequestDetailUpdated event,
+    Emitter<ItRequestDetailState> emit,
+  ) {
+    emit(ItRequestDetailState(
+      status: ItRequestDetailStatus.success,
+      detail: event.detail,
+    ));
   }
 }

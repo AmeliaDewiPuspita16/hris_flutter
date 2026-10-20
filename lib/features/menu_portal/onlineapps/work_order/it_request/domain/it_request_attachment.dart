@@ -1,3 +1,12 @@
+/// Membuka galeri dan mengembalikan gambar yang dipilih, atau null kalau
+/// dibatalkan.
+///
+/// Disuntik lewat konstruktor supaya test bisa menggantinya tanpa perlu
+/// plugin galeri sungguhan — dipakai baik oleh `AddItRequestScreen` maupun
+/// `ItRequestCompleteSheet` (foto bukti pengerjaan), pola sama dengan
+/// `PhotoPicker` di form pengumuman.
+typedef AttachmentPicker = Future<ItRequestAttachment?> Function();
+
 /// Satu berkas gambar yang dilampirkan ke sebuah IT/Media Request.
 ///
 /// Sengaja tidak memakai tipe dari image_picker supaya aturan validasinya

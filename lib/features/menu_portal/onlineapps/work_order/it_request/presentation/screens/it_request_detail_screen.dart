@@ -15,7 +15,9 @@ import '../../domain/it_request_new_employee.dart';
 import '../bloc/detail/it_request_detail_bloc.dart';
 import '../bloc/detail/it_request_detail_event.dart';
 import '../bloc/detail/it_request_detail_state.dart';
+import '../widgets/it_request_complete_sheet.dart';
 import '../widgets/it_request_rating_stars.dart';
+import '../widgets/it_request_respond_sheet.dart';
 import '../widgets/it_request_section_title.dart';
 
 /// Layar detail satu request IT/Media.
@@ -23,29 +25,56 @@ import '../widgets/it_request_section_title.dart';
 /// [item] dibawa dari daftar supaya kepala layar (status, kategori,
 /// deskripsi) langsung tergambar sementara rinciannya masih diambil dari
 /// server. Pola sama dengan `PrDetailScreen` di Procurement Monitoring.
+///
+/// [onItTeamActionDone] diisi HANYA saat layar ini dibuka dari tab "List
+/// Request" tim IT (lih. `ListRequestTab`) — kehadirannya yang menentukan
+/// apakah action bar Respond/Complete Request ditampilkan, BUKAN flag
+/// terpisah, supaya staff biasa yang membuka request miliknya sendiri lewat
+/// "Form IT & Media" tidak pernah melihat aksi yang bukan wewenangnya
+/// (server toh menolak lewat role, tapi UI tidak perlu menawarkannya).
+/// Dipanggil dengan rincian terbaru setelah respond/complete berhasil,
+/// supaya pemanggil (daftar) bisa menyinkronkan baris yang sama.
 class ItRequestDetailScreen extends StatelessWidget {
-  const ItRequestDetailScreen({super.key, required this.item, this.repository});
+  const ItRequestDetailScreen({
+    super.key,
+    required this.item,
+    this.repository,
+    this.onItTeamActionDone,
+  });
 
   final ItRequestItem item;
 
   /// Diisi test; di aplikasi diambil dari [RepositoryProvider].
   final ItRequestRepository? repository;
 
+  final ValueChanged<ItRequestDetail>? onItTeamActionDone;
+
   @override
   Widget build(BuildContext context) {
+    final resolvedRepository = repository ?? context.read<ItRequestRepository>();
+
     return BlocProvider(
-      create: (_) => ItRequestDetailBloc(
-        repository: repository ?? context.read<ItRequestRepository>(),
-      )..add(ItRequestDetailRequested(item.id)),
-      child: _ItRequestDetailView(item: item),
+      create: (_) => ItRequestDetailBloc(repository: resolvedRepository)
+        ..add(ItRequestDetailRequested(item.id)),
+      child: _ItRequestDetailView(
+        item: item,
+        repository: resolvedRepository,
+        onItTeamActionDone: onItTeamActionDone,
+      ),
     );
   }
 }
 
 class _ItRequestDetailView extends StatelessWidget {
-  const _ItRequestDetailView({required this.item});
+  const _ItRequestDetailView({
+    required this.item,
+    required this.repository,
+    this.onItTeamActionDone,
+  });
 
   final ItRequestItem item;
+  final ItRequestRepository repository;
+  final ValueChanged<ItRequestDetail>? onItTeamActionDone;
 
   @override
   Widget build(BuildContext context) {
@@ -73,6 +102,77 @@ class _ItRequestDetailView extends StatelessWidget {
             ),
           );
         },
+      ),
+      bottomNavigationBar: onItTeamActionDone == null
+          ? null
+          : BlocBuilder<ItRequestDetailBloc, ItRequestDetailState>(
+              builder: (context, state) =>
+                  _buildItTeamActionBar(context, state) ?? const SizedBox.shrink(),
+            ),
+    );
+  }
+
+  Widget? _buildItTeamActionBar(BuildContext context, ItRequestDetailState state) {
+    final detail = state.detail;
+    if (detail == null) return null;
+
+    final String label;
+    final Future<ItRequestDetail?> Function(BuildContext) openSheet;
+    switch (detail.status.code) {
+      case 'waiting':
+        label = 'Respond';
+        openSheet = (ctx) => showModalBottomSheet<ItRequestDetail>(
+              context: ctx,
+              isScrollControlled: true,
+              backgroundColor: Colors.transparent,
+              builder: (_) => ItRequestRespondSheet(detail: detail, repository: repository),
+            );
+      case 'progress':
+        label = 'Complete Request';
+        openSheet = (ctx) => showModalBottomSheet<ItRequestDetail>(
+              context: ctx,
+              isScrollControlled: true,
+              backgroundColor: Colors.transparent,
+              builder: (_) => ItRequestCompleteSheet(detail: detail, repository: repository),
+            );
+      default:
+        // Status lain (sudah complete, done, finished, dst) tidak punya
+        // aksi tim IT lagi di layar ini.
+        return null;
+    }
+
+    final detailBloc = context.read<ItRequestDetailBloc>();
+
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(top: BorderSide(color: AppColors.border)),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+          child: SizedBox(
+            width: double.infinity,
+            height: 48,
+            child: ElevatedButton(
+              onPressed: () async {
+                final updated = await openSheet(context);
+                if (updated == null) return;
+
+                detailBloc.add(ItRequestDetailUpdated(updated));
+                onItTeamActionDone?.call(updated);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.present,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+              child: Text(label, style: AppTextStyles.buttonText.copyWith(color: Colors.white)),
+            ),
+          ),
+        ),
       ),
     );
   }

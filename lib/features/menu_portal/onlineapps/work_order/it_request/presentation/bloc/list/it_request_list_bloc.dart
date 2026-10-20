@@ -13,17 +13,32 @@ import 'it_request_list_state.dart';
 /// pemanggil sendiri (tambah request, beri feedback) — bloc ini cuma
 /// menyatukan hasilnya ke state, bukan yang memanggil API-nya.
 class ItRequestListBloc extends Bloc<ItRequestListEvent, ItRequestListState> {
-  ItRequestListBloc({required ItRequestRepository repository})
-      : _repository = repository,
+  ItRequestListBloc({
+    required ItRequestRepository repository,
+    this.loadAllPages = false,
+  })  : _repository = repository,
         super(const ItRequestListState()) {
     on<ItRequestListStarted>(_onReload);
     on<ItRequestListRefreshed>(_onReload);
     on<ItRequestListNextPageRequested>(_onNextPage);
     on<ItRequestLocalItemAdded>(_onLocalItemAdded);
+    on<ItRequestLocalItemUpdated>(_onLocalItemUpdated);
     on<ItRequestFeedbackGiven>(_onFeedbackGiven);
   }
 
   final ItRequestRepository _repository;
+
+  /// True untuk `ListRequestTab`, yang menghitung counter On Waiting/On
+  /// Progress dari `items` — tanpa menarik SEMUA halaman di awal, counter
+  /// itu akan terus bertambah tiap kali scroll memuat halaman berikutnya
+  /// (bukan total sebenarnya, cuma "sejauh yang sudah termuat"). Server
+  /// tidak punya endpoint hitung/filter per status, jadi inilah satu-satunya
+  /// cara mendapat angka yang akurat dan stabil.
+  ///
+  /// False untuk `ItFormAndMediaTab` (nilai default) — riwayat perusahaan
+  /// bisa sangat panjang dan tab itu tidak butuh total apa pun, jadi tetap
+  /// lazy-load per scroll seperti biasa supaya tidak boros network di awal.
+  final bool loadAllPages;
 
   /// Sama alasannya dengan `ProcurementListBloc`: dua permintaan halaman
   /// pertama yang tumpang tindih (mis. refresh ditekan dua kali) bisa
@@ -55,6 +70,7 @@ class ItRequestListBloc extends Bloc<ItRequestListEvent, ItRequestListState> {
       ));
 
       await _huntForOwnAwaitingItem(token, emit);
+      if (loadAllPages) await _loadRemainingPages(token, emit);
     } on ApiException catch (e) {
       if (token != _requestToken) return;
 
@@ -107,7 +123,7 @@ class ItRequestListBloc extends Bloc<ItRequestListEvent, ItRequestListState> {
         if (token != _requestToken) return;
 
         emit(state.copyWith(
-          items: [...state.items, ...page.items],
+          items: _appendWithoutDuplicates(state.items, page.items),
           summary: page.summary,
           meta: page.meta,
         ));
@@ -127,6 +143,65 @@ class ItRequestListBloc extends Bloc<ItRequestListEvent, ItRequestListState> {
   bool _hasOwnAwaitingItem(List<ItRequestItem> items) =>
       items.any((item) => item.isMine && item.canRate);
 
+  /// Menambahkan [incoming] ke [existing] tanpa duplikat id.
+  ///
+  /// WAJIB dipakai setiap kali menyambung hasil halaman baru — daftar ini
+  /// diurut "terbaru dulu" dari data SELURUH perusahaan yang terus berubah
+  /// (request baru bisa masuk kapan saja). Paginasi offset seperti ini
+  /// rentan "bergeser": kalau ada request baru masuk di antara dua
+  /// permintaan halaman, request yang tadinya di halaman N bisa ikut
+  /// terdorong dan muncul lagi di halaman N+1 — tanpa dedup, request yang
+  /// sama terhitung dua kali dan bikin counter On Waiting/On Progress
+  /// membengkak jauh dari angka sebenarnya di server.
+  List<ItRequestItem> _appendWithoutDuplicates(
+    List<ItRequestItem> existing,
+    List<ItRequestItem> incoming,
+  ) {
+    final seenIds = existing.map((item) => item.id).toSet();
+    final newOnly = incoming.where((item) => seenIds.add(item.id));
+    return [...existing, ...newOnly];
+  }
+
+  /// Menarik semua halaman tersisa sekaligus, berurutan, sampai server
+  /// bilang `meta.hasMore` false — dipakai [loadAllPages]. `loadingMore`
+  /// dipasang untuk seluruh proses (bukan per halaman) supaya tidak
+  /// berkedip nyala-mati tiap kali satu halaman selesai.
+  Future<void> _loadRemainingPages(
+    int token,
+    Emitter<ItRequestListState> emit,
+  ) async {
+    if (!state.meta.hasMore) return;
+
+    emit(state.copyWith(loadingMore: true));
+
+    while (state.meta.hasMore) {
+      if (token != _requestToken) return;
+
+      try {
+        final page = await _repository.fetchList(page: state.meta.currentPage + 1);
+        if (token != _requestToken) return;
+
+        emit(state.copyWith(
+          items: _appendWithoutDuplicates(state.items, page.items),
+          summary: page.summary,
+          meta: page.meta,
+        ));
+      } on ApiException catch (e) {
+        // Sama seperti _huntForOwnAwaitingItem: kegagalan di tengah proses
+        // ini tidak boleh menimpa daftar yang sudah berhasil dimuat dengan
+        // layar galat — counter cukup dihitung dari sebagian yang berhasil.
+        AppLogger.info(
+          'Memuat seluruh halaman IT Request untuk counter berhenti karena '
+          'galat: ${e.message}',
+        );
+        break;
+      }
+    }
+
+    if (token != _requestToken) return;
+    emit(state.copyWith(loadingMore: false));
+  }
+
   Future<void> _onNextPage(
     ItRequestListNextPageRequested event,
     Emitter<ItRequestListState> emit,
@@ -142,7 +217,7 @@ class ItRequestListBloc extends Bloc<ItRequestListEvent, ItRequestListState> {
       if (token != _requestToken) return;
 
       emit(state.copyWith(
-        items: [...state.items, ...page.items],
+        items: _appendWithoutDuplicates(state.items, page.items),
         summary: page.summary,
         meta: page.meta,
         loadingMore: false,
@@ -162,6 +237,18 @@ class ItRequestListBloc extends Bloc<ItRequestListEvent, ItRequestListState> {
     emit(state.copyWith(
       items: [event.item, ...state.items],
       meta: state.meta.copyWith(total: state.meta.total + 1),
+    ));
+  }
+
+  void _onLocalItemUpdated(
+    ItRequestLocalItemUpdated event,
+    Emitter<ItRequestListState> emit,
+  ) {
+    emit(state.copyWith(
+      items: [
+        for (final item in state.items)
+          if (item.id == event.detail.id) event.detail else item,
+      ],
     ));
   }
 

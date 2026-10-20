@@ -25,6 +25,27 @@ void main() {
       expect(status.color, AppColors.accent);
     });
 
+    test('waiting (belum direspons tim IT) berwarna pending', () {
+      final status =
+          ItRequestStatus.fromJson(const {'code': 'waiting', 'label': 'On Waiting'});
+
+      expect(status.color, AppColors.pending);
+    });
+
+    test('progress (sedang dikerjakan tim IT) berwarna in-progress', () {
+      final status =
+          ItRequestStatus.fromJson(const {'code': 'progress', 'label': 'On Progress'});
+
+      expect(status.color, AppColors.inProgress);
+    });
+
+    test('wait_checked (sudah complete, menunggu verifikasi) berwarna aksen', () {
+      final status =
+          ItRequestStatus.fromJson(const {'code': 'wait_checked', 'label': 'Wait Checked'});
+
+      expect(status.color, AppColors.accent);
+    });
+
     test('kode yang belum dikenal tetap tampil, warnanya netral', () {
       // Kode selain "done"/"finished" belum ada contohnya — daripada
       // menebak warna yang salah, kode tak dikenal jatuh ke netral tapi

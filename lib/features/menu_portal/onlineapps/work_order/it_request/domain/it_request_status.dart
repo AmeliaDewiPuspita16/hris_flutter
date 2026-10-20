@@ -8,10 +8,12 @@ import '../../../../../../core/theme/app_colors.dart';
 /// yang ditambahkan backend tetap terbaca di layar tanpa aplikasi perlu
 /// dirilis ulang — pola sama dengan `PrStatus` di EProcurement.
 ///
-/// Baru dua kode yang diketahui pasti artinya: "done" (sudah dikerjakan tim
-/// IT, menunggu rating dari user) dan "finished" (sudah dinilai/ditutup).
-/// Kode lain (mis. tahap menunggu HOD, sedang dikerjakan) belum ada
-/// contohnya — daripada menebak warnanya, kode tak dikenal jatuh ke netral;
+/// Kode yang diketahui pasti artinya: "waiting" (belum direspons tim IT),
+/// "progress" (sedang dikerjakan, lih. `ItRequestRepository.respond`),
+/// "wait_checked" (sudah complete, menunggu verifikasi terpisah — lih.
+/// `ItRequestRepository.complete`), "done" (sudah dikerjakan, menunggu
+/// rating dari user), dan "finished" (sudah dinilai/ditutup). Kode lain
+/// yang belum ada contohnya jatuh ke netral — daripada menebak warnanya,
 /// labelnya tetap benar karena datang dari server.
 class ItRequestStatus {
   const ItRequestStatus({required this.code, required this.label});
@@ -31,14 +33,18 @@ class ItRequestStatus {
 
   Color get color => switch (code) {
         'finished' => AppColors.present,
-        'done' => AppColors.accent,
+        'done' || 'wait_checked' => AppColors.accent,
+        'progress' => AppColors.inProgress,
+        'waiting' => AppColors.pending,
         'rejected' || 'cancelled' => AppColors.rejected,
         _ => AppColors.neutral,
       };
 
   Color get background => switch (code) {
         'finished' => AppColors.presentBg,
-        'done' => AppColors.accentBg,
+        'done' || 'wait_checked' => AppColors.accentBg,
+        'progress' => AppColors.inProgressBg,
+        'waiting' => AppColors.pendingBg,
         'rejected' || 'cancelled' => AppColors.rejectedBg,
         _ => AppColors.neutralBg,
       };

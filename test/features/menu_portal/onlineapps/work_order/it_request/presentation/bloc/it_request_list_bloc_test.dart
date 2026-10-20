@@ -303,4 +303,156 @@ void main() {
 
     await bloc.close();
   });
+
+  test('ItRequestLocalItemUpdated mengganti item yang id-nya cocok, tanpa '
+      'menyentuh summary.awaitingRating', () async {
+    final harness = ItRequestHarness(
+      (_, __) => ok(itRequestListEnvelope(
+        items: [itRequestListItem(id: 2394, statusCode: 'waiting', statusLabel: 'On Waiting')],
+        awaitingRating: 3,
+      )),
+    );
+    final bloc = blocOver(harness);
+
+    bloc.add(const ItRequestListStarted());
+    await settle(bloc);
+
+    bloc.add(ItRequestLocalItemUpdated(
+      ItRequestDetail.fromJson(
+        itRequestDetail(id: 2394, statusCode: 'progress', statusLabel: 'On Progress'),
+      ),
+    ));
+    await bloc.stream.firstWhere((s) => s.items.single.status.code == 'progress');
+
+    expect(bloc.state.items.single.status.code, 'progress');
+    expect(bloc.state.summary.awaitingRating, 3);
+
+    await bloc.close();
+  });
+
+  test('ItRequestLocalItemUpdated untuk id yang tidak ada di daftar tidak '
+      'mengubah apa pun', () async {
+    final harness = ItRequestHarness(
+      (_, __) => ok(itRequestListEnvelope(items: [itRequestListItem(id: 2394)])),
+    );
+    final bloc = blocOver(harness);
+
+    bloc.add(const ItRequestListStarted());
+    await settle(bloc);
+
+    bloc.add(ItRequestLocalItemUpdated(
+      ItRequestDetail.fromJson(itRequestDetail(id: 9999, statusCode: 'progress')),
+    ));
+    await Future<void>.delayed(const Duration(milliseconds: 20));
+
+    expect(bloc.state.items.single.id, 2394);
+
+    await bloc.close();
+  });
+
+  group('loadAllPages', () {
+    test('menarik semua halaman sekali di awal, bukan cuma halaman pertama',
+        () async {
+      final harness = ItRequestHarness((url, __) {
+        final page = int.parse(url.queryParameters['page'] ?? '1');
+        return ok(itRequestListEnvelope(
+          items: [itRequestListItem(id: page)],
+          currentPage: page,
+          lastPage: 3,
+        ));
+      });
+      final bloc = ItRequestListBloc(repository: harness.repository, loadAllPages: true);
+
+      bloc.add(const ItRequestListStarted());
+      await bloc.stream.firstWhere((s) => s.meta.currentPage == 3);
+      // Beri kesempatan bloc menandai loadingMore selesai (emit terakhir)
+      // sebelum diperiksa.
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+
+      expect(harness.requested, hasLength(3));
+      expect(bloc.state.items.map((i) => i.id), [1, 2, 3]);
+      expect(bloc.state.loadingMore, isFalse);
+
+      await bloc.close();
+    });
+
+    test('tidak menarik halaman tambahan saat loadAllPages false (default)',
+        () async {
+      final harness = ItRequestHarness(
+        (_, __) => ok(itRequestListEnvelope(currentPage: 1, lastPage: 3)),
+      );
+      final bloc = ItRequestListBloc(repository: harness.repository);
+
+      bloc.add(const ItRequestListStarted());
+      await settle(bloc);
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+
+      expect(harness.requested, hasLength(1));
+
+      await bloc.close();
+    });
+
+    test('kegagalan di tengah proses tetap menyisakan halaman yang sudah '
+        'berhasil dimuat, bukan layar galat', () async {
+      final harness = ItRequestHarness((url, __) {
+        final page = int.parse(url.queryParameters['page'] ?? '1');
+        if (page == 2) return fails(message: 'Server sibuk');
+        return ok(itRequestListEnvelope(
+          items: [itRequestListItem(id: page)],
+          currentPage: page,
+          lastPage: 3,
+        ));
+      });
+      final bloc = ItRequestListBloc(repository: harness.repository, loadAllPages: true);
+
+      bloc.add(const ItRequestListStarted());
+      await settle(bloc);
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+
+      expect(bloc.state.status, ItRequestListStatus.success);
+      expect(bloc.state.items.single.id, 1);
+      expect(bloc.state.loadingMore, isFalse);
+
+      await bloc.close();
+    });
+
+    test(
+        'item yang sama tidak dihitung dua kali kalau ikut tergeser ke '
+        'halaman berikutnya (paginasi offset di atas data yang terus '
+        'berubah — request baru masuk saat halaman lain masih ditarik)',
+        () async {
+      // Simulasi pergeseran: halaman 1 awalnya berisi id 1 & 2, tapi begitu
+      // halaman 2 diminta, request baru (id 99) sudah masuk duluan di
+      // server — mendorong id 2 yang tadinya di halaman 1 kini muncul lagi
+      // di urutan halaman 2 ("terbaru dulu").
+      final harness = ItRequestHarness((url, __) {
+        final page = int.parse(url.queryParameters['page'] ?? '1');
+        if (page == 1) {
+          return ok(itRequestListEnvelope(
+            items: [itRequestListItem(id: 1), itRequestListItem(id: 2)],
+            currentPage: 1,
+            lastPage: 2,
+            perPage: 2,
+            total: 4,
+          ));
+        }
+        return ok(itRequestListEnvelope(
+          items: [itRequestListItem(id: 2), itRequestListItem(id: 3)],
+          currentPage: 2,
+          lastPage: 2,
+          perPage: 2,
+          total: 4,
+        ));
+      });
+      final bloc = ItRequestListBloc(repository: harness.repository, loadAllPages: true);
+
+      bloc.add(const ItRequestListStarted());
+      await bloc.stream.firstWhere((s) => s.meta.currentPage == 2);
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+
+      expect(bloc.state.items.map((i) => i.id).toList(), [1, 2, 3]);
+
+      await bloc.close();
+    });
+  });
 }

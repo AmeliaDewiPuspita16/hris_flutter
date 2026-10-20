@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hris_mobile/features/menu_portal/onlineapps/work_order/it_request/domain/it_request_detail.dart';
 import 'package:hris_mobile/features/menu_portal/onlineapps/work_order/it_request/presentation/bloc/detail/it_request_detail_bloc.dart';
 import 'package:hris_mobile/features/menu_portal/onlineapps/work_order/it_request/presentation/bloc/detail/it_request_detail_event.dart';
 import 'package:hris_mobile/features/menu_portal/onlineapps/work_order/it_request/presentation/bloc/detail/it_request_detail_state.dart';
@@ -51,6 +52,26 @@ void main() {
     await bloc.stream.firstWhere((s) => s.status == ItRequestDetailStatus.success);
 
     expect(bloc.state.errorMessage, isNull);
+
+    await bloc.close();
+  });
+
+  test('ItRequestDetailUpdated menggambar ulang layar dengan rincian terbaru '
+      'tanpa fetch ulang', () async {
+    final harness = ItRequestHarness((_, __) => ok({'data': itRequestDetail()}));
+    final bloc = ItRequestDetailBloc(repository: harness.repository);
+
+    bloc.add(const ItRequestDetailRequested(2395));
+    await bloc.stream.firstWhere((s) => s.status == ItRequestDetailStatus.success);
+
+    final updated = ItRequestDetail.fromJson(
+      itRequestDetail(id: 2395, statusCode: 'progress', statusLabel: 'On Progress'),
+    );
+    bloc.add(ItRequestDetailUpdated(updated));
+    await bloc.stream.firstWhere((s) => s.detail?.status.code == 'progress');
+
+    expect(harness.requested, hasLength(1), reason: 'tidak ada request HTTP tambahan');
+    expect(bloc.state.status, ItRequestDetailStatus.success);
 
     await bloc.close();
   });

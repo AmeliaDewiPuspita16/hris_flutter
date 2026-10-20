@@ -115,6 +115,63 @@ class ItRequestRepository {
     }
   }
 
+  /// Dipanggil tim IT untuk merespons request yang masih "On Waiting" —
+  /// server otomatis mengubah statusnya jadi "On Progress" begitu respons
+  /// ini tersimpan.
+  ///
+  /// Bentuk `data` sama dengan `GET .../{id}`, jadi dipetakan lewat
+  /// [ItRequestDetail.fromJson] yang sama.
+  ///
+  /// Melempar [ApiException] bila gagal, termasuk galat validasi (mis.
+  /// `note` kosong) atau karena user bukan tim IT.
+  Future<ItRequestDetail> respond(int id, {required String note}) async {
+    final data = await _apiClient.post(
+      '${ApiConfig.itRequest}/$id/respond',
+      body: {'note': note},
+    );
+
+    try {
+      return ItRequestDetail.fromJson(data);
+    } on FormatException {
+      throw const ApiException.server(
+        'Respons terkirim, tapi respons server tidak dikenali.',
+      );
+    }
+  }
+
+  /// Dipanggil tim IT untuk menutup request yang "On Progress" dengan foto
+  /// bukti pengerjaan. Status di server berubah jadi "Wait Checked" — BUKAN
+  /// langsung "Done", karena "Done" baru tercapai lewat langkah verifikasi
+  /// terpisah (lih. `Checking`).
+  ///
+  /// Wajib `multipart/form-data` karena ada berkas foto. Bentuk `data` sama
+  /// dengan `GET .../{id}`, jadi dipetakan lewat [ItRequestDetail.fromJson]
+  /// yang sama.
+  ///
+  /// Melempar [ApiException] bila gagal, termasuk galat validasi (mis. foto
+  /// tidak disertakan).
+  Future<ItRequestDetail> complete(
+    int id, {
+    required String photoPath,
+    String? note,
+  }) async {
+    final data = await _apiClient.postMultipart(
+      '${ApiConfig.itRequest}/$id/complete',
+      fields: {
+        if (note != null && note.isNotEmpty) 'note': note,
+      },
+      files: {'photo': [photoPath]},
+    );
+
+    try {
+      return ItRequestDetail.fromJson(data);
+    } on FormatException {
+      throw const ApiException.server(
+        'Foto terkirim, tapi respons server tidak dikenali.',
+      );
+    }
+  }
+
   static String _pathWithQuery(String path, Map<String, String> query) =>
       Uri(path: path, queryParameters: query).toString();
 }

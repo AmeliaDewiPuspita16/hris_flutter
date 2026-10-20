@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:hris_mobile/features/menu_portal/onlineapps/work_order/it_request/domain/it_request_detail.dart';
 import 'package:hris_mobile/features/menu_portal/onlineapps/work_order/it_request/domain/it_request_item.dart';
 import 'package:hris_mobile/features/menu_portal/onlineapps/work_order/it_request/presentation/screens/it_request_detail_screen.dart';
+import 'package:hris_mobile/features/menu_portal/onlineapps/work_order/it_request/presentation/widgets/it_request_complete_sheet.dart';
+import 'package:hris_mobile/features/menu_portal/onlineapps/work_order/it_request/presentation/widgets/it_request_respond_sheet.dart';
 
 import '../../../../../../../fixtures/it_request_response.dart';
 import '../../support/it_request_harness.dart';
@@ -16,6 +19,22 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         home: ItRequestDetailScreen(item: summary, repository: harness.repository),
+      ),
+    );
+  }
+
+  Future<void> pumpScreenForItTeam(
+    WidgetTester tester,
+    ItRequestHarness harness, {
+    required ValueChanged<ItRequestDetail> onItTeamActionDone,
+  }) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: ItRequestDetailScreen(
+          item: summary,
+          repository: harness.repository,
+          onItTeamActionDone: onItTeamActionDone,
+        ),
       ),
     );
   }
@@ -115,5 +134,109 @@ void main() {
     await settle(tester);
 
     expect(tester.takeException(), isNull);
+  });
+
+  group('action bar tim IT (onItTeamActionDone)', () {
+    testWidgets(
+        'tanpa onItTeamActionDone, status waiting tidak menampilkan tombol Respond '
+        '(mis. dibuka lewat riwayat milik sendiri)', (tester) async {
+      await pumpScreen(
+        tester,
+        detailHarness(itRequestDetail(statusCode: 'waiting', statusLabel: 'On Waiting')),
+      );
+      await settle(tester);
+
+      expect(find.text('Respond'), findsNothing);
+    });
+
+    testWidgets('status waiting menampilkan tombol Respond', (tester) async {
+      await pumpScreenForItTeam(
+        tester,
+        detailHarness(itRequestDetail(statusCode: 'waiting', statusLabel: 'On Waiting')),
+        onItTeamActionDone: (_) {},
+      );
+      await settle(tester);
+
+      expect(find.text('Respond'), findsOneWidget);
+      expect(find.text('Complete Request'), findsNothing);
+    });
+
+    testWidgets('status progress menampilkan tombol Complete Request', (tester) async {
+      await pumpScreenForItTeam(
+        tester,
+        detailHarness(itRequestDetail(statusCode: 'progress', statusLabel: 'On Progress')),
+        onItTeamActionDone: (_) {},
+      );
+      await settle(tester);
+
+      expect(find.text('Complete Request'), findsOneWidget);
+      expect(find.text('Respond'), findsNothing);
+    });
+
+    testWidgets('status finished tidak menampilkan aksi tim IT apa pun',
+        (tester) async {
+      await pumpScreenForItTeam(
+        tester,
+        detailHarness(itRequestDetail(statusCode: 'finished', statusLabel: 'Finished')),
+        onItTeamActionDone: (_) {},
+      );
+      await settle(tester);
+
+      expect(find.text('Respond'), findsNothing);
+      expect(find.text('Complete Request'), findsNothing);
+    });
+
+    testWidgets(
+        'menekan Respond, submit, memperbarui badge jadi On Progress dan '
+        'memanggil onItTeamActionDone', (tester) async {
+      ItRequestDetail? callbackResult;
+      final harness = ItRequestHarness((url, __) {
+        if (url.path.endsWith('/respond')) {
+          return ok({
+            'data': itRequestDetail(id: 2395, statusCode: 'progress', statusLabel: 'On Progress'),
+          });
+        }
+        return ok({'data': itRequestDetail(statusCode: 'waiting', statusLabel: 'On Waiting')});
+      });
+
+      await pumpScreenForItTeam(
+        tester,
+        harness,
+        onItTeamActionDone: (detail) => callbackResult = detail,
+      );
+      await settle(tester);
+
+      await tester.tap(find.text('Respond'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(ItRequestRespondSheet), findsOneWidget);
+
+      await tester.enterText(find.byType(TextField), 'Scheduling the installation.');
+      await tester.pump();
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Submit'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(ItRequestRespondSheet), findsNothing);
+      expect(find.text('On Progress'), findsWidgets);
+      expect(find.text('Respond'), findsNothing);
+      expect(find.text('Complete Request'), findsOneWidget);
+      expect(callbackResult, isNotNull);
+      expect(callbackResult!.status.code, 'progress');
+    });
+
+    testWidgets('menekan Complete Request membuka ItRequestCompleteSheet',
+        (tester) async {
+      await pumpScreenForItTeam(
+        tester,
+        detailHarness(itRequestDetail(statusCode: 'progress', statusLabel: 'On Progress')),
+        onItTeamActionDone: (_) {},
+      );
+      await settle(tester);
+
+      await tester.tap(find.text('Complete Request'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(ItRequestCompleteSheet), findsOneWidget);
+    });
   });
 }
