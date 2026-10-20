@@ -23,18 +23,24 @@ import 'pr_detail_screen.dart';
 /// "Receiving". Filter status, pencarian, dan paginasi semuanya dikerjakan
 /// server; filter Section dan rentang tanggal belum ikut.
 class ProcurementPage extends StatelessWidget {
-  const ProcurementPage({super.key, this.repository});
+  const ProcurementPage({super.key, this.repository, this.initialStatusCode});
 
   /// Diisi test; di aplikasi diambil dari [RepositoryProvider].
   final ProcurementRepository? repository;
+
+  /// Kode status yang langsung aktif saat halaman dibuka, mis. `pending_hod`
+  /// (lihat `PrStatusCode`). Null = chip "Semua".
+  final String? initialStatusCode;
 
   @override
   Widget build(BuildContext context) {
     final procurement = repository ?? context.read<ProcurementRepository>();
 
     return BlocProvider(
-      create: (_) => ProcurementListBloc(repository: procurement)
-        ..add(const ProcurementListStarted()),
+      create: (_) => ProcurementListBloc(
+        repository: procurement,
+        initialStatusCode: initialStatusCode,
+      )..add(const ProcurementListStarted()),
       child: _ProcurementView(repository: procurement),
     );
   }

@@ -85,6 +85,7 @@ class _IndentAssignSheetState extends State<IndentAssignSheet> {
       IndentAssignResult(
         plateNumber: _plateController.text.trim().toUpperCase(),
         driver: widget.item.withDriver ? _driver?.name : null,
+        driverId: widget.item.withDriver ? _driver?.id : null,
       ),
     );
   }

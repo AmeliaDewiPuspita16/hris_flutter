@@ -18,6 +18,9 @@ import '../../../leave_approval/domain/leave_approval_request.dart';
 import '../../../leave_approval/domain/leave_approval_status.dart';
 import '../../../leave_approval/presentation/screens/leave_approval_screen.dart';
 import '../../../menu_portal/onlineapps/presentation/screens/online_apps_screen.dart';
+import '../../../menu_portal/onlineapps/procurement/domain/pr_status.dart';
+import '../../../menu_portal/onlineapps/procurement/presentation/screens/procurement_page.dart';
+import '../../../menu_portal/onlineapps/work_order/est_request/presentation/screens/est_request_screen.dart';
 import '../../../menu_portal/onlineapps/work_order/it_request/presentation/screens/it_request_screen.dart';
 import '../../../menu_portal/record/presentation/screens/record_screen.dart';
 import '../../../menu_portal/data_app/presentation/screens/data_screen.dart';
@@ -387,16 +390,39 @@ class _BerandaScreenState extends State<BerandaScreen> {
     );
   }
 
-  /// SEMENTARA: EST belum punya tab Approve Request sendiri seperti IT
-  /// (menu EST Request baru sisi requester) — untuk sekarang jatuh ke
-  /// Notifications.
-  void _openEstApproval() => _openApprovalNotifications();
+  /// EST: buka EstRequestScreen langsung di tab Approve HOD (tab 1), pola
+  /// yang sama dengan IT di atas. `isHod` memakai default layar (true);
+  /// pemetaan role HOD yang asli masih SEMENTARA di sana.
+  void _openEstApproval() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => const EstRequestScreen(initialTabIndex: 1),
+      ),
+    );
+  }
 
-  /// SEMENTARA: Indent Vehicle & eProcurement juga belum punya tampilan
-  /// approval khusus HOD — untuk sekarang jatuh ke Notifications juga, sama
-  /// seperti EST di atas.
-  void _openIndentVehicleApproval() => _openApprovalNotifications();
-  void _openEprocurementApproval() => _openApprovalNotifications();
+  /// Indent Vehicle: buka halamannya langsung di tab Supervisor Approval
+  /// (tab 1). Banner Approvals waiting memang hanya untuk yang berhak
+  /// approve, jadi tidak perlu bercabang menurut role.
+  void _openIndentVehicleApproval() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => const IndentVehicleScreen(initialTabIndex: 1),
+      ),
+    );
+  }
+
+  /// eProcurement: buka Procurement Monitoring dengan chip "HOD"
+  /// (`pending_hod`) sudah aktif, bukan ke tab Notifications.
+  void _openEprocurementApproval() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => ProcurementPage(
+          initialStatusCode: PrStatusCode.pendingHod.code,
+        ),
+      ),
+    );
+  }
 
   /// Menu utama "Online Apps" — dipush sebagai halaman baru, bukan tab,
   /// jadi bottom nav Beranda tidak ikut tampil di sana.

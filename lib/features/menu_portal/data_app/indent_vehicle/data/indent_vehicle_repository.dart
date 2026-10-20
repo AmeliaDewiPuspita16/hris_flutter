@@ -5,6 +5,8 @@ import '../../../../../core/network/api_exception.dart';
 import '../../../../../core/network/page_meta.dart';
 import '../domain/indent_approval_item.dart';
 import '../domain/indent_driver.dart';
+import '../domain/indent_json.dart';
+import '../domain/indent_pending_item.dart';
 import '../domain/indent_request_item.dart';
 import '../domain/indent_request_page.dart';
 
@@ -165,6 +167,71 @@ class IndentVehicleRepository {
 
   /// Server memakai id angka; id di layar berupa teks.
   Object _idBody(String id) => int.tryParse(id) ?? id;
+
+  /// Request yang menunggu admin menetapkan kendaraan — `GET
+  /// /api/indent/admin/list`, dibungkus `{data: [...], admin: bool}`.
+  ///
+  /// Isi endpoint ini bergantung role pemanggil: `admin` true hanya untuk
+  /// `driver-admin`. Untuk akun lain (mis. `driver`, yang mendapat request
+  /// yang ditugaskan kepadanya) hasilnya dibuang dan daftar kosong
+  /// dikembalikan, karena itu bukan antrean assignment. Jadi bloc boleh
+  /// memuat ini untuk semua akun tanpa perlu mencocokkan nama role.
+  ///
+  /// Baris yang ditolak HOD (`approval_hod = 2`) atau sudah bukan status 0
+  /// dilewati sebagai pengaman, karena dokumentasi API kurang tegas soal
+  /// filter di sisi server.
+  ///
+  /// Melempar [ApiException] bila gagal.
+  Future<List<IndentPendingItem>> fetchPendingAssignments() async {
+    final envelope = await _apiClient.getEnvelope(ApiConfig.indentAdminList);
+    if (envelope['admin'] != true) return const [];
+
+    final rows = envelope['data'];
+    if (rows is! List) {
+      AppLogger.info('admin/list: data bukan list (${rows.runtimeType})');
+      throw const ApiException.server();
+    }
+
+    final items = <IndentPendingItem>[];
+    for (final row in rows.whereType<Map<String, dynamic>>()) {
+      if (!_awaitsAssignment(row)) continue;
+
+      try {
+        items.add(IndentPendingItem.fromJson(row));
+      } on FormatException catch (e) {
+        AppLogger.info('Melewati pending yang tidak bisa dibaca: $e');
+      }
+    }
+    return items;
+  }
+
+  static bool _awaitsAssignment(Map<String, dynamic> row) {
+    if (indentInt(row['approval_hod']) == 2) return false;
+
+    final status = indentInt(row['status']);
+    return status == null || status == 0;
+  }
+
+  /// Admin menetapkan kendaraan (dan driver, bila request memakai driver)
+  /// — `POST /api/admin_indent/approve` dengan `status: 1`. Request lalu
+  /// keluar dari antrean pending.
+  ///
+  /// `driver` dan `id_driver` hanya dikirim bila ada. Hanya status HTTP
+  /// yang diperiksa (bentuk respons endpoint ini tidak seragam dengan yang
+  /// lain), jadi gagal-tidaknya penugasan tidak bergantung pada isi balasan.
+  Future<void> assignByAdmin({
+    required String id,
+    required String plateNumber,
+    int? driverId,
+    String? driverName,
+  }) =>
+      _apiClient.postRaw(ApiConfig.indentAdminApprove, body: {
+        'id': _idBody(id),
+        'status': 1,
+        'kendaraan': plateNumber,
+        if (driverId != null) 'id_driver': driverId,
+        if (driverName != null) 'driver': driverName,
+      });
 
   /// id driver -> nama; kosong bila gagal. Tidak pernah melempar, karena
   /// kegagalan daftar driver tidak boleh membuat seluruh list request gagal.
