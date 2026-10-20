@@ -21,6 +21,7 @@ import '../../../menu_portal/data_app/indent_vehicle/presentation/screens/indent
 import '../../../menu_portal/onlineapps/presentation/screens/online_apps_screen.dart';
 import '../../../menu_portal/onlineapps/procurement/domain/pr_status.dart';
 import '../../../menu_portal/onlineapps/procurement/presentation/screens/procurement_page.dart';
+import '../../../menu_portal/onlineapps/work_order/est_request/presentation/screens/est_request_screen.dart';
 import '../../../menu_portal/onlineapps/work_order/it_request/presentation/screens/it_request_screen.dart';
 import '../../../menu_portal/record/presentation/screens/record_screen.dart';
 import '../../../menu_portal/data_app/presentation/screens/data_screen.dart';
@@ -390,10 +391,16 @@ class _BerandaScreenState extends State<BerandaScreen> {
     );
   }
 
-  /// SEMENTARA: EST belum punya tab Approve Request sendiri seperti IT
-  /// (menu EST Request baru sisi requester) — untuk sekarang jatuh ke
-  /// Notifications.
-  void _openEstApproval() => _openApprovalNotifications();
+  /// EST: buka EstRequestScreen langsung di tab Approve HOD (tab 1), pola
+  /// yang sama dengan IT di atas. `isHod` memakai default layar (true);
+  /// pemetaan role HOD yang asli masih SEMENTARA di sana.
+  void _openEstApproval() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => const EstRequestScreen(initialTabIndex: 1),
+      ),
+    );
+  }
 
   /// Indent Vehicle: buka halamannya langsung di tab Supervisor Approval
   /// (tab 1). Banner Approvals waiting memang hanya untuk yang berhak
