@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
@@ -37,10 +39,6 @@ Future<void> main() async {
   // function (lih. notification_service.dart), bukan closure/method.
   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
 
-  // Minta izin notifikasi + siapkan local notifications untuk foreground.
-  // Dipanggil sekali di sini supaya berlaku untuk seluruh siklus hidup app.
-  await NotificationService().init();
-
   // Wajib dipanggil sebelum runApp() supaya package:intl (dipakai internal
   // oleh Material DatePicker & month_picker_dialog) punya data locale
   // Indonesia. Tanpa ini -> LocaleDataException.
@@ -71,6 +69,13 @@ Future<void> main() async {
           ApprovalsWaitingRepository(apiClient: apiClient),
     ),
   );
+
+  // Dipanggil setelah runApp(), bukan di-await di sini, supaya first frame
+  // tetap tampil walau Future-nya menggantung. Di Chrome (flutter run -d
+  // chrome), window tidak otomatis fokus, dan Notification.requestPermission()
+  // browser bisa tidak pernah resolve kalau tab-nya tidak fokus -- kalau ini
+  // di-await sebelum runApp(), seluruh app macet di splash screen.
+  unawaited(NotificationService().init());
 }
 
 class MyApp extends StatelessWidget {
