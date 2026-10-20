@@ -68,6 +68,17 @@ class ApiConfig {
   static const String indentHodApprove = '/api/indent/vehicle/approve_hod';
   static const String indentHodReject = '/api/indent/vehicle/reject_hod';
 
+  /// Request yang menunggu admin driver menetapkan kendaraan (tab Pending
+  /// Vehicle Assigment). ISinya bergantung role pemanggil: untuk
+  /// 'driver-admin' berisi request yang lolos HOD tapi belum diproses; untuk
+  /// role lain bentuknya sama tapi isinya lain (atau kosong). Respons
+  /// `{data: [...], admin: bool}` - ambil lewat [ApiClient.getEnvelope].
+  static const String indentAdminList = '/api/indent/admin/list';
+
+  /// Admin menetapkan kendaraan + driver ('status: 1') atau membatalkan
+  /// ('status: 5').
+  static const String indentAdminApprove = '/api/admin_indent/approve';
+
   // --------------------------------- HRIS ----------------------------
 
   /// HRIS attendance. satu endpoint dua pemakai: 'today_schedule' untuk
