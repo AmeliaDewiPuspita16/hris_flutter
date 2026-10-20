@@ -11,6 +11,7 @@ class ApproveRequestDemoData {
           department: 'AML',
           description:
               'Setting zoom meeting persiapan FGD di ruang Srikandi jam 14.00',
+          supportType: 'IT (PERMINTAAN)',
         ),
         const ApproveRequestItem(
           id: 'appr-2',
@@ -18,12 +19,14 @@ class ApproveRequestDemoData {
           department: 'AML',
           description:
               'Request perangkat Camera, HDMI untuk zoom meeting di TV ruang AML',
+          supportType: 'IT (PERMINTAAN)',
         ),
         const ApproveRequestItem(
           id: 'appr-3',
           requesterName: 'Andang Eka Putra',
           department: 'AML',
           description: 'Perbaikan validasi ukuran upload dokumen',
+          supportType: 'IT (PERBAIKAN)',
         ),
         const ApproveRequestItem(
           id: 'appr-4',
@@ -31,6 +34,7 @@ class ApproveRequestDemoData {
           department: 'HR & GA',
           description:
               'Siapkan sound system, proyektor, 2 mic & 1 pointer untuk kegiatan KISS',
+          supportType: 'Media (PERMINTAAN)',
         ),
       ];
 }

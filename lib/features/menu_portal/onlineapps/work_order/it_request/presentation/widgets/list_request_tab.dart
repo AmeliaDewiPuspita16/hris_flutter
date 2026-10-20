@@ -27,8 +27,19 @@ const _kProgressCode = 'progress';
 /// sama sumber datanya (`GET /api/portal/apps/it_request`, lewat
 /// [ItRequestListBloc] yang sama) dengan tab "Form IT & Media", cuma
 /// disaring beda.
+/// Isi tab "List Request", mengikuti web: daftar SEMUA permintaan langsung
+/// terbuka, dengan dua tombol On Waiting / On Progress di atasnya yang
+/// berfungsi sebagai filter.
+///
+/// Menekan salah satu tombol memfilter daftar ke status itu; menekannya lagi
+/// (atau tombol yang aktif) mengembalikan daftar ke semua request.
 ///
 /// Filter Month/Year/Status seperti di web belum diimplementasikan di
+/// iterasi ini.
+///
+/// SEMENTARA: [ListRequestDemoData] statis, belum tersambung ke API.
+class ListRequestTab extends StatefulWidget {
+  const ListRequestTab({super.key});
 /// iterasi ini — cuma dua counter utamanya dulu.
 ///
 /// `loadAllPages: true` dipasang di sini (beda dari tab sebelah) supaya
@@ -61,6 +72,20 @@ class _ListRequestView extends StatefulWidget {
   State<_ListRequestView> createState() => _ListRequestViewState();
 }
 
+class _ListRequestTabState extends State<ListRequestTab> {
+  final List<ListRequestItem> _items = ListRequestDemoData.items();
+
+  /// Null = semua request.
+  ListRequestStatus? _filter;
+
+  int _countOf(ListRequestStatus status) =>
+      _items.where((i) => i.status == status).length;
+
+  /// Tekan tombol yang belum aktif -> filter ke status itu; tekan yang sudah
+  /// aktif -> kembali ke semua.
+  void _toggleFilter(ListRequestStatus status) {
+    setState(() => _filter = _filter == status ? null : status);
+  }
 class _ListRequestViewState extends State<_ListRequestView> {
   static const _loadMoreThreshold = 320.0;
 
@@ -112,6 +137,10 @@ class _ListRequestViewState extends State<_ListRequestView> {
 
   @override
   Widget build(BuildContext context) {
+    final shown = _filter == null
+        ? _items
+        : _items.where((i) => i.status == _filter).toList();
+    final title = _filter == null ? 'Semua Request' : _filter!.label;
     return BlocBuilder<ItRequestListBloc, ItRequestListState>(
       builder: (context, state) => _buildBody(context, state),
     );
@@ -135,6 +164,52 @@ class _ListRequestViewState extends State<_ListRequestView> {
         state.items.where((i) => i.status.code == _kProgressCode).length;
     final filtered = state.items.where((i) => i.status.code == _filter).toList();
 
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: _StatusButton(
+                label: ListRequestStatus.onWaiting.label,
+                count: _countOf(ListRequestStatus.onWaiting),
+                color: AppColors.pending,
+                background: AppColors.pendingBg,
+                active: _filter == ListRequestStatus.onWaiting,
+                onTap: () => _toggleFilter(ListRequestStatus.onWaiting),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _StatusButton(
+                label: ListRequestStatus.onProgress.label,
+                count: _countOf(ListRequestStatus.onProgress),
+                color: AppColors.present,
+                background: AppColors.presentBg,
+                active: _filter == ListRequestStatus.onProgress,
+                onTap: () => _toggleFilter(ListRequestStatus.onProgress),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Text('$title (${shown.length})', style: AppTextStyles.sectionTitle),
+        const SizedBox(height: 10),
+        if (shown.isEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 24),
+            child: Center(
+              child: Text('Tidak ada data', style: AppTextStyles.bodyMuted),
+            ),
+          )
+        else
+          for (var i = 0; i < shown.length; i++) ...[
+            if (i > 0) const SizedBox(height: 10),
+            ListRequestRow(
+              item: shown[i],
+              onTap: () => ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Detail belum tersedia')),
+              ),
     return RefreshIndicator(
       onRefresh: _refresh,
       child: ListView(
@@ -197,8 +272,10 @@ class _ListRequestViewState extends State<_ListRequestView> {
   }
 }
 
-class _CounterChip extends StatelessWidget {
-  const _CounterChip({
+/// Tombol filter status dengan jumlah di kanan (seperti tombol "On Waiting 8"
+/// di web). Saat aktif, bingkainya menebal dan latarnya terisi warna status.
+class _StatusButton extends StatelessWidget {
+  const _StatusButton({
     required this.label,
     required this.count,
     required this.color,
@@ -225,17 +302,44 @@ class _CounterChip extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(10),
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         decoration: BoxDecoration(
-          color: background,
+          color: active ? background : AppColors.card,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: active ? color : Colors.transparent,
-            width: 1.4,
-          ),
+          border: Border.all(color: color, width: active ? 1.8 : 1),
         ),
-        child: Column(
+        child: Row(
           children: [
+            Expanded(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontFamily: AppTextStyles.fontFamily,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: color,
+                ),
+              ),
+            ),
+            const SizedBox(width: 6),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: color,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                '$count',
+                style: const TextStyle(
+                  fontFamily: AppTextStyles.fontFamily,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                ),
+              ),
+            ),
             SizedBox(
               height: 22,
               child: count == null
