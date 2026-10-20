@@ -14,9 +14,13 @@ import 'procurement_list_state.dart';
 /// baru satu halaman yang termuat.
 class ProcurementListBloc
     extends Bloc<ProcurementListEvent, ProcurementListState> {
-  ProcurementListBloc({required ProcurementRepository repository})
-      : _repository = repository,
-        super(const ProcurementListState()) {
+  /// [initialStatusCode] membuka daftar langsung dengan chip status itu
+  /// aktif (mis. `pending_hod` dari banner "Approvals waiting"). Null = Semua.
+  ProcurementListBloc({
+    required ProcurementRepository repository,
+    String? initialStatusCode,
+  })  : _repository = repository,
+        super(ProcurementListState(statusCode: initialStatusCode)) {
     on<ProcurementListStarted>(_onReload);
     on<ProcurementListRefreshed>(_onReload);
     on<ProcurementListStatusSelected>(_onStatusSelected);
