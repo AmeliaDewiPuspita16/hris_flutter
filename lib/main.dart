@@ -41,8 +41,8 @@ Future<void> main() async {
 
   // Wajib dipanggil sebelum runApp() supaya package:intl (dipakai internal
   // oleh Material DatePicker & month_picker_dialog) punya data locale
-  // Indonesia. Tanpa ini -> LocaleDataException.
-  await initializeDateFormatting('id_ID');
+  // Inggris. Tanpa ini -> LocaleDataException.
+  await initializeDateFormatting('en_US');
 
   // Satu ApiClient dipakai bersama oleh semua repository, supaya token yang
   // dipasang AuthRepository setelah login otomatis ikut terpakai saat
@@ -151,8 +151,8 @@ class MyApp extends StatelessWidget {
         child: MaterialApp(
           title: 'HRIS Mobile',
           debugShowCheckedModeBanner: false,
-          locale: const Locale('id'),
-          supportedLocales: const [Locale('id'), Locale('en')],
+          locale: const Locale('en'),
+          supportedLocales: const [Locale('en')],
           localizationsDelegates: const [
             GlobalMaterialLocalizations.delegate,
             GlobalWidgetsLocalizations.delegate,

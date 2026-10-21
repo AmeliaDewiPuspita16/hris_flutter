@@ -146,7 +146,7 @@ class _TimeWheelSheetState extends State<_TimeWheelSheet> {
           children: [
             const Align(
               alignment: Alignment.centerLeft,
-              child: Text('Pilih Waktu', style: AppTextStyles.sectionTitle),
+              child: Text('Select Time', style: AppTextStyles.sectionTitle),
             ),
             const SizedBox(height: 12),
             Stack(
@@ -189,7 +189,7 @@ class _TimeWheelSheetState extends State<_TimeWheelSheet> {
                 Expanded(
                   child: OutlinedButton(
                     onPressed: () => Navigator.pop(context),
-                    child: const Text('Batal'),
+                    child: const Text('Cancel'),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -200,7 +200,7 @@ class _TimeWheelSheetState extends State<_TimeWheelSheet> {
                       foregroundColor: Colors.white,
                     ),
                     onPressed: () => Navigator.pop(context, TimeOfDay(hour: _hour, minute: _minute)),
-                    child: const Text('Konfirmasi'),
+                    child: const Text('Confirm'),
                   ),
                 ),
               ],

@@ -112,7 +112,7 @@ class _DateCalendarSheetState extends State<_DateCalendarSheet> {
           children: [
             const Align(
               alignment: Alignment.centerLeft,
-              child: Text('Pilih Tanggal', style: AppTextStyles.sectionTitle),
+              child: Text('Select Date', style: AppTextStyles.sectionTitle),
             ),
             const SizedBox(height: 8),
             TableCalendar(
@@ -165,7 +165,7 @@ class _DateCalendarSheetState extends State<_DateCalendarSheet> {
                 Expanded(
                   child: OutlinedButton(
                     onPressed: () => Navigator.pop(context),
-                    child: const Text('Batal'),
+                    child: const Text('Cancel'),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -176,7 +176,7 @@ class _DateCalendarSheetState extends State<_DateCalendarSheet> {
                       foregroundColor: Colors.white,
                     ),
                     onPressed: _selected != null ? () => Navigator.pop(context, _selected) : null,
-                    child: const Text('Konfirmasi'),
+                    child: const Text('Confirm'),
                   ),
                 ),
               ],

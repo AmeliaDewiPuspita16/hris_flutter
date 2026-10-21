@@ -51,19 +51,19 @@ class StatusBadge extends StatelessWidget {
         return (
           fg: AppColors.present,
           bg: AppColors.presentBg,
-          label: 'Disetujui'
+          label: 'Approved'
         );
       case AppStatus.pending:
         return (
           fg: AppColors.pending,
           bg: AppColors.pendingBg,
-          label: 'Menunggu'
+          label: 'Pending'
         );
       case AppStatus.rejected:
         return (
           fg: AppColors.rejected,
           bg: AppColors.rejectedBg,
-          label: 'Ditolak'
+          label: 'Rejected'
         );
       case AppStatus.neutral:
         return (fg: AppColors.neutral, bg: AppColors.neutralBg, label: '-');
@@ -71,7 +71,7 @@ class StatusBadge extends StatelessWidget {
         return (
           fg: AppColors.inProgress,
           bg: AppColors.inProgressBg,
-          label: 'Diproses'
+          label: 'In Progress'
         );
     }
   }

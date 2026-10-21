@@ -22,23 +22,23 @@ class ApiException implements Exception {
   const ApiException(this.kind, this.message);
 
   const ApiException.network([
-    this.message = 'Tidak ada koneksi internet. Periksa jaringan Anda.',
+    this.message = 'No internet connection. Please check your network.',
   ]) : kind = ApiErrorKind.network;
 
   const ApiException.timeout([
-    this.message = 'Server tidak merespons. Coba lagi sebentar lagi.',
+    this.message = 'The server is not responding. Please try again shortly.',
   ]) : kind = ApiErrorKind.network;
 
   const ApiException.unauthorized([
-    this.message = 'Sesi Anda telah berakhir. Silakan masuk kembali.',
+    this.message = 'Your Session has expired. Please sign in again.',
   ]) : kind = ApiErrorKind.unauthorized;
 
   const ApiException.badRequest([
-    this.message = 'Data yang dikirim tidak sesuai.',
+    this.message = 'The submitted data is invalid.',
   ]) : kind = ApiErrorKind.badRequest;
 
   const ApiException.server([
-    this.message = 'Terjadi gangguan pada server. Coba lagi nanti.',
+    this.message = 'A server error occurred. Please try again later.',
   ]) : kind = ApiErrorKind.server;
 
   final ApiErrorKind kind;

@@ -95,7 +95,7 @@ class AppDateRangeField extends StatelessWidget {
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
-                      '$dayCount hari',
+                      '$dayCount ${dayCount == 1 ? 'day' : 'days'}',
                       style: const TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
@@ -152,7 +152,7 @@ class _RangeCalendarSheetState extends State<_RangeCalendarSheet> {
           children: [
             Row(
               children: [
-                const Text('Pilih Rentang Tanggal', style: AppTextStyles.sectionTitle),
+                const Text('Select Date Range', style: AppTextStyles.sectionTitle),
                 const Spacer(),
                 if (dayCount != null)
                   Container(
@@ -162,7 +162,7 @@ class _RangeCalendarSheetState extends State<_RangeCalendarSheet> {
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
-                      '$dayCount hari',
+                      '$dayCount ${dayCount == 1 ? 'day' : 'days'}',
                       style: const TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
@@ -235,7 +235,7 @@ class _RangeCalendarSheetState extends State<_RangeCalendarSheet> {
                 Expanded(
                   child: OutlinedButton(
                     onPressed: () => Navigator.pop(context),
-                    child: const Text('Batal'),
+                    child: const Text('Cancel'),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -248,7 +248,7 @@ class _RangeCalendarSheetState extends State<_RangeCalendarSheet> {
                     onPressed: (_rangeStart != null && _rangeEnd != null)
                         ? () => Navigator.pop(context, (start: _rangeStart!, end: _rangeEnd!))
                         : null,
-                    child: const Text('Konfirmasi'),
+                    child: const Text('Confirm'),
                   ),
                 ),
               ],
