@@ -88,13 +88,13 @@ void main() {
     expect(find.text('Report'), findsNothing);
   });
 
-  testWidgets('tidak ada tab Approve Request lagi, walau role IT Media',
+  testWidgets('role "it media" juga menampilkan tab Approve Request',
       (tester) async {
     final authBloc = await authBlocWith(tester, ['it media']);
 
     await pumpScreen(tester, authBloc: authBloc);
 
-    expect(find.text('Approve Request'), findsNothing);
+    expect(find.text('Approve Request'), findsOneWidget);
   });
 
   testWidgets('isItTeam override tetap dihormati tanpa perlu AuthBloc',
