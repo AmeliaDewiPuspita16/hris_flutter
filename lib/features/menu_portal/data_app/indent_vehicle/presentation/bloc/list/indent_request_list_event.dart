@@ -1,5 +1,3 @@
-import '../../../domain/indent_request_item.dart';
-
 /// Hal-hal yang bisa terjadi pada tab "List of User Requests".
 sealed class IndentRequestListEvent {
   const IndentRequestListEvent();
@@ -22,19 +20,8 @@ class IndentRequestListNextPageRequested extends IndentRequestListEvent {
   const IndentRequestListNextPageRequested();
 }
 
-/// SEMENTARA — aksi di bawah ini masih lokal (belum tersambung ke API),
-/// jadi layar yang menjalankannya memberi tahu Bloc supaya tampilan ikut
-/// berubah. Dihapus satu per satu begitu endpoint-nya disambungkan
-/// (feedback), karena nanti cukup memuat ulang daftar.
-/// Tambah dan edit request sudah tersambung: layar langsung memicu
-/// [IndentRequestListRefreshed] setelah form berhasil menyimpan.
-
-/// Request yang diberi rating; menggantikan item ber-id sama.
-class IndentRequestLocalUpdated extends IndentRequestListEvent {
-  const IndentRequestLocalUpdated(this.item);
-
-  final IndentRequestItem item;
-}
+// Tambah, edit, dan feedback sudah tersambung ke API: layar langsung
+// memicu [IndentRequestListRefreshed] setelah server menerima.
 
 /// Request yang sudah dihapus di server; dibuang dari daftar tanpa memuat
 /// ulang supaya posisi scroll tetap.
