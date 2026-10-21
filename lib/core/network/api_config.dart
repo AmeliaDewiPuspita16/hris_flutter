@@ -65,6 +65,9 @@ class ApiConfig {
   /// Buat indent baru, atau perbarui yang ada bila `id_recuitment` dikirim.
   static const String indentStore = '/api/indent/vehicle/store';
 
+  /// Untuk request yang sudah selesai, dan user mharus memberikan feedback
+  static const String indentStoreRating = '/api/indent/vehicle/store_rating';
+
   /// Request yang menunggu keputusan atasan (hanya role `hod`).
   static const String indentHodList = '/api/list_hod_approve';
   static const String indentHodApprove = '/api/indent/vehicle/approve_hod';

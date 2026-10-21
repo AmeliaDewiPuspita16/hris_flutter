@@ -6,7 +6,6 @@ import '../../../../../core/network/page_meta.dart';
 import '../domain/indent_approval_item.dart';
 import '../domain/indent_driver.dart';
 import '../domain/indent_json.dart';
-import '../domain/indent_my_request_item.dart';
 import '../domain/indent_pending_item.dart';
 import '../domain/indent_request_item.dart';
 import '../domain/indent_request_page.dart';
@@ -86,29 +85,6 @@ class IndentVehicleRepository {
     return IndentRequestPage(items: items, meta: PageMeta.fromJson(data));
   }
 
-  /// Tab "My Request" — `GET /api/indent/list`: request milik user yang
-  /// sedang login (server yang menyaring dari token), array polos tanpa
-  /// paginasi. Beda dengan [fetchRequests], endpoint ini tidak memuat nama
-  /// peminta maupun `approval_hod`, dan nama driver sudah ada di field
-  /// `driver`, jadi daftar driver tidak perlu diambil.
-  ///
-  /// Satu baris cacat dilewati, tidak menggagalkan seluruh daftar.
-  ///
-  /// Melempar [ApiException] bila gagal.
-  Future<List<IndentMyRequestItem>> fetchMyRequests() async {
-    final rows = await _apiClient.getRawList(ApiConfig.indentMyList);
-
-    final items = <IndentMyRequestItem>[];
-    for (final row in rows.whereType<Map<String, dynamic>>()) {
-      try {
-        items.add(IndentMyRequestItem.fromJson(row));
-      } on FormatException catch (e) {
-        AppLogger.info('Melewati my request yang tidak bisa dibaca: $e');
-      }
-    }
-    return items;
-  }
-
   /// Membuat request indent baru, atau memperbarui yang sudah ada bila [id]
   /// diisi — `POST /api/indent/vehicle/store` melayani keduanya (server
   /// membaca `id_recuitment`; ejaan itu memang begitu di API).
@@ -150,6 +126,26 @@ class IndentVehicleRepository {
       },
     );
   }
+
+  /// Requester memberi rating (1-5) dan komentar opsional untuk perjalanan
+  /// yang sudah selesai — `POST /api/indent/vehicle/store_rating`.
+  ///
+  /// `feedback_user` hanya dikirim bila ada komentar. Seperti
+  /// [assignByAdmin], hanya status HTTP yang diperiksa; isi balasan
+  /// (`{message, status, data}`) tidak dipakai karena layar memuat ulang
+  /// daftar.
+  ///
+  /// Melempar [ApiException] bila gagal.
+  Future<void> submitRating({
+    required int id,
+    required int rating,
+    String? feedback,
+  }) =>
+      _apiClient.postRaw(ApiConfig.indentStoreRating, body: {
+        'id': id,
+        'rating': rating,
+        if (feedback != null) 'feedback_user': feedback,
+      });
 
   /// Menghapus request milik sendiri — `DELETE /api/indent/{id}`.
   ///

@@ -11,7 +11,6 @@ import '../../../../../auth/presentation/bloc/auth/auth_bloc.dart';
 import '../../data/indent_vehicle_repository.dart';
 import '../../domain/indent_approval_item.dart';
 import '../../domain/indent_assign_result.dart';
-import '../../domain/indent_my_request_item.dart';
 import '../../domain/indent_pending_item.dart';
 import '../../domain/indent_request_item.dart';
 import '../bloc/approval/indent_approval_bloc.dart';
@@ -20,16 +19,12 @@ import '../bloc/approval/indent_approval_state.dart';
 import '../bloc/list/indent_request_list_bloc.dart';
 import '../bloc/list/indent_request_list_event.dart';
 import '../bloc/list/indent_request_list_state.dart';
-import '../bloc/my_request/indent_my_request_bloc.dart';
-import '../bloc/my_request/indent_my_request_event.dart';
-import '../bloc/my_request/indent_my_request_state.dart';
 import '../bloc/pending/indent_pending_bloc.dart';
 import '../bloc/pending/indent_pending_event.dart';
 import '../bloc/pending/indent_pending_state.dart';
 import '../widgets/indent_assign_sheet.dart';
 import '../widgets/indent_feedback_banner.dart';
 import '../widgets/indent_feedback_sheet.dart';
-import '../widgets/indent_my_request_tab.dart';
 import '../widgets/indent_pending_assignment_tab.dart';
 import '../widgets/indent_request_row.dart';
 import '../widgets/indent_supervisor_approval_tab.dart';
@@ -46,7 +41,6 @@ import 'add_indent_screen.dart';
 /// - Tab 1 "Supervisor Approval"       — atasan (role `hod`) approve/reject
 ///   request lewat API. Yang di-approve masuk ke antrean admin di server.
 /// - Tab 2 "List of User Requests"     — daftar semua request, dari API.
-/// - Tab 3 "My Request"                — request milik user yang login, dari API.
 class IndentVehicleScreen extends StatefulWidget {
   const IndentVehicleScreen({super.key, this.initialTabIndex = 2});
 
@@ -64,7 +58,6 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
     'Pending Vehicle Assignment',
     'Supervisor Approval',
     'List of User Requests',
-    'My Request',
   ];
 
   late int _tabIndex = widget.initialTabIndex;
@@ -73,9 +66,6 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
   // sini, bukan lewat BlocProvider, supaya handler di State ini bisa
   // memakainya langsung.
   late final IndentRequestListBloc _requestBloc;
-
-  // Tab My Request: request milik sendiri, dari `GET /api/indent/list`.
-  late final IndentMyRequestBloc _myBloc;
   final _requestScrollController = ScrollController();
 
   // Tab Pending Vehicle Assignment juga dipegang bloc. Dimulai untuk semua
@@ -99,10 +89,6 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
     )..add(const IndentRequestListStarted());
     _requestScrollController.addListener(_onRequestScroll);
 
-    _myBloc = IndentMyRequestBloc(
-      repository: context.read<IndentVehicleRepository>(),
-    )..add(const IndentMyRequestStarted());
-
     _isHod = user?.hasRole('hod') ?? false;
     _approvalBloc = IndentApprovalBloc(
       repository: context.read<IndentVehicleRepository>(),
@@ -117,7 +103,6 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
   @override
   void dispose() {
     _requestBloc.close();
-    _myBloc.close();
     _approvalBloc.close();
     _pendingBloc.close();
     _requestScrollController
@@ -137,19 +122,6 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
           r.remark.toLowerCase().contains(q) ||
           (r.vehicle ?? '').toLowerCase().contains(q) ||
           (r.driver ?? '').toLowerCase().contains(q);
-    }).toList();
-  }
-
-  List<IndentMyRequestItem> _filterMyRequests(List<IndentMyRequestItem> items) {
-    if (_query.trim().isEmpty) return items;
-
-    final q = _query.trim().toLowerCase();
-    return items.where((r) {
-      return r.destination.toLowerCase().contains(q) ||
-          r.remark.toLowerCase().contains(q) ||
-          (r.vehicle ?? '').toLowerCase().contains(q) ||
-          (r.driver ?? '').toLowerCase().contains(q) ||
-          r.status.label.toLowerCase().contains(q);
     }).toList();
   }
 
@@ -224,22 +196,45 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
     _pendingBloc.add(IndentPendingAssigned(item: item, result: result));
   }
 
-  /// buka sheet feedback; kalau dikirim, reting disimpan ke item.
-  ///
-  /// TODO (api) : kirim rating + catatan ke server (endpoint belum ada). Catatan
-  /// juga belum diismpan di model, tambahkan field-nya bila API menyediakan.
-  Future<void> _giveFeedback(IndentRequestItem item) async {
-    final result = await showModalBottomSheet<({int rating, String? note})>(
-        context: context,
-        isScrollControlled: true,
-        backgroundColor: Colors.transparent,
-        builder: (_) => IndentFeedbackSheet(item: item));
+  /// Buka sheet feedback; rating + catatan dikirim ke server dari dalam
+  /// sheet (loading dan galat ditampilkan di sana, sheet tetap terbuka bila
+  /// gagal). Begitu server menerima, daftar dimuat ulang supaya banner
+  /// feedback berganti jadi bintang.
+  Future<void> _giveFeedback({
+    required String id,
+    required String destination,
+    required String date,
+  }) async {
+    final requestId = int.tryParse(id);
+    if (requestId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('This request has not been saved to the server yet.')),
+      );
+      return;
+    }
 
-    if (result == null || !mounted) return;
-
-    _requestBloc.add(
-      IndentRequestLocalUpdated(item.copyWith(rating: result.rating)),
+    final repository = context.read<IndentVehicleRepository>();
+    final sent = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => IndentFeedbackSheet(
+        destination: destination,
+        date: date,
+        onSubmit: (rating, note) async {
+          await repository.submitRating(
+            id: requestId,
+            rating: rating,
+            feedback: note,
+          );
+          // Di sini (bukan setelah sheet tertutup) supaya daftar tetap
+          // diperbarui walau sheet sudah ditutup saat balasan datang.
+          _requestBloc.add(const IndentRequestListRefreshed());
+        },
+      ),
     );
+
+    if (sent != true || !mounted) return;
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Thank you for your feedback')),
@@ -261,7 +256,6 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
     if (saved != true || !mounted) return;
 
     _requestBloc.add(const IndentRequestListRefreshed());
-    _myBloc.add(const IndentMyRequestRefreshed());
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Request updated')),
@@ -289,7 +283,6 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
       // Server sudah menghapus; buang dari daftar tanpa memuat ulang supaya
       // posisi scroll tidak lompat.
       _requestBloc.add(IndentRequestLocalRemoved(item.id));
-      _myBloc.add(const IndentMyRequestRefreshed());
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Request deleted')),
       );
@@ -318,11 +311,10 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
 
     // Muat ulang dari server: request baru (id terbesar) muncul paling atas.
     _requestBloc.add(const IndentRequestListRefreshed());
-    _myBloc.add(const IndentMyRequestRefreshed());
     setState(() {
       // Pastikan hasilnya langsung kelihatan, dan kosongkan search supaya
-      // request baru tidak tersaring. Dari tab My Request tetap di sana.
-      if (_tabIndex != 3) _tabIndex = 2;
+      // request baru tidak tersaring.
+      _tabIndex = 2;
       _searchController.clear();
       _query = '';
     });
@@ -341,9 +333,9 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
         onBack: () => Navigator.of(context).pop(),
       ),
       // FAB oranye di kanan-bawah, sama pola dengan IT Request, HSE, dan EST.
-      // Cuma muncul di tab List of User Requests dan My Request — tab lain
-      // (assign & approval) bukan tempat membuat request baru.
-      floatingActionButton: (_tabIndex == 2 || _tabIndex == 3)
+      // Cuma muncul di tab List of User Requests — tab lain (assign &
+      // approval) bukan tempat membuat request baru.
+      floatingActionButton: _tabIndex == 2
           ? FloatingActionButton(
               onPressed: _addIndent,
               backgroundColor: AppColors.orange,
@@ -368,7 +360,6 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
               // Requests.
               if (!notice.isError) {
                 _requestBloc.add(const IndentRequestListRefreshed());
-                _myBloc.add(const IndentMyRequestRefreshed());
               }
             },
           ),
@@ -385,7 +376,6 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
               // Assign mengisi kolom Vehicle/Driver di List of User Requests.
               if (!notice.isError) {
                 _requestBloc.add(const IndentRequestListRefreshed());
-                _myBloc.add(const IndentMyRequestRefreshed());
               }
             },
           ),
@@ -431,7 +421,6 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
                   _buildPendingAssignment(),
                   _buildSupervisorApproval(),
                   _buildListOfRequests(),
-                  _buildMyRequests(),
                 ],
               ),
             ),
@@ -607,7 +596,11 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
                     if (item.needsFeedback) {
                       return IndentFeedbackBanner(
                         item: item,
-                        onGiveFeedback: () => _giveFeedback(item),
+                        onGiveFeedback: () => _giveFeedback(
+                          id: item.id,
+                          destination: item.destination,
+                          date: item.date,
+                        ),
                       );
                     }
                     return IndentRequestRow(
@@ -620,37 +613,6 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
         );
       },
     );
-  }
-
-  Widget _buildMyRequests() {
-    return BlocBuilder<IndentMyRequestBloc, IndentMyRequestState>(
-      bloc: _myBloc,
-      builder: (context, state) {
-        if (state.isFirstLoad) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
-        if (state.status == IndentMyRequestStatus.failure) {
-          return AppErrorView(
-            message: state.errorMessage ?? 'Failed to load your requests.',
-            onRetry: () => _myBloc.add(const IndentMyRequestRefreshed()),
-          );
-        }
-
-        return IndentMyRequestTab(
-          items: _filterMyRequests(state.items),
-          isFiltered: _query.trim().isNotEmpty,
-          onRefresh: _refreshMyRequests,
-        );
-      },
-    );
-  }
-
-  /// Tarik-untuk-refresh tab My Request; berhenti begitu datanya datang.
-  Future<void> _refreshMyRequests() async {
-    _myBloc.add(const IndentMyRequestRefreshed());
-    await _myBloc.stream
-        .firstWhere((s) => s.status != IndentMyRequestStatus.loading);
   }
 
   /// Dekat dasar daftar -> minta halaman berikutnya. Bloc sendiri yang

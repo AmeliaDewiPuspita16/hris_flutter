@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../../../../../../core/logging/app_logger.dart';
+import '../../../../../../core/network/api_exception.dart';
 import '../../../../../../core/theme/app_colors.dart';
 import '../../../../../../core/theme/app_text_styles.dart';
 import '../../../../../../core/widgets/app_text_field.dart';
-import '../../domain/indent_request_item.dart';
 
 const _ratingLabels = {
   1: 'Very Dissatisfied',
@@ -15,16 +16,26 @@ const _ratingLabels = {
 
 /// Bottom sheet rating 1–5 bintang + catatan opsional.
 ///
-/// Mengembalikan ({int rating, String? note}) lewat Navigator.pop, atau null
-/// kalau sheet ditutup tanpa submit.
+/// Pemanggil menyerahkan [onSubmit] yang mengirim ke server. Sheet
+/// menampilkan loading selama menunggu, dan bila gagal tetap terbuka dengan
+/// pesan galat supaya pengguna bisa mencoba lagi. Mengembalikan `true` lewat
+/// Navigator.pop bila terkirim, atau null bila ditutup tanpa submit.
 ///
-/// TODO(api): saat endpoint feedback Indent tersedia, panggil repository di
-/// sini (pola sama dengan ItRequestFeedbackSheet.submitRating) dan tampilkan
-/// loading + error. Sekarang cuma mengembalikan nilainya ke layar.
+/// Sheet hanya butuh [destination] dan [date] untuk judul.
 class IndentFeedbackSheet extends StatefulWidget {
-  const IndentFeedbackSheet({super.key, required this.item});
+  const IndentFeedbackSheet({
+    super.key,
+    required this.destination,
+    required this.date,
+    required this.onSubmit,
+  });
 
-  final IndentRequestItem item;
+  final String destination;
+  final String date;
+
+  /// Mengirim rating + catatan (null bila kosong). Melempar [ApiException]
+  /// bila gagal; pesannya ditampilkan di sheet.
+  final Future<void> Function(int rating, String? note) onSubmit;
 
   @override
   State<IndentFeedbackSheet> createState() => _IndentFeedbackSheetState();
@@ -33,6 +44,8 @@ class IndentFeedbackSheet extends StatefulWidget {
 class _IndentFeedbackSheetState extends State<IndentFeedbackSheet> {
   int _rating = 0;
   final _noteController = TextEditingController();
+  bool _sending = false;
+  String? _error;
 
   @override
   void dispose() {
@@ -40,16 +53,37 @@ class _IndentFeedbackSheetState extends State<IndentFeedbackSheet> {
     super.dispose();
   }
 
-  void _submit() {
-    if (_rating == 0) return;
+  Future<void> _submit() async {
+    if (_rating == 0 || _sending) return;
+
     final note = _noteController.text.trim();
-    Navigator.of(context).pop((rating: _rating, note: note.isEmpty ? null : note));
+    setState(() {
+      _sending = true;
+      _error = null;
+    });
+
+    try {
+      await widget.onSubmit(_rating, note.isEmpty ? null : note);
+      if (!mounted) return;
+      Navigator.of(context).pop(true);
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _sending = false;
+        _error = e.message;
+      });
+    } catch (e, stack) {
+      AppLogger.error('Kirim feedback indent gagal tak terduga', e, stack);
+      if (!mounted) return;
+      setState(() {
+        _sending = false;
+        _error = 'An unexpected error occurred. Please try again.';
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final item = widget.item;
-
     return Padding(
       // Naik mengikuti keyboard supaya field catatan tidak ketutupan.
       padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
@@ -80,7 +114,7 @@ class _IndentFeedbackSheetState extends State<IndentFeedbackSheet> {
                 const Text('Give feedback', style: AppTextStyles.sectionTitle),
                 const SizedBox(height: 4),
                 Text(
-                  '${item.destination} · ${item.date}',
+                  '${widget.destination} · ${widget.date}',
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: AppTextStyles.caption,
@@ -91,7 +125,7 @@ class _IndentFeedbackSheetState extends State<IndentFeedbackSheet> {
                   children: [
                     for (var i = 1; i <= 5; i++)
                       InkWell(
-                        onTap: () => setState(() => _rating = i),
+                        onTap: _sending ? null : () => setState(() => _rating = i),
                         borderRadius: BorderRadius.circular(20),
                         child: Padding(
                           padding: const EdgeInsets.all(4),
@@ -126,11 +160,21 @@ class _IndentFeedbackSheetState extends State<IndentFeedbackSheet> {
                   maxLines: 3,
                   minLines: 1,
                 ),
+                if (_error != null) ...[
+                  const SizedBox(height: 12),
+                  Text(
+                    _error!,
+                    style: AppTextStyles.caption.copyWith(
+                      color: AppColors.rejected,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 18),
                 SizedBox(
                   height: 46,
                   child: ElevatedButton(
-                    onPressed: _rating == 0 ? null : _submit,
+                    onPressed: (_rating == 0 || _sending) ? null : _submit,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
                       disabledBackgroundColor: AppColors.border,
@@ -138,10 +182,20 @@ class _IndentFeedbackSheetState extends State<IndentFeedbackSheet> {
                         borderRadius: BorderRadius.circular(10),
                       ),
                     ),
-                    child: Text(
-                      'Send Feedback',
-                      style: AppTextStyles.buttonText.copyWith(color: Colors.white),
-                    ),
+                    child: _sending
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : Text(
+                            'Send Feedback',
+                            style: AppTextStyles.buttonText
+                                .copyWith(color: Colors.white),
+                          ),
                   ),
                 ),
               ],
