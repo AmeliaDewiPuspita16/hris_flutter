@@ -53,13 +53,13 @@ class _DataDiriScreenState extends State<DataDiriScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.bg,
-      appBar: BackHeader(title: 'Data Diri', onBack: () => Navigator.of(context).pop()),
+      appBar: BackHeader(title: 'Personal Data', onBack: () => Navigator.of(context).pop()),
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(20, 20, 20, 28),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const SectionLabel('DAPAT DIUBAH'),
+            const SectionLabel('EDITABLE'),
             const SizedBox(height: 8),
             AppCard(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
@@ -67,7 +67,7 @@ class _DataDiriScreenState extends State<DataDiriScreen> {
                 children: [
                   _editableRow(
                     fieldKey: 'phone',
-                    label: 'No. HP',
+                    label: 'Phone No.',
                     icon: Icons.phone_outlined,
                     keyboardType: TextInputType.phone,
                     controller: _phoneCtrl,
@@ -85,12 +85,12 @@ class _DataDiriScreenState extends State<DataDiriScreen> {
               ),
             ),
             const SizedBox(height: 8),
-            const InfoNote('Perubahan data memerlukan verifikasi Admin HR.'),
+            const InfoNote('Data changes require HR Admin verification.'),
             const SizedBox(height: 22),
             const Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                SectionLabel('IDENTITAS'),
+                SectionLabel('IDENTITY'),
                 ReadOnlyBadge(),
               ],
             ),
@@ -100,17 +100,17 @@ class _DataDiriScreenState extends State<DataDiriScreen> {
               child: Column(
                 children: [
                   DetailFieldTile(label: 'NIP', value: nip),
-                  DetailFieldTile(label: 'Kategori Pegawai', value: p.employeeCategory),
-                  DetailFieldTile(label: 'Tempat Lahir', value: p.birthPlace),
-                  DetailFieldTile(label: 'Tanggal Lahir', value: birthDate),
-                  DetailFieldTile(label: 'Agama', value: p.religion),
-                  DetailFieldTile(label: 'Status Pernikahan', value: p.maritalStatus),
-                  DetailFieldTile(label: 'Pendidikan Terakhir', value: p.degree, showDivider: false),
+                  DetailFieldTile(label: 'Employee Category', value: p.employeeCategory),
+                  DetailFieldTile(label: 'Place of Birth', value: p.birthPlace),
+                  DetailFieldTile(label: 'Date of Birth', value: birthDate),
+                  DetailFieldTile(label: 'Religion', value: p.religion),
+                  DetailFieldTile(label: 'Marital Status', value: p.maritalStatus),
+                  DetailFieldTile(label: 'Highest Education', value: p.degree, showDivider: false),
                 ],
               ),
             ),
             const SizedBox(height: 8),
-            const InfoNote('Perubahan data identitas hanya dapat dilakukan oleh HR/Admin.'),
+            const InfoNote('Identity data can only be changed by HR/Admin.'),
           ],
         ),
       ),
@@ -158,7 +158,7 @@ class _DataDiriScreenState extends State<DataDiriScreen> {
             ),
           ),
           const SizedBox(width: 10),
-          PillButton(label: isEditing ? 'Simpan' : 'Ubah', filled: isEditing, onPressed: toggle),
+          PillButton(label: isEditing ? 'Save' : 'Edit', filled: isEditing, onPressed: toggle),
         ],
       ),
     );

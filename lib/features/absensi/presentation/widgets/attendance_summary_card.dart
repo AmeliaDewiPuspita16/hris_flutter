@@ -21,7 +21,7 @@ class AttendanceSummaryCard extends StatelessWidget {
         Expanded(
           child: _StatCard(
             value: '${summary.present}',
-            label: 'Hadir',
+            label: 'Present',
             valueColor: AppColors.text,
             borderColor: AppColors.present,
           ),
@@ -30,7 +30,7 @@ class AttendanceSummaryCard extends StatelessWidget {
         Expanded(
           child: _StatCard(
             value: '${summary.late}',
-            label: 'Terlambat',
+            label: 'Late',
             valueColor: AppColors.rejected,
             borderColor: AppColors.rejected,
           ),
@@ -39,7 +39,7 @@ class AttendanceSummaryCard extends StatelessWidget {
         Expanded(
           child: _StatCard(
             value: overtimeHoursText(summary.overtimeHrs),
-            label: 'Jam Lembur',
+            label: 'Overtime Hours',
             valueColor: AppColors.text,
             borderColor: AppColors.overtime,
           ),

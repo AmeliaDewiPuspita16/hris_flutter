@@ -6,6 +6,7 @@ import '../../../../../core/network/page_meta.dart';
 import '../domain/indent_approval_item.dart';
 import '../domain/indent_driver.dart';
 import '../domain/indent_json.dart';
+import '../domain/indent_my_request_item.dart';
 import '../domain/indent_pending_item.dart';
 import '../domain/indent_request_item.dart';
 import '../domain/indent_request_page.dart';
@@ -83,6 +84,29 @@ class IndentVehicleRepository {
     }
 
     return IndentRequestPage(items: items, meta: PageMeta.fromJson(data));
+  }
+
+  /// Tab "My Request" — `GET /api/indent/list`: request milik user yang
+  /// sedang login (server yang menyaring dari token), array polos tanpa
+  /// paginasi. Beda dengan [fetchRequests], endpoint ini tidak memuat nama
+  /// peminta maupun `approval_hod`, dan nama driver sudah ada di field
+  /// `driver`, jadi daftar driver tidak perlu diambil.
+  ///
+  /// Satu baris cacat dilewati, tidak menggagalkan seluruh daftar.
+  ///
+  /// Melempar [ApiException] bila gagal.
+  Future<List<IndentMyRequestItem>> fetchMyRequests() async {
+    final rows = await _apiClient.getRawList(ApiConfig.indentMyList);
+
+    final items = <IndentMyRequestItem>[];
+    for (final row in rows.whereType<Map<String, dynamic>>()) {
+      try {
+        items.add(IndentMyRequestItem.fromJson(row));
+      } on FormatException catch (e) {
+        AppLogger.info('Melewati my request yang tidak bisa dibaca: $e');
+      }
+    }
+    return items;
   }
 
   /// Membuat request indent baru, atau memperbarui yang sudah ada bila [id]

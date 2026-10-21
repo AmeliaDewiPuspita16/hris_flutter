@@ -60,10 +60,12 @@ class ApiConfig {
   /// berupa angka 200 (bukan kata 'success')
   static const String indent = '/api/indent';
 
+  static const String indentMyList = '/api/indent/list';
+
   /// Buat indent baru, atau perbarui yang ada bila `id_recuitment` dikirim.
   static const String indentStore = '/api/indent/vehicle/store';
 
-    /// Request yang menunggu keputusan atasan (hanya role `hod`).
+  /// Request yang menunggu keputusan atasan (hanya role `hod`).
   static const String indentHodList = '/api/list_hod_approve';
   static const String indentHodApprove = '/api/indent/vehicle/approve_hod';
   static const String indentHodReject = '/api/indent/vehicle/reject_hod';

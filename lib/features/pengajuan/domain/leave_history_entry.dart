@@ -41,7 +41,7 @@ class LeaveHistoryEntry {
     if (start == null) return null;
     final end = dateOrNull(json['end_date']) ?? start;
 
-    final rawType = textOrNull(json['type']) ?? 'Cuti';
+    final rawType = textOrNull(json['type']) ?? 'Leave';
     final leaveType = LeaveTypeX.fromApiName(rawType);
 
     final code = textOrNull(json['status_code']);

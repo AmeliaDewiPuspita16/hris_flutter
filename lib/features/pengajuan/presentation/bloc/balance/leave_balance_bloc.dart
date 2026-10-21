@@ -45,7 +45,7 @@ class LeaveBalanceBloc extends Bloc<LeaveBalanceEvent, LeaveBalanceState> {
 
       emit(state.copyWith(
         status: LeaveBalanceStatus.failure,
-        errorMessage: 'Gagal memuat saldo. Coba lagi.',
+        errorMessage: 'Failed to load balance. Please try again.',
       ));
     }
   }

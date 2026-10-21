@@ -24,8 +24,8 @@ class AttendanceMonthNav extends StatelessWidget {
   final VoidCallback onPick;
 
   static const _months = [
-    'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-    'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December',
   ];
 
   String get _label => '${_months[month.month - 1]} ${month.year}';
