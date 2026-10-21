@@ -38,7 +38,7 @@ class LeaveHistoryBloc extends Bloc<LeaveHistoryEvent, LeaveHistoryState> {
 
       emit(state.copyWith(
         status: LeaveHistoryStatus.failure,
-        errorMessage: 'Gagal memuat riwayat. Coba lagi.',
+        errorMessage: 'Failed to load history. Please try again.',
       ));
     }
   }

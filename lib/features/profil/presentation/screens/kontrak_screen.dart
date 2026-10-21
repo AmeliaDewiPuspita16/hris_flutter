@@ -17,7 +17,7 @@ class KontrakScreen extends StatelessWidget {
     final p = profile;
     return Scaffold(
       backgroundColor: AppColors.bg,
-      appBar: BackHeader(title: 'Kontrak Kerja', onBack: () => Navigator.of(context).pop()),
+      appBar: BackHeader(title: 'Employment Contract', onBack: () => Navigator.of(context).pop()),
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(20, 20, 20, 28),
         child: Column(
@@ -34,7 +34,7 @@ class KontrakScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('No. Kontrak', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: AppColors.textMuted)),
+                        const Text('Contract No.', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: AppColors.textMuted)),
                         const SizedBox(height: 2),
                         Text(p.contractNo, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.text)),
                       ],
@@ -47,7 +47,7 @@ class KontrakScreen extends StatelessWidget {
             const Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                SectionLabel('DETAIL KONTRAK'),
+                SectionLabel('CONTRACT DETAILS'),
                 ReadOnlyBadge(),
               ],
             ),
@@ -56,15 +56,15 @@ class KontrakScreen extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Column(
                 children: [
-                  DetailFieldTile(label: 'Jabatan', value: p.title),
-                  DetailFieldTile(label: 'Departemen', value: p.dept),
-                  DetailFieldTile(label: 'Tanggal Bergabung', value: p.join),
-                  DetailFieldTile(label: 'Kategori Pegawai', value: p.employeeCategory, showDivider: false),
+                  DetailFieldTile(label: 'Position', value: p.title),
+                  DetailFieldTile(label: 'Department', value: p.dept),
+                  DetailFieldTile(label: 'Join Date', value: p.join),
+                  DetailFieldTile(label: 'Employee Category', value: p.employeeCategory, showDivider: false),
                 ],
               ),
             ),
             const SizedBox(height: 8),
-            const InfoNote('Data kontrak dikelola oleh HR. Hubungi Admin HR untuk perubahan.'),
+            const InfoNote('Contract data is managed by HR. Contact HR Admin to request changes.'),
           ],
         ),
       ),

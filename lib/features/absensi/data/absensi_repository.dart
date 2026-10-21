@@ -30,7 +30,7 @@ class AbsensiRepository {
     final schedule = data['today_schedule'];
     if (schedule is! Map<String, dynamic>) {
       throw const ApiException.server(
-          'Jadwal hari ini tidak ditemukan pada respons server.');
+          'Today\'s schedule was not found in the server response.');
     }
 
     return AttendanceStatus.fromJson(schedule);

@@ -17,7 +17,7 @@ class RekeningScreen extends StatelessWidget {
     final p = profile;
     return Scaffold(
       backgroundColor: AppColors.bg,
-      appBar: BackHeader(title: 'Rekening Bank', onBack: () => Navigator.of(context).pop()),
+      appBar: BackHeader(title: 'Bank Account', onBack: () => Navigator.of(context).pop()),
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(20, 20, 20, 28),
         child: Column(
@@ -50,7 +50,7 @@ class RekeningScreen extends StatelessWidget {
                               children: [
                                 Icon(Icons.check, size: 11, color: AppColors.primary),
                                 SizedBox(width: 4),
-                                Text('Rekening Gaji Utama', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w600, color: AppColors.primary)),
+                                Text('Primary Salary Account', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w600, color: AppColors.primary)),
                               ],
                             ),
                           ),
@@ -66,13 +66,13 @@ class RekeningScreen extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Column(
                 children: [
-                  DetailFieldTile(label: 'No. Rekening', value: p.bankAccountNo),
-                  DetailFieldTile(label: 'Nama Pemilik', value: p.bankAccountName, showDivider: false),
+                  DetailFieldTile(label: 'Account No.', value: p.bankAccountNo),
+                  DetailFieldTile(label: 'Account Holder', value: p.bankAccountName, showDivider: false),
                 ],
               ),
             ),
             const SizedBox(height: 8),
-            const InfoNote('Perubahan rekening gaji wajib melalui pengajuan ke HR Admin.'),
+            const InfoNote('Salary account changes must be requested through HR Admin.'),
           ],
         ),
       ),

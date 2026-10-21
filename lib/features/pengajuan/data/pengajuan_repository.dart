@@ -134,7 +134,7 @@ class PengajuanRepository {
       date: _describeDraftDate(draft),
       requestDate: draft.startDate ?? draft.date ?? DateTime.now(),
       status: AppStatus.pending,
-      note: 'Menunggu persetujuan',
+      note: 'Awaiting approval',
       reason: draft.reason,
       photoUrl: draft.attachmentFileName,
     );

@@ -597,7 +597,7 @@ class _EmptyState extends StatelessWidget {
       child: Padding(
         padding: EdgeInsets.fromLTRB(40, 0, 40, 60),
         child: Text(
-          'Menu tidak ditemukan.',
+          'No menu found.',
           textAlign: TextAlign.center,
           style: AppTextStyles.bodyMuted,
         ),

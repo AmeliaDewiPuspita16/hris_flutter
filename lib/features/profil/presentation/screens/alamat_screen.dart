@@ -30,7 +30,7 @@ class _AlamatScreenState extends State<AlamatScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.bg,
-      appBar: BackHeader(title: 'Alamat', onBack: () => Navigator.of(context).pop()),
+      appBar: BackHeader(title: 'Address', onBack: () => Navigator.of(context).pop()),
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(20, 20, 20, 28),
         child: Column(
@@ -46,10 +46,10 @@ class _AlamatScreenState extends State<AlamatScreen> {
                       const TintedIcon(Icons.location_on_outlined),
                       const SizedBox(width: 14),
                       const Expanded(
-                        child: Text('Alamat Domisili', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.text)),
+                        child: Text('Home Address', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.text)),
                       ),
                       PillButton(
-                        label: _editing ? 'Simpan' : 'Ubah',
+                        label: _editing ? 'Save' : 'Edit',
                         filled: _editing,
                         onPressed: () => setState(() => _editing = !_editing),
                       ),
@@ -79,10 +79,10 @@ class _AlamatScreenState extends State<AlamatScreen> {
               ),
             ),
             const SizedBox(height: 10),
-            const InfoNote('Perubahan alamat memerlukan verifikasi Admin HR sebelum aktif.'),
+            const InfoNote('Address changes require HR Admin verification before they take effect.'),
             if (_editing) ...[
               const SizedBox(height: 16),
-              AppButton(label: 'Ajukan Perubahan Alamat', onPressed: () => setState(() => _editing = false)),
+              AppButton(label: 'Request Address Change', onPressed: () => setState(() => _editing = false)),
             ],
           ],
         ),

@@ -27,8 +27,8 @@ class MonthYearPickerSheet extends StatefulWidget {
 
 class _MonthYearPickerSheetState extends State<MonthYearPickerSheet> {
   static const _months = [
-    'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-    'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December',
   ];
 
   static const _itemExtent = 44.0;
@@ -80,7 +80,7 @@ class _MonthYearPickerSheetState extends State<MonthYearPickerSheet> {
               ),
             ),
             const Text(
-              'Pilih Bulan',
+              'Select Month',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.text),
             ),
@@ -163,7 +163,7 @@ class _MonthYearPickerSheetState extends State<MonthYearPickerSheet> {
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
                 elevation: 0,
               ),
-              child: const Text('Pilih', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+              child: const Text('Select', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
             ),
           ],
         ),

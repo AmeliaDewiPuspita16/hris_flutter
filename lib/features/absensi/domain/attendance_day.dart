@@ -75,10 +75,10 @@ class AttendanceDay {
       shiftTimeRange: shift?.range,
       timeText: _timeText(checkIn, checkOut, ongoing: ongoing),
       badgeLabel: switch (status) {
-        AttendanceDayStatus.tepatWaktu => 'Tepat waktu',
+        AttendanceDayStatus.tepatWaktu => 'On time',
         AttendanceDayStatus.terlambat =>
-          lateMinutes > 0 ? 'Telat ${lateMinutes}m' : 'Terlambat',
-        AttendanceDayStatus.lembur => 'Lembur',
+          lateMinutes > 0 ? 'Late ${lateMinutes}m' : 'Late',
+        AttendanceDayStatus.lembur => 'Overtime',
         _ => null,
       },
     );
@@ -163,8 +163,8 @@ class AttendanceDay {
     if (checkIn == null) return null;
     if (checkOut != null) return '${_hhmm(checkIn)} – ${_hhmm(checkOut)}';
     return ongoing
-        ? '${_hhmm(checkIn)} — Berlangsung'
-        : '${_hhmm(checkIn)} – belum ada data pulang';
+        ? '${_hhmm(checkIn)} — In progress'
+        : '${_hhmm(checkIn)} – no check-out data';
   }
 
   static bool _isToday(DateTime date) {

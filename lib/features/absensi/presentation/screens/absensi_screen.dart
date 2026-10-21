@@ -65,16 +65,16 @@ class _AbsensiView extends StatelessWidget {
 
   final bool showBack;
 
-  static const _bulanIndonesia = [
-    'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-    'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
+  static const _monthNames = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December',
   ];
 
   static final _firstSelectableMonth = DateTime(2023, 1);
   static final _lastSelectableMonth = DateTime(DateTime.now().year + 1, 12);
 
   String _monthLabel(DateTime month) =>
-      '${_bulanIndonesia[month.month - 1]} ${month.year}';
+      '${_monthNames[month.month - 1]} ${month.year}';
 
   void _shiftMonth(BuildContext context, DateTime current, int delta) {
     context.read<AbsensiBloc>().add(
@@ -157,7 +157,7 @@ class _AbsensiView extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          HeaderTitleRow(title: 'Log Absensi', showBack: showBack),
+          HeaderTitleRow(title: 'Attendance Log', showBack: showBack),
           _buildMonthNav(context, selectedMonth),
         ],
       ),
@@ -227,7 +227,7 @@ class _AbsensiView extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 32),
         child: Center(
           child: Text(
-            state.errorMessage ?? 'Gagal memuat absensi.',
+            state.errorMessage ?? 'Failed to load attendance.',
             style: const TextStyle(color: AppColors.textMuted),
           ),
         ),

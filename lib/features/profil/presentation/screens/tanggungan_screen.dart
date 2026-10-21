@@ -16,7 +16,7 @@ class TanggunganScreen extends StatelessWidget {
     final list = profile.dependents;
     return Scaffold(
       backgroundColor: AppColors.bg,
-      appBar: BackHeader(title: 'Tanggungan', onBack: () => Navigator.of(context).pop()),
+      appBar: BackHeader(title: 'Dependents', onBack: () => Navigator.of(context).pop()),
       body: list.isEmpty
           ? const Center(
               child: Padding(
@@ -27,7 +27,7 @@ class TanggunganScreen extends StatelessWidget {
                     TintedIcon(Icons.family_restroom_outlined, size: 56),
                     SizedBox(height: 14),
                     Text(
-                      'Belum ada data tanggungan terdaftar.',
+                      'No registered dependents yet.',
                       textAlign: TextAlign.center,
                       style: TextStyle(fontSize: 13, color: AppColors.textMuted),
                     ),
@@ -45,8 +45,8 @@ class TanggunganScreen extends StatelessWidget {
                   return Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const SectionLabel('TERDAFTAR'),
-                      InfoPill('${list.length} orang'),
+                      const SectionLabel('REGISTERED'),
+                      InfoPill('${list.length} ${list.length == 1 ? 'person' : 'people'}'),
                     ],
                   );
                 }
@@ -87,7 +87,7 @@ class TanggunganScreen extends StatelessWidget {
                                 ),
                                 const SizedBox(width: 8),
                                 Flexible(
-                                  child: Text('Lahir ${d.birthDate}', style: const TextStyle(fontSize: 12.5, color: AppColors.textMuted)),
+                                  child: Text('Born ${d.birthDate}', style: const TextStyle(fontSize: 12.5, color: AppColors.textMuted)),
                                 ),
                               ],
                             ),

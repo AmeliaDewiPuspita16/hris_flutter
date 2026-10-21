@@ -21,7 +21,7 @@ class SyncFootnote extends StatelessWidget {
           SizedBox(width: 6),
           Expanded(
             child: Text(
-              'Data tercatat otomatis dari mesin fingerprint kantor dan tersinkron dari HRIS web. Absensi tidak dilakukan lewat aplikasi ini.',
+              'Data is recorded automatically from the office fingerprint machine and synced from the HRIS web. Attendance is not done through this app.',
               style: TextStyle(
                   fontSize: 10.5, color: AppColors.textMuted, height: 1.4),
             ),

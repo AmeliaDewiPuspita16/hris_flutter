@@ -76,11 +76,11 @@ class _ProfilView extends StatelessWidget {
     final p = EmployeeProfile.of(role);
 
     final categories = <_CategoryItem>[
-      _CategoryItem(Icons.badge_outlined, 'Data Diri', 'Identitas dan kontak pribadi', (_) => DataDiriScreen(profile: p, user: user)),
-      _CategoryItem(Icons.description_outlined, 'Kontrak Kerja', 'Periode dan status kontrak', (_) => KontrakScreen(profile: p)),
-      _CategoryItem(Icons.account_balance_outlined, 'Rekening Bank', 'Rekening untuk pembayaran', (_) => RekeningScreen(profile: p)),
-      _CategoryItem(Icons.location_on_outlined, 'Alamat', 'Alamat domisili dan KTP', (_) => AlamatScreen(profile: p)),
-      _CategoryItem(Icons.family_restroom_outlined, 'Tanggungan', 'Anggota keluarga yang ditanggung', (_) => TanggunganScreen(profile: p)),
+      _CategoryItem(Icons.badge_outlined, 'Personal Data', 'Identity and personal contact', (_) => DataDiriScreen(profile: p, user: user)),
+      _CategoryItem(Icons.description_outlined, 'Employment Contract', 'Contract period and status', (_) => KontrakScreen(profile: p)),
+      _CategoryItem(Icons.account_balance_outlined, 'Bank Account', 'Account for payments', (_) => RekeningScreen(profile: p)),
+      _CategoryItem(Icons.location_on_outlined, 'Address', 'Residential and ID card address', (_) => AlamatScreen(profile: p)),
+      _CategoryItem(Icons.family_restroom_outlined, 'Dependents', 'Covered family members', (_) => TanggunganScreen(profile: p)),
     ];
 
     return BlocConsumer<ProfilPhotoBloc, ProfilPhotoState>(
@@ -133,9 +133,9 @@ class _ProfilView extends StatelessWidget {
         if (updated != null) {
           context.read<AuthBloc>().add(AuthUserRefreshed(updated));
         }
-        _toast(context, 'Foto profil diperbarui');
+        _toast(context, 'Profile photo updated');
       case ProfilPhotoStatus.failure:
-        _toast(context, state.errorMessage ?? 'Gagal mengganti foto profil.');
+        _toast(context, state.errorMessage ?? 'Failed to change the profile photo.');
       case ProfilPhotoStatus.initial:
       case ProfilPhotoStatus.picking:
       case ProfilPhotoStatus.uploading:
@@ -202,7 +202,7 @@ class _ProfilView extends StatelessWidget {
                   ),
                 ),
                 child: const Text(
-                  'Profil',
+                  'Profile',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Colors.white),
                 ),
               ),

@@ -75,7 +75,7 @@ class AbsensiBloc extends Bloc<AbsensiEvent, AbsensiState> {
 
       emit(state.copyWith(
         status: AbsensiStatus.failure,
-        errorMessage: 'Gagal memuat absensi. Coba lagi.',
+        errorMessage: 'Failed to load attendance. Please try again.',
       ));
     }
   }

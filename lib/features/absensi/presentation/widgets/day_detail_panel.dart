@@ -12,8 +12,8 @@ class DayDetailPanel extends StatelessWidget {
   final AttendanceDay? day;
 
   static const _months = [
-    'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-    'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December',
   ];
 
   @override
@@ -21,7 +21,7 @@ class DayDetailPanel extends StatelessWidget {
     final day = this.day;
     if (day == null) {
       return const Text(
-        'Pilih tanggal untuk melihat detailnya.',
+        'Select a date to see its details.',
         style: TextStyle(fontSize: 13, color: AppColors.textMuted),
       );
     }
@@ -48,7 +48,7 @@ class DayDetailPanel extends StatelessWidget {
     if (day.shiftCode == null) {
       return const Text(
         // 'Hari libur bersama',
-        'Belum ada data absensi atau jadwal untuk tanggal ini.',
+        'No attendance or schedule data for this date yet.',
         style: TextStyle(fontSize: 13, color: AppColors.textMuted),
       );
     }
@@ -56,12 +56,12 @@ class DayDetailPanel extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Terjadwal shift ${day.shiftCode} · ${day.shiftTimeRange}',
+          'Scheduled shift ${day.shiftCode} · ${day.shiftTimeRange}',
           style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.text),
         ),
         const SizedBox(height: 2),
         const Text(
-          'Belum berlangsung',
+          'Not started yet',
           style: TextStyle(fontSize: 12, color: AppColors.textMuted),
         ),
       ],
@@ -98,7 +98,7 @@ class DayDetailPanel extends StatelessWidget {
               if (day.hasOvertime)
                 _StatusBadge(
                   status: AttendanceDayStatus.lembur,
-                  label: 'Lembur ${overtimeDurationText(day.overtimeMinutes)}',
+                  label: 'Overtime ${overtimeDurationText(day.overtimeMinutes)}',
                 ),
             ],
           ),
