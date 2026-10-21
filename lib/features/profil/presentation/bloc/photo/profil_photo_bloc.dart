@@ -55,7 +55,7 @@ class ProfilPhotoBloc extends Bloc<ProfilPhotoEvent, ProfilPhotoState> {
       emit(ProfilPhotoState(
         status: ProfilPhotoStatus.failure,
         photo: previous,
-        errorMessage: 'Terjadi kesalahan tak terduga. Coba lagi.',
+        errorMessage: 'An unexpected error occurred. Please try again.',
       ));
       return;
     }
@@ -84,7 +84,7 @@ class ProfilPhotoBloc extends Bloc<ProfilPhotoEvent, ProfilPhotoState> {
       emit(ProfilPhotoState(
         status: ProfilPhotoStatus.failure,
         photo: previous,
-        errorMessage: 'Terjadi kesalahan tak terduga. Coba lagi.',
+        errorMessage: 'An unexpected error occurred. Please try again.',
       ));
     }
   }

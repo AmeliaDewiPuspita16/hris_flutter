@@ -36,17 +36,17 @@ Future<PhotoSheetAction?> showPhotoSourceSheet(
             if (hasPhoto)
               _SourceTile(
                 icon: Icons.visibility_outlined,
-                label: 'Lihat foto profil',
+                label: 'View profile photo',
                 onTap: () => Navigator.of(ctx).pop(PhotoSheetAction.view),
               ),
             _SourceTile(
               icon: Icons.photo_camera_outlined,
-              label: 'Ambil foto',
+              label: 'Take photo',
               onTap: () => Navigator.of(ctx).pop(PhotoSheetAction.camera),
             ),
             _SourceTile(
               icon: Icons.photo_library_outlined,
-              label: 'Pilih dari galeri',
+              label: 'Choose from gallery',
               onTap: () => Navigator.of(ctx).pop(PhotoSheetAction.gallery),
             ),
           ],

@@ -33,7 +33,7 @@ class ProfilRepository {
     final rawUser = data['user'];
     if (rawUser is! Map<String, dynamic>) {
       throw const ApiException.server(
-        'Foto terkirim, tapi respons server tidak dikenali.',
+        'The photo was uploaded, but the server response was not recognized.',
       );
     }
 
@@ -41,7 +41,7 @@ class ProfilRepository {
       return AuthUser.fromJson(rawUser);
     } on FormatException {
       throw const ApiException.server(
-        'Foto terkirim, tapi respons server tidak dikenali.',
+        'The photo was uploaded, but the server response was not recognized.',
       );
     }
   }

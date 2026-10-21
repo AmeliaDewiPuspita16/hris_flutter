@@ -203,7 +203,7 @@ class _ListRequestTabState extends State<ListRequestTab> {
     if (state.status == ItRequestListStatus.failure && state.items.isEmpty) {
       return [
         AppErrorView(
-          message: state.errorMessage ?? 'Gagal memuat daftar request.',
+          message: state.errorMessage ?? 'Failed to load the request list.',
           onRetry: () => _activeBloc.add(const ItRequestListRefreshed()),
         ),
       ];
@@ -215,7 +215,7 @@ class _ListRequestTabState extends State<ListRequestTab> {
         Padding(
           padding: const EdgeInsets.only(top: 24),
           child: Center(
-            child: Text('Tidak ada data', style: AppTextStyles.bodyMuted),
+            child: Text('No data', style: AppTextStyles.bodyMuted),
           ),
         )
       else

@@ -38,7 +38,7 @@ class PhotoPickerService {
       );
     } catch (e, stack) {
       AppLogger.error('Gagal membuka kamera/galeri', e, stack);
-      throw const PhotoPickException('Tidak bisa membuka kamera/galeri. Cek izin aplikasi.');
+      throw const PhotoPickException('Unable to open the camera/gallery. Please check the app permissions.');
     }
     if (picked == null) return null;
 
@@ -51,10 +51,10 @@ class PhotoPickerService {
     // bisa tanpa ekstensi, dan path Android memuat titik di nama package.
     final ext = await _detectExtension(file);
     if (ext == null) {
-      throw const PhotoPickException('Format foto harus JPG atau PNG.');
+      throw const PhotoPickException('The photo must be a JPG or PNG.');
     }
     if (await file.length() > maxPhotoBytes) {
-      throw const PhotoPickException('Ukuran foto terlalu besar (maksimal 1 MB).');
+      throw const PhotoPickException('The photo is too large (max 1 MB).');
     }
 
     // Nama berkas disamakan dengan isinya supaya Content-Type yang dikirim
@@ -82,7 +82,7 @@ class PhotoPickerService {
         maxHeight: 800,
         uiSettings: [
           AndroidUiSettings(
-            toolbarTitle: 'Atur foto profil',
+            toolbarTitle: 'Adjust profile photo',
             toolbarColor: AppColors.primary,
             toolbarWidgetColor: Colors.white,
             activeControlsWidgetColor: AppColors.primary,
@@ -91,7 +91,7 @@ class PhotoPickerService {
             cropStyle: CropStyle.circle,
           ),
           IOSUiSettings(
-            title: 'Atur foto profil',
+            title: 'Adjust profile photo',
             aspectRatioLockEnabled: true,
             aspectRatioPickerButtonHidden: true,
             resetAspectRatioEnabled: false,
@@ -104,7 +104,7 @@ class PhotoPickerService {
       // Penyebab aslinya (mis. plugin belum terdaftar, UCropActivity belum
       // ada di manifest) hanya terlihat di log, jadi jangan dibuang.
       AppLogger.error('Gagal membuka layar crop foto', e, stack);
-      throw const PhotoPickException('Gagal membuka layar crop foto.');
+      throw const PhotoPickException('Failed to open the photo crop screen.');
     }
   }
 

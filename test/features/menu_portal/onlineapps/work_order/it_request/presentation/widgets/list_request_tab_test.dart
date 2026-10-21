@@ -136,7 +136,7 @@ void main() {
     expect(find.text('Butuh akses VPN'), findsNothing);
   });
 
-  testWidgets('daftar kosong menampilkan "Tidak ada data"', (tester) async {
+  testWidgets('daftar kosong menampilkan "No data"', (tester) async {
     final harness = ItRequestHarness(
       (_, __) => ok(itRequestListEnvelope(items: const [], total: 0)),
     );
@@ -144,7 +144,7 @@ void main() {
     await pumpTab(tester, harness);
     await settle(tester);
 
-    expect(find.text('Tidak ada data'), findsOneWidget);
+    expect(find.text('No data'), findsOneWidget);
   });
 
   testWidgets('mengetuk baris membuka layar detail dengan aksi tim IT aktif',

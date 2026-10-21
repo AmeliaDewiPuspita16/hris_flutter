@@ -42,7 +42,7 @@ class ProfileAvatar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Semantics(
       button: true,
-      label: 'Ubah foto profil',
+      label: 'Change profile photo',
       child: GestureDetector(
         onTap: onTap,
         child: SizedBox(
