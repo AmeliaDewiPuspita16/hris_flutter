@@ -59,7 +59,7 @@ class IndentApprovalBloc
       emit(state.copyWith(
         status: IndentApprovalStatus.failure,
         items: const [],
-        errorMessage: 'Terjadi kesalahan tak terduga. Coba lagi.',
+        errorMessage: 'An unexpected error occurred. Please try again.',
       ));
     }
   }
@@ -87,8 +87,8 @@ class IndentApprovalBloc
         busyIds: Set.of(state.busyIds)..remove(item.id),
         notice: IndentApprovalNotice(
           message: event.approved
-              ? 'Request ${item.name} disetujui'
-              : 'Request ${item.name} ditolak',
+              ? 'Request from ${item.name} approved'
+              : 'Request from ${item.name} rejected',
           isError: false,
         ),
       ));
@@ -103,7 +103,7 @@ class IndentApprovalBloc
       emit(state.copyWith(
         busyIds: Set.of(state.busyIds)..remove(item.id),
         notice: const IndentApprovalNotice(
-          message: 'Terjadi kesalahan tak terduga. Coba lagi.',
+          message: 'An unexpected error occurred. Please try again.',
           isError: true,
         ),
       ));

@@ -28,24 +28,38 @@ class ApproveRequestTab extends StatelessWidget {
     if (items.isEmpty) {
       return Center(
         child: Text(
-          'Tidak ada request yang menunggu approval',
+          'No requests waiting for approval',
           style: AppTextStyles.bodyMuted,
         ),
       );
     }
 
-    return ListView.separated(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-      itemCount: items.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 10),
-      itemBuilder: (context, index) {
-        final item = items[index];
-        return ApproveRequestCard(
-          item: item,
-          onApprove: () => onApprove(item),
-          onReject: () => onReject(item),
-        );
-      },
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(18, 0, 16, 8),
+          child: Text(
+            '${items.length} ${items.length == 1 ? 'request' : 'requests'} waiting for approval',
+            style: AppTextStyles.label,
+          ),
+        ),
+        Expanded(
+          child: ListView.separated(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+            itemCount: items.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 10),
+            itemBuilder: (context, index) {
+              final item = items[index];
+              return ApproveRequestCard(
+                item: item,
+                onApprove: () => onApprove(item),
+                onReject: () => onReject(item),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 }

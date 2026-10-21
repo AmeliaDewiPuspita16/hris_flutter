@@ -70,11 +70,51 @@ class _ItRequestScreenState extends State<ItRequestScreen> {
     );
   }
 
-  /// Keputusan di tab Approve Request: request keluar dari daftar.
+  /// Keputusan di tab Approve Request: request keluar dari daftar. Ada
+  /// dialog konfirmasi dulu karena keputusan tidak bisa dibatalkan dari
+  /// aplikasi (sama seperti Supervisor Approval di Indent Vehicle).
   ///
   /// TODO(api): kirim keputusan ke server; sekarang hanya mengubah daftar
   /// lokal.
-  void _decide(ApproveRequestItem item, {required bool approved}) {
+  Future<void> _decide(
+    ApproveRequestItem item, {
+    required bool approved,
+  }) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(approved ? 'Approve request?' : 'Reject request?'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              item.requesterName,
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              item.description,
+              maxLines: 4,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(approved ? 'Approve' : 'Reject'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !mounted) return;
+
     setState(() {
       _approvals = _approvals.where((r) => r.id != item.id).toList();
     });
@@ -83,8 +123,8 @@ class _ItRequestScreenState extends State<ItRequestScreen> {
       SnackBar(
         content: Text(
           approved
-              ? 'Request ${item.requesterName} disetujui'
-              : 'Request ${item.requesterName} ditolak',
+              ? 'Request from ${item.requesterName} approved'
+              : 'Request from ${item.requesterName} rejected',
         ),
       ),
     );

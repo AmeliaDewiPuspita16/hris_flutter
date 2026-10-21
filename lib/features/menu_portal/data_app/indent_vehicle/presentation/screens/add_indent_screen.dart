@@ -91,9 +91,9 @@ class _AddIndentScreenState extends State<AddIndentScreen> {
     return DateTime(y, m, d);
   }
 
-  /// '01:00:00 s/d 14:30:00' -> (dari, sampai).
+  /// '01:00:00 to 14:30:00' -> (dari, sampai).
   (TimeOfDay?, TimeOfDay?) _parseTimeRange(String s) {
-    final parts = s.split(' s/d ');
+    final parts = s.split(' to ');
     if (parts.length != 2) return (null, null);
     return (_parseTime(parts[0]), _parseTime(parts[1]));
   }
@@ -160,7 +160,7 @@ class _AddIndentScreenState extends State<AddIndentScreen> {
       AppLogger.error('Simpan indent gagal karena galat tak terduga', e, stack);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Terjadi kesalahan tak terduga. Coba lagi.')),
+        const SnackBar(content: Text('An unexpected error occurred. Please try again.')),
       );
     } finally {
       if (mounted) setState(() => _submitting = false);
@@ -210,7 +210,7 @@ class _AddIndentScreenState extends State<AddIndentScreen> {
             // supaya form tidak terbaca sebagai satu daftar panjang.
             _FormSection(
               icon: Icons.event_outlined,
-              title: 'Jadwal',
+              title: 'Schedule',
               children: [
                 // Tanggal & jam memakai AppDateField / AppTimeField dari
                 // core — sama dengan form Pengajuan cuti & izin, label
@@ -249,7 +249,7 @@ class _AddIndentScreenState extends State<AddIndentScreen> {
             const SizedBox(height: 14),
             _FormSection(
               icon: Icons.place_outlined,
-              title: 'Perjalanan',
+              title: 'Trip',
               children: [
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -261,7 +261,7 @@ class _AddIndentScreenState extends State<AddIndentScreen> {
                       textInputAction: TextInputAction.next,
                       style: AppTextStyles.body,
                       decoration: _fieldDecoration(
-                          'Contoh: Pelabuhan Speed Tanjung Uban'),
+                          'e.g. Tanjung Uban Speed Port'),
                     ),
                   ],
                 ),
@@ -275,7 +275,7 @@ class _AddIndentScreenState extends State<AddIndentScreen> {
                       maxLines: null,
                       textCapitalization: TextCapitalization.sentences,
                       style: AppTextStyles.body,
-                      decoration: _fieldDecoration('Keperluan perjalanan'),
+                      decoration: _fieldDecoration('Purpose of the trip'),
                     ),
                   ],
                 ),

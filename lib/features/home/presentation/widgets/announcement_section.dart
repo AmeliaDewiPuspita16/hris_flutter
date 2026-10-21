@@ -267,7 +267,7 @@ class _AnnouncementError extends StatelessWidget {
               child: const Padding(
                 padding: EdgeInsets.symmetric(vertical: 4),
                 child: Text(
-                  'Coba lagi',
+                  'Try again',
                   style: TextStyle(
                     fontFamily: AppTextStyles.fontFamily,
                     fontSize: 12,

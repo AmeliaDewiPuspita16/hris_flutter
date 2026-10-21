@@ -23,11 +23,11 @@ String indentDate(dynamic value) {
   return '${two(date.day)}-${two(date.month)}-${date.year}';
 }
 
-/// `jam_pergi` + `jam_pulang` -> '08:00:00 s/d 09:05:00'.
+/// `jam_pergi` + `jam_pulang` -> '08:00:00 to 09:05:00'.
 String indentTimeRange(Map<String, dynamic> json) {
   final from = textOrNull(json['jam_pergi']) ?? '--:--';
   final until = textOrNull(json['jam_pulang']) ?? '--:--';
-  return '$from s/d $until';
+  return '$from to $until';
 }
 
 /// Field `driver` di baris mentah berupa angka (1 = pakai driver, 0 =

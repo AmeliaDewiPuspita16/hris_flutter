@@ -18,17 +18,17 @@ class LoginCredentials {
   static final _emailPattern = RegExp(r'^[\w.+-]+@[\w-]+(\.[\w-]+)+$');
 
   String? get emailError {
-    if (email.isEmpty) return 'Email wajib diisi';
+    if (email.isEmpty) return 'Email is required';
     if (!_emailPattern.hasMatch(email)) {
-      return 'Format email tidak sesuai, contoh: nama@biie.co.id';
+      return 'Invalid email format, e.g. name@biie.co.id';
     }
     return null;
   }
 
   String? get passwordError {
-    if (password.isEmpty) return 'Kata sandi wajib diisi';
+    if (password.isEmpty) return 'Password is required';
     if (password.length < minPasswordLength) {
-      return 'Kata sandi minimal $minPasswordLength karakter';
+      return 'Password must be at least $minPasswordLength characters';
     }
     return null;
   }

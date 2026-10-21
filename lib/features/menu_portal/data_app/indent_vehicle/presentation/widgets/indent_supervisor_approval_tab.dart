@@ -42,7 +42,7 @@ class IndentSupervisorApprovalTab extends StatelessWidget {
                 const SizedBox(height: 120),
                 Center(
                   child: Text(
-                    'Tidak ada request yang menunggu approval',
+                    'No requests waiting for approval',
                     style: AppTextStyles.bodyMuted,
                   ),
                 ),

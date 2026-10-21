@@ -457,14 +457,14 @@ class _BerandaScreenState extends State<BerandaScreen> {
 
       final driverText = result.driver == null ? '' : ' · ${result.driver}';
       _showSnack(
-        'Kendaraan ${result.plateNumber}$driverText '
-        'ditetapkan untuk ${item.name}',
+        'Vehicle ${result.plateNumber}$driverText '
+        'assigned to ${item.name}',
       );
     } on ApiException catch (e) {
       _showSnack(e.message);
     } catch (e, stack) {
       AppLogger.error('Assign dari notifikasi gagal tak terduga', e, stack);
-      _showSnack('Terjadi kesalahan tak terduga. Coba lagi.');
+      _showSnack('An unexpected error occurred. Please try again.');
     } finally {
       _assigningIds.remove(item.id);
     }

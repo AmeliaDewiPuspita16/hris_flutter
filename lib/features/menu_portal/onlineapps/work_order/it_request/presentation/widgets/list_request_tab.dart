@@ -45,7 +45,7 @@ class _ListRequestTabState extends State<ListRequestTab> {
     final shown = _filter == null
         ? _items
         : _items.where((i) => i.status == _filter).toList();
-    final title = _filter == null ? 'Semua Request' : _filter!.label;
+    final title = _filter == null ? 'All Requests' : _filter!.label;
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
@@ -82,7 +82,7 @@ class _ListRequestTabState extends State<ListRequestTab> {
           Padding(
             padding: const EdgeInsets.only(top: 24),
             child: Center(
-              child: Text('Tidak ada data', style: AppTextStyles.bodyMuted),
+              child: Text('No data', style: AppTextStyles.bodyMuted),
             ),
           )
         else
@@ -91,7 +91,7 @@ class _ListRequestTabState extends State<ListRequestTab> {
             ListRequestRow(
               item: shown[i],
               onTap: () => ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Detail belum tersedia')),
+                const SnackBar(content: Text('Details are not available yet')),
               ),
             ),
           ],

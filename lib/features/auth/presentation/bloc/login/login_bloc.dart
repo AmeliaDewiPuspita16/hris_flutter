@@ -57,7 +57,7 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
       emit(
         const LoginState(
           status: LoginStatus.failure,
-          errorMessage: 'Terjadi kesalahan tak terduga. Coba lagi.',
+          errorMessage: 'An unexpected error occurred. Please try again.',
         ),
       );
     }

@@ -190,7 +190,7 @@ class _NotificationList extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 28),
       children: [
         if (pending.isNotEmpty) ...[
-          const _GroupLabel('Perlu tindakan'),
+          const _GroupLabel('Action needed'),
           for (final item in pending)
             NotificationTile(
               notification: item,
@@ -285,7 +285,7 @@ class _EmptyState extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             const Text(
-              'Belum ada notifikasi',
+              'No notifications yet',
               style: TextStyle(
                 fontFamily: AppTextStyles.fontFamily,
                 fontSize: 14,
@@ -295,7 +295,7 @@ class _EmptyState extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             const Text(
-              'Pembaruan baru akan muncul di sini.',
+              'New updates will appear here.',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontFamily: AppTextStyles.fontFamily,

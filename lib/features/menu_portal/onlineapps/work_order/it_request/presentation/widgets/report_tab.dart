@@ -69,11 +69,11 @@ class _ReportTabState extends State<ReportTab> {
         ),
         actionBarSettings: PickerActionBarSettings(
           confirmWidget: Text(
-            'Pilih',
+            'Select',
             style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w700),
           ),
           cancelWidget: Text(
-            'Batal',
+            'Cancel',
             style: TextStyle(color: AppColors.textMuted, fontWeight: FontWeight.w600),
           ),
         ),
@@ -103,14 +103,14 @@ class _ReportTabState extends State<ReportTab> {
           children: [
             Expanded(
               child: _StatusMeter(
-                title: 'Status IT Request',
+                title: 'IT Request Status',
                 breakdown: ItRequestReportDemoData.itStatus(),
               ),
             ),
             const SizedBox(width: 10),
             Expanded(
               child: _StatusMeter(
-                title: 'Status Media Request',
+                title: 'Media Request Status',
                 breakdown: ItRequestReportDemoData.mediaStatus(),
               ),
             ),
@@ -386,7 +386,7 @@ class _AvgResponseCard extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           Text(
-            'Hari sejak disetujui HOD',
+            'Days since HOD approval',
             style: AppTextStyles.caption.copyWith(color: Colors.white70, height: 1.4),
           ),
         ],
@@ -418,8 +418,8 @@ class _TrendChart extends StatefulWidget {
 
 class _TrendChartState extends State<_TrendChart> {
   static const _monthLabels = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun',
-    'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des',
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
   ];
   static const _chartHeight = 160.0;
   static const _yAxisWidth = 28.0;
@@ -458,7 +458,7 @@ class _TrendChartState extends State<_TrendChart> {
                 ),
               ),
               const SizedBox(width: 8),
-              const Text('Tren Request Per Bulan', style: AppTextStyles.sectionTitle),
+              const Text('Request Trend per Month', style: AppTextStyles.sectionTitle),
               const SizedBox(width: 6),
               Text('(${widget.year})', style: AppTextStyles.caption),
             ],
@@ -731,7 +731,7 @@ class _StatusMeter extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            percent == null ? 'Belum ada data' : '$percent% closed',
+            percent == null ? 'No data yet' : '$percent% closed',
             style: AppTextStyles.caption,
           ),
         ],

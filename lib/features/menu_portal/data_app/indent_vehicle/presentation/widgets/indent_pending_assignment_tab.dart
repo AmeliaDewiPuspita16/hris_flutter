@@ -40,7 +40,7 @@ class IndentPendingAssignmentTab extends StatelessWidget {
                 const SizedBox(height: 120),
                 Center(
                   child: Text(
-                    'Tidak ada request yang menunggu kendaraan',
+                    'No requests waiting for a vehicle',
                     style: AppTextStyles.bodyMuted,
                   ),
                 ),

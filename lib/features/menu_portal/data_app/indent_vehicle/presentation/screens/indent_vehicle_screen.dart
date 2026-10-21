@@ -159,16 +159,16 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(approved ? 'Setujui request?' : 'Tolak request?'),
+        title: Text(approved ? 'Approve request?' : 'Reject request?'),
         content: Text('${item.name} — ${item.destination}'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Batal'),
+            child: const Text('Cancel'),
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(approved ? 'Setujui' : 'Tolak'),
+            child: Text(approved ? 'Approve' : 'Reject'),
           ),
         ],
       ),
@@ -214,7 +214,7 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
     );
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Terima kasih atas feedback Anda')),
+      const SnackBar(content: Text('Thank you for your feedback')),
     );
   }
 
@@ -248,7 +248,7 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
     final id = int.tryParse(item.id);
     if (id == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Request ini belum tersimpan di server.')),
+        const SnackBar(content: Text('This request has not been saved to the server yet.')),
       );
       return;
     }
@@ -261,7 +261,7 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
       // posisi scroll tidak lompat.
       _requestBloc.add(IndentRequestLocalRemoved(item.id));
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Request dihapus')),
+        const SnackBar(content: Text('Request deleted')),
       );
     } on ApiException catch (e) {
       if (!mounted) return;
@@ -271,7 +271,7 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
       AppLogger.error('Hapus indent gagal karena galat tak terduga', e, stack);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Terjadi kesalahan tak terduga. Coba lagi.')),
+        const SnackBar(content: Text('An unexpected error occurred. Please try again.')),
       );
     }
   }
@@ -447,7 +447,7 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
 
         if (state.status == IndentPendingStatus.failure) {
           return AppErrorView(
-            message: state.errorMessage ?? 'Gagal memuat daftar assignment.',
+            message: state.errorMessage ?? 'Failed to load the assignment list.',
             onRetry: () => _pendingBloc.add(const IndentPendingRefreshed()),
           );
         }
@@ -479,7 +479,7 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
 
         if (state.status == IndentApprovalStatus.failure) {
           return AppErrorView(
-            message: state.errorMessage ?? 'Gagal memuat daftar approval.',
+            message: state.errorMessage ?? 'Failed to load the approval list.',
             onRetry: () => _approvalBloc.add(const IndentApprovalRefreshed()),
           );
         }
@@ -515,7 +515,7 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
 
         if (state.status == IndentRequestListStatus.failure) {
           return AppErrorView(
-            message: state.errorMessage ?? 'Gagal memuat daftar request.',
+            message: state.errorMessage ?? 'Failed to load the request list.',
             onRetry: () => _requestBloc.add(const IndentRequestListRefreshed()),
           );
         }
@@ -540,7 +540,7 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
                   children: [
                     const SizedBox(height: 120),
                     Center(
-                      child: Text('Tidak ada data',
+                      child: Text('No data',
                           style: AppTextStyles.bodyMuted),
                     ),
                   ],

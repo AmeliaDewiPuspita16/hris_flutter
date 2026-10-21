@@ -23,7 +23,7 @@ class IndentDriverChoice extends StatelessWidget {
         Expanded(
           child: _Option(
             icon: Icons.person_outline,
-            label: 'Dengan driver',
+            label: 'With driver',
             selected: withDriver,
             onTap: () => onChanged(true),
           ),
@@ -32,7 +32,7 @@ class IndentDriverChoice extends StatelessWidget {
         Expanded(
           child: _Option(
             icon: Icons.person_off_outlined,
-            label: 'Tanpa driver',
+            label: 'Without driver',
             selected: !withDriver,
             onTap: () => onChanged(false),
           ),

@@ -173,7 +173,7 @@ class _NewEmployeeSubformState extends State<NewEmployeeSubform> {
           InkWell(
             onTap: widget.onRetryLoadDepartments,
             child: const Text(
-              'Coba lagi',
+              'Try again',
               style: TextStyle(
                 fontSize: 12,
                 color: AppColors.primary,

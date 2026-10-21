@@ -104,7 +104,7 @@ class _CreateAnnouncementSheetState extends State<CreateAnnouncementSheet> {
       picked = await picker();
     } catch (e) {
       if (mounted) {
-        setState(() => _photoError = 'Tidak bisa membuka galeri.');
+        setState(() => _photoError = 'Unable to open the gallery.');
       }
       return;
     }
@@ -210,7 +210,7 @@ class _CreateAnnouncementSheetState extends State<CreateAnnouncementSheet> {
       AppLogger.error('Gagal menerbitkan pengumuman', e, stack);
       if (!mounted) return;
       setState(() {
-        _submitError = 'Gagal menerbitkan pengumuman. Coba lagi.';
+        _submitError = 'Failed to post the announcement. Please try again.';
         _submitting = false;
       });
     }
@@ -398,14 +398,14 @@ class _CreateAnnouncementSheetState extends State<CreateAnnouncementSheet> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              _loadError ?? 'Gagal memuat daftar departemen.',
+              _loadError ?? 'Failed to load departments.',
               style: const TextStyle(fontSize: 12, color: AppColors.rejected),
             ),
             const SizedBox(height: 6),
             InkWell(
               onTap: _loadDepartments,
               child: const Text(
-                'Coba lagi',
+                'Try again',
                 style: TextStyle(
                   fontSize: 12,
                   color: AppColors.primary,
@@ -419,7 +419,7 @@ class _CreateAnnouncementSheetState extends State<CreateAnnouncementSheet> {
       case _LoadState.loaded:
         if (_departments.isEmpty || _department == null) {
           return const Text(
-            'Belum ada departemen aktif.',
+            'No active departments yet.',
             style: TextStyle(fontSize: 12, color: AppColors.textMuted),
           );
         }
@@ -521,7 +521,7 @@ class _AddPhotoButton extends StatelessWidget {
             Icon(Icons.add_a_photo_outlined, size: 18, color: AppColors.primaryMid),
             SizedBox(height: 4),
             Text(
-              'Tambah foto',
+              'Add photo',
               style: TextStyle(fontSize: 10, color: AppColors.primaryMid),
             ),
           ],

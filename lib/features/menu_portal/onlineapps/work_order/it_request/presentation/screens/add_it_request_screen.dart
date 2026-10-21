@@ -259,7 +259,7 @@ class _AddItRequestScreenState extends State<AddItRequestScreen> {
     try {
       picked = await pick();
     } catch (e) {
-      if (mounted) setState(() => _attachmentError = 'Tidak bisa membuka galeri.');
+      if (mounted) setState(() => _attachmentError = 'Unable to open the gallery.');
       return;
     }
 
@@ -316,7 +316,7 @@ class _AddItRequestScreenState extends State<AddItRequestScreen> {
       AppLogger.error('Gagal mengajukan IT request', e, stack);
       if (!mounted) return;
       setState(() {
-        _submitError = 'Gagal mengajukan request. Coba lagi.';
+        _submitError = 'Failed to submit the request. Please try again.';
         _submitting = false;
       });
     }

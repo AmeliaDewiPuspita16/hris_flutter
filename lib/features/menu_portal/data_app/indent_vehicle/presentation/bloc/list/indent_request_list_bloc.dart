@@ -76,7 +76,7 @@ class IndentRequestListBloc
       emit(state.copyWith(
         status: IndentRequestListStatus.failure,
         items: const [],
-        errorMessage: 'Terjadi kesalahan tak terduga. Coba lagi.',
+        errorMessage: 'An unexpected error occurred. Please try again.',
       ));
     }
   }

@@ -37,7 +37,7 @@ class ItRequestRepository {
       return ItRequestDetail.fromJson(data);
     } on FormatException {
       throw const ApiException.server(
-        'Detail request diterima, tapi isinya tidak dikenali.',
+        'The request detail was received, but its content was not recognized.',
       );
     }
   }
@@ -82,7 +82,7 @@ class ItRequestRepository {
       return ItRequestDetail.fromJson(data);
     } on FormatException {
       throw const ApiException.server(
-        'Request terkirim, tapi respons server tidak dikenali.',
+        'The request was submitted, but the server response was not recognized.',
       );
     }
   }
@@ -110,7 +110,7 @@ class ItRequestRepository {
       return ItRequestDetail.fromJson(data);
     } on FormatException {
       throw const ApiException.server(
-        'Rating terkirim, tapi respons server tidak dikenali.',
+        'The rating was submitted, but the server response was not recognized.',
       );
     }
   }

@@ -34,13 +34,13 @@ class ItRequestAttachment {
   /// pesan yang jelas tetap lebih baik daripada "berkas tidak valid".
   String? get validationError {
     if (!allowedExtensions.contains(extension)) {
-      return '$fileName harus JPG, JPEG, PNG, GIF, atau WEBP.';
+      return '$fileName must be a JPG, JPEG, PNG, GIF, or WEBP file.';
     }
     if (sizeBytes <= 0) {
-      return '$fileName kosong atau tidak bisa dibaca.';
+      return '$fileName is empty or cannot be read.';
     }
     if (sizeBytes > maxSizeBytes) {
-      return '$fileName lebih dari 10 MB.';
+      return '$fileName is larger than 10 MB.';
     }
     return null;
   }

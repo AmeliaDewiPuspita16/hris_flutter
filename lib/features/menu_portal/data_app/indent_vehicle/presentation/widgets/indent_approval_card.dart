@@ -30,10 +30,10 @@ class IndentApprovalCardAlt extends StatelessWidget {
   final VoidCallback onApprove;
   final VoidCallback onReject;
 
-  /// '10:00:00 s/d 13:00:00' -> '10:00 – 13:00'. Kalau formatnya tak sesuai,
+  /// '10:00:00 to 13:00:00' -> '10:00 – 13:00'. Kalau formatnya tak sesuai,
   /// dikembalikan apa adanya supaya tidak ada info yang hilang.
   String get _shortTimeRange {
-    final parts = item.timeRange.split(' s/d ');
+    final parts = item.timeRange.split(' to ');
     if (parts.length != 2 || parts.any((p) => p.length < 5)) {
       return item.timeRange;
     }

@@ -27,7 +27,7 @@ class EstApproveHodTab extends StatelessWidget {
     if (items.isEmpty) {
       return Center(
         child: Text(
-          'Tidak ada request yang menunggu approval HOD',
+          'No requests waiting for HOD approval',
           style: AppTextStyles.bodyMuted,
         ),
       );

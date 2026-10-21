@@ -46,7 +46,7 @@ class AuthRepository {
       if (e.kind == ApiErrorKind.unauthorized) {
         throw const ApiException(
           ApiErrorKind.unauthorized,
-          'Email atau kata sandi salah.',
+          'Incorrect email or password.',
         );
       }
       rethrow;
@@ -57,7 +57,7 @@ class AuthRepository {
       session = AuthSession.fromJson(data);
     } on FormatException {
       throw const ApiException.server(
-        'Respons login tidak dikenali. Hubungi tim IT.',
+        'Unrecognized login response. Please contact the IT team.',
       );
     }
 

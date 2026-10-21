@@ -37,7 +37,7 @@ class ItRequestDetailBloc extends Bloc<ItRequestDetailEvent, ItRequestDetailStat
       emit(
         const ItRequestDetailState(
           status: ItRequestDetailStatus.failure,
-          errorMessage: 'Terjadi kesalahan tak terduga. Coba lagi.',
+          errorMessage: 'An unexpected error occurred. Please try again.',
         ),
       );
     }

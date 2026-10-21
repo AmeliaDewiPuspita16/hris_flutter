@@ -41,7 +41,7 @@ class IndentFeedbackBanner extends StatelessWidget {
                               size: 15, color: AppColors.accent),
                           const SizedBox(width: 6),
                           const Text(
-                            'PERJALANAN SELESAI · BERI FEEDBACK',
+                            'TRIP COMPLETED · GIVE FEEDBACK',
                             style: TextStyle(
                               fontFamily: AppTextStyles.fontFamily,
                               fontSize: 10,
@@ -65,7 +65,7 @@ class IndentFeedbackBanner extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Beri feedback untuk perjalanan ini.',
+                        'Give feedback for this trip.',
                         style: AppTextStyles.caption.copyWith(height: 1.5),
                       ),
                       const SizedBox(height: 12),
@@ -81,7 +81,7 @@ class IndentFeedbackBanner extends StatelessWidget {
                             ),
                           ),
                           child: Text(
-                            'Beri Feedback',
+                            'Give Feedback',
                             style: AppTextStyles.buttonText
                                 .copyWith(color: Colors.white),
                           ),
