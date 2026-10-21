@@ -62,6 +62,13 @@ class NotificationCategory {
     background: AppColors.estRequestBg,
   );
 
+  static const indentVehicle = NotificationCategory(
+    label: 'Indent vehicle',
+    icon: Icons.directions_car_outlined,
+    color: AppColors.orange,
+    background: AppColors.orangeBg,
+  );
+
   static const announcement = NotificationCategory(
     label: 'Announcement',
     icon: Icons.campaign_outlined,

@@ -111,7 +111,7 @@ class EstRequestDetailScreen extends StatelessWidget {
             _SectionCard(
               title: 'Feedback User',
               child: Text(
-                detail.feedbackUser ?? 'Belum ada feedback dari requester.',
+                detail.feedbackUser ?? 'No feedback from the requester yet.',
                 style: AppTextStyles.body.copyWith(
                   color: detail.feedbackUser == null ? AppColors.textMuted : AppColors.text,
                   fontStyle: detail.feedbackUser == null ? FontStyle.italic : FontStyle.normal,
@@ -128,7 +128,7 @@ class EstRequestDetailScreen extends StatelessWidget {
                 onPressed: () => _verifyAndGiveFeedback(context),
                 icon: const Icon(Icons.check_circle_outline, size: 18),
                 label: Text(
-                  'Verifikasi & Beri Feedback',
+                  'Verify & Give Feedback',
                   style: AppTextStyles.buttonText.copyWith(color: Colors.white),
                 ),
                 style: ElevatedButton.styleFrom(

@@ -46,7 +46,7 @@ class AppErrorView extends StatelessWidget {
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
-              child: const Text('Coba lagi', style: AppTextStyles.buttonText),
+              child: const Text('Try again', style: AppTextStyles.buttonText),
             ),
           ],
         ),

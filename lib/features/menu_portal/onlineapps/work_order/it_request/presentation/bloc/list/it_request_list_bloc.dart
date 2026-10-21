@@ -88,7 +88,7 @@ class ItRequestListBloc extends Bloc<ItRequestListEvent, ItRequestListState> {
       emit(state.copyWith(
         status: ItRequestListStatus.failure,
         items: const [],
-        errorMessage: 'Terjadi kesalahan tak terduga. Coba lagi.',
+        errorMessage: 'An unexpected error occurred. Please try again.',
         loadingMore: false,
       ));
     }

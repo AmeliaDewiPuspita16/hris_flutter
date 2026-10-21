@@ -26,7 +26,7 @@ class ItRequestStatus {
     final serverLabel = json?['label'];
     final label = serverLabel is String && serverLabel.isNotEmpty
         ? serverLabel
-        : (code.isEmpty ? 'Tidak diketahui' : code);
+        : (code.isEmpty ? 'Unknown' : code);
 
     return ItRequestStatus(code: code, label: label);
   }

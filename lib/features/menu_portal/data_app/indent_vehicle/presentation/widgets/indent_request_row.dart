@@ -91,8 +91,8 @@ class IndentRequestRow extends StatelessWidget {
                   icon: Icons.person_outline,
                   text: item.driver ??
                       (item.withDriver
-                          ? 'Driver belum ditunjuk'
-                          : 'Tanpa driver'),
+                          ? 'Driver not assigned yet'
+                          : 'No driver'),
                 ),
               ),
             ],
@@ -140,7 +140,7 @@ class _ActionMenu extends StatelessWidget {
       height: 24,
       child: PopupMenuButton<_RowAction>(
         padding: EdgeInsets.zero,
-        tooltip: 'Opsi',
+        tooltip: 'Options',
         icon: const Icon(Icons.more_vert, size: 20, color: AppColors.textMuted),
         // Putih polos + hilangkan tint hijau bawaan Material 3.
         color: AppColors.card,
@@ -168,7 +168,7 @@ class _ActionMenu extends StatelessWidget {
             _item(
               _RowAction.delete,
               Icons.delete_outline,
-              'Hapus',
+              'Delete',
               AppColors.hseRequest,
             ),
         ],

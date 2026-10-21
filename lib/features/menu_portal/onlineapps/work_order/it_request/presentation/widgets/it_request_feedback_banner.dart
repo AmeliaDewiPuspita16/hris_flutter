@@ -51,7 +51,7 @@ class ItRequestFeedbackBanner extends StatelessWidget {
                           const Icon(Icons.star_rounded, size: 15, color: AppColors.accent),
                           const SizedBox(width: 6),
                           const Text(
-                            'SUDAH SELESAI · BERI FEEDBACK',
+                            'COMPLETED · GIVE FEEDBACK',
                             style: TextStyle(
                               fontFamily: AppTextStyles.fontFamily,
                               fontSize: 10,
@@ -69,13 +69,13 @@ class ItRequestFeedbackBanner extends StatelessWidget {
                       ),
                       const SizedBox(height: 3),
                       Text(
-                        'Selesai dikerjakan · ${DateFormatter.shortDate(item.createdAt)}',
+                        'Completed · ${DateFormatter.shortDate(item.createdAt)}',
                         style: AppTextStyles.caption,
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Beri feedback untuk permintaan ini sebelum '
-                        'mengajukan permintaan baru.',
+                        'Give feedback for this request before '
+                        'submitting a new one.',
                         style: AppTextStyles.caption.copyWith(height: 1.5),
                       ),
                       const SizedBox(height: 12),
@@ -101,7 +101,7 @@ class ItRequestFeedbackBanner extends StatelessWidget {
                                   ),
                                 )
                               : Text(
-                                  'Beri Feedback',
+                                  'Give Feedback',
                                   style: AppTextStyles.buttonText.copyWith(color: Colors.white),
                                 ),
                         ),

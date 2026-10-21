@@ -138,7 +138,7 @@ class _ItFormAndMediaViewState extends State<_ItFormAndMediaView> {
 
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Terima kasih atas feedbacknya!')),
+      const SnackBar(content: Text('Thank you for your feedback!')),
     );
   }
 
@@ -214,7 +214,7 @@ class _ItFormAndMediaViewState extends State<_ItFormAndMediaView> {
 
     if (state.status == ItRequestListStatus.failure && state.items.isEmpty) {
       return AppErrorView(
-        message: state.errorMessage ?? 'Gagal memuat riwayat request.',
+        message: state.errorMessage ?? 'Failed to load request history.',
         onRetry: () => context
             .read<ItRequestListBloc>()
             .add(const ItRequestListRefreshed()),
@@ -256,8 +256,8 @@ class _ItFormAndMediaViewState extends State<_ItFormAndMediaView> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Selesaikan feedback untuk request yang sudah dikerjakan dulu '
-                      'untuk membuka pengajuan baru.',
+                      'Complete the feedback for finished requests first '
+                      'to open a new request.',
                       style: AppTextStyles.caption
                           .copyWith(color: AppColors.text, height: 1.4),
                     ),
@@ -269,7 +269,7 @@ class _ItFormAndMediaViewState extends State<_ItFormAndMediaView> {
             Padding(
               padding: const EdgeInsets.only(top: 24),
               child: Center(
-                child: Text('Tidak ada data', style: AppTextStyles.bodyMuted),
+                child: Text('No data', style: AppTextStyles.bodyMuted),
               ),
             )
           else

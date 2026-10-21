@@ -78,7 +78,7 @@ class AppAttachmentField extends StatelessWidget {
                       const Icon(Icons.image_outlined, color: AppColors.textMuted, size: 26),
                       const SizedBox(height: 8),
                       Text(
-                        'Tap untuk unggah',
+                        'Tap to upload',
                         style: AppTextStyles.body.copyWith(
                           fontWeight: FontWeight.w600,
                           color: AppColors.textSub,

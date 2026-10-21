@@ -83,16 +83,20 @@ class _ListRequestViewState extends State<_ListRequestView> {
   void _onScroll() {
     if (!_scrollController.hasClients) return;
 
-    final remaining =
-        _scrollController.position.maxScrollExtent - _scrollController.position.pixels;
+    final remaining = _scrollController.position.maxScrollExtent -
+        _scrollController.position.pixels;
     if (remaining > _loadMoreThreshold) return;
 
-    context.read<ItRequestListBloc>().add(const ItRequestListNextPageRequested());
+    context
+        .read<ItRequestListBloc>()
+        .add(const ItRequestListNextPageRequested());
   }
 
   Future<void> _refresh() async {
-    final bloc = context.read<ItRequestListBloc>()..add(const ItRequestListRefreshed());
-    await bloc.stream.firstWhere((s) => s.status != ItRequestListStatus.loading);
+    final bloc = context.read<ItRequestListBloc>()
+      ..add(const ItRequestListRefreshed());
+    await bloc.stream
+        .firstWhere((s) => s.status != ItRequestListStatus.loading);
   }
 
   void _openDetail(ItRequestItem item) {
@@ -125,7 +129,9 @@ class _ListRequestViewState extends State<_ListRequestView> {
     if (state.status == ItRequestListStatus.failure && state.items.isEmpty) {
       return AppErrorView(
         message: state.errorMessage ?? 'Gagal memuat daftar request.',
-        onRetry: () => context.read<ItRequestListBloc>().add(const ItRequestListRefreshed()),
+        onRetry: () => context
+            .read<ItRequestListBloc>()
+            .add(const ItRequestListRefreshed()),
       );
     }
 
@@ -133,7 +139,8 @@ class _ListRequestViewState extends State<_ListRequestView> {
         state.items.where((i) => i.status.code == _kWaitingCode).length;
     final progressCount =
         state.items.where((i) => i.status.code == _kProgressCode).length;
-    final filtered = state.items.where((i) => i.status.code == _filter).toList();
+    final filtered =
+        state.items.where((i) => i.status.code == _filter).toList();
 
     return RefreshIndicator(
       onRefresh: _refresh,
@@ -184,7 +191,8 @@ class _ListRequestViewState extends State<_ListRequestView> {
           else
             for (var i = 0; i < filtered.length; i++) ...[
               if (i > 0) const SizedBox(height: 10),
-              ListRequestRow(item: filtered[i], onTap: () => _openDetail(filtered[i])),
+              ListRequestRow(
+                  item: filtered[i], onTap: () => _openDetail(filtered[i])),
             ],
           if (state.loadingMore)
             const Padding(
@@ -243,7 +251,8 @@ class _CounterChip extends StatelessWidget {
                       child: SizedBox(
                         width: 14,
                         height: 14,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: color),
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: color),
                       ),
                     )
                   : Text(
@@ -257,7 +266,9 @@ class _CounterChip extends StatelessWidget {
                     ),
             ),
             const SizedBox(height: 2),
-            Text(label, style: AppTextStyles.caption.copyWith(color: AppColors.textMid)),
+            Text(label,
+                style:
+                    AppTextStyles.caption.copyWith(color: AppColors.textMid)),
           ],
         ),
       ),

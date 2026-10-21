@@ -3,6 +3,10 @@ import 'notification_category.dart';
 /// Keputusan atas notifikasi yang menuntut tindakan.
 enum NotificationDecision { approved, rejected }
 
+/// Jenis tindakan yang diminta notifikasi: [decision] = Approve/Reject,
+/// [assign] = admin driver menetapkan kendaraan (satu tombol "Assign").
+enum NotificationActionType { decision, assign }
+
 /// Satu notifikasi.
 ///
 /// Yang membedakan halaman ini dari daftar biasa: notifikasi yang
@@ -19,6 +23,8 @@ class AppNotification {
     this.isRead = false,
     this.requiresDecision = false,
     this.decision,
+    this.actionType = NotificationActionType.decision,
+    this.refId,
   });
 
   final String id;
@@ -34,15 +40,26 @@ class AppNotification {
   /// Null selama belum diputuskan.
   final NotificationDecision? decision;
 
+  /// Bentuk tombol yang ditampilkan bila [needsAction].
+  final NotificationActionType actionType;
+
+  /// id request di modul asalnya (mis. id indent untuk [assign]), supaya
+  /// pemanggil bisa membuka request yang dimaksud. Null untuk yang lain.
+  final String? refId;
+
   bool get needsAction => requiresDecision && decision == null;
 
   /// Ringkasan hasil keputusan, dipakai sebagai pengganti body setelah
   /// tombol ditekan.
-  String? get decisionLabel => switch (decision) {
-        NotificationDecision.approved => 'You approved this request',
-        NotificationDecision.rejected => 'You rejected this request',
-        null => null,
-      };
+  String? get decisionLabel {
+    if (decision == null) return null;
+    if (actionType == NotificationActionType.assign) return 'Vehicle assigned';
+    return switch (decision) {
+      NotificationDecision.approved => 'You approved this request',
+      NotificationDecision.rejected => 'You rejected this request',
+      null => null,
+    };
+  }
 
   AppNotification copyWith({bool? isRead, NotificationDecision? decision}) {
     return AppNotification(
@@ -54,6 +71,8 @@ class AppNotification {
       isRead: isRead ?? this.isRead,
       requiresDecision: requiresDecision,
       decision: decision ?? this.decision,
+      actionType: actionType,
+      refId: refId,
     );
   }
 }

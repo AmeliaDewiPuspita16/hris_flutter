@@ -10,11 +10,11 @@ import '../../data/it_request_repository.dart';
 import '../../domain/it_request_detail.dart';
 
 const _ratingLabels = {
-  1: 'Sangat Kecewa',
-  2: 'Kecewa',
-  3: 'Cukup',
-  4: 'Puas',
-  5: 'Sangat Puas',
+  1: 'Very Dissatisfied',
+  2: 'Dissatisfied',
+  3: 'Fair',
+  4: 'Satisfied',
+  5: 'Very Satisfied',
 };
 
 /// Bottom sheet rating 1–5 bintang + catatan opsional, dibuka lewat tombol
@@ -121,7 +121,7 @@ class _ItRequestFeedbackSheetState extends State<ItRequestFeedbackSheet> {
                     ),
                   ),
                 ),
-                const Text('Beri feedback', style: AppTextStyles.sectionTitle),
+                const Text('Give feedback', style: AppTextStyles.sectionTitle),
                 const SizedBox(height: 4),
                 Text(
                   detail.description,
@@ -176,9 +176,9 @@ class _ItRequestFeedbackSheetState extends State<ItRequestFeedbackSheet> {
                 ],
                 const SizedBox(height: 16),
                 AppTextField(
-                  label: 'Catatan (opsional)',
+                  label: 'Notes (optional)',
                   controller: _noteController,
-                  hint: 'Ceritakan hasil pengerjaannya...',
+                  hint: 'Tell us about the result...',
                   maxLines: 3,
                   minLines: 1,
                 ),
@@ -209,7 +209,7 @@ class _ItRequestFeedbackSheetState extends State<ItRequestFeedbackSheet> {
                             ),
                           )
                         : Text(
-                            'Kirim Feedback',
+                            'Send Feedback',
                             style: AppTextStyles.buttonText.copyWith(color: Colors.white),
                           ),
                   ),
@@ -243,7 +243,7 @@ class _HandlingSummary extends StatelessWidget {
         children: [
           if (workBy != null)
             Text(
-              'Dikerjakan oleh: $workBy',
+              'Handled by: $workBy',
               style: AppTextStyles.caption.copyWith(
                 fontWeight: FontWeight.w700,
                 color: AppColors.textMid,

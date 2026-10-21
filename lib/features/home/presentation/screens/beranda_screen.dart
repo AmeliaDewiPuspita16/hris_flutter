@@ -17,7 +17,11 @@ import '../../../leave_approval/data/leave_approval_repository.dart';
 import '../../../leave_approval/domain/leave_approval_request.dart';
 import '../../../leave_approval/domain/leave_approval_status.dart';
 import '../../../leave_approval/presentation/screens/leave_approval_screen.dart';
+import '../../../menu_portal/data_app/indent_vehicle/data/indent_vehicle_repository.dart';
+import '../../../menu_portal/data_app/indent_vehicle/domain/indent_assign_result.dart';
+import '../../../menu_portal/data_app/indent_vehicle/domain/indent_pending_item.dart';
 import '../../../menu_portal/data_app/indent_vehicle/presentation/screens/indent_vehicle_screen.dart';
+import '../../../menu_portal/data_app/indent_vehicle/presentation/widgets/indent_assign_sheet.dart';
 import '../../../menu_portal/onlineapps/presentation/screens/online_apps_screen.dart';
 import '../../../menu_portal/onlineapps/procurement/domain/pr_status.dart';
 import '../../../menu_portal/onlineapps/procurement/presentation/screens/procurement_page.dart';
@@ -25,6 +29,7 @@ import '../../../menu_portal/onlineapps/work_order/est_request/presentation/scre
 import '../../../menu_portal/onlineapps/work_order/it_request/presentation/screens/it_request_screen.dart';
 import '../../../menu_portal/record/presentation/screens/record_screen.dart';
 import '../../../menu_portal/data_app/presentation/screens/data_screen.dart';
+import '../../../notifikasi/domain/notification_category.dart';
 import '../../../notifikasi/domain/notification_filter.dart';
 import '../widgets/approval_summary_banner.dart';
 import '../../../pengajuan/presentation/screens/pengajuan_screen.dart';
@@ -110,6 +115,17 @@ class _BerandaScreenState extends State<BerandaScreen> {
   /// titik penanda di lonceng tetap benar setelah layar itu ditutup.
   List<AppNotification> _notifications = NotificationDemoData.initial();
 
+  /// Request indent yang menunggu kendaraan (dari server), dipegang supaya
+  /// sheet Assign bisa dibuka dengan data lengkapnya. Kosong untuk akun yang
+  /// bukan admin driver — server yang menentukan.
+  Map<String, IndentPendingItem> _pendingAssignments = {};
+
+  /// id indent yang sedang dikirim ke server, supaya Assign tidak terkirim
+  /// dua kali.
+  final Set<String> _assigningIds = {};
+
+  static const _assignNotificationPrefix = 'n-indent-assign-';
+
   /// Pengumuman dari server. Dipegang di sini, bukan di AnnouncementSection,
   /// supaya pengumuman yang baru diterbitkan langsung kelihatan begitu modal
   /// ditutup tanpa perlu mengambil ulang seluruh daftar.
@@ -159,6 +175,7 @@ class _BerandaScreenState extends State<BerandaScreen> {
     _loadLeaveApprovalCount();
     _loadTodayAttendance();
     _loadApprovalsWaiting();
+    _loadPendingAssignments();
   }
 
   Future<void> _loadAnnouncements() async {
@@ -209,7 +226,11 @@ class _BerandaScreenState extends State<BerandaScreen> {
     }
   }
 
-  void _openTab(MainTab tab) => setState(() => _activeTab = tab);
+  void _openTab(MainTab tab) {
+    setState(() => _activeTab = tab);
+    // Data assign bisa berubah sejak Beranda dibuka (request baru lolos HOD).
+    if (tab == MainTab.notifications) _loadPendingAssignments();
+  }
 
   void _openPayslip() {
     Navigator.of(context).push(
@@ -341,6 +362,121 @@ class _BerandaScreenState extends State<BerandaScreen> {
     await _loadLeaveApprovalCount();
   }
 
+  /// Memuat request indent yang menunggu kendaraan
+  /// (`GET /api/indent/admin/list`) dan menjadikannya notifikasi bertipe
+  /// assign di tab Action. Untuk akun yang bukan admin driver server
+  /// membalas tanpa data, jadi tidak ada notifikasi yang ditambahkan.
+  ///
+  /// Gagal memuat tidak mengganggu notifikasi lain: cukup dicatat.
+  Future<void> _loadPendingAssignments() async {
+    try {
+      final items =
+          await context.read<IndentVehicleRepository>().fetchPendingAssignments();
+      if (!mounted) return;
+
+      setState(() {
+        final previous = {
+          for (final n in _notifications)
+            if (n.actionType == NotificationActionType.assign) n.id: n,
+        };
+
+        _pendingAssignments = {for (final item in items) item.id: item};
+        _notifications = [
+          for (final item in items)
+            _assignNotification(
+              item,
+              previous['$_assignNotificationPrefix${item.id}'],
+            ),
+          for (final n in _notifications)
+            if (n.actionType != NotificationActionType.assign) n,
+        ];
+      });
+    } catch (e, stack) {
+      AppLogger.error('Daftar assign gagal dimuat', e, stack);
+    }
+  }
+
+  /// Notifikasi assign untuk satu request. Waktu dan status baca dari
+  /// pemuatan sebelumnya ([previous]) dipertahankan supaya tidak "baru lagi"
+  /// setiap kali daftar dimuat ulang — server belum mengirim waktu request.
+  AppNotification _assignNotification(
+    IndentPendingItem item,
+    AppNotification? previous,
+  ) {
+    return AppNotification(
+      id: '$_assignNotificationPrefix${item.id}',
+      category: NotificationCategory.indentVehicle,
+      title: 'Assign vehicle for ${item.name}',
+      body: '${item.destination} · ${item.date} · ${item.timeRange} · '
+          '${item.withDriver ? 'With driver' : 'No driver'}',
+      createdAt: previous?.createdAt ?? DateTime.now(),
+      isRead: previous?.isRead ?? false,
+      requiresDecision: true,
+      actionType: NotificationActionType.assign,
+      refId: item.id,
+    );
+  }
+
+  /// Tombol "Assign" di notifikasi: buka sheet pilih plat & driver, kirim ke
+  /// server, lalu tandai notifikasinya selesai. Gagal -> notifikasi tetap
+  /// menunggu supaya admin bisa mencoba lagi.
+  Future<void> _assignFromNotification(AppNotification notification) async {
+    final item = _pendingAssignments[notification.refId];
+    if (item == null || _assigningIds.contains(item.id)) return;
+
+    final result = await showModalBottomSheet<IndentAssignResult>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => IndentAssignSheet(item: item),
+    );
+    if (result == null || !mounted) return;
+
+    _assigningIds.add(item.id);
+    try {
+      await context.read<IndentVehicleRepository>().assignByAdmin(
+            id: item.id,
+            plateNumber: result.plateNumber,
+            driverId: result.driverId,
+            driverName: result.driver,
+          );
+      if (!mounted) return;
+
+      setState(() {
+        _pendingAssignments = Map.of(_pendingAssignments)..remove(item.id);
+        _notifications = [
+          for (final n in _notifications)
+            n.id == notification.id
+                ? n.copyWith(
+                    decision: NotificationDecision.approved,
+                    isRead: true,
+                  )
+                : n,
+        ];
+      });
+
+      final driverText = result.driver == null ? '' : ' · ${result.driver}';
+      _showSnack(
+        'Vehicle ${result.plateNumber}$driverText '
+        'assigned to ${item.name}',
+      );
+    } on ApiException catch (e) {
+      _showSnack(e.message);
+    } catch (e, stack) {
+      AppLogger.error('Assign dari notifikasi gagal tak terduga', e, stack);
+      _showSnack('An unexpected error occurred. Please try again.');
+    } finally {
+      _assigningIds.remove(item.id);
+    }
+  }
+
+  void _showSnack(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+
   Future<void> _loadApprovalsWaiting() async {
     try {
       final summary = await _approvalsWaitingRepository.fetchSummary();
@@ -365,6 +501,7 @@ class _BerandaScreenState extends State<BerandaScreen> {
         _loadTodayAttendance(),
         _loadLeaveApprovalCount(),
         _loadApprovalsWaiting(),
+        _loadPendingAssignments(),
       ]);
 
   int get _itApprovalCount => _approvalsWaiting.itRequest;
@@ -381,6 +518,7 @@ class _BerandaScreenState extends State<BerandaScreen> {
       _notificationFilterToken++;
       _activeTab = MainTab.notifications;
     });
+    _loadPendingAssignments();
   }
 
   void _openItApproval() {
@@ -540,6 +678,7 @@ class _BerandaScreenState extends State<BerandaScreen> {
           NotifikasiScreen(
             notifications: _notifications,
             onChanged: _onNotificationsChanged,
+            onAssign: _assignFromNotification,
             initialFilter: _notificationFilter,
             filterRequestToken: _notificationFilterToken,
             showBack: false,

@@ -55,7 +55,7 @@ class _EstRequestFeedbackSheetState extends State<EstRequestFeedbackSheet> {
                   ),
                 ),
               ),
-              const Text('Beri feedback', style: AppTextStyles.sectionTitle),
+              const Text('Give feedback', style: AppTextStyles.sectionTitle),
               const SizedBox(height: 4),
               Text(
                 widget.description,
@@ -84,9 +84,9 @@ class _EstRequestFeedbackSheetState extends State<EstRequestFeedbackSheet> {
               ),
               const SizedBox(height: 16),
               AppTextField(
-                label: 'Catatan (opsional)',
+                label: 'Notes (optional)',
                 controller: _noteController,
-                hint: 'Ceritakan hasil pengerjaannya...',
+                hint: 'Tell us about the result...',
               ),
               const SizedBox(height: 18),
               SizedBox(
@@ -101,7 +101,7 @@ class _EstRequestFeedbackSheetState extends State<EstRequestFeedbackSheet> {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   ),
                   child: Text(
-                    'Kirim Feedback',
+                    'Send Feedback',
                     style: AppTextStyles.buttonText.copyWith(color: Colors.white),
                   ),
                 ),

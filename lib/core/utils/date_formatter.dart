@@ -2,11 +2,13 @@ import 'package:intl/intl.dart';
 
 /// Pemformat tanggal.
 ///
-/// Bagian Inggris (`fullDate`, `shortDate`, dst) masih pakai daftar
-/// nama hari/bulan manual peninggalan sebelum project pakai `intl`.
-/// Bagian ID (`shortDateID`, `monthYearID`, `shortDayID`) sudah pakai
-/// `DateFormat` dari package `intl` dengan locale `id_ID` — pastikan
-/// `initializeDateFormatting('id_ID')` sudah dipanggil di `main()`.
+/// Bagian pertama (`fullDate`, `shortDate`, dst) memakai daftar nama
+/// hari/bulan manual peninggalan sebelum project pakai `intl`.
+/// Bagian yang berakhiran `ID` (`shortDateID`, `monthYearID`, `shortDayID`,
+/// `dateTimeID`) memakai `DateFormat` dari package `intl` dengan locale
+/// `en_US` — pastikan `initializeDateFormatting('en_US')` sudah dipanggil di
+/// `main()`. Akhiran `ID` adalah sisa nama dari saat locale-nya masih
+/// Indonesia; namanya dipertahankan supaya pemanggil tidak ikut berubah.
 class DateFormatter {
   DateFormatter._();
 
@@ -62,25 +64,25 @@ class DateFormatter {
     return '${date.day} $month ${date.year}';
   }
 
-  /// Contoh: "12 Okt 2026". Dipakai AppDateField & AppDateRangeField.
+  /// Contoh: "12 Oct 2026". Dipakai AppDateField & AppDateRangeField.
   static String shortDateID(DateTime date) {
-    return DateFormat('d MMM yyyy', 'id_ID').format(date);
+    return DateFormat('d MMM yyyy', 'en_US').format(date);
   }
 
-  /// Contoh: "Oktober 2026". Dipakai untuk judul header kalender.
+  /// Contoh: "October 2026". Dipakai untuk judul header kalender.
   static String monthYearID(DateTime date) {
-    return DateFormat('MMMM yyyy', 'id_ID').format(date);
+    return DateFormat('MMMM yyyy', 'en_US').format(date);
   }
 
-  /// Contoh: "Sen". Dipakai untuk label hari di header kalender.
+  /// Contoh: "Mon". Dipakai untuk label hari di header kalender.
   static String shortDayID(DateTime date) {
-    return DateFormat('EEE', 'id_ID').format(date);
+    return DateFormat('EEE', 'en_US').format(date);
   }
 
   /// Contoh: "16 Sep 2026, 10:30". Dipakai layar detail, di mana waktu pasti
   /// lebih berguna daripada waktu relatif seperti "2h ago".
   static String dateTimeID(DateTime date) {
-    return DateFormat("d MMM yyyy, HH:mm", 'id_ID').format(date);
+    return DateFormat("d MMM yyyy, HH:mm", 'en_US').format(date);
   }
 
   /// Mengubah tanggal ISO dari API ("1991-11-21") menjadi format yang

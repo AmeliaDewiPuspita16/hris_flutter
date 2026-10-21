@@ -59,7 +59,7 @@ class IndentPendingBloc extends Bloc<IndentPendingEvent, IndentPendingState> {
       emit(state.copyWith(
         status: IndentPendingStatus.failure,
         items: const [],
-        errorMessage: 'Terjadi kesalahan tak terduga. Coba lagi.',
+        errorMessage: 'An unexpected error occurred. Please try again.',
       ));
     }
   }
@@ -89,8 +89,8 @@ class IndentPendingBloc extends Bloc<IndentPendingEvent, IndentPendingState> {
         items: state.items.where((r) => r.id != item.id).toList(),
         busyIds: Set.of(state.busyIds)..remove(item.id),
         notice: IndentPendingNotice(
-          message: 'Kendaraan ${result.plateNumber}$driverText '
-              'ditetapkan untuk ${item.name}',
+          message: 'Vehicle ${result.plateNumber}$driverText '
+              'assigned to ${item.name}',
           isError: false,
         ),
       ));
@@ -105,7 +105,7 @@ class IndentPendingBloc extends Bloc<IndentPendingEvent, IndentPendingState> {
       emit(state.copyWith(
         busyIds: Set.of(state.busyIds)..remove(item.id),
         notice: const IndentPendingNotice(
-          message: 'Terjadi kesalahan tak terduga. Coba lagi.',
+          message: 'An unexpected error occurred. Please try again.',
           isError: true,
         ),
       ));

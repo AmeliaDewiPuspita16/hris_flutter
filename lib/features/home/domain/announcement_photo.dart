@@ -27,17 +27,17 @@ class AnnouncementPhoto {
 
   /// Alasan foto ini ditolak, atau null bila memenuhi syarat.
   ///
-  /// Pesannya berbahasa Indonesia dan menyebut nama berkas, supaya pengguna
+  /// Pesannya berbahasa Inggris dan menyebut nama berkas, supaya pengguna
   /// tahu foto mana yang harus diganti tanpa menebak.
   String? get validationError {
     if (!allowedExtensions.contains(extension)) {
-      return '$fileName bukan JPG atau PNG.';
+      return '$fileName is not a JPG or PNG.';
     }
     if (sizeBytes <= 0) {
-      return '$fileName kosong atau tidak bisa dibaca.';
+      return '$fileName is empty or cannot be read.';
     }
     if (sizeBytes > maxSizeBytes) {
-      return '$fileName lebih dari 5 MB.';
+      return '$fileName is larger than 5 MB.';
     }
     return null;
   }
@@ -45,7 +45,7 @@ class AnnouncementPhoto {
   /// Alasan sekumpulan foto ditolak, atau null bila semuanya memenuhi syarat.
   static String? errorForSelection(List<AnnouncementPhoto> photos) {
     if (photos.length > maxCount) {
-      return 'Maksimal $maxCount foto per pengumuman.';
+      return 'You can add up to $maxCount photos per announcement.';
     }
     for (final photo in photos) {
       final error = photo.validationError;

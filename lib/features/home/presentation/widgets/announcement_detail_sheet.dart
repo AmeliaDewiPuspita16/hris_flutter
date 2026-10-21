@@ -102,7 +102,7 @@ class AnnouncementDetailSheet extends StatelessWidget {
                     Text(
                       [
                         DateFormatter.dateTimeID(announcement.createdAt),
-                        if (postedBy != null) 'oleh $postedBy',
+                        if (postedBy != null) 'by $postedBy',
                       ].join(' · '),
                       style: const TextStyle(
                         fontFamily: AppTextStyles.fontFamily,
@@ -230,7 +230,7 @@ class _DetailPhoto extends StatelessWidget {
               ),
               SizedBox(height: 6),
               Text(
-                'Foto tidak bisa dimuat',
+                'Photo could not be loaded',
                 style: TextStyle(
                   fontFamily: AppTextStyles.fontFamily,
                   fontSize: 11,

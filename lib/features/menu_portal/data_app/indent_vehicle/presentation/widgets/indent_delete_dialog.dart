@@ -47,14 +47,14 @@ class IndentDeleteDialog extends StatelessWidget {
             ),
             const SizedBox(height: 14),
             const Text(
-              'Hapus request?',
+              'Delete request?',
               textAlign: TextAlign.center,
               style: AppTextStyles.sectionTitle,
             ),
             const SizedBox(height: 6),
             Text(
-              'Request ke ${item.destination} pada ${item.date} akan '
-              'dihapus dan tidak bisa dikembalikan.',
+              'The request to ${item.destination} on ${item.date} will be '
+              'deleted and cannot be restored.',
               textAlign: TextAlign.center,
               style: AppTextStyles.caption.copyWith(height: 1.5),
             ),
@@ -74,7 +74,7 @@ class IndentDeleteDialog extends StatelessWidget {
                         ),
                       ),
                       child: Text(
-                        'Batal',
+                        'Cancel',
                         style: AppTextStyles.buttonText
                             .copyWith(color: AppColors.textMid),
                       ),
@@ -96,7 +96,7 @@ class IndentDeleteDialog extends StatelessWidget {
                         ),
                       ),
                       child: Text(
-                        'Hapus',
+                        'Delete',
                         style: AppTextStyles.buttonText
                             .copyWith(color: Colors.white),
                       ),

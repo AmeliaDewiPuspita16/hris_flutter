@@ -73,7 +73,7 @@ class AnnouncementRepository {
       return PublishedAnnouncement.fromJson(data);
     } on FormatException {
       throw const ApiException.server(
-        'Pengumuman terkirim, tapi respons server tidak dikenali.',
+        'The announcement was posted, but the server response was not recognized.',
       );
     }
   }

@@ -62,7 +62,7 @@ class IndentVehicleRepository {
     final rows = data['data'];
     if (rows is! List) {
       throw const ApiException.server(
-        'Daftar indent diterima, tapi bentuknya tidak dikenali.',
+        'The indent list was received, but its format was not recognized.',
       );
     }
 

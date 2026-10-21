@@ -243,7 +243,7 @@ class _ItRequestDetailView extends StatelessWidget {
       return SizedBox(
         height: 260,
         child: AppErrorView(
-          message: state.errorMessage ?? 'Gagal memuat detail request.',
+          message: state.errorMessage ?? 'Failed to load the request detail.',
           onRetry: () =>
               context.read<ItRequestDetailBloc>().add(ItRequestDetailRequested(item.id)),
         ),
@@ -272,7 +272,7 @@ class _ItRequestDetailView extends StatelessWidget {
       children: [
         if (detail.cancelReason != null) ...[
           _buildBanner(
-            title: 'Alasan pembatalan',
+            title: 'Cancellation reason',
             body: detail.cancelReason!,
             color: AppColors.rejected,
             background: AppColors.rejectedBg,
@@ -357,9 +357,9 @@ class _ItRequestDetailView extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Column(
             children: [
-              DetailFieldTile(label: 'Nama', value: detail.requester!.name),
+              DetailFieldTile(label: 'Name', value: detail.requester!.name),
               DetailFieldTile(
-                label: 'Departemen',
+                label: 'Department',
                 value: detail.requester!.department,
                 showDivider: false,
               ),
@@ -374,7 +374,7 @@ class _ItRequestDetailView extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const ItRequestSectionTitle(title: 'YANG DIBUTUHKAN', icon: Icons.checklist_outlined),
+        const ItRequestSectionTitle(title: 'WHAT IS NEEDED', icon: Icons.checklist_outlined),
         AppCard(
           padding: const EdgeInsets.all(14),
           child: Wrap(
@@ -393,13 +393,13 @@ class _ItRequestDetailView extends StatelessWidget {
         (label: 'Application', value: detail.specifiedApplication!),
       if (detail.specifiedUsername != null)
         (label: 'Username', value: detail.specifiedUsername!),
-      if (detail.specifiedOther != null) (label: 'Lainnya', value: detail.specifiedOther!),
+      if (detail.specifiedOther != null) (label: 'Others', value: detail.specifiedOther!),
     ];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const ItRequestSectionTitle(title: 'SPESIFIKASI', icon: Icons.edit_note_outlined),
+        const ItRequestSectionTitle(title: 'SPECIFICATIONS', icon: Icons.edit_note_outlined),
         AppCard(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Column(
@@ -420,20 +420,20 @@ class _ItRequestDetailView extends StatelessWidget {
   Widget _buildNewEmployee(ItRequestNewEmployee newEmployee) {
     final rows = <({String label, String value})>[
       if (newEmployee.fullName != null)
-        (label: 'Nama Lengkap', value: newEmployee.fullName!),
+        (label: 'Full Name', value: newEmployee.fullName!),
       if (newEmployee.employeeNumber != null)
-        (label: 'Nomor Pegawai', value: newEmployee.employeeNumber!),
+        (label: 'Employee Number', value: newEmployee.employeeNumber!),
       if (newEmployee.executiveType != null)
-        (label: 'Tipe', value: newEmployee.executiveType!),
+        (label: 'Type', value: newEmployee.executiveType!),
       if (newEmployee.department != null)
-        (label: 'Departemen', value: newEmployee.department!),
+        (label: 'Department', value: newEmployee.department!),
       if (newEmployee.section != null) (label: 'Section', value: newEmployee.section!),
     ];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const ItRequestSectionTitle(title: 'KARYAWAN BARU', icon: Icons.badge_outlined),
+        const ItRequestSectionTitle(title: 'NEW EMPLOYEE', icon: Icons.badge_outlined),
         AppCard(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Column(
@@ -454,19 +454,19 @@ class _ItRequestDetailView extends StatelessWidget {
   Widget _buildHandling(ItRequestDetail detail) {
     final handling = detail.handling!;
     final rows = <({String label, String value})>[
-      if (handling.workBy != null) (label: 'Dikerjakan oleh', value: handling.workBy!),
+      if (handling.workBy != null) (label: 'Handled by', value: handling.workBy!),
       if (handling.dateStart != null)
-        (label: 'Mulai', value: DateFormatter.shortDate(handling.dateStart!)),
+        (label: 'Start', value: DateFormatter.shortDate(handling.dateStart!)),
       if (handling.dateEnd != null)
-        (label: 'Target selesai', value: DateFormatter.shortDate(handling.dateEnd!)),
+        (label: 'Target completion', value: DateFormatter.shortDate(handling.dateEnd!)),
       if (handling.dateDone != null)
-        (label: 'Selesai', value: DateFormatter.shortDate(handling.dateDone!)),
+        (label: 'Completed', value: DateFormatter.shortDate(handling.dateDone!)),
     ];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const ItRequestSectionTitle(title: 'PENGERJAAN', icon: Icons.build_outlined),
+        const ItRequestSectionTitle(title: 'WORK DETAILS', icon: Icons.build_outlined),
         AppCard(
           padding: const EdgeInsets.all(14),
           child: Column(

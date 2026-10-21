@@ -27,7 +27,7 @@ enum EstRequestStatus {
         EstRequestStatus.waitApprovalHod => 'Wait Approval HOD',
         EstRequestStatus.maintenancePlan => 'Maintenance Plan',
         EstRequestStatus.waitVerifyUser => 'Wait Verify User',
-        EstRequestStatus.completed => 'Selesai',
+        EstRequestStatus.completed => 'Done',
       };
 
   Color get color => switch (this) {

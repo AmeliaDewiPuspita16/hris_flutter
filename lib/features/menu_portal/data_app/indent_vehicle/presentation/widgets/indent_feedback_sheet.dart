@@ -6,11 +6,11 @@ import '../../../../../../core/widgets/app_text_field.dart';
 import '../../domain/indent_request_item.dart';
 
 const _ratingLabels = {
-  1: 'Sangat Kecewa',
-  2: 'Kecewa',
-  3: 'Cukup',
-  4: 'Puas',
-  5: 'Sangat Puas',
+  1: 'Very Dissatisfied',
+  2: 'Dissatisfied',
+  3: 'Fair',
+  4: 'Satisfied',
+  5: 'Very Satisfied',
 };
 
 /// Bottom sheet rating 1–5 bintang + catatan opsional.
@@ -77,7 +77,7 @@ class _IndentFeedbackSheetState extends State<IndentFeedbackSheet> {
                     ),
                   ),
                 ),
-                const Text('Beri feedback', style: AppTextStyles.sectionTitle),
+                const Text('Give feedback', style: AppTextStyles.sectionTitle),
                 const SizedBox(height: 4),
                 Text(
                   '${item.destination} · ${item.date}',
@@ -120,9 +120,9 @@ class _IndentFeedbackSheetState extends State<IndentFeedbackSheet> {
                 ],
                 const SizedBox(height: 16),
                 AppTextField(
-                  label: 'Catatan (opsional)',
+                  label: 'Notes (optional)',
                   controller: _noteController,
-                  hint: 'Ceritakan pengalaman perjalanannya...',
+                  hint: 'Tell us about your trip...',
                   maxLines: 3,
                   minLines: 1,
                 ),
@@ -139,7 +139,7 @@ class _IndentFeedbackSheetState extends State<IndentFeedbackSheet> {
                       ),
                     ),
                     child: Text(
-                      'Kirim Feedback',
+                      'Send Feedback',
                       style: AppTextStyles.buttonText.copyWith(color: Colors.white),
                     ),
                   ),

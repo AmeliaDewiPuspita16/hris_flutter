@@ -99,7 +99,7 @@ class _EstRequestScreenState extends State<EstRequestScreen> {
 
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Terima kasih atas feedbacknya!')),
+      const SnackBar(content: Text('Thank you for your feedback!')),
     );
   }
 
@@ -166,7 +166,7 @@ class _EstRequestScreenState extends State<EstRequestScreen> {
 
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Terima kasih atas feedbacknya!')),
+          const SnackBar(content: Text('Thank you for your feedback!')),
         );
       case EstRequestStatus.onWaiting:
       case EstRequestStatus.waitApprovalHod:
@@ -198,8 +198,8 @@ class _EstRequestScreenState extends State<EstRequestScreen> {
       SnackBar(
         content: Text(
           approved
-              ? 'Rencana kerja untuk ${item.requesterName} disetujui'
-              : 'Rencana kerja untuk ${item.requesterName} dikembalikan ke tim EST',
+              ? 'Work plan for ${item.requesterName} approved'
+              : 'Work plan for ${item.requesterName} returned to the EST team',
         ),
       ),
     );
@@ -330,8 +330,8 @@ class _EstRequestScreenState extends State<EstRequestScreen> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'Selesaikan feedback di atas dulu untuk membuka '
-                    'pengajuan baru.',
+                    'Complete the feedback above first to open '
+                    'a new request.',
                     style: AppTextStyles.caption.copyWith(
                       color: AppColors.text,
                       height: 1.4,
@@ -347,7 +347,7 @@ class _EstRequestScreenState extends State<EstRequestScreen> {
           Padding(
             padding: const EdgeInsets.only(top: 24),
             child: Center(
-              child: Text('Tidak ada data', style: AppTextStyles.bodyMuted),
+              child: Text('No data', style: AppTextStyles.bodyMuted),
             ),
           )
         else

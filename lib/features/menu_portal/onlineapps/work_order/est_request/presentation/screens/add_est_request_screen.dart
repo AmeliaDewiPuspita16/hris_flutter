@@ -60,7 +60,7 @@ class _AddEstRequestScreenState extends State<AddEstRequestScreen> {
       id: 'est-${now.microsecondsSinceEpoch}',
       // TODO: ambil dari sesi auth begitu tersambung — lihat catatan role
       // serupa di ItRequestScreen/auth_gate.dart.
-      requesterName: 'Anda',
+      requesterName: 'You',
       department: '-',
       type: _type!,
       location: _locationController.text.trim(),
@@ -127,7 +127,7 @@ class _AddEstRequestScreenState extends State<AddEstRequestScreen> {
           TextField(
             controller: _locationController,
             style: AppTextStyles.body,
-            decoration: _fieldDecoration('Contoh: Blok 3 unit 8'),
+            decoration: _fieldDecoration('e.g. Block 3, unit 8'),
           ),
           const SizedBox(height: 18),
           const FieldLabelRow(label: 'Description', required: true),
@@ -136,7 +136,7 @@ class _AddEstRequestScreenState extends State<AddEstRequestScreen> {
             minLines: 4,
             maxLines: null,
             style: AppTextStyles.body,
-            decoration: _fieldDecoration('Jelaskan detail permintaan Anda'),
+            decoration: _fieldDecoration('Describe your request in detail'),
           ),
           const SizedBox(height: 18),
           const FieldLabelRow(label: 'Photo'),

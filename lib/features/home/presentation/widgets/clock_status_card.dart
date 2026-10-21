@@ -171,13 +171,13 @@ class _CardPlaceholder extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24),
                   child: Text(
-                    errorMessage ?? 'Gagal memuat jadwal hari ini.',
+                    errorMessage ?? 'Failed to load today\'s schedule.',
                     textAlign: TextAlign.center,
                     style: AppTextStyles.caption,
                   ),
                 ),
                 const SizedBox(height: 8),
-                TextButton(onPressed: onRetry, child: const Text('Coba lagi')),
+                TextButton(onPressed: onRetry, child: const Text('Try again')),
               ],
             ),
     );
