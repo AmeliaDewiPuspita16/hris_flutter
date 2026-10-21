@@ -38,143 +38,92 @@ void main() {
     await pumpTab(tester, harness);
     await tester.pump();
 
-    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    // Satu di daftar, satu di tiap counter.
+    expect(find.byType(CircularProgressIndicator), findsNWidgets(3));
 
     await tester.pump(const Duration(milliseconds: 300));
   });
 
-  testWidgets('filter On Waiting aktif secara default dan hanya menampilkan '
-      'item berstatus waiting', (tester) async {
+  testWidgets('filter On Waiting aktif secara default dan menampilkan hasil '
+      '?status=waiting', (tester) async {
     final harness = ItRequestHarness(
-      (_, __) => ok(itRequestListEnvelope(
-        items: [
-          itRequestListItem(
-            id: 1,
-            description: 'Butuh akses VPN',
-            statusCode: 'waiting',
-            statusLabel: 'On Waiting',
-            requesterName: 'Fadel Satriawan',
-            requesterDepartment: 'BDD',
-          ),
-          itRequestListItem(
-            id: 2,
-            description: 'Pasang CCTV',
-            statusCode: 'progress',
-            statusLabel: 'On Progress',
-            requesterName: 'Frida Khaerani',
-            requesterDepartment: 'HR & GA',
-          ),
-        ],
-      )),
+      (url, __) => ok(url.queryParameters['status'] == 'waiting'
+          ? itRequestListEnvelope(items: [
+              itRequestListItem(
+                id: 1,
+                description: 'Butuh akses VPN',
+                statusCode: 'waiting',
+                statusLabel: 'On Waiting',
+                requesterName: 'Fadel Satriawan',
+                requesterDepartment: 'BDD',
+              ),
+            ])
+          : itRequestListEnvelope(items: [
+              itRequestListItem(
+                id: 2,
+                description: 'Pasang CCTV',
+                statusCode: 'progress',
+                statusLabel: 'On Progress',
+              ),
+            ])),
     );
 
     await pumpTab(tester, harness);
     await settle(tester);
 
+    expect(
+      harness.requested.map((u) => u.queryParameters['status']),
+      unorderedEquals(['waiting', 'progress']),
+    );
     expect(find.text('Butuh akses VPN'), findsOneWidget);
     expect(find.text('Pasang CCTV'), findsNothing);
     expect(find.textContaining('Fadel Satriawan'), findsOneWidget);
   });
 
-  testWidgets('counter On Waiting/On Progress menghitung item yang termuat',
-      (tester) async {
+  testWidgets('counter memakai meta.total dari server, bukan jumlah item yang '
+      'termuat', (tester) async {
     final harness = ItRequestHarness(
-      (_, __) => ok(itRequestListEnvelope(
-        items: [
-          itRequestListItem(id: 1, statusCode: 'waiting', statusLabel: 'On Waiting'),
-          itRequestListItem(id: 2, statusCode: 'waiting', statusLabel: 'On Waiting'),
-          itRequestListItem(id: 3, statusCode: 'progress', statusLabel: 'On Progress'),
-        ],
-      )),
+      (url, __) => ok(url.queryParameters['status'] == 'waiting'
+          ? itRequestListEnvelope(
+              items: [itRequestListItem(id: 1, statusCode: 'waiting')],
+              lastPage: 5,
+              total: 91,
+            )
+          : itRequestListEnvelope(
+              items: [itRequestListItem(id: 2, statusCode: 'progress')],
+              lastPage: 2,
+              total: 21,
+            )),
     );
 
     await pumpTab(tester, harness);
     await settle(tester);
 
-    expect(find.text('2'), findsOneWidget);
-    expect(find.text('1'), findsOneWidget);
-  });
-
-  testWidgets(
-      'counter menghitung total sebenarnya dari semua halaman, bukan cuma '
-      'halaman pertama (regresi: dulu angkanya terus bertambah tiap scroll)',
-      (tester) async {
-    final harness = ItRequestHarness((url, __) {
-      final page = int.parse(url.queryParameters['page'] ?? '1');
-      return ok(itRequestListEnvelope(
-        items: [itRequestListItem(id: page, statusCode: 'waiting', statusLabel: 'On Waiting')],
-        currentPage: page,
-        lastPage: 3,
-      ));
-    });
-
-    await pumpTab(tester, harness);
-    await settle(tester);
-
-    // Seluruh 3 halaman (3 item) sudah ditarik otomatis saat tab dibuka,
-    // tanpa perlu scroll sama sekali.
-    expect(harness.requested, hasLength(3));
-    expect(find.text('3'), findsOneWidget);
-
-    // Angkanya tidak berubah lagi walau di-scroll — sudah final/akurat,
-    // bukan "sejauh yang sudah termuat sampai sekarang".
-    await tester.drag(find.byType(ListView), const Offset(0, -2000));
-    await settle(tester);
-
-    expect(harness.requested, hasLength(3));
-    expect(find.text('3'), findsOneWidget);
-  });
-
-  testWidgets(
-      'selagi halaman tersisa masih ditarik, counter menampilkan spinner — '
-      'bukan angka parsial yang berubah-ubah tiap halaman masuk',
-      (tester) async {
-    final harness = ItRequestHarness((url, __) async {
-      final page = int.parse(url.queryParameters['page'] ?? '1');
-      // Delay di halaman ke-2 dan seterusnya supaya ada jeda nyata untuk
-      // diperiksa di tengah proses "tarik semua halaman".
-      if (page > 1) await Future<void>.delayed(const Duration(milliseconds: 50));
-      return ok(itRequestListEnvelope(
-        items: [itRequestListItem(id: page, statusCode: 'waiting', statusLabel: 'On Waiting')],
-        currentPage: page,
-        lastPage: 3,
-      ));
-    });
-
-    await pumpTab(tester, harness);
-    // Halaman pertama saja yang sudah selesai (1 item) — halaman 2 & 3
-    // masih berjalan di latar belakang.
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 10));
-
-    expect(find.text('1'), findsNothing, reason: 'angka parsial tidak boleh tampil');
-    expect(find.byType(CircularProgressIndicator), findsWidgets);
-
-    await settle(tester);
-    await tester.pump(const Duration(milliseconds: 150));
-
-    expect(find.text('3'), findsOneWidget);
+    expect(find.text('91'), findsOneWidget);
+    expect(find.text('21'), findsOneWidget);
+    expect(harness.requested, hasLength(2), reason: 'tidak menarik semua halaman');
   });
 
   testWidgets('menekan counter On Progress memindahkan filter ke on progress',
       (tester) async {
     final harness = ItRequestHarness(
-      (_, __) => ok(itRequestListEnvelope(
-        items: [
-          itRequestListItem(
-            id: 1,
-            description: 'Butuh akses VPN',
-            statusCode: 'waiting',
-            statusLabel: 'On Waiting',
-          ),
-          itRequestListItem(
-            id: 2,
-            description: 'Pasang CCTV',
-            statusCode: 'progress',
-            statusLabel: 'On Progress',
-          ),
-        ],
-      )),
+      (url, __) => ok(url.queryParameters['status'] == 'waiting'
+          ? itRequestListEnvelope(items: [
+              itRequestListItem(
+                id: 1,
+                description: 'Butuh akses VPN',
+                statusCode: 'waiting',
+                statusLabel: 'On Waiting',
+              ),
+            ])
+          : itRequestListEnvelope(items: [
+              itRequestListItem(
+                id: 2,
+                description: 'Pasang CCTV',
+                statusCode: 'progress',
+                statusLabel: 'On Progress',
+              ),
+            ])),
     );
 
     await pumpTab(tester, harness);
@@ -187,12 +136,9 @@ void main() {
     expect(find.text('Butuh akses VPN'), findsNothing);
   });
 
-  testWidgets('tidak ada item sesuai filter menampilkan "Tidak ada data"',
-      (tester) async {
+  testWidgets('daftar kosong menampilkan "Tidak ada data"', (tester) async {
     final harness = ItRequestHarness(
-      (_, __) => ok(itRequestListEnvelope(
-        items: [itRequestListItem(id: 1, statusCode: 'finished', statusLabel: 'Finished')],
-      )),
+      (_, __) => ok(itRequestListEnvelope(items: const [], total: 0)),
     );
 
     await pumpTab(tester, harness);
@@ -254,6 +200,9 @@ void main() {
           ),
         });
       }
+      if (url.queryParameters['status'] == 'progress') {
+        return ok(itRequestListEnvelope(items: const [], total: 0));
+      }
       return ok(itRequestListEnvelope(
         items: [
           itRequestListItem(
@@ -263,6 +212,7 @@ void main() {
             statusLabel: 'On Waiting',
           ),
         ],
+        total: 1,
       ));
     });
 
@@ -289,6 +239,8 @@ void main() {
       findsNothing,
       reason: 'tidak lagi di filter On Waiting',
     );
+    expect(find.text('0'), findsOneWidget, reason: 'counter On Waiting turun');
+    expect(find.text('1'), findsOneWidget, reason: 'counter On Progress naik');
 
     await tester.tap(find.text('On Progress'));
     await tester.pump();

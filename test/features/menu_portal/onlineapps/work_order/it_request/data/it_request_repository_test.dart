@@ -35,6 +35,14 @@ void main() {
       expect(h.requested.single.queryParameters, {'page': '3', 'per_page': '20'});
     });
 
+    test('meneruskan filter status sebagai query', () async {
+      final h = build();
+
+      await h.repository.fetchList(status: 'waiting');
+
+      expect(h.requested.single.queryParameters['status'], 'waiting');
+    });
+
     test('memetakan daftar, ringkasan, dan paginasi dari satu amplop', () async {
       final h = build(body: itRequestListEnvelope(awaitingRating: 6, lastPage: 57));
 

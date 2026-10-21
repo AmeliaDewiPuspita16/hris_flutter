@@ -15,61 +15,57 @@ import 'list_request_row.dart';
 
 /// Status yang relevan untuk tab "List Request" — IT masih bisa merespons
 /// yang "On Waiting", dan menutup yang "On Progress" (lih. dokumentasi
-/// `POST .../respond` dan `POST .../complete`). Status lain (wait_checked,
-/// done, finished, dst) tidak muncul di sini karena sudah tidak butuh aksi
-/// tim IT lagi — tetap kelihatan di tab "Form IT & Media".
+/// `POST .../respond` dan `POST .../complete`). Nilainya sama dengan
+/// parameter `?status=` di server. Status lain (wait_checked, done,
+/// finished, dst) tidak muncul di sini karena sudah tidak butuh aksi tim IT
+/// lagi — tetap kelihatan di tab "Form IT & Media".
 const _kWaitingCode = 'waiting';
 const _kProgressCode = 'progress';
 
 /// Isi tab "List Request": dua counter On Waiting / On Progress yang juga
 /// berfungsi sebagai filter (mengikuti dua "tab" berwarna di versi web),
-/// lalu daftar permintaan SELURUH perusahaan sesuai filter yang aktif —
-/// sama sumber datanya (`GET /api/portal/apps/it_request`, lewat
-/// [ItRequestListBloc] yang sama) dengan tab "Form IT & Media", cuma
-/// disaring beda.
+/// lalu daftar permintaan SELURUH perusahaan sesuai filter yang aktif.
+///
+/// Tiap status punya [ItRequestListBloc] sendiri yang menyaring di sisi
+/// server (`GET /api/portal/apps/it_request?status=waiting|progress`) —
+/// angka counter diambil dari `meta.total` masing-masing, jadi sudah total
+/// sebenarnya sejak halaman pertama tanpa perlu menarik semua halaman.
+/// Daftarnya tetap lazy-load per scroll.
 ///
 /// Filter Month/Year/Status seperti di web belum diimplementasikan di
 /// iterasi ini — cuma dua counter utamanya dulu.
-///
-/// `loadAllPages: true` dipasang di sini (beda dari tab sebelah) supaya
-/// bloc menarik SEMUA halaman sekali di awal — tanpa ini, counter cuma
-/// menghitung item yang sudah termuat dan terus bertambah tiap kali user
-/// scroll, bukan menunjukkan total sebenarnya (server tidak punya endpoint
-/// hitung/filter per status).
-class ListRequestTab extends StatelessWidget {
+class ListRequestTab extends StatefulWidget {
   const ListRequestTab({super.key, this.repository});
 
   /// Diisi test; di aplikasi diambil dari [RepositoryProvider].
   final ItRequestRepository? repository;
 
   @override
-  Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => ItRequestListBloc(
-        repository: repository ?? context.read<ItRequestRepository>(),
-        loadAllPages: true,
-      )..add(const ItRequestListStarted()),
-      child: const _ListRequestView(),
-    );
-  }
+  State<ListRequestTab> createState() => _ListRequestTabState();
 }
 
-class _ListRequestView extends StatefulWidget {
-  const _ListRequestView();
-
-  @override
-  State<_ListRequestView> createState() => _ListRequestViewState();
-}
-
-class _ListRequestViewState extends State<_ListRequestView> {
+class _ListRequestTabState extends State<ListRequestTab> {
   static const _loadMoreThreshold = 320.0;
 
   final _scrollController = ScrollController();
+  late final ItRequestRepository _repository;
+  late final ItRequestListBloc _waitingBloc;
+  late final ItRequestListBloc _progressBloc;
   String _filter = _kWaitingCode;
+
+  ItRequestListBloc get _activeBloc =>
+      _filter == _kWaitingCode ? _waitingBloc : _progressBloc;
 
   @override
   void initState() {
     super.initState();
+    _repository = widget.repository ?? context.read<ItRequestRepository>();
+    _waitingBloc =
+        ItRequestListBloc(repository: _repository, status: _kWaitingCode)
+          ..add(const ItRequestListStarted());
+    _progressBloc =
+        ItRequestListBloc(repository: _repository, status: _kProgressCode)
+          ..add(const ItRequestListStarted());
     _scrollController.addListener(_onScroll);
   }
 
@@ -77,6 +73,8 @@ class _ListRequestViewState extends State<_ListRequestView> {
   void dispose() {
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
+    _waitingBloc.close();
+    _progressBloc.close();
     super.dispose();
   }
 
@@ -87,65 +85,77 @@ class _ListRequestViewState extends State<_ListRequestView> {
         _scrollController.position.pixels;
     if (remaining > _loadMoreThreshold) return;
 
-    context
-        .read<ItRequestListBloc>()
-        .add(const ItRequestListNextPageRequested());
+    _activeBloc.add(const ItRequestListNextPageRequested());
   }
 
   Future<void> _refresh() async {
-    final bloc = context.read<ItRequestListBloc>()
-      ..add(const ItRequestListRefreshed());
-    await bloc.stream
-        .firstWhere((s) => s.status != ItRequestListStatus.loading);
+    _waitingBloc.add(const ItRequestListRefreshed());
+    _progressBloc.add(const ItRequestListRefreshed());
+    await Future.wait([
+      for (final bloc in [_waitingBloc, _progressBloc])
+        bloc.stream.firstWhere((s) => s.status != ItRequestListStatus.loading),
+    ]);
+  }
+
+  void _selectFilter(String filter) {
+    if (filter == _filter) return;
+    setState(() => _filter = filter);
+    if (_scrollController.hasClients) _scrollController.jumpTo(0);
   }
 
   void _openDetail(ItRequestItem item) {
-    final bloc = context.read<ItRequestListBloc>();
-
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => ItRequestDetailScreen(
           item: item,
-          repository: context.read<ItRequestRepository>(),
-          onItTeamActionDone: (ItRequestDetail updated) =>
-              bloc.add(ItRequestLocalItemUpdated(updated)),
+          repository: _repository,
+          // Dikirim ke dua bloc: yang lama mengeluarkan item dari daftarnya,
+          // yang cocok dengan status barunya menyisipkannya (lih.
+          // `_onLocalItemUpdated` di bloc).
+          onItTeamActionDone: (ItRequestDetail updated) {
+            _waitingBloc.add(ItRequestLocalItemUpdated(updated));
+            _progressBloc.add(ItRequestLocalItemUpdated(updated));
+          },
         ),
       ),
     );
   }
 
+  /// Null selagi halaman pertama status itu belum termuat — tampilkan
+  /// spinner kecil, bukan angka 0 yang belum benar.
+  int? _countOf(ItRequestListState state) =>
+      state.status == ItRequestListStatus.initial || state.isFirstLoad
+          ? null
+          : state.meta.total;
+
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<ItRequestListBloc, ItRequestListState>(
-      builder: (context, state) => _buildBody(context, state),
+      bloc: _waitingBloc,
+      builder: (context, waitingState) =>
+          BlocBuilder<ItRequestListBloc, ItRequestListState>(
+        bloc: _progressBloc,
+        builder: (context, progressState) => _buildBody(
+          context,
+          waitingState: waitingState,
+          progressState: progressState,
+        ),
+      ),
     );
   }
 
-  Widget _buildBody(BuildContext context, ItRequestListState state) {
-    if (state.isFirstLoad) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    if (state.status == ItRequestListStatus.failure && state.items.isEmpty) {
-      return AppErrorView(
-        message: state.errorMessage ?? 'Gagal memuat daftar request.',
-        onRetry: () => context
-            .read<ItRequestListBloc>()
-            .add(const ItRequestListRefreshed()),
-      );
-    }
-
-    final waitingCount =
-        state.items.where((i) => i.status.code == _kWaitingCode).length;
-    final progressCount =
-        state.items.where((i) => i.status.code == _kProgressCode).length;
-    final filtered =
-        state.items.where((i) => i.status.code == _filter).toList();
+  Widget _buildBody(
+    BuildContext context, {
+    required ItRequestListState waitingState,
+    required ItRequestListState progressState,
+  }) {
+    final state = _filter == _kWaitingCode ? waitingState : progressState;
 
     return RefreshIndicator(
       onRefresh: _refresh,
       child: ListView(
         controller: _scrollController,
+        physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
         children: [
           Row(
@@ -153,55 +163,72 @@ class _ListRequestViewState extends State<_ListRequestView> {
               Expanded(
                 child: _CounterChip(
                   label: 'On Waiting',
-                  // Null selagi halaman-halaman sisanya masih ditarik di
-                  // latar belakang (lih. `loadAllPages` di bloc) — angka
-                  // SEMENTARA yang baru mencakup sebagian halaman sengaja
-                  // tidak ditampilkan, supaya tidak terlihat "berubah
-                  // terus" tiap kali satu halaman lagi masuk. Begitu
-                  // `loadingMore` selesai, angkanya final dan tidak
-                  // berubah lagi sampai di-refresh.
-                  count: state.loadingMore ? null : waitingCount,
+                  count: _countOf(waitingState),
                   color: AppColors.pending,
                   background: AppColors.pendingBg,
                   active: _filter == _kWaitingCode,
-                  onTap: () => setState(() => _filter = _kWaitingCode),
+                  onTap: () => _selectFilter(_kWaitingCode),
                 ),
               ),
               const SizedBox(width: 10),
               Expanded(
                 child: _CounterChip(
                   label: 'On Progress',
-                  count: state.loadingMore ? null : progressCount,
+                  count: _countOf(progressState),
                   color: AppColors.inProgress,
                   background: AppColors.inProgressBg,
                   active: _filter == _kProgressCode,
-                  onTap: () => setState(() => _filter = _kProgressCode),
+                  onTap: () => _selectFilter(_kProgressCode),
                 ),
               ),
             ],
           ),
           const SizedBox(height: 14),
-          if (filtered.isEmpty)
-            Padding(
-              padding: const EdgeInsets.only(top: 24),
-              child: Center(
-                child: Text('Tidak ada data', style: AppTextStyles.bodyMuted),
-              ),
-            )
-          else
-            for (var i = 0; i < filtered.length; i++) ...[
-              if (i > 0) const SizedBox(height: 10),
-              ListRequestRow(
-                  item: filtered[i], onTap: () => _openDetail(filtered[i])),
-            ],
-          if (state.loadingMore)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 16),
-              child: Center(child: CircularProgressIndicator()),
-            ),
+          ..._buildList(context, state),
         ],
       ),
     );
+  }
+
+  List<Widget> _buildList(BuildContext context, ItRequestListState state) {
+    if (state.status == ItRequestListStatus.initial || state.isFirstLoad) {
+      return const [
+        Padding(
+          padding: EdgeInsets.only(top: 32),
+          child: Center(child: CircularProgressIndicator()),
+        ),
+      ];
+    }
+
+    if (state.status == ItRequestListStatus.failure && state.items.isEmpty) {
+      return [
+        AppErrorView(
+          message: state.errorMessage ?? 'Gagal memuat daftar request.',
+          onRetry: () => _activeBloc.add(const ItRequestListRefreshed()),
+        ),
+      ];
+    }
+
+    final items = state.items;
+    return [
+      if (items.isEmpty)
+        Padding(
+          padding: const EdgeInsets.only(top: 24),
+          child: Center(
+            child: Text('Tidak ada data', style: AppTextStyles.bodyMuted),
+          ),
+        )
+      else
+        for (var i = 0; i < items.length; i++) ...[
+          if (i > 0) const SizedBox(height: 10),
+          ListRequestRow(item: items[i], onTap: () => _openDetail(items[i])),
+        ],
+      if (state.loadingMore)
+        const Padding(
+          padding: EdgeInsets.symmetric(vertical: 16),
+          child: Center(child: CircularProgressIndicator()),
+        ),
+    ];
   }
 }
 
@@ -217,9 +244,8 @@ class _CounterChip extends StatelessWidget {
 
   final String label;
 
-  /// Null berarti masih dihitung (halaman-halaman lain masih ditarik di
-  /// latar belakang) — tampilkan spinner kecil, bukan angka sementara yang
-  /// belum final.
+  /// Null berarti halaman pertama status ini belum termuat — tampilkan
+  /// spinner kecil, bukan angka yang belum final.
   final int? count;
 
   final Color color;

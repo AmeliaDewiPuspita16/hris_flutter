@@ -16,10 +16,22 @@ class ItRequestRepository {
   /// Satu halaman riwayat request, beserta jumlah yang menunggu rating dan
   /// paginasinya.
   ///
+  /// [status] (mis. `waiting`, `progress`) menyaring di sisi server lewat
+  /// `?status=` — `meta.total` pada hasilnya pun jadi jumlah request
+  /// berstatus itu saja, cocok untuk counter di tab "List Request".
+  ///
   /// Melempar [ApiException] bila gagal.
-  Future<ItRequestPage> fetchList({int page = 1, int perPage = 20}) async {
+  Future<ItRequestPage> fetchList({
+    int page = 1,
+    int perPage = 20,
+    String? status,
+  }) async {
     final envelope = await _apiClient.getEnvelope(
-      _pathWithQuery(ApiConfig.itRequest, {'page': '$page', 'per_page': '$perPage'}),
+      _pathWithQuery(ApiConfig.itRequest, {
+        'page': '$page',
+        'per_page': '$perPage',
+        if (status != null) 'status': status,
+      }),
     );
 
     return ItRequestPage.fromEnvelope(envelope);
