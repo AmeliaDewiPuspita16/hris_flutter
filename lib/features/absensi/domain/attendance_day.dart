@@ -221,6 +221,20 @@ class AttendanceDay {
         overtimeMinutes: minutes,
       );
 
+  /// Salinan hari ini dengan jadwal shift terisi. Dipakai saat realisasi
+  /// dari server tidak membawa info shift, tapi jadwalnya diketahui
+  AttendanceDay withShift({required String code, String? timeRange}) =>
+      AttendanceDay(
+        date: date,
+        status: status,
+        shiftCode: code,
+        shiftTimeRange: timeRange,
+        timeText: timeText,
+        noteText: noteText,
+        badgeLabel: badgeLabel,
+        overtimeMinutes: overtimeMinutes,
+      );
+
   bool get isScheduledOnly => status == AttendanceDayStatus.terjadwal;
 
   bool isSameDay(DateTime other) =>
