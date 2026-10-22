@@ -162,7 +162,7 @@ class _CommentSheetState extends State<_CommentSheet> {
             // Label kolom
             Text.rich(
               TextSpan(
-                text: 'Komentar',
+                text: 'Comment',
                 children: [
                   if (widget.required)
                     const TextSpan(
@@ -171,7 +171,7 @@ class _CommentSheetState extends State<_CommentSheet> {
                     )
                   else
                     const TextSpan(
-                      text: '  (opsional)',
+                      text: '  (optional)',
                       style: TextStyle(
                         fontWeight: FontWeight.w400,
                         color: AppColors.textMuted,
@@ -201,7 +201,7 @@ class _CommentSheetState extends State<_CommentSheet> {
                 color: AppColors.text,
               ),
               decoration: InputDecoration(
-                hintText: 'Tulis komentar...',
+                hintText: 'Write a comment...',
                 hintStyle: const TextStyle(
                   fontFamily: AppTextStyles.fontFamily,
                   fontSize: 14,
@@ -223,7 +223,7 @@ class _CommentSheetState extends State<_CommentSheet> {
               ),
               validator: (v) =>
                   widget.required && (v == null || v.trim().isEmpty)
-                      ? 'Komentar wajib diisi'
+                      ? 'Comment is required'
                       : null,
             ),
             const SizedBox(height: 18),
@@ -247,7 +247,7 @@ class _CommentSheetState extends State<_CommentSheet> {
                         fontWeight: FontWeight.w600,
                       ),
                     ),
-                    child: const Text('Batal'),
+                    child: const Text('Cancel'),
                   ),
                 ),
                 const SizedBox(width: 10),

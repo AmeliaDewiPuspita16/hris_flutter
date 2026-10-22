@@ -10,6 +10,7 @@ import '../../../../../../core/widgets/app_card.dart';
 import '../../../../../../core/widgets/back_header.dart';
 import '../../../../../../core/widgets/detail_field_tile.dart';
 import '../../data/procurement_repository.dart';
+import '../../domain/pr_action.dart';
 import '../../domain/pr_attachment.dart';
 import '../../domain/purchase_requisition.dart';
 import '../../domain/purchase_requisition_summary.dart';
@@ -133,50 +134,74 @@ class _PrDetailViewState extends State<_PrDetailView> {
   Future<void> _onApprove(BuildContext context, PurchaseRequisition pr) async {
     final comment = await showCommentSheet(
       context,
-      title: 'Setujui PR',
-      description: '${pr.prNumber} akan disetujui dan dilanjutkan ke tahap '
-          'berikutnya.',
+      title: 'Approve PR',
+      description: '${pr.prNumber} will be approved and moved to the next '
+          'stage.',
       confirmLabel: 'Approve',
       icon: Icons.check_circle_outline,
       color: AppColors.primary,
       required: false,
     );
     if (comment == null || !context.mounted) return;
-    // TODO: context.read<PrDetailBloc>().add(PrApproveRequested(comment));
+    context.read<PrDetailBloc>().add(
+          PrActionSubmitted(PrAction.approve, comments: comment),
+        );
   }
 
   Future<void> _onRevision(
       BuildContext context, PurchaseRequisition pr) async {
     final comment = await showCommentSheet(
       context,
-      title: 'Kembalikan untuk Revisi',
-      description: '${pr.prNumber} akan dikembalikan ke requestor. Approval '
-          'dimulai ulang setelah diajukan kembali.',
-      confirmLabel: 'Kirim Revisi',
+      title: 'Return for Revision',
+      description: '${pr.prNumber} will be sent back to the requestor for '
+          'correction. Approval will restart from the beginning after it is '
+          'resubmitted.',
+      confirmLabel: 'Send for Revision',
       icon: Icons.edit_note_outlined,
-      color: const Color(0xFFFFC107),
+      color: AppColors.accent,
     );
     if (comment == null || !context.mounted) return;
-    // TODO: context.read<PrDetailBloc>().add(PrRevisionRequested(comment));
+    context.read<PrDetailBloc>().add(
+          PrActionSubmitted(PrAction.revision, comments: comment),
+        );
   }
 
   Future<void> _onReject(BuildContext context, PurchaseRequisition pr) async {
     final comment = await showCommentSheet(
       context,
-      title: 'Tolak PR',
-      description: '${pr.prNumber} akan ditolak. Alasan penolakan akan '
-          'terlihat oleh requestor.',
+      title: 'Reject PR',
+      description: '${pr.prNumber} will be rejected. The reason will be '
+          'visible to the requestor.',
       confirmLabel: 'Reject',
       icon: Icons.block_outlined,
-      color: const Color(0xFFDC3545),
+      color: AppColors.rejected,
     );
     if (comment == null || !context.mounted) return;
-    // TODO: context.read<PrDetailBloc>().add(PrRejectRequested(comment));
+    context.read<PrDetailBloc>().add(
+          PrActionSubmitted(PrAction.reject, comments: comment),
+        );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return BlocListener<PrDetailBloc, PrDetailState>(
+      listenWhen: (previous, current) =>
+          current.feedback != null &&
+          !identical(previous.feedback, current.feedback),
+      listener: (context, state) {
+        final feedback = state.feedback!;
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(
+            SnackBar(
+              content: Text(feedback.message),
+              backgroundColor:
+                  feedback.isError ? AppColors.rejected : AppColors.primary,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+      },
+      child: Scaffold(
       // Body memanjang sampai ke belakang action bar yang transparan.
       extendBody: true,
       backgroundColor: AppColors.bg,
@@ -223,15 +248,14 @@ class _PrDetailViewState extends State<_PrDetailView> {
           return PrApprovalActionBar(
             enabled: _reachedBottom,
             onLockedTap: _scrollToBottom,
-            // TODO: setelah `isSubmitting` ada di PrDetailState, ganti jadi
-            // state.isSubmitting.
-            isLoading: false,
+            isLoading: state.isSubmitting,
             onApprove: () => _onApprove(context, pr),
             onRevision: () => _onRevision(context, pr),
             onReject: () => _onReject(context, pr),
           );
         },
       ),
+    ),
     );
   }
 

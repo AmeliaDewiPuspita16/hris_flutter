@@ -43,6 +43,14 @@ class ApiConfig {
   /// `getList`.
   static const String eprocurement = '/api/portal/apps/eprocurement';
 
+  /// Keputusan atasan atas satu PR, dikirim dengan POST ke
+  /// `$eprocurement/{id}/approve`, `/revision`, atau `/reject`.
+  ///
+  /// Body berisi `comments`: opsional untuk approve, wajib untuk revision
+  /// dan reject
+  static String eprocurementAction(int id, String action) =>
+      '$eprocurement/$id/$action';
+
   /// IT/Media Request — riwayat permintaan milik user sendiri. Daftar di
   /// path ini, detail satu request di `$itRequest/{id}`.
   ///

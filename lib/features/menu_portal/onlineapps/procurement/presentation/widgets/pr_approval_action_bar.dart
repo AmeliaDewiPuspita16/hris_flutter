@@ -28,9 +28,10 @@ class PrApprovalActionBar extends StatelessWidget {
   final bool enabled;
   final VoidCallback? onLockedTap;
 
-  static const _red = Color(0xFFDC3545);
-  static const _amber = Color(0xFFFFC107);
-  static const _amberText = Color(0xFFB88700);
+  static const _red = AppColors.rejected;
+  static const _amber = AppColors.accent;
+  // Emas lebih gelap khusus teks, karena AppColors.accent di atas putih kurang terbaca.
+  static const _amberText = Color(0xFF8F6F1E);
   static const _green = AppColors.primary;
   static const _disabledBorder = Color(0xFFD9D8D2);
 
@@ -79,7 +80,7 @@ class PrApprovalActionBar extends StatelessWidget {
                               ),
                               SizedBox(width: 6),
                               Text(
-                                'Baca sampai bawah untuk mengaktifkan tombol',
+                                'Scroll to the bottom to enable the buttons',
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: AppColors.textMid,
@@ -99,6 +100,8 @@ class PrApprovalActionBar extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(horizontal: 8),
                         backgroundColor: Colors.white,
                         disabledBackgroundColor: Colors.white,
+                        elevation: 1,
+                        shadowColor: Colors.black26,
                         foregroundColor: _red,
                         side: BorderSide(
                           color: active ? _red : _disabledBorder,
@@ -123,6 +126,8 @@ class PrApprovalActionBar extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(horizontal: 8),
                         backgroundColor: Colors.white,
                         disabledBackgroundColor: Colors.white,
+                        elevation: 1,
+                        shadowColor: Colors.black26,
                         foregroundColor: _amberText,
                         side: BorderSide(
                           color: active ? _amber : _disabledBorder,
@@ -133,7 +138,7 @@ class PrApprovalActionBar extends StatelessWidget {
                         ),
                       ),
                       child: const Text(
-                        'Revisi',
+                        'Revision',
                         maxLines: 1,
                         softWrap: false,
                       ),

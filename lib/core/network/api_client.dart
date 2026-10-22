@@ -245,6 +245,51 @@ class ApiClient {
     }
   }
 
+    /// POST untuk aksi yang isi responsnya tidak dipakai, mis. approve /
+  /// revision / reject PR. Yang dicek hanya keberhasilannya; `data` boleh
+  /// apa saja atau tidak ada. Badan respons dicatat utuh karena bentuknya
+  /// belum pernah teramati.
+  Future<void> postAction(
+    String path, {
+    Map<String, dynamic>? body,
+    bool authenticated = true,
+  }) async {
+    final uri = _uriFor(path);
+    AppLogger.info('POST $uri ${_redactedBody(body)}');
+
+    final response = await _sendRaw(
+      'POST',
+      uri,
+      () => _httpClient.post(
+        uri,
+        headers: _headers(authenticated: authenticated),
+        body: jsonEncode(body ?? const <String, dynamic>{}),
+      ),
+    );
+
+    final status = response.statusCode;
+    if (status < 200 || status >= 300) {
+      _unwrap(response); // selalu melempar (401/403/422/5xx)
+      throw const ApiException.server();
+    }
+
+    AppLogger.info('Respons aksi $uri: ${_truncate(response.body)}');
+
+    // `status` di amplop sengaja hanya dianggap gagal bila eksplisit gagal.
+    // Bisa saja isinya status dokumen (mis. "approved"), bukan status HTTP,
+    // dan itu tidak boleh dibaca sebagai kegagalan.
+    final envelope = _decode(response.body);
+    final s = envelope?['status'];
+    final explicitFailure = (s is num && s >= 400) ||
+        (s is String && const {'error', 'fail', 'failed'}.contains(s.toLowerCase()));
+    if (explicitFailure) {
+      throw ApiException(
+        ApiErrorKind.server,
+        _messageFrom(envelope) ?? const ApiException.server().message,
+      );
+    }
+  }
+
   /// DELETE tanpa mengharapkan isi: dipakai endpoint yang membalas ringkas,
   /// mis. `DELETE /api/indent/{id}` -> `{"message":"success","status":200,
   /// "data":true}`. Yang dicek hanya keberhasilannya; `data` boleh bentuk apa
