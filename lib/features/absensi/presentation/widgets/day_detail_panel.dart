@@ -12,8 +12,18 @@ class DayDetailPanel extends StatelessWidget {
   final AttendanceDay? day;
 
   static const _months = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December',
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
   ];
 
   @override
@@ -33,14 +43,26 @@ class DayDetailPanel extends StatelessWidget {
       children: [
         Text(
           dateLabel,
-          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.text),
+          style: const TextStyle(
+              fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.text),
         ),
         const SizedBox(height: 6),
         if (day.status == AttendanceDayStatus.terjadwal)
           _buildScheduledOnly(day)
+        else if (day.status == AttendanceDayStatus.liburHari &&
+            day.timeText == null)
+          _buildDayOff()
         else
           _buildRealized(day),
       ],
+    );
+  }
+
+  Widget _buildDayOff() {
+    return const Text(
+      'Day Off',
+      style: TextStyle(
+          fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.text),
     );
   }
 
@@ -52,17 +74,23 @@ class DayDetailPanel extends StatelessWidget {
         style: TextStyle(fontSize: 13, color: AppColors.textMuted),
       );
     }
+
+    final now = DateTime.now();
+
+    final isPast = day.date.isBefore(DateTime(now.year, now.month, now.day));
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'Scheduled shift ${day.shiftCode} · ${day.shiftTimeRange}',
-          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.text),
+          style: const TextStyle(
+              fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.text),
         ),
         const SizedBox(height: 2),
-        const Text(
-          'Not started yet',
-          style: TextStyle(fontSize: 12, color: AppColors.textMuted),
+        Text(
+          isPast ? 'No attendance recorded' : 'Not started yet',
+          style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
         ),
       ],
     );
@@ -74,7 +102,8 @@ class DayDetailPanel extends StatelessWidget {
       children: [
         Text(
           day.timeText ?? day.noteText ?? '-',
-          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.text),
+          style: const TextStyle(
+              fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.text),
         ),
         if (day.shiftCode != null) ...[
           const SizedBox(height: 2),
@@ -98,7 +127,8 @@ class DayDetailPanel extends StatelessWidget {
               if (day.hasOvertime)
                 _StatusBadge(
                   status: AttendanceDayStatus.lembur,
-                  label: 'Overtime ${overtimeDurationText(day.overtimeMinutes)}',
+                  label:
+                      'Overtime ${overtimeDurationText(day.overtimeMinutes)}',
                 ),
             ],
           ),
@@ -134,10 +164,15 @@ class _StatusBadge extends StatelessWidget {
     final c = _colors;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(color: c.bg, borderRadius: BorderRadius.circular(6)),
+      decoration:
+          BoxDecoration(color: c.bg, borderRadius: BorderRadius.circular(6)),
       child: Text(
         label,
-        style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w800, color: c.fg, letterSpacing: 0.2),
+        style: TextStyle(
+            fontSize: 9.5,
+            fontWeight: FontWeight.w800,
+            color: c.fg,
+            letterSpacing: 0.2),
       ),
     );
   }

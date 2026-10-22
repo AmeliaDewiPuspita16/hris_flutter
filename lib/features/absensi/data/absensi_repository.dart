@@ -46,14 +46,18 @@ class AbsensiRepository {
   Future<AttendanceMonth> fetchMonth(DateTime month) async {
     final key = '${month.year}-${month.month.toString().padLeft(2, '0')}';
 
-    // Keduanya dimulai dulu baru ditunggu, supaya berjalan paralel.
-    final attendanceRequest = _apiClient.get('${ApiConfig.attendance}?month=$key');
+    // Ketiganya dimulai dulu baru ditunggu, supaya berjalan paralel.
+    final attendanceRequest =
+        _apiClient.get('${ApiConfig.attendance}?month=$key');
     final overtimeRequest = _fetchOvertime(key);
+    final shiftRequest = _fetchShiftSchedule(key);
 
     final data = await attendanceRequest;
     final overtime = await overtimeRequest;
+    final schedule = await shiftRequest;
 
-    return AttendanceMonth.fromJson(data, month: month, overtime: overtime);
+    return AttendanceMonth.fromJson(data,
+        month: month, overtime: overtime, schedule: schedule);
   }
 
   /// Lembur sebulan; null bila gagal. Tidak pernah melempar, karena
@@ -65,6 +69,19 @@ class AbsensiRepository {
       AppLogger.info('Data lembur $monthKey tidak dimuat: ${e.message}');
     } catch (e, stack) {
       AppLogger.error('Data lembur $monthKey gagal dimuat', e, stack);
+    }
+    return null;
+  }
+
+  /// Jadwal shift sebulan; null bila gagal. Tidak pernah melempar: tanpa
+  /// jadwal, tanggal ke depan sekedar tampil kosong seperti sebelumnya.
+  Future<Map<String, dynamic>?> _fetchShiftSchedule(String monthKey) async {
+    try {
+      return await _apiClient.get('${ApiConfig.shift}?month=$monthKey');
+    } on ApiException catch (e) {
+      AppLogger.info('Jadwal shift $monthKey tidak dimuat: ${e.message}');
+    } catch (e, stack) {
+      AppLogger.error('Jadwal shift $monthKey gagal dimuat', e, stack);
     }
     return null;
   }

@@ -18,7 +18,9 @@ import '../bloc/detail/pr_detail_event.dart';
 import '../bloc/detail/pr_detail_state.dart';
 import '../widgets/approval_progress_timeline.dart';
 import '../widgets/document_progress_timeline.dart';
+import '../widgets/pr_approval_action_bar.dart';
 import '../widgets/pr_attachment_tile.dart';
+import '../widgets/pr_comment_sheet.dart';
 import '../widgets/pr_detail_hero.dart';
 import '../widgets/pr_item_count_chip.dart';
 import '../widgets/pr_item_tile.dart';
@@ -66,17 +68,61 @@ class PrDetailScreen extends StatelessWidget {
   }
 }
 
-class _PrDetailView extends StatelessWidget {
+class _PrDetailView extends StatefulWidget {
   const _PrDetailView({required this.summary, required this.openUrl});
 
   final PurchaseRequisitionSummary summary;
   final UrlOpener openUrl;
 
+  @override
+  State<_PrDetailView> createState() => _PrDetailViewState();
+}
+
+class _PrDetailViewState extends State<_PrDetailView> {
+  final _scrollController = ScrollController();
+
+  /// Sekali true tetap true, walau user menggulung naik lagi.
+  bool _reachedBottom = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_checkReachedBottom);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _checkReachedBottom() {
+    if (_reachedBottom || !_scrollController.hasClients) return;
+
+    // Jangan dihitung selagi rincian PR belum datang.
+    if (context.read<PrDetailBloc>().state.requisition == null) return;
+
+    final position = _scrollController.position;
+    // Toleransi 24px supaya tidak harus pas sampai piksel terakhir.
+    if (position.pixels >= position.maxScrollExtent - 24) {
+      setState(() => _reachedBottom = true);
+    }
+  }
+
+  void _scrollToBottom() {
+    if (!_scrollController.hasClients) return;
+    _scrollController.animateTo(
+      _scrollController.position.maxScrollExtent,
+      duration: const Duration(milliseconds: 400),
+      curve: Curves.easeOut,
+    );
+  }
+
   Future<void> _open(BuildContext context, PrAttachment attachment) async {
     final url = attachment.openableUrl;
     if (url == null) return;
 
-    final opened = await openUrl(Uri.parse(url));
+    final opened = await widget.openUrl(Uri.parse(url));
     if (opened || !context.mounted) return;
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -84,28 +130,105 @@ class _PrDetailView extends StatelessWidget {
     );
   }
 
+  Future<void> _onApprove(BuildContext context, PurchaseRequisition pr) async {
+    final comment = await showCommentSheet(
+      context,
+      title: 'Setujui PR',
+      description: '${pr.prNumber} akan disetujui dan dilanjutkan ke tahap '
+          'berikutnya.',
+      confirmLabel: 'Approve',
+      icon: Icons.check_circle_outline,
+      color: AppColors.primary,
+      required: false,
+    );
+    if (comment == null || !context.mounted) return;
+    // TODO: context.read<PrDetailBloc>().add(PrApproveRequested(comment));
+  }
+
+  Future<void> _onRevision(
+      BuildContext context, PurchaseRequisition pr) async {
+    final comment = await showCommentSheet(
+      context,
+      title: 'Kembalikan untuk Revisi',
+      description: '${pr.prNumber} akan dikembalikan ke requestor. Approval '
+          'dimulai ulang setelah diajukan kembali.',
+      confirmLabel: 'Kirim Revisi',
+      icon: Icons.edit_note_outlined,
+      color: const Color(0xFFFFC107),
+    );
+    if (comment == null || !context.mounted) return;
+    // TODO: context.read<PrDetailBloc>().add(PrRevisionRequested(comment));
+  }
+
+  Future<void> _onReject(BuildContext context, PurchaseRequisition pr) async {
+    final comment = await showCommentSheet(
+      context,
+      title: 'Tolak PR',
+      description: '${pr.prNumber} akan ditolak. Alasan penolakan akan '
+          'terlihat oleh requestor.',
+      confirmLabel: 'Reject',
+      icon: Icons.block_outlined,
+      color: const Color(0xFFDC3545),
+    );
+    if (comment == null || !context.mounted) return;
+    // TODO: context.read<PrDetailBloc>().add(PrRejectRequested(comment));
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // Body memanjang sampai ke belakang action bar yang transparan.
+      extendBody: true,
       backgroundColor: AppColors.bg,
       appBar: BackHeader(
-        title: summary.prNumber,
+        title: widget.summary.prNumber,
         onBack: () => Navigator.of(context).pop(),
       ),
-      body: BlocBuilder<PrDetailBloc, PrDetailState>(
+      body: NotificationListener<ScrollMetricsNotification>(
+        // Ukuran konten berubah (data baru datang, PR pendek): cek ulang.
+        onNotification: (_) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) _checkReachedBottom();
+          });
+          return false;
+        },
+        child: BlocBuilder<PrDetailBloc, PrDetailState>(
+          builder: (context, state) {
+            return SingleChildScrollView(
+              controller: _scrollController,
+              // Padding bawah besar supaya konten terakhir tidak tertutup
+              // action bar.
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 160),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Kepala layar memakai rincian begitu datang, dan ringkasan
+                  // dari daftar sebelum itu — status di detail lebih baru.
+                  PrDetailHero(requisition: state.requisition ?? widget.summary),
+                  const SizedBox(height: 20),
+                  _buildContent(context, state),
+                ],
+              ),
+            );
+          },
+        ),
+      ),
+      bottomNavigationBar: BlocBuilder<PrDetailBloc, PrDetailState>(
         builder: (context, state) {
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Kepala layar memakai rincian begitu datang, dan ringkasan
-                // dari daftar sebelum itu — status di detail lebih baru.
-                PrDetailHero(requisition: state.requisition ?? summary),
-                const SizedBox(height: 20),
-                _buildContent(context, state),
-              ],
-            ),
+          final pr = state.requisition;
+          // TODO: setelah `canAct` ada di model PurchaseRequisition, ganti
+          // jadi: if (pr == null || !pr.canAct) return const SizedBox.shrink();
+          if (pr == null) return const SizedBox.shrink();
+
+          return PrApprovalActionBar(
+            enabled: _reachedBottom,
+            onLockedTap: _scrollToBottom,
+            // TODO: setelah `isSubmitting` ada di PrDetailState, ganti jadi
+            // state.isSubmitting.
+            isLoading: false,
+            onApprove: () => _onApprove(context, pr),
+            onRevision: () => _onRevision(context, pr),
+            onReject: () => _onReject(context, pr),
           );
         },
       ),
@@ -118,8 +241,9 @@ class _PrDetailView extends StatelessWidget {
         height: 260,
         child: AppErrorView(
           message: state.errorMessage ?? 'Gagal memuat detail PR.',
-          onRetry: () =>
-              context.read<PrDetailBloc>().add(PrDetailRequested(summary.id)),
+          onRetry: () => context
+              .read<PrDetailBloc>()
+              .add(PrDetailRequested(widget.summary.id)),
         ),
       );
     }

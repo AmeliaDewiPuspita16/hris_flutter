@@ -91,6 +91,11 @@ class ApiConfig {
   /// layar Log Absensi (belum disambungkan)
   static const String attendance = '/api/portal/apps/hris/attendance';
 
+  /// Jadwal shift per bulan (`?month=YYYY-MM`): satu entri per tanggal,
+  /// termasuk tanggal yang belum terjadi. Dipakai Log Absensi untuk mengisi
+  /// jadwal di tanggal yang belum punya realisasi kehadiran
+  static const String shift = '/api/portal/apps/hris/shift';
+
   /// HRIS status pengajuan cuti milik user yang login (tab Status di layar
   /// Pengajuan). `data` berupa list, jadi diambil lewat [ApiClient.getList].
   static const String leaveStatus = '/api/portal/apps/hris/leave/status';

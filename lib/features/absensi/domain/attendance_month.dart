@@ -1,6 +1,7 @@
 import '../../../core/utils/json_value.dart';
 import 'attendance_day.dart';
 import 'attendance_summary.dart';
+import 'scheduled_shift.dart';
 
 /// Hasil satu kali muat Log Absensi: seluruh tanggal dalam satu bulan
 /// (jadwal shift + realisasi kehadiran) beserta ringkasannya.
@@ -17,6 +18,7 @@ class AttendanceMonth {
     Map<String, dynamic> data, {
     required DateTime month,
     Map<String, dynamic>? overtime,
+    Map<String, dynamic>? schedule,
   }) {
     final byDate = <String, AttendanceDay>{};
 
@@ -30,15 +32,16 @@ class AttendanceMonth {
 
     final overtimeMinutes = _overtimeMinutesByDate(overtime);
 
+    final shifts = _shiftsByDate(schedule);
+
     final daysInMonth = DateTime(month.year, month.month + 1, 0).day;
     final days = [
       for (var d = 1; d <= daysInMonth; d++)
         _withOvertime(
-          byDate[_key(DateTime(month.year, month.month, d))] ??
-              AttendanceDay(
-                date: DateTime(month.year, month.month, d),
-                status: AttendanceDayStatus.terjadwal,
-              ),
+          _withSchedule(
+              byDate[_key(DateTime(month.year, month.month, d))],
+              DateTime(month.year, month.month, d),
+              shifts[_key(DateTime(month.year, month.month, d))]),
           overtimeMinutes,
         ),
     ];
@@ -107,6 +110,58 @@ class AttendanceMonth {
 
     return day.withOvertime(minutes);
   }
+
+  /// jadwal shift per tanggal dari `days[]` endpoint shift. Item yang
+  /// tanggal atau shift-nya tidak terbaca dilewati.
+  static Map<String, ScheduledShift> _shiftsByDate(
+    Map<String, dynamic>? schedule,
+  ) {
+    final result = <String, ScheduledShift>{};
+
+    final rawDays = schedule?['days'];
+    if (rawDays is! List) return result;
+
+    for (final raw in rawDays.whereType<Map<String, dynamic>>()) {
+      final date = dateOrNull(raw['date']);
+      final rawShift = raw['shift'];
+      if (date == null || rawShift is! Map<String, dynamic>) continue;
+
+      final shift = ScheduledShift.tryFromJson(rawShift);
+      if (shift != null) result[_key(date)] = shift;
+    }
+    return result;
+  }
+
+  /// Menggabungkan jadwal ke satu tanggal.
+  /// - Tanggal tanpa realisasi (null): dibuat "terjadwal" dengan shiftnya,
+  ///   atau "liburHari" bila jadwalnya off
+  /// - Tanggal dengan realisasi: tidak diubah, kecuali shift-nya kosong
+  ///   (jadwal dipakai sebagai cadangan)
+  static AttendanceDay _withSchedule(
+    AttendanceDay? actual,
+    DateTime date,
+    ScheduledShift? shift,
+  ) {
+    if (actual == null) {
+      if (shift == null) {
+        return AttendanceDay(date: date, status: AttendanceDayStatus.terjadwal);
+      }
+      if (shift.isOff) {
+        return AttendanceDay(date: date, status: AttendanceDayStatus.liburHari);
+      }
+      return AttendanceDay(
+          date: date,
+          status: AttendanceDayStatus.terjadwal,
+          shiftCode: shift.code,
+          shiftTimeRange: shift.timeRange);
+    }
+
+    if (actual.shiftCode == null && shift != null && !shift.isOff) {
+      return actual.withShift(code: shift.code, timeRange: shift.timeRange);
+    }
+    return actual;
+  }
+  
 
   static String _key(DateTime d) => '${d.year}-${d.month}-${d.day}';
 
