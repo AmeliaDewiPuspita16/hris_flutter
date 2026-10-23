@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/app_card.dart';
+import '../../../../core/widgets/app_shimmer.dart';
 import '../../domain/announcement.dart';
 import '../../domain/published_announcement.dart';
 import 'section_header.dart';
@@ -63,16 +64,7 @@ class AnnouncementSection extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           if (isLoading)
-            const AppCard(
-              padding: EdgeInsets.symmetric(vertical: 24, horizontal: 16),
-              child: Center(
-                child: SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
-              ),
-            )
+            const _AnnouncementSkeleton()
           else if (hasError)
             _AnnouncementError(message: errorMessage!, onRetry: onRetry)
           else if (announcements.isEmpty)
@@ -343,6 +335,46 @@ class _ThumbnailStrip extends StatelessWidget {
             ),
           ),
       ],
+    );
+  }
+}
+
+/// Skeleton daftar pengumuman: satu kartu berisi dua baris dipisah garis
+/// tipis, meniru [_AnnouncementTile] (badge + tanggal, judul, isi).
+class _AnnouncementSkeleton extends StatelessWidget {
+  const _AnnouncementSkeleton();
+
+  static const _row = Padding(
+    padding: EdgeInsets.symmetric(vertical: 14),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            ShimmerBox(width: 56, height: 16, borderRadius: 6),
+            SizedBox(width: 8),
+            ShimmerLine(width: 70, height: 10),
+          ],
+        ),
+        SizedBox(height: 10),
+        ShimmerLine(width: 200, height: 13),
+        SizedBox(height: 6),
+        ShimmerLine(height: 11),
+      ],
+    ),
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    return const ShimmerCard(
+      padding: EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        children: [
+          _row,
+          Divider(height: 1, thickness: 1, color: AppColors.border),
+          _row,
+        ],
+      ),
     );
   }
 }

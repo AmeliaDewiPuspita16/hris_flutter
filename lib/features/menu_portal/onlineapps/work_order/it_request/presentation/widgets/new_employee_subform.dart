@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../../../../core/theme/app_colors.dart';
 import '../../../../../../../core/theme/app_text_styles.dart';
 import '../../../../../../../core/widgets/app_dropdown.dart';
+import '../../../../../../../core/widgets/app_shimmer.dart';
 import '../../../../../../../core/widgets/app_text_field.dart';
 import '../../../../../../shared/domain/department.dart';
 import '../../domain/new_employee_data.dart';
@@ -186,16 +187,16 @@ class _NewEmployeeSubformState extends State<NewEmployeeSubform> {
     }
 
     if (widget.departments.isEmpty) {
-      return const Row(
-        children: [
-          SizedBox(
-            width: 16,
-            height: 16,
-            child: CircularProgressIndicator(strokeWidth: 2),
-          ),
-          SizedBox(width: 10),
-          Text('Loading departments...', style: AppTextStyles.body),
-        ],
+      // Skeleton dropdown Department: label kecil + kotak setinggi field.
+      return const AppShimmer(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ShimmerLine(width: 80, height: 10),
+            SizedBox(height: 8),
+            ShimmerBox(height: 46, borderRadius: 10),
+          ],
+        ),
       );
     }
 

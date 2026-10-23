@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/widgets/app_shimmer.dart';
 import '../../../../core/widgets/header_title_row.dart';
 import '../../../pengajuan/domain/leave_type.dart';
 import '../../data/leave_approval_repository.dart';
@@ -329,7 +330,7 @@ class _LeaveApprovalViewState extends State<_LeaveApprovalView> {
 
   Widget _buildBody(LeaveApprovalState state) {
     if (state.status == LeaveApprovalLoadStatus.loading && state.items.isEmpty) {
-      return const Center(child: CircularProgressIndicator());
+      return const _ApprovalListSkeleton();
     }
 
     if (state.status == LeaveApprovalLoadStatus.failure && state.items.isEmpty) {
@@ -522,6 +523,61 @@ class _ErrorState extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Skeleton daftar approval cuti selagi data pertama dimuat. Meniru
+/// [LeaveApprovalCard]: nama + departemen + status, tanggal, alasan, lalu
+/// dua tombol keputusan.
+class _ApprovalListSkeleton extends StatelessWidget {
+  const _ApprovalListSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      physics: const NeverScrollableScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+      children: [
+        ShimmerList(
+          itemCount: 4,
+          itemBuilder: (context) => const ShimmerCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          ShimmerLine(width: 130, height: 14),
+                          SizedBox(height: 6),
+                          ShimmerLine(width: 90, height: 10),
+                        ],
+                      ),
+                    ),
+                    SizedBox(width: 8),
+                    ShimmerBox(width: 64, height: 20, borderRadius: 20),
+                  ],
+                ),
+                SizedBox(height: 12),
+                ShimmerLine(width: 150, height: 11),
+                SizedBox(height: 8),
+                ShimmerLine(height: 11),
+                SizedBox(height: 14),
+                Row(
+                  children: [
+                    Expanded(child: ShimmerBox(height: 36, borderRadius: 10)),
+                    SizedBox(width: 10),
+                    Expanded(child: ShimmerBox(height: 36, borderRadius: 10)),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

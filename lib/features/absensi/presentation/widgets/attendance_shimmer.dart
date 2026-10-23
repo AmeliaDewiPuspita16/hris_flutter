@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:shimmer/shimmer.dart';
 
-import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/app_shimmer.dart';
 
 /// Skeleton shimmer untuk isi kartu Log Absensi (ringkasan + kalender)
 /// selagi [AbsensiBloc] masih memuat data bulan terpilih. Bentuknya meniru
@@ -17,9 +16,7 @@ class AttendanceShimmer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Shimmer.fromColors(
-      baseColor: AppColors.border,
-      highlightColor: AppColors.bg,
+    return AppShimmer(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -27,7 +24,7 @@ class AttendanceShimmer extends StatelessWidget {
             children: [
               for (var i = 0; i < 3; i++) ...[
                 if (i > 0) const SizedBox(width: 8),
-                const Expanded(child: _ShimmerBox(height: 54, borderRadius: 12)),
+                const Expanded(child: ShimmerBox(height: 54, borderRadius: 12)),
               ],
             ],
           ),
@@ -38,7 +35,7 @@ class AttendanceShimmer extends StatelessWidget {
                 if (i > 0) const SizedBox(width: 6),
                 const Expanded(
                   child: Center(
-                    child: _ShimmerBox(width: 20, height: 10, borderRadius: 3),
+                    child: ShimmerBox(width: 20, height: 10, borderRadius: 3),
                   ),
                 ),
               ],
@@ -57,30 +54,9 @@ class AttendanceShimmer extends StatelessWidget {
             ),
             itemCount: _weekdayCount * _gridRows,
             itemBuilder: (context, index) =>
-                const _ShimmerBox(borderRadius: 10),
+                const ShimmerBox(borderRadius: 10),
           ),
         ],
-      ),
-    );
-  }
-}
-
-/// Kotak abu-abu polos, dasar bentuk setiap bagian [AttendanceShimmer].
-class _ShimmerBox extends StatelessWidget {
-  const _ShimmerBox({this.width, this.height, this.borderRadius = 6});
-
-  final double? width;
-  final double? height;
-  final double borderRadius;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: width,
-      height: height,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(borderRadius),
       ),
     );
   }

@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../../../../core/theme/app_colors.dart';
 import '../../../../../../../core/theme/app_text_styles.dart';
 import '../../../../../../../core/widgets/app_error_view.dart';
+import '../../../../../../../core/widgets/app_shimmer.dart';
 import '../../../../../../../core/widgets/back_header.dart';
 import '../../../../../../auth/presentation/bloc/auth/auth_bloc.dart';
 import '../../data/est_request_repository.dart';
@@ -369,7 +370,7 @@ class _EstRequestScreenState extends State<EstRequestScreen> {
       },
       builder: (context, state) {
         if (state.isFirstLoad) {
-          return const Center(child: CircularProgressIndicator());
+          return const _ApprovalTabSkeleton();
         }
 
         if (state.status == EstApprovalStatus.failure) {
@@ -446,6 +447,59 @@ class _EstRequestScreenState extends State<EstRequestScreen> {
             if (i > 0) const SizedBox(height: 10),
             EstRequestRow(item: results[i], onTap: () => _onTapItem(results[i])),
           ],
+      ],
+    );
+  }
+}
+
+/// Skeleton tab Approval EST selagi daftar pertama dimuat: baris keterangan
+/// jumlah, lalu kartu yang meniru [EstApproveHodCard] (judul, tipe + tanggal,
+/// deskripsi, dan baris tombol keputusan).
+class _ApprovalTabSkeleton extends StatelessWidget {
+  const _ApprovalTabSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      physics: const NeverScrollableScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+      children: [
+        const Padding(
+          padding: EdgeInsets.fromLTRB(2, 0, 0, 12),
+          child: AppShimmer(child: ShimmerLine(width: 160, height: 12)),
+        ),
+        ShimmerList(
+          itemCount: 4,
+          itemBuilder: (context) => const ShimmerCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ShimmerLine(width: 170, height: 14),
+                SizedBox(height: 10),
+                Row(
+                  children: [
+                    ShimmerBox(width: 64, height: 18, borderRadius: 20),
+                    Spacer(),
+                    ShimmerLine(width: 70, height: 10),
+                  ],
+                ),
+                SizedBox(height: 10),
+                ShimmerLine(height: 11),
+                SizedBox(height: 6),
+                ShimmerLine(width: 190, height: 11),
+                SizedBox(height: 14),
+                Row(
+                  children: [
+                    Spacer(),
+                    ShimmerBox(width: 78, height: 32, borderRadius: 8),
+                    SizedBox(width: 8),
+                    ShimmerBox(width: 78, height: 32, borderRadius: 8),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
       ],
     );
   }

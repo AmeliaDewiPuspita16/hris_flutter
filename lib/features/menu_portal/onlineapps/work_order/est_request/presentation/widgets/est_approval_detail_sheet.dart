@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../../../../core/theme/app_colors.dart';
 import '../../../../../../../core/theme/app_text_styles.dart';
+import '../../../../../../../core/widgets/app_shimmer.dart';
 import '../../domain/est_approval_item.dart';
 import 'est_approve_hod_card.dart';
 
@@ -122,7 +123,7 @@ class EstApprovalDetailSheet extends StatelessWidget {
   }
 }
 
-/// Foto lampiran dari server. Selama memuat tampil spinner, dan kalau
+/// Foto lampiran dari server. Selama memuat tampil shimmer, dan kalau
 /// gagal (URL mati / tanpa jaringan) tampil kotak pengganti — bukan
 /// error merah Flutter.
 class _Photo extends StatelessWidget {
@@ -141,9 +142,12 @@ class _Photo extends StatelessWidget {
         fit: BoxFit.cover,
         loadingBuilder: (context, child, progress) {
           if (progress == null) return child;
-          return const SizedBox(
-            height: 200,
-            child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+          return const AppShimmer(
+            child: ShimmerBox(
+              width: double.infinity,
+              height: 200,
+              borderRadius: 10,
+            ),
           );
         },
         errorBuilder: (context, error, stack) => Container(

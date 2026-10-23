@@ -6,6 +6,7 @@ import '../../../../../../../core/theme/app_text_styles.dart';
 import '../../../../../../../core/utils/date_formatter.dart';
 import '../../../../../../../core/widgets/app_card.dart';
 import '../../../../../../../core/widgets/app_error_view.dart';
+import '../../../../../../../core/widgets/app_shimmer.dart';
 import '../../../../../../../core/widgets/back_header.dart';
 import '../../../../../../../core/widgets/detail_field_tile.dart';
 import '../../data/it_request_repository.dart';
@@ -252,10 +253,7 @@ class _ItRequestDetailView extends StatelessWidget {
 
     final detail = state.detail;
     if (detail == null) {
-      return const SizedBox(
-        height: 260,
-        child: Center(child: CircularProgressIndicator()),
-      );
+      return const ShimmerDetailSections();
     }
 
     final hasSpecified = detail.specifiedApplication != null ||

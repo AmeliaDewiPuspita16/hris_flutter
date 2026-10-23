@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:shimmer/shimmer.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/app_card.dart';
+import '../../../../core/widgets/app_shimmer.dart';
 
 /// Banner ringkasan approval yang masih menunggu, digabung dari 5 modul:
 /// Leave (HRIS), IT Request, EST Work Order, Indent Vehicle, eProcurement —
@@ -199,9 +199,7 @@ class _BannerShimmer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Shimmer.fromColors(
-      baseColor: AppColors.border,
-      highlightColor: AppColors.bg,
+    return AppShimmer(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -209,15 +207,15 @@ class _BannerShimmer extends StatelessWidget {
             padding: const EdgeInsets.only(bottom: 12),
             child: Row(
               children: [
-                const _ShimmerBox(width: 40, height: 40, borderRadius: 20),
+                const ShimmerBox(width: 40, height: 40, borderRadius: 20),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: const [
-                      _ShimmerBox(width: 130, height: 14, borderRadius: 4),
+                      ShimmerBox(width: 130, height: 14, borderRadius: 4),
                       SizedBox(height: 6),
-                      _ShimmerBox(width: 160, height: 11, borderRadius: 4),
+                      ShimmerBox(width: 160, height: 11, borderRadius: 4),
                     ],
                   ),
                 ),
@@ -232,31 +230,10 @@ class _BannerShimmer extends StatelessWidget {
               itemCount: 5,
               separatorBuilder: (context, index) => const SizedBox(width: 8),
               itemBuilder: (context, index) =>
-                  const SizedBox(width: 140, child: _ShimmerBox(height: 54, borderRadius: 12)),
+                  const SizedBox(width: 140, child: ShimmerBox(height: 54, borderRadius: 12)),
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-/// Kotak abu-abu polos, dasar bentuk setiap bagian [_BannerShimmer].
-class _ShimmerBox extends StatelessWidget {
-  const _ShimmerBox({required this.height, this.width, this.borderRadius = 6});
-
-  final double? width;
-  final double height;
-  final double borderRadius;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: width,
-      height: height,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(borderRadius),
       ),
     );
   }
