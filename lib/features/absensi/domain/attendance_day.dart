@@ -114,6 +114,11 @@ class AttendanceDay {
   /// menit keterlambatan terhadap jam mulai shift; 0 bila tepat waktu atau
   /// tidak bisa dihitung (tanpa jam masuk atau jam shift).
   ///
+  /// Jam mulai tidak dikunci ke tanggal record, karena shift malam bisa
+  /// dimulai lewat tengah malam (mis. S3 00:00 - 08:00, check in 23:49 hari
+  /// sebelumnya). Dipakai jam mulai yang paling dekat dengan jam masuk dari
+  /// tiga kandidat: kemarin, hari itu, besok.
+  ///
   /// Jam masuk dipotong ke menit: 08:00:06 dianggap 08:00, belum terlambat.
   static int _lateMinutes(DateTime day, DateTime? checkIn, String? range) {
     if (checkIn == null || range == null) return 0;
@@ -121,13 +126,16 @@ class AttendanceDay {
     final match = RegExp(r'^\s*(\d{1,2}):(\d{2})').firstMatch(range);
     if (match == null) return 0;
 
-    final start = DateTime(
-      day.year,
-      day.month,
-      day.day,
-      int.parse(match.group(1)!),
-      int.parse(match.group(2)!),
-    );
+    final hour = int.parse(match.group(1)!);
+    final minute = int.parse(match.group(2)!);
+
+    // final start = DateTime(
+    //   day.year,
+    //   day.month,
+    //   day.day,
+    //   int.parse(match.group(1)!),
+    //   int.parse(match.group(2)!),
+    // );
     final arrived = DateTime(
       checkIn.year,
       checkIn.month,
@@ -136,7 +144,18 @@ class AttendanceDay {
       checkIn.minute,
     );
 
-    final delay = arrived.difference(start) - lateGrace;
+    DateTime? nearest;
+    for (final offset in const [-1, 0, 1]) {
+      // DateTime menormalkan day+offset yang melewati batas bulan.
+      final start =
+          DateTime(day.year, day.month, day.day + offset, hour, minute);
+      if (nearest == null ||
+          arrived.difference(start).abs() < arrived.difference(nearest).abs()) {
+        nearest = start;
+      }
+    }
+
+    final delay = arrived.difference(nearest!) - lateGrace;
     return delay.isNegative ? 0 : delay.inMinutes;
   }
 
