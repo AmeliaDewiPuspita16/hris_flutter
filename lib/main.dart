@@ -18,9 +18,10 @@ import 'features/auth/presentation/bloc/auth/auth_event.dart';
 import 'features/auth/presentation/widgets/auth_gate.dart';
 import 'features/home/data/announcement_repository.dart';
 import 'features/home/data/approvals_waiting_repository.dart';
-import 'features/menu_portal/onlineapps/procurement/data/procurement_repository.dart';
-import 'features/menu_portal/onlineapps/work_order/it_request/data/it_request_repository.dart';
 import 'features/menu_portal/data_app/indent_vehicle/data/indent_vehicle_repository.dart';
+import 'features/menu_portal/onlineapps/procurement/data/procurement_repository.dart';
+import 'features/menu_portal/onlineapps/work_order/est_request/data/est_request_repository.dart';
+import 'features/menu_portal/onlineapps/work_order/it_request/data/it_request_repository.dart';
 import 'features/overtime_request/data/overtime_repository.dart';
 import 'features/pengajuan/data/pengajuan_repository.dart';
 import 'features/profil/data/profil_repository.dart';
@@ -60,6 +61,7 @@ Future<void> main() async {
       announcementRepository: AnnouncementRepository(apiClient: apiClient),
       procurementRepository: ProcurementRepository(apiClient: apiClient),
       itRequestRepository: ItRequestRepository(apiClient: apiClient),
+      estRequestRepository: EstRequestRepository(apiClient: apiClient),
       indentVehicleRepository: IndentVehicleRepository(apiClient: apiClient),
       profilRepository: ProfilRepository(apiClient: apiClient),
       absensiRepository: AbsensiRepository(apiClient: apiClient),
@@ -86,6 +88,7 @@ class MyApp extends StatelessWidget {
     AnnouncementRepository? announcementRepository,
     ProcurementRepository? procurementRepository,
     ItRequestRepository? itRequestRepository,
+    EstRequestRepository? estRequestRepository,
     IndentVehicleRepository? indentVehicleRepository,
     ProfilRepository? profilRepository,
     AbsensiRepository? absensiRepository,
@@ -100,6 +103,8 @@ class MyApp extends StatelessWidget {
             ProcurementRepository(apiClient: ApiClient()),
         itRequestRepository =
             itRequestRepository ?? ItRequestRepository(apiClient: ApiClient()),
+        estRequestRepository = estRequestRepository ??
+            EstRequestRepository(apiClient: ApiClient()),
         indentVehicleRepository = indentVehicleRepository ??
             IndentVehicleRepository(apiClient: ApiClient()),
         profilRepository =
@@ -118,6 +123,7 @@ class MyApp extends StatelessWidget {
   final AnnouncementRepository announcementRepository;
   final ProcurementRepository procurementRepository;
   final ItRequestRepository itRequestRepository;
+  final EstRequestRepository estRequestRepository;
   final IndentVehicleRepository indentVehicleRepository;
   final ProfilRepository profilRepository;
   final AbsensiRepository absensiRepository;
@@ -138,6 +144,7 @@ class MyApp extends StatelessWidget {
         RepositoryProvider.value(value: announcementRepository),
         RepositoryProvider.value(value: procurementRepository),
         RepositoryProvider.value(value: itRequestRepository),
+        RepositoryProvider.value(value: estRequestRepository),
         RepositoryProvider.value(value: indentVehicleRepository),
         RepositoryProvider.value(value: profilRepository),
         RepositoryProvider.value(value: absensiRepository),
