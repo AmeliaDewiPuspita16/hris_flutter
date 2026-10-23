@@ -524,7 +524,7 @@ class _BerandaScreenState extends State<BerandaScreen> {
   void _openItApproval() {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => const ItRequestScreen(initialTabIndex: 1),
+        builder: (_) => const ItRequestScreen(initialTab: ItRequestTab.approve),
       ),
     );
   }

@@ -120,3 +120,51 @@ Map<String, dynamic> itRequestDetail({
     'rating_comment': ratingComment,
   };
 }
+
+/// Contoh respons `GET /api/portal/apps/it_request/approvals` (antrean HOD),
+/// disalin dari dokumentasi endpoint. `summary.pending` adalah total
+/// antrean, bukan jumlah baris di halaman ini.
+Map<String, dynamic> itRequestApprovalsEnvelope({
+  List<Map<String, dynamic>>? items,
+  int pending = 1,
+}) {
+  final rows = items ?? [itRequestApprovalItem()];
+  return {
+    'data': rows,
+    'summary': {'pending': pending},
+    'meta': {
+      'current_page': 1,
+      'last_page': 1,
+      'per_page': 100,
+      'total': rows.length,
+    },
+  };
+}
+
+Map<String, dynamic> itRequestApprovalItem({
+  int id = 2396,
+  String type = 'IT',
+  String? supportType = 'PERMINTAAN',
+  String description = 'Kebutuhan BD',
+  String requesterName = 'Rachmananda',
+  String requesterDepartment = 'BDD',
+}) {
+  return {
+    'id': id,
+    'type': type,
+    'support_type': supportType,
+    'category': {
+      'code': 'download_req',
+      'label': 'Download/install application'
+    },
+    'description': description,
+    'requester': {
+      'id': 26,
+      'name': requesterName,
+      'department': requesterDepartment
+    },
+    'approval': {'code': 'waiting', 'label': 'Wait Approval HOD'},
+    'status': {'code': 'waiting', 'label': 'On Waiting'},
+    'created_at': '2026-10-20T09:15:00+07:00',
+  };
+}

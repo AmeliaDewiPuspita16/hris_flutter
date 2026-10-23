@@ -1,6 +1,7 @@
 import '../../../../../../core/network/api_client.dart';
 import '../../../../../../core/network/api_config.dart';
 import '../../../../../../core/network/api_exception.dart';
+import '../domain/approve_request_page.dart';
 import '../domain/it_request_detail.dart';
 import '../domain/it_request_page.dart';
 import '../domain/it_request_type.dart';
@@ -183,6 +184,51 @@ class ItRequestRepository {
       );
     }
   }
+
+  /// Antrean HOD: request dari department-nya yang belum diputuskan.
+  ///
+  /// Belum ada infinite scroll di tab Approve Request, jadi [perPage]
+  /// sengaja besar — antrean satu department jarang sebanyak itu, dan
+  /// badge tetap akurat karena memakai `summary.pending`.
+  ///
+  /// [type] (`IT` atau `Media`) menyaring di sisi server lewat `?type=`.
+  ///
+  /// Melempar [ApiException] bila gagal (mis. 403 untuk akun bukan HOD).
+  Future<ApproveRequestPage> fetchApprovals({
+    int perPage = 100,
+    String? type,
+  }) async {
+    final envelope = await _apiClient.getEnvelope(
+      _pathWithQuery('${ApiConfig.itRequest}/approvals', {
+        'per_page': '$perPage',
+        if (type != null) 'type': type,
+      }),
+    );
+
+    return ApproveRequestPage.fromEnvelope(envelope);
+  }
+
+  /// HOD menyetujui request; server lalu mengirim push notification ke
+  /// staf "it media", sama seperti di web.
+  ///
+  /// Respons memuat detail lengkap request, tapi tab Approve Request cukup
+  /// mengeluarkannya dari daftar — jadi isinya tidak dipetakan.
+  ///
+  /// Melempar [ApiException] bila gagal.
+  Future<void> approve(int id) =>
+      _apiClient.postAction('${ApiConfig.itRequest}/$id/approve');
+
+  /// HOD menolak request. [reason] opsional (maks 1000 karakter), disimpan
+  /// server ke `cancel_reason`; kosong berarti tidak dikirim sama sekali.
+  ///
+  /// Melempar [ApiException] bila gagal, termasuk galat validasi.
+  Future<void> reject(int id, {String? reason}) => _apiClient.postAction(
+        '${ApiConfig.itRequest}/$id/reject',
+        body: {
+          if (reason != null && reason.trim().isNotEmpty)
+            'reason': reason.trim(),
+        },
+      );
 
   static String _pathWithQuery(String path, Map<String, String> query) =>
       Uri(path: path, queryParameters: query).toString();

@@ -6,7 +6,7 @@ class ApproveRequestDemoData {
 
   static List<ApproveRequestItem> items() => [
         const ApproveRequestItem(
-          id: 'appr-1',
+          id: 1,
           requesterName: 'Rika Susila Susanti',
           department: 'AML',
           description:
@@ -14,7 +14,7 @@ class ApproveRequestDemoData {
           supportType: 'IT (PERMINTAAN)',
         ),
         const ApproveRequestItem(
-          id: 'appr-2',
+          id: 2,
           requesterName: 'Rika Susila Susanti',
           department: 'AML',
           description:
@@ -22,14 +22,14 @@ class ApproveRequestDemoData {
           supportType: 'IT (PERMINTAAN)',
         ),
         const ApproveRequestItem(
-          id: 'appr-3',
+          id: 3,
           requesterName: 'Andang Eka Putra',
           department: 'AML',
           description: 'Perbaikan validasi ukuran upload dokumen',
           supportType: 'IT (PERBAIKAN)',
         ),
         const ApproveRequestItem(
-          id: 'appr-4',
+          id: 4,
           requesterName: 'Frida Khaerani',
           department: 'HR & GA',
           description:

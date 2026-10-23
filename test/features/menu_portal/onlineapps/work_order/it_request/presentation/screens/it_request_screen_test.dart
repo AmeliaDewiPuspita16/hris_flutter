@@ -88,13 +88,98 @@ void main() {
     expect(find.text('Report'), findsNothing);
   });
 
-  testWidgets('role "it media" juga menampilkan tab Approve Request',
+  testWidgets(
+      'role "it media" tanpa "hod" tidak menampilkan tab Approve Request',
       (tester) async {
     final authBloc = await authBlocWith(tester, ['it media']);
 
     await pumpScreen(tester, authBloc: authBloc);
 
+    expect(find.text('Approve Request'), findsNothing);
+  });
+
+  testWidgets(
+      'role "hod" menampilkan tab Approve Request, tanpa List Request/Report',
+      (tester) async {
+    final authBloc = await authBlocWith(tester, ['hod']);
+
+    await pumpScreen(tester, authBloc: authBloc);
+
+    expect(find.text('Form IT & Media'), findsOneWidget);
     expect(find.text('Approve Request'), findsOneWidget);
+    expect(find.text('List Request'), findsNothing);
+    expect(find.text('Report'), findsNothing);
+  });
+
+  testWidgets('HOD: antrean dari API tampil, badge memakai summary.pending',
+      (tester) async {
+    final authBloc = await authBlocWith(tester, ['hod']);
+    final harness = ItRequestHarness((url, _) => url.path.endsWith('/approvals')
+        ? ok(itRequestApprovalsEnvelope(pending: 7))
+        : ok(itRequestListEnvelope()));
+
+    await tester.pumpWidget(
+      MultiBlocProvider(
+        providers: [BlocProvider<AuthBloc>.value(value: authBloc)],
+        child: RepositoryProvider<ItRequestRepository>.value(
+          value: harness.repository,
+          child: const MaterialApp(
+            home: ItRequestScreen(initialTab: ItRequestTab.approve),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('Rachmananda'), findsOneWidget);
+    expect(find.text('IT (PERMINTAAN)'), findsOneWidget);
+    expect(find.text('7 requests waiting for approval'), findsOneWidget);
+    expect(find.text('7'), findsOneWidget);
+  });
+
+  testWidgets(
+      'HOD: approve mengirim POST lalu mengeluarkan request dari daftar',
+      (tester) async {
+    final authBloc = await authBlocWith(tester, ['hod']);
+    final harness = ItRequestHarness((url, _) {
+      if (url.path.endsWith('/approve')) {
+        return ok({
+          'message': 'Request has been approved.',
+          'data': itRequestDetail()
+        });
+      }
+      if (url.path.endsWith('/approvals')) {
+        return ok(itRequestApprovalsEnvelope());
+      }
+      return ok(itRequestListEnvelope());
+    });
+
+    await tester.pumpWidget(
+      MultiBlocProvider(
+        providers: [BlocProvider<AuthBloc>.value(value: authBloc)],
+        child: RepositoryProvider<ItRequestRepository>.value(
+          value: harness.repository,
+          child: const MaterialApp(
+            home: ItRequestScreen(initialTab: ItRequestTab.approve),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Approve'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(TextButton, 'Approve'));
+    await tester.pumpAndSettle();
+
+    expect(
+      harness.requested.map((u) => u.path),
+      contains('/api/portal/apps/it_request/2396/approve'),
+    );
+    expect(find.text('Request from Rachmananda approved'), findsOneWidget);
+    expect(find.text('No requests waiting for approval'), findsOneWidget);
   });
 
   testWidgets('isItTeam override tetap dihormati tanpa perlu AuthBloc',
@@ -106,11 +191,12 @@ void main() {
       RepositoryProvider<ItRequestRepository>.value(
         value: itRequestHarness.repository,
         child: MaterialApp(
-          home: ItRequestScreen(isItTeam: true),
+          home: ItRequestScreen(isItTeam: true, isHod: false),
         ),
       ),
     );
     await tester.pump();
 
-    expect(find.text('List Request'), findsOneWidget);  });
+    expect(find.text('List Request'), findsOneWidget);
+  });
 }
