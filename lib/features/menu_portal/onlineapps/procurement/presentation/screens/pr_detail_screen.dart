@@ -32,6 +32,13 @@ import '../../../../../../core/widgets/app_error_view.dart';
 /// Membuka URL lampiran. Diambil alih test supaya tidak menyentuh plugin.
 typedef UrlOpener = Future<bool> Function(Uri url);
 
+/// Tahap approval yang tombol aksinya sudah boleh tampil.
+///
+/// Untuk sementara hanya HOD, karena baru tahap itu yang sudah diuji ke
+/// server. Tahap lain ditambahkan di sini kalau sudah siap, mis.
+/// 'peding_review', 'pending_dgm', dll.
+const _actionableStatusCodes = {'pending_hod'};
+
 /// Layar detail satu Purchase Requisition — padanan modal "PR Detail" di web.
 ///
 /// Dibuka sebagai halaman penuh, bukan bottom sheet: isinya panjang (info,
@@ -148,8 +155,7 @@ class _PrDetailViewState extends State<_PrDetailView> {
         );
   }
 
-  Future<void> _onRevision(
-      BuildContext context, PurchaseRequisition pr) async {
+  Future<void> _onRevision(BuildContext context, PurchaseRequisition pr) async {
     final comment = await showCommentSheet(
       context,
       title: 'Return for Revision',
@@ -202,60 +208,69 @@ class _PrDetailViewState extends State<_PrDetailView> {
           );
       },
       child: Scaffold(
-      // Body memanjang sampai ke belakang action bar yang transparan.
-      extendBody: true,
-      backgroundColor: AppColors.bg,
-      appBar: BackHeader(
-        title: widget.summary.prNumber,
-        onBack: () => Navigator.of(context).pop(),
-      ),
-      body: NotificationListener<ScrollMetricsNotification>(
-        // Ukuran konten berubah (data baru datang, PR pendek): cek ulang.
-        onNotification: (_) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (mounted) _checkReachedBottom();
-          });
-          return false;
-        },
-        child: BlocBuilder<PrDetailBloc, PrDetailState>(
+        // Body memanjang sampai ke belakang action bar yang transparan.
+        extendBody: true,
+        backgroundColor: AppColors.bg,
+        appBar: BackHeader(
+          title: widget.summary.prNumber,
+          onBack: () => Navigator.of(context).pop(),
+        ),
+        body: NotificationListener<ScrollMetricsNotification>(
+          // Ukuran konten berubah (data baru datang, PR pendek): cek ulang.
+          onNotification: (_) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) _checkReachedBottom();
+            });
+            return false;
+          },
+          child: BlocBuilder<PrDetailBloc, PrDetailState>(
+            builder: (context, state) {
+              return SingleChildScrollView(
+                controller: _scrollController,
+                // Padding bawah besar supaya konten terakhir tidak tertutup
+                // action bar.
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 160),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Kepala layar memakai rincian begitu datang, dan ringkasan
+                    // dari daftar sebelum itu — status di detail lebih baru.
+                    PrDetailHero(
+                        requisition: state.requisition ?? widget.summary),
+                    const SizedBox(height: 20),
+                    _buildContent(context, state),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
+        bottomNavigationBar: BlocBuilder<PrDetailBloc, PrDetailState>(
           builder: (context, state) {
-            return SingleChildScrollView(
-              controller: _scrollController,
-              // Padding bawah besar supaya konten terakhir tidak tertutup
-              // action bar.
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 160),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // Kepala layar memakai rincian begitu datang, dan ringkasan
-                  // dari daftar sebelum itu — status di detail lebih baru.
-                  PrDetailHero(requisition: state.requisition ?? widget.summary),
-                  const SizedBox(height: 20),
-                  _buildContent(context, state),
-                ],
-              ),
+            final pr = state.requisition;
+
+            /// Tombol hanya untuk PR yang masih berjalan di rantai approval
+            /// (pending_*). Siapa yang berhak memutuskan tetap ditentukan server
+            // if (pr == null) return const SizedBox.shrink();
+            // if (pr == null || !pr.status.isPending) { //(PERUBAHAN 2)
+            //   return const SizedBox.shrink();  //(PERUBAHAN 2)
+            // }  // (PERUBAHAN 2)
+
+            if (pr == null || !_actionableStatusCodes.contains(pr.status.code)) {
+              return const SizedBox.shrink();
+            }
+
+            return PrApprovalActionBar(
+              enabled: _reachedBottom,
+              onLockedTap: _scrollToBottom,
+              isLoading: state.isSubmitting,
+              onApprove: () => _onApprove(context, pr),
+              onRevision: () => _onRevision(context, pr),
+              onReject: () => _onReject(context, pr),
             );
           },
         ),
       ),
-      bottomNavigationBar: BlocBuilder<PrDetailBloc, PrDetailState>(
-        builder: (context, state) {
-          final pr = state.requisition;
-          // TODO: setelah `canAct` ada di model PurchaseRequisition, ganti
-          // jadi: if (pr == null || !pr.canAct) return const SizedBox.shrink();
-          if (pr == null) return const SizedBox.shrink();
-
-          return PrApprovalActionBar(
-            enabled: _reachedBottom,
-            onLockedTap: _scrollToBottom,
-            isLoading: state.isSubmitting,
-            onApprove: () => _onApprove(context, pr),
-            onRevision: () => _onRevision(context, pr),
-            onReject: () => _onReject(context, pr),
-          );
-        },
-      ),
-    ),
     );
   }
 
@@ -334,7 +349,10 @@ class _PrDetailViewState extends State<_PrDetailView> {
       (label: 'Section', value: pr.section),
       (label: 'Requestor', value: pr.requestor),
       if (pr.requiredDate != null)
-        (label: 'Required Date', value: DateFormatter.shortDate(pr.requiredDate!)),
+        (
+          label: 'Required Date',
+          value: DateFormatter.shortDate(pr.requiredDate!)
+        ),
       if (pr.priority != null) (label: 'Priority', value: pr.priority!),
       if (pr.paperRef != null) (label: 'Paper Ref', value: pr.paperRef!),
       if (pr.submittedAt != null)
