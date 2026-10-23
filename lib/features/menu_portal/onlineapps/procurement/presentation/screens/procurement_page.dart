@@ -107,8 +107,8 @@ class _ProcurementViewState extends State<_ProcurementView> {
     });
   }
 
-  void _openDetail(PurchaseRequisitionSummary requisition) {
-    Navigator.of(context).push(
+  Future<void> _openDetail(PurchaseRequisitionSummary requisition) async {
+    await Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => PrDetailScreen(
           summary: requisition,
@@ -116,6 +116,11 @@ class _ProcurementViewState extends State<_ProcurementView> {
         ),
       ),
     );
+
+    // Keputusan di layar detail mengubah status PR (dan angka di chip),
+    // jadi daftar diambil ulang begitu user kembali.
+    if (!mounted) return;
+    context.read<ProcurementListBloc>().add(const ProcurementListRefreshed());
   }
 
   Future<void> _refresh() async {
