@@ -1,6 +1,6 @@
 {
-    "name": "hris_mobile",
-    "short_name": "hris_mobile",
+    "name": "BIIE Portal",
+    "short_name": "BIIE Portal",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

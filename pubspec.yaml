@@ -33,6 +33,7 @@ dev_dependencies:
     sdk: flutter
   flutter_lints: ^6.0.0
   flutter_native_splash: ^2.4.4
+  flutter_launcher_icons: ^0.14.4
 
 # Layar pembuka bawaan sistem, yang tampil sejak ikon diketuk sampai Flutter
 # menggambar frame pertamanya. Tanpa ini, layarnya putih dan pengguna melihat
@@ -51,6 +52,37 @@ flutter_native_splash:
 
   android_12:
     color: "#0E4A34"
+
+# Ikon aplikasi di launcher Android & home screen iOS.
+#
+# Gambar sumbernya di assets/launcher/, BUKAN assets/icons/ — folder itu ikut
+# terbundel ke aplikasi (lihat blok `flutter.assets`), padahal PNG 1024px ini
+# cuma dibutuhkan saat generate.
+#
+# - app_icon.png: ikon lengkap 1024x1024, latar penuh tanpa transparansi
+#   (iOS menolak ikon beralpha). Dipakai iOS dan Android lama.
+# - app_icon_foreground.png: simbolnya saja di latar transparan, 1024x1024,
+#   simbol di dalam ~66% tengah — Android 8+ memotong ikon adaptif jadi
+#   lingkaran/squircle, bagian pinggir bisa terpotong.
+# - app_icon_background.png: gradasi hijaunya saja, lapisan belakang ikon
+#   adaptif — supaya sama dengan app_icon.png, bukan hijau polos.
+#
+# Ketiganya diturunkan dari assets/images/m_logo.jpg (simbol emas dipisahkan
+# dari latarnya, gradasi diukur ulang dari logo itu).
+#
+# Regenerasi setelah mengganti gambar atau mengubah blok ini:
+#   dart run flutter_launcher_icons
+flutter_launcher_icons:
+  image_path: "assets/launcher/app_icon.png"
+  android: "launcher_icon"
+  ios: true
+  remove_alpha_ios: true
+  min_sdk_android: 21
+  adaptive_icon_background: "assets/launcher/app_icon_background.png"
+  adaptive_icon_foreground: "assets/launcher/app_icon_foreground.png"
+  # Jarak ke tepi sudah ada di gambarnya sendiri; inset bawaan plugin (16%)
+  # akan menciutkan simbolnya dua kali.
+  adaptive_icon_foreground_inset: 0
 
 flutter:
   uses-material-design: true

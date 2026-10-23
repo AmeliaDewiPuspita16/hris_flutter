@@ -156,7 +156,7 @@ class MyApp extends StatelessWidget {
         create: (_) =>
             AuthBloc(repository: authRepository)..add(const AuthStarted()),
         child: MaterialApp(
-          title: 'HRIS Mobile',
+          title: 'BIIE Portal',
           debugShowCheckedModeBanner: false,
           locale: const Locale('en'),
           supportedLocales: const [Locale('en')],
