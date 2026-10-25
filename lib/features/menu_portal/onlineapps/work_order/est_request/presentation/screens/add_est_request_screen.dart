@@ -2,21 +2,21 @@ import 'package:flutter/material.dart';
 
 import '../../../../../../../core/theme/app_colors.dart';
 import '../../../../../../../core/theme/app_text_styles.dart';
-import '../../../../../../../core/utils/date_formatter.dart';
 import '../../../../../../../core/widgets/back_header.dart';
 import '../../../../../../../core/widgets/field_label_row.dart';
-import '../../domain/est_request_item.dart';
-import '../../domain/est_request_status.dart';
 import '../../domain/est_request_type.dart';
 import '../widgets/est_photo_upload_field.dart';
 import '../widgets/request_type_selector.dart';
 
 /// Layar "+ Add Request"
 ///
-/// Mengembalikan [EstRequestItem] baru lewat Navigator.pop kalau berhasil
-/// disubmit, atau null kalau ditutup tanpa submit. Belum terhubung ke API —
-/// Nama & departemen requester untuk sementara di-hardcode ke user yang sedang
-/// login belum tersedia di sini — tinggal disambungkan ke sesi auth nanti.
+/// Menutup diri dengan `true` lewat Navigator.pop kalau request tersimpan di
+/// server (pemanggil lalu memuat ulang daftar), atau null kalau ditutup tanpa
+/// submit.
+///
+/// Belum terhubung ke API: submit baru memvalidasi isian lalu memberi tahu
+/// bahwa belum tersambung. Nama & departemen requester tidak perlu dikirim —
+/// server memakai user yang login.
 class AddEstRequestScreen extends StatefulWidget {
   const AddEstRequestScreen({super.key});
 
@@ -55,22 +55,14 @@ class _AddEstRequestScreenState extends State<AddEstRequestScreen> {
       return;
     }
 
-    final now = DateTime.now();
-    final item = EstRequestItem(
-      id: 'est-${now.microsecondsSinceEpoch}',
-      // TODO: ambil dari sesi auth begitu tersambung — lihat catatan role
-      // serupa di ItRequestScreen/auth_gate.dart.
-      requesterName: 'You',
-      department: '-',
-      type: _type!,
-      location: _locationController.text.trim(),
-      description: _descriptionController.text.trim(),
-      date: DateFormatter.shortDate(now),
-      status: EstRequestStatus.onWaiting,
-      imageFileName: _imageFileName,
+    // TODO(est): kirim ke POST /est_work_order (multipart, foto opsional),
+    // lalu `Navigator.pop(true)` agar daftar dimuat ulang. Sampai itu
+    // tersambung, jangan pura-pura berhasil.
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Add Request is not connected to the server yet.'),
+      ),
     );
-
-    Navigator.of(context).pop(item);
   }
 
   InputDecoration _fieldDecoration(String hint) => InputDecoration(

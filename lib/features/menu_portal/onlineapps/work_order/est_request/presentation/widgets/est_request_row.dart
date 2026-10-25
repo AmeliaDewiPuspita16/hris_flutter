@@ -8,17 +8,19 @@ import '../../domain/est_request_item.dart';
 
 /// Satu baris di layar "EST Work Order" — mengemas kolom tabel web (Name,
 /// Dept, Type Request, Location, Description, Date, Status) jadi satu kartu
-/// ringkas.
+/// ringkas. Teks status memakai label dari server.
 class EstRequestRow extends StatelessWidget {
   const EstRequestRow({super.key, required this.item, this.onTap});
 
   final EstRequestItem item;
+
+  /// Null = kartu tidak bisa diketuk (detail belum tersambung).
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     return AppCard(
-      onTap: item.status.isTappable ? onTap : null,
+      onTap: onTap,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -40,7 +42,7 @@ class EstRequestRow extends StatelessWidget {
           Row(
             children: [
               StatusBadge.custom(
-                label: item.type.label,
+                label: item.type,
                 color: AppColors.textMuted,
                 background: AppColors.neutralBg,
               ),
@@ -70,6 +72,19 @@ class EstRequestRow extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: AppTextStyles.caption.copyWith(height: 1.4),
           ),
+          // Alasan penolakan hanya ada pada request yang ditolak HOD.
+          if (item.status.isRejected && item.rejectReason != null) ...[
+            const SizedBox(height: 6),
+            Text(
+              'Reason: ${item.rejectReason}',
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: AppTextStyles.caption.copyWith(
+                color: AppColors.rejected,
+                height: 1.4,
+              ),
+            ),
+          ],
           const SizedBox(height: 6),
           Text(item.date, style: AppTextStyles.caption),
         ],
@@ -78,8 +93,7 @@ class EstRequestRow extends StatelessWidget {
   }
 }
 
-/// Badge status — untuk [EstRequestStatus.maintenancePlan] ditambah ikon
-/// mata supaya jelas bisa diketuk.
+/// Badge status: teks dari label server, warna dari [EstRequestStatus].
 class _StatusPill extends StatelessWidget {
   const _StatusPill({required this.item});
 
@@ -94,23 +108,14 @@ class _StatusPill extends StatelessWidget {
         color: status.background,
         borderRadius: BorderRadius.circular(20),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (status.isTappable) ...[
-            Icon(Icons.visibility_outlined, size: 11, color: status.color),
-            const SizedBox(width: 4),
-          ],
-          Text(
-            status.label,
-            style: TextStyle(
-              fontFamily: AppTextStyles.fontFamily,
-              fontSize: 10,
-              fontWeight: FontWeight.w700,
-              color: status.color,
-            ),
-          ),
-        ],
+      child: Text(
+        status.label,
+        style: TextStyle(
+          fontFamily: AppTextStyles.fontFamily,
+          fontSize: 10,
+          fontWeight: FontWeight.w700,
+          color: status.color,
+        ),
       ),
     );
   }
