@@ -1,12 +1,14 @@
 import '../../../../../../core/network/api_client.dart';
 import '../../../../../../core/network/api_config.dart';
+import '../../../../../../core/network/api_exception.dart';
 import '../domain/est_approval_page.dart';
 import '../domain/est_request_detail.dart';
 import '../domain/est_request_page.dart';
+import '../domain/est_request_type.dart';
 
 /// Akses API EST Work Order. Tidak tahu soal HTTP — itu urusan
-/// `ApiClient`. Saat ini: daftar All Request dan antrean approval HOD;
-/// detail, rating, hapus, submit, dan edit menyusul.
+/// `ApiClient`. Saat ini: daftar All Request, detail, submit (create),
+/// dan antrean approval HOD; rating, hapus, dan edit menyusul.
 class EstRequestRepository {
   EstRequestRepository({required ApiClient apiClient})
       : _apiClient = apiClient;
@@ -52,6 +54,42 @@ class EstRequestRepository {
     final data = await _apiClient.get(ApiConfig.estRequestDetail(id));
 
     return EstRequestDetail.fromJson(data);
+  }
+
+  /// Mengajukan Work Order baru — `POST /est_work_order` (multipart).
+  ///
+  /// Nama & departemen requester tidak dikirim: server memakai user yang
+  /// login. Setelah tersimpan, HOD departemen requester mendapat notifikasi
+  /// push (diurus server). [imagePath] opsional (png/jpg, maks 2 MB).
+  ///
+  /// Bentuk `data` pada respons 201 sama dengan `GET /{id}`, jadi dipetakan
+  /// lewat [EstRequestDetail.fromJson] yang sama.
+  ///
+  /// Melempar [ApiException] bila gagal, termasuk galat validasi (pesan dari
+  /// field pertama yang salah, lihat `ApiClient._firstValidationError`).
+  Future<EstRequestDetail> create({
+    required EstRequestType type,
+    required String location,
+    required String description,
+    String? imagePath,
+  }) async {
+    final data = await _apiClient.postMultipart(
+      ApiConfig.estRequest,
+      fields: {
+        'type': type.label,
+        'location': location.trim(),
+        'description': description.trim(),
+      },
+      files: imagePath == null ? null : {'image': [imagePath]},
+    );
+
+    try {
+      return EstRequestDetail.fromJson(data);
+    } on FormatException {
+      throw const ApiException.server(
+        'The request was submitted, but the server response was not recognized.',
+      );
+    }
   }
 
   /// Antrean HOD: request dari department-nya yang masih `status = 0`
