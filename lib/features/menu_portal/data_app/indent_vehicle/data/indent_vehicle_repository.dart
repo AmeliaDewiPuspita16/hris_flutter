@@ -4,6 +4,7 @@ import '../../../../../core/network/api_config.dart';
 import '../../../../../core/network/api_exception.dart';
 import '../../../../../core/network/page_meta.dart';
 import '../domain/indent_approval_item.dart';
+import '../domain/indent_assigned_item.dart';
 import '../domain/indent_driver.dart';
 import '../domain/indent_json.dart';
 import '../domain/indent_pending_item.dart';
@@ -225,6 +226,51 @@ class IndentVehicleRepository {
     return items;
   }
 
+  /// Perjalanan yang ditugaskan ke driver yang sedang login — endpoint yang
+  /// sama dengan [fetchPendingAssignments] (`GET /api/indent/admin/list`),
+  /// tapi untuk akun `driver` isinya indent yang sudah di-approve HOD dan
+  /// ditugaskan ke dirinya. Penyaringan per driver dilakukan server.
+  ///
+  /// `admin: true` berarti akun `driver-admin`: isinya antrean assignment,
+  /// bukan tugas driver, jadi dibuang.
+  ///
+  /// Melempar [ApiException] bila gagal.
+  Future<List<IndentAssignedItem>> fetchDriverAssignments() async {
+    final envelope = await _apiClient.getEnvelope(ApiConfig.indentAdminList);
+    if (envelope['admin'] == true) return const [];
+
+    final rows = envelope['data'];
+    if (rows is! List) {
+      AppLogger.info('admin/list: data bukan list (${rows.runtimeType})');
+      throw const ApiException.server();
+    }
+
+    final items = <IndentAssignedItem>[];
+    for (final row in rows.whereType<Map<String, dynamic>>()) {
+      if (!_isActiveTrip(row)) continue;
+
+      try {
+        items.add(IndentAssignedItem.fromJson(row));
+      } on FormatException catch (e) {
+        AppLogger.info('Melewati tugas driver yang tidak bisa dibaca: $e');
+      }
+    }
+    return items;
+  }
+
+  /// Pengaman bila server mengirim lebih dari yang dijanjikan dokumentasi:
+  /// buang yang ditolak HOD, yang statusnya bukan "sedang jalan" (1), dan
+  /// yang sudah ditutup driver (`date_close` terisi).
+  static bool _isActiveTrip(Map<String, dynamic> row) {
+    if (indentInt(row['approval_hod']) == 2) return false;
+
+    final status = indentInt(row['status']);
+    if (status != null && status != 1) return false;
+
+    return row['date_close'] == null ||
+        row['date_close'].toString().trim().isEmpty;
+  }
+
   static bool _awaitsAssignment(Map<String, dynamic> row) {
     if (indentInt(row['approval_hod']) == 2) return false;
 
@@ -252,6 +298,22 @@ class IndentVehicleRepository {
         if (driverId != null) 'id_driver': driverId,
         if (driverName != null) 'driver': driverName,
       });
+
+  /// Driver menutup request setelah perjalanan selesai —
+  /// `POST /api/driver_indent/close_request`.
+  ///
+  /// Server hanya mengisi `date_close`; `status` tetap 1. Status baru jadi 3
+  /// setelah requester memberi rating (`store_rating`). Dokumentasi API
+  /// menulis sebaliknya, tapi perilaku server yang berlaku adalah yang ini.
+  ///
+  /// Hanya status HTTP yang diperiksa, seperti [assignByAdmin].
+  Future<void> closeRequest(String id) => _apiClient.postRaw(
+        _closeRequestPath,
+        body: {'id': _idBody(id)},
+      );
+
+  // Boleh dipindah ke ApiConfig bila ingin seragam dengan endpoint lain.
+  static const _closeRequestPath = '/api/driver_indent/close_request';
 
   /// id driver -> nama; kosong bila gagal. Tidak pernah melempar, karena
   /// kegagalan daftar driver tidak boleh membuat seluruh list request gagal.
