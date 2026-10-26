@@ -9,17 +9,19 @@ import '../../../../../../../core/theme/app_text_styles.dart';
 import '../../../../../../../core/widgets/back_header.dart';
 import '../../../../../../../core/widgets/field_label_row.dart';
 import '../../data/est_request_repository.dart';
+import '../../domain/est_request_item.dart';
 import '../../domain/est_request_photo.dart';
 import '../../domain/est_request_type.dart';
 import '../widgets/est_photo_upload_field.dart';
 import '../widgets/request_type_selector.dart';
 
-/// Layar "+ Add Request"
+/// Layar "+ Add Request", sekaligus form edit bila [initialItem] diisi.
 ///
-/// Mengirim ke `POST /api/portal/apps/est_work_order` lewat
-/// [EstRequestRepository] (multipart, foto opsional). Menutup diri dengan
-/// `true` lewat Navigator.pop kalau request tersimpan di server (pemanggil
-/// lalu memuat ulang daftar), atau null kalau ditutup tanpa submit.
+/// Mode tambah mengirim ke `POST /est_work_order`; mode edit ke
+/// `POST /est_work_order/{id}` (multipart, foto opsional) lewat
+/// [EstRequestRepository]. Menutup diri dengan `true` lewat Navigator.pop
+/// kalau tersimpan di server (pemanggil lalu memuat ulang), atau null kalau
+/// ditutup tanpa submit. Pola sama dengan `AddIndentScreen`.
 ///
 /// Galat ditangani dengan setState lokal (bukan bloc) — aksi sekali-jalan
 /// yang terikat ke satu layar, pola sama dengan `AddIndentScreen`. Nama &
@@ -29,9 +31,13 @@ class AddEstRequestScreen extends StatefulWidget {
     super.key,
     this.repository,
     this.pickPhoto,
+    this.initialItem,
   });
 
   final EstRequestRepository? repository;
+
+  /// Null = mode tambah. Diisi = mode edit untuk request ini.
+  final EstRequestItem? initialItem;
 
   /// Null berarti memakai galeri sungguhan lewat image_picker.
   final EstPhotoPicker? pickPhoto;
@@ -53,10 +59,35 @@ class _AddEstRequestScreenState extends State<AddEstRequestScreen> {
   String? _photoError;
   bool _submitting = false;
 
+  /// Mode edit: foto yang sudah ada di server, dan apakah user memintanya
+  /// dihapus. Foto baru ([_photo]) menggantikan foto lama.
+  String? _existingImageUrl;
+  bool _removeExisting = false;
+
+  bool get _isEdit => widget.initialItem != null;
+
+  /// Nama yang ditampilkan di field foto; null = belum ada foto sama sekali.
+  String? get _photoLabel {
+    if (_photo != null) return _photo!.fileName;
+    if (_existingImageUrl != null && !_removeExisting) return 'Current photo';
+    return null;
+  }
+
   @override
   void initState() {
     super.initState();
     _repository = widget.repository ?? context.read<EstRequestRepository>();
+
+    final item = widget.initialItem;
+    if (item != null) {
+      _type = EstRequestType.values.firstWhere(
+        (t) => t.label == item.type,
+        orElse: () => EstRequestType.repair,
+      );
+      _locationController.text = item.location;
+      _descriptionController.text = item.description;
+      _existingImageUrl = item.imageUrl;
+    }
   }
 
   @override
@@ -96,14 +127,16 @@ class _AddEstRequestScreenState extends State<AddEstRequestScreen> {
     );
   }
 
-  /// Ketuk saat belum ada foto: buka galeri. Ketuk saat sudah ada: hapus.
+  /// Ketuk saat belum ada foto: buka galeri. Ketuk saat sudah ada: hapus
+  /// (di mode edit, foto lama di server ikut ditandai untuk dihapus).
   Future<void> _onPhotoTap() async {
     if (_submitting) return;
 
-    if (_photo != null) {
+    if (_photoLabel != null) {
       setState(() {
         _photo = null;
         _photoError = null;
+        if (_existingImageUrl != null) _removeExisting = true;
       });
       return;
     }
@@ -125,6 +158,8 @@ class _AddEstRequestScreenState extends State<AddEstRequestScreen> {
     setState(() {
       _photoError = error;
       _photo = error == null ? picked : null;
+      // Foto baru menggantikan foto lama, jadi tidak perlu `remove_image`.
+      if (_photo != null) _removeExisting = false;
     });
   }
 
@@ -139,12 +174,23 @@ class _AddEstRequestScreenState extends State<AddEstRequestScreen> {
 
     setState(() => _submitting = true);
     try {
-      await _repository.create(
-        type: _type!,
-        location: _locationController.text,
-        description: _descriptionController.text,
-        imagePath: _photo?.path,
-      );
+      if (_isEdit) {
+        await _repository.update(
+          widget.initialItem!.id,
+          type: _type!,
+          location: _locationController.text,
+          description: _descriptionController.text,
+          imagePath: _photo?.path,
+          removeImage: _removeExisting,
+        );
+      } else {
+        await _repository.create(
+          type: _type!,
+          location: _locationController.text,
+          description: _descriptionController.text,
+          imagePath: _photo?.path,
+        );
+      }
       if (!mounted) return;
       Navigator.of(context).pop(true);
     } on ApiException catch (e) {
@@ -152,7 +198,11 @@ class _AddEstRequestScreenState extends State<AddEstRequestScreen> {
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text(e.message)));
     } catch (e, stack) {
-      AppLogger.error('Submit EST request gagal karena galat tak terduga', e, stack);
+      AppLogger.error(
+        '${_isEdit ? 'Edit' : 'Submit'} EST request gagal karena galat tak terduga',
+        e,
+        stack,
+      );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -189,7 +239,7 @@ class _AddEstRequestScreenState extends State<AddEstRequestScreen> {
     return Scaffold(
       backgroundColor: AppColors.bg,
       appBar: BackHeader(
-        title: 'Add Request',
+        title: _isEdit ? 'Edit Request' : 'Add Request',
         onBack: () => Navigator.of(context).pop(),
       ),
       body: ListView(
@@ -238,7 +288,7 @@ class _AddEstRequestScreenState extends State<AddEstRequestScreen> {
           const SizedBox(height: 18),
           const FieldLabelRow(label: 'Photo'),
           EstPhotoUploadField(
-            fileName: _photo?.fileName,
+            fileName: _photoLabel,
             onTap: _onPhotoTap,
           ),
           if (_photoError != null) ...[
@@ -269,7 +319,7 @@ class _AddEstRequestScreenState extends State<AddEstRequestScreen> {
                       ),
                     )
                   : Text(
-                      'Submit request',
+                      _isEdit ? 'Save changes' : 'Submit request',
                       style: AppTextStyles.buttonText.copyWith(color: Colors.white),
                     ),
             ),

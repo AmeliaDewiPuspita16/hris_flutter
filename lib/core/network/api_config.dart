@@ -75,6 +75,11 @@ class ApiConfig {
   static String estRequestApprove(int id) => '$estRequest/$id/approve';
   static String estRequestReject(int id) => '$estRequest/$id/reject';
 
+  /// Verifikasi + rating oleh requester untuk WO yang sudah selesai
+  /// (`can_rate = true`). Body: `star` (1-5) dan `message` (wajib, maks 1000
+  /// karakter). Setelah ini status WO menjadi `finished`.
+  static String estRequestRating(int id) => '$estRequest/$id/rating';
+
   /// Daftar driver untuk dropdown Asign Vehicle (role admin driver).
   /// Responnya array polos, bukan amplop {data: ...}
   static const String indentDrivers = '/api/indent/admin/list_driver';

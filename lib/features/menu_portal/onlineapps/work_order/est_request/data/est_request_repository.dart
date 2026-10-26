@@ -7,8 +7,8 @@ import '../domain/est_request_page.dart';
 import '../domain/est_request_type.dart';
 
 /// Akses API EST Work Order. Tidak tahu soal HTTP — itu urusan
-/// `ApiClient`. Saat ini: daftar All Request, detail, submit (create),
-/// dan antrean approval HOD; rating, hapus, dan edit menyusul.
+/// `ApiClient`. Saat ini: daftar All Request, detail, submit (create), edit,
+/// hapus, rating, dan antrean approval HOD.
 class EstRequestRepository {
   EstRequestRepository({required ApiClient apiClient})
       : _apiClient = apiClient;
@@ -91,6 +91,71 @@ class EstRequestRepository {
       );
     }
   }
+
+  /// Mengedit Work Order milik sendiri — `POST /est_work_order/{id}`
+  /// (multipart, bukan PUT, karena bisa mengganti foto).
+  ///
+  /// Hanya bisa saat status masih `waiting_hod` (`can_edit = true`); server
+  /// membalas 403/422 di luar itu. Tiga kemungkinan untuk foto:
+  /// - [imagePath] diisi: foto lama diganti.
+  /// - [removeImage] `true` (tanpa [imagePath]): foto lama dihapus.
+  /// - keduanya kosong: foto lama tetap dipakai.
+  ///
+  /// `data` pada respons 200 berisi detail lengkap, dipetakan lewat
+  /// [EstRequestDetail.fromJson]. Melempar [ApiException] bila gagal.
+  Future<EstRequestDetail> update(
+    int id, {
+    required EstRequestType type,
+    required String location,
+    required String description,
+    String? imagePath,
+    bool removeImage = false,
+  }) async {
+    final data = await _apiClient.postMultipart(
+      ApiConfig.estRequestDetail(id),
+      fields: {
+        'type': type.label,
+        'location': location.trim(),
+        'description': description.trim(),
+        if (imagePath == null && removeImage) 'remove_image': '1',
+      },
+      files: imagePath == null ? null : {'image': [imagePath]},
+    );
+
+    try {
+      return EstRequestDetail.fromJson(data);
+    } on FormatException {
+      throw const ApiException.server(
+        'The request was updated, but the server response was not recognized.',
+      );
+    }
+  }
+
+  /// Menghapus Work Order milik sendiri — `DELETE /est_work_order/{id}`.
+  /// Foto WO ikut terhapus di server. Hanya bisa saat `can_delete = true`.
+  ///
+  /// Melempar [ApiException] bila gagal (403 bukan pemilik, 422 sudah
+  /// diproses HOD).
+  Future<void> delete(int id) =>
+      _apiClient.delete(ApiConfig.estRequestDetail(id));
+
+  /// Verifikasi + rating oleh requester — `POST /est_work_order/{id}/rating`.
+  ///
+  /// Menutup WO dari sisi requester (sama dengan tombol "Verify Request" di
+  /// web); status berubah menjadi `finished`. [star] 1-5, [message] wajib
+  /// (maks 1000 karakter). Server membalas 422 bila user bukan pemilik, WO
+  /// belum selesai, atau sudah pernah dirating.
+  ///
+  /// Melempar [ApiException] bila gagal, termasuk galat validasi.
+  Future<void> submitRating(
+    int id, {
+    required int star,
+    required String message,
+  }) =>
+      _apiClient.postAction(
+        ApiConfig.estRequestRating(id),
+        body: {'star': star, 'message': message.trim()},
+      );
 
   /// Antrean HOD: request dari department-nya yang masih `status = 0`
   /// (menunggu HOD).

@@ -61,7 +61,11 @@ class EstRequestDetail {
   static String? _feedbackText(Object? raw) {
     if (raw is String) return textOrNull(raw);
     if (raw is Map<String, dynamic>) {
-      return textOrNull(raw['feedback'] ?? raw['note'] ?? raw['comment']);
+      // Dokumentasi API: { rating, message, date }; kunci lain dipertahankan
+      // untuk jaga-jaga.
+      return textOrNull(
+        raw['message'] ?? raw['feedback'] ?? raw['note'] ?? raw['comment'],
+      );
     }
     return null;
   }
