@@ -35,8 +35,8 @@ import 'est_request_detail_screen.dart';
 ///   Form IT & Media / Approve Request di `ItRequestScreen`.
 ///
 /// Yang SUDAH tersambung ke API: daftar All Request (infinite scroll),
-/// layar detail, tab Approve HOD. Yang belum: rating, hapus, tambah, dan
-/// edit — dikerjakan bertahap.
+/// layar detail, tab Approve HOD, tambah, edit, dan hapus. Yang belum:
+/// rating — dikerjakan bertahap.
 class EstRequestScreen extends StatefulWidget {
   const EstRequestScreen({
     super.key,
@@ -119,17 +119,22 @@ class _EstRequestScreenState extends State<EstRequestScreen> {
 
   /// Buka layar detail. Semua baris bisa diketuk: semua user boleh melihat
   /// WO siapa pun, dan flag `can_*` di detail yang menentukan aksinya.
-  void _openDetail(EstRequestItem item) {
-    Navigator.of(context).push(
+  ///
+  /// Layar detail menutup diri dengan `true` bila WO diedit atau dihapus di
+  /// sana, jadi daftar dimuat ulang supaya barisnya ikut berubah.
+  Future<void> _openDetail(EstRequestItem item) async {
+    final changed = await Navigator.of(context).push<bool>(
       MaterialPageRoute(builder: (_) => EstRequestDetailScreen(item: item)),
     );
+
+    if (changed != true || !mounted) return;
+
+    _listBloc.add(const EstRequestListRefreshed());
   }
 
   /// Buka form Add Request. Bila form menutup diri dengan `true` (request
   /// tersimpan di server), daftar dimuat ulang supaya request baru muncul
   /// paling atas.
-  ///
-  /// TODO(est): form belum terhubung ke API, jadi belum pernah `true`.
   Future<void> _addRequest() async {
     final saved = await Navigator.of(context).push<bool>(
       MaterialPageRoute(builder: (_) => const AddEstRequestScreen()),
