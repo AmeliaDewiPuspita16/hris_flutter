@@ -29,18 +29,21 @@ class NotificationRoutes {
         NotificationLink.moduleEstWorkOrder =>
           EstRequestScreen(initialTabIndex: link.isApprover ? 1 : 0),
         NotificationLink.moduleIndentVehicle =>
-          IndentVehicleScreen(initialTabIndex: _indentTab(link)),
+          IndentVehicleScreen(initialTab: _indentTab(link)),
         NotificationLink.moduleEprocurement => ProcurementPage(
             initialStatusCode: link.isApprover ? link.filter : null,
           ),
         _ => null,
       };
 
-  /// 0 Pending Vehicle Assignment (admin driver), 1 Supervisor Approval
-  /// (HOD), 2 List of User Requests (pemohon dan driver).
-  static int _indentTab(NotificationLink link) {
-    if (link.isApprover) return 1;
-    if (link.isHandler && link.type == 'new_task') return 0;
-    return 2;
+  /// Pending Vehicle Assignment untuk admin driver, Supervisor Approval
+  /// untuk HOD, List of User Requests untuk pemohon dan driver. Kalau akun
+  /// tidak berhak atas tabnya, layar jatuh ke List of User Requests.
+  static IndentTab _indentTab(NotificationLink link) {
+    if (link.isApprover) return IndentTab.supervisorApproval;
+    if (link.isHandler && link.type == 'new_task') {
+      return IndentTab.pendingAssignment;
+    }
+    return IndentTab.requests;
   }
 }

@@ -51,7 +51,8 @@ void main() {
           filter: 'pending_hod',
         );
 
-    test('IT Request: approver ke tab Approve, handler ke List, pemohon ke Form',
+    test(
+        'IT Request: approver ke tab Approve, handler ke List, pemohon ke Form',
         () {
       ItRequestTab tabFor(String audience) =>
           (NotificationRoutes.screenFor(link('it_request', audience))
@@ -73,15 +74,17 @@ void main() {
 
     test('Indent Vehicle: HOD, admin driver, dan driver ke tab masing-masing',
         () {
-      int tabFor(String audience, String type) => (NotificationRoutes.screenFor(
+      IndentTab tabFor(String audience, String type) =>
+          (NotificationRoutes.screenFor(
             link('indent_vehicle', audience, type: type),
           ) as IndentVehicleScreen)
-              .initialTabIndex;
+              .initialTab;
 
-      expect(tabFor('approver', 'approval_needed'), 1);
-      expect(tabFor('handler', 'new_task'), 0);
-      expect(tabFor('handler', 'trip_assigned'), 2);
-      expect(tabFor('requester', 'approved'), 2);
+      expect(
+          tabFor('approver', 'approval_needed'), IndentTab.supervisorApproval);
+      expect(tabFor('handler', 'new_task'), IndentTab.pendingAssignment);
+      expect(tabFor('handler', 'trip_assigned'), IndentTab.requests);
+      expect(tabFor('requester', 'approved'), IndentTab.requests);
     });
 
     test('eProcurement: approver langsung ke chip level-nya', () {
