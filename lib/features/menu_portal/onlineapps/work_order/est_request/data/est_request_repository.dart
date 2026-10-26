@@ -1,10 +1,12 @@
 import '../../../../../../core/network/api_client.dart';
 import '../../../../../../core/network/api_config.dart';
 import '../domain/est_approval_page.dart';
+import '../domain/est_request_detail.dart';
 import '../domain/est_request_page.dart';
 
 /// Akses API EST Work Order. Tidak tahu soal HTTP — itu urusan
-/// `ApiClient`. Saat ini: daftar All Request dan antrean approval HOD.
+/// `ApiClient`. Saat ini: daftar All Request dan antrean approval HOD;
+/// detail, rating, hapus, submit, dan edit menyusul.
 class EstRequestRepository {
   EstRequestRepository({required ApiClient apiClient})
       : _apiClient = apiClient;
@@ -35,10 +37,21 @@ class EstRequestRepository {
         if (mine) 'mine': '1',
         if (status != null) 'status': status,
         if (type != null) 'type': type,
-      })
+      }),
     );
 
     return EstRequestPage.fromEnvelope(envelope);
+  }
+
+  /// Detail satu Work Order — `GET /est_work_order/{id}`.
+  ///
+  /// Semua user boleh membuka WO siapa pun (mengikuti daftar di web); yang
+  /// membedakan hanya flag `can_*` di hasilnya. Melempar `ApiException`
+  /// bila gagal, mis. 404 untuk id yang tidak ada.
+  Future<EstRequestDetail> fetchDetail(int id) async {
+    final data = await _apiClient.get(ApiConfig.estRequestDetail(id));
+
+    return EstRequestDetail.fromJson(data);
   }
 
   /// Antrean HOD: request dari department-nya yang masih `status = 0`
