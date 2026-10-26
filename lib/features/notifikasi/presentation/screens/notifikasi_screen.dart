@@ -6,6 +6,8 @@ import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/widgets/back_header.dart';
 import '../../domain/app_notification.dart';
 import '../../domain/notification_filter.dart';
+import '../../domain/notification_category.dart';
+import '../widgets/notification_action_type_filter.dart';
 import '../widgets/notification_filter_tabs.dart';
 import '../widgets/notification_tile.dart';
 
@@ -74,6 +76,9 @@ class _NotifikasiScreenState extends State<NotifikasiScreen> {
   late List<AppNotification> _items = List.of(widget.notifications);
   late NotificationFilter _filter = widget.initialFilter;
 
+  /// Sub-filter jenis tindakan di tab Action. Null = semua jenis.
+  NotificationCategory? _actionCategory;
+
   @override
   void didUpdateWidget(NotifikasiScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -82,6 +87,7 @@ class _NotifikasiScreenState extends State<NotifikasiScreen> {
     }
     if (oldWidget.filterRequestToken != widget.filterRequestToken) {
       _filter = widget.initialFilter;
+      _actionCategory = null;
     }
   }
 
@@ -126,9 +132,30 @@ class _NotifikasiScreenState extends State<NotifikasiScreen> {
           filter: _items.where((n) => filter.matches(n) && !n.isRead).length,
       };
 
+  /// Kategori yang ada di daftar Action beserta jumlahnya, urutan kemunculan.
+  Map<NotificationCategory, int> get _actionOptions {
+    final counts = <NotificationCategory, int>{};
+    for (final item in _items.where(NotificationFilter.action.matches)) {
+      counts.update(item.category, (n) => n + 1, ifAbsent: () => 1);
+    }
+    return counts;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final visible = _items.where(_filter.matches).toList();
+    final actionOptions = _actionOptions;
+    // Dropdown cuma berguna kalau ada lebih dari satu jenis. Pilihan yang
+    // jenisnya sudah habis (semua sudah diputuskan) dianggap "All types".
+    final showTypeFilter =
+        _filter == NotificationFilter.action && actionOptions.length > 1;
+    final category = showTypeFilter && actionOptions.containsKey(_actionCategory)
+        ? _actionCategory
+        : null;
+
+    final visible = _items
+        .where(_filter.matches)
+        .where((n) => category == null || n.category == category)
+        .toList();
     final pending = visible.where((n) => n.needsAction).toList();
     final rest = visible.where((n) => !n.needsAction).toList();
 
@@ -153,6 +180,12 @@ class _NotifikasiScreenState extends State<NotifikasiScreen> {
             counts: _unreadCounts,
             onSelected: (filter) => setState(() => _filter = filter),
           ),
+          if (showTypeFilter)
+            NotificationActionTypeFilter(
+              options: actionOptions,
+              selected: category,
+              onSelected: (value) => setState(() => _actionCategory = value),
+            ),
           Expanded(
             child: _withRefresh(
               visible.isEmpty
