@@ -1,55 +1,77 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../../core/theme/app_colors.dart';
+import '../../../../../../core/utils/json_value.dart';
 
+/// Status satu Work Order, dibaca dari objek `status` di respons server:
 ///
-/// 1. [onWaiting] — baru diajukan, tim EST belum menindaklanjuti.
-/// 2. [waitApprovalHosd] — tim EST sudah menyusun rencana kerja, menunggu
-///    Head of Dept menyetujuinya. Belum bisa dibuka detailnya.
-/// 3. [maintenancePlan] — rencana kerja sudah disetujui & tampil ke
-///    requester (tombol hijau "Maintenance Plan" di web membuka rincian
-///    working method & material/tools).
-/// 4. [waitVerifyUser] — pekerjaan sudah selesai dikerjakan, menunggu
-///    requester memverifikasi lewat laporan lengkap ("Show Details" di web,
-///    di mobile jadi layar detail native — lihat EstRequestDetailScreen).
-/// 5. [completed] — requester sudah memverifikasi. Sama seperti IT Request,
-///    requester wajib kasih rating 1–5 bintang dulu sebelum bisa mengajukan
-///    request baru (lihat [EstRequestFeedbackBanner]).
-enum EstRequestStatus {
-  onWaiting,
-  waitApprovalHod,
-  maintenancePlan,
-  waitVerifyUser,
-  completed;
+/// ```json
+/// "status": { "code": "progress", "label": "On Progress" }
+/// ```
+///
+/// | code          | arti                                              |
+/// |---------------|---------------------------------------------------|
+/// | `waiting_hod` | menunggu HOD menyetujui request-nya               |
+/// | `waiting`     | HOD sudah setuju, tim EST belum mengerjakan       |
+/// | `progress`    | sedang dikerjakan                                 |
+/// | `finished`    | selesai                                           |
+/// | `rejected`    | ditolak HOD                                       |
+///
+/// Sengaja BUKAN enum: [code] dan [label] disimpan apa adanya dari server.
+/// Teks yang tampil selalu [label] dari server, dan hanya warna badge yang
+/// ditentukan di sini. Kalau server menambah kode baru, aplikasi tidak error
+/// — badge-nya memakai warna netral sampai kita menambahkan warnanya.
+class EstRequestStatus {
+  const EstRequestStatus({required this.code, required this.label});
 
-  String get label => switch (this) {
-        EstRequestStatus.onWaiting => 'On Waiting',
-        EstRequestStatus.waitApprovalHod => 'Wait Approval HOD',
-        EstRequestStatus.maintenancePlan => 'Maintenance Plan',
-        EstRequestStatus.waitVerifyUser => 'Wait Verify User',
-        EstRequestStatus.completed => 'Done',
+  static const codeWaitingHod = 'waiting_hod';
+  static const codeWaiting = 'waiting';
+  static const codeProgress = 'progress';
+  static const codeFinished = 'finished';
+  static const codeRejected = 'rejected';
+
+  final String code;
+  final String label;
+
+  /// Bila `status` hilang atau bentuknya tidak dikenal, hasilnya status
+  /// kosong berlabel `-` supaya satu baris cacat tidak merusak seluruh daftar.
+  factory EstRequestStatus.fromJson(Object? raw) {
+    if (raw is! Map<String, dynamic>) {
+      return const EstRequestStatus(code: '', label: '-');
+    }
+
+    final code = textOrNull(raw['code']) ?? '';
+    return EstRequestStatus(
+      code: code,
+      label: textOrNull(raw['label']) ?? (code.isEmpty ? '-' : code),
+    );
+  }
+
+  bool get isWaitingHod => code == codeWaitingHod;
+  bool get isRejected => code == codeRejected;
+
+  Color get color => switch (code) {
+        codeWaitingHod => AppColors.accent,
+        codeWaiting => AppColors.pending,
+        codeProgress => AppColors.inProgress,
+        codeFinished => AppColors.primaryMid,
+        codeRejected => AppColors.rejected,
+        _ => AppColors.textMuted,
       };
 
-  Color get color => switch (this) {
-        EstRequestStatus.onWaiting => AppColors.pending,
-        EstRequestStatus.waitApprovalHod => AppColors.accent,
-        EstRequestStatus.maintenancePlan => AppColors.present,
-        EstRequestStatus.waitVerifyUser => AppColors.rejected,
-        EstRequestStatus.completed => AppColors.primaryMid,
+  Color get background => switch (code) {
+        codeWaitingHod => AppColors.accentBg,
+        codeWaiting => AppColors.pendingBg,
+        codeProgress => AppColors.inProgressBg,
+        codeFinished => AppColors.primaryLight,
+        codeRejected => AppColors.rejectedBg,
+        _ => AppColors.neutralBg,
       };
 
-  Color get background => switch (this) {
-        EstRequestStatus.onWaiting => AppColors.pendingBg,
-        EstRequestStatus.waitApprovalHod => AppColors.accentBg,
-        EstRequestStatus.maintenancePlan => AppColors.presentBg,
-        EstRequestStatus.waitVerifyUser => AppColors.rejectedBg,
-        EstRequestStatus.completed => AppColors.primaryLight,
-      };
+  @override
+  bool operator ==(Object other) =>
+      other is EstRequestStatus && other.code == code && other.label == label;
 
-  /// True kalau baris ini bisa diketuk untuk membuka detail — [onWaiting]
-  /// dan [waitApprovalHosd] belum punya apa-apa untuk ditampilkan.
-  bool get isTappable =>
-      this == EstRequestStatus.maintenancePlan ||
-      this == EstRequestStatus.waitVerifyUser ||
-      this == EstRequestStatus.completed;
+  @override
+  int get hashCode => Object.hash(code, label);
 }

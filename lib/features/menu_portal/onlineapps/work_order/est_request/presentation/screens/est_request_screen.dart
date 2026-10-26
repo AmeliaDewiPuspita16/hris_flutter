@@ -4,39 +4,38 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../../../../core/theme/app_colors.dart';
 import '../../../../../../../core/theme/app_text_styles.dart';
 import '../../../../../../../core/widgets/app_error_view.dart';
+import '../../../../../../../core/widgets/app_shimmer.dart';
 import '../../../../../../../core/widgets/back_header.dart';
 import '../../../../../../auth/presentation/bloc/auth/auth_bloc.dart';
 import '../../data/est_request_repository.dart';
 import '../../domain/est_approval_item.dart';
-import '../../domain/est_request_demo_data.dart';
 import '../../domain/est_request_item.dart';
-import '../../domain/est_request_status.dart';
-import '../../domain/est_work_detail.dart';
 import '../bloc/approval/est_approval_bloc.dart';
 import '../bloc/approval/est_approval_event.dart';
 import '../bloc/approval/est_approval_state.dart';
+import '../bloc/list/est_request_list_bloc.dart';
+import '../bloc/list/est_request_list_event.dart';
+import '../bloc/list/est_request_list_state.dart';
 import '../widgets/est_approval_detail_sheet.dart';
 import '../widgets/est_approve_hod_tab.dart';
 import '../widgets/est_decision_dialog.dart';
-import '../widgets/est_request_feedback_banner.dart';
-import '../widgets/est_request_feedback_sheet.dart';
 import '../widgets/est_request_row.dart';
 import '../widgets/est_request_tab_bar.dart';
-import '../widgets/maintenance_plan_sheet.dart';
 import 'add_est_request_screen.dart';
-import 'est_request_detail_screen.dart';
 
-/// Layar "EST Work Order" — daftar SEMUA request (bukan cuma milik sendiri), plus
-/// tombol Add Request yang di-gate oleh feedback yang
-/// belum diselesaikan.
+/// Layar "EST Work Order" — daftar SEMUA request (bukan cuma milik sendiri),
+/// dari API, plus tombol Add Request.
 ///
 /// Pembagian requester vs HOD mengikuti role `hod` user yang login (lewat
 /// `AuthBloc`), sama seperti `ItRequestScreen`.
 ///
-/// - Requester biasa (`isHod: false`): cuma daftar All Request, tanpa tab —
-///   perilakunya persis seperti sebelum tab HOD ditambahkan.
+/// - Requester biasa (`isHod: false`): cuma daftar All Request, tanpa tab.
 /// - HOD (`isHod: true`): tab All Request / Approve HOD, mengikuti pola
 ///   Form IT & Media / Approve Request di `ItRequestScreen`.
+///
+/// Yang SUDAH tersambung ke API: daftar All Request (infinite scroll), tab
+/// Approve HOD. Yang belum: buka detail, rating, hapus, tambah, dan edit —
+/// dikerjakan bertahap.
 class EstRequestScreen extends StatefulWidget {
   const EstRequestScreen({
     super.key,
@@ -60,7 +59,11 @@ class EstRequestScreen extends StatefulWidget {
 class _EstRequestScreenState extends State<EstRequestScreen> {
   late int _tabIndex = widget.initialTabIndex;
 
-  List<EstRequestItem> _items = EstRequestDemoData.items();
+  // Daftar All Request dipegang bloc (data dari API). Dibuat di sini, bukan
+  // lewat BlocProvider, supaya handler di State ini bisa memakainya langsung.
+  late final EstRequestListBloc _listBloc;
+  final _scrollController = ScrollController();
+
   final _searchController = TextEditingController();
   String _query = '';
 
@@ -77,30 +80,35 @@ class _EstRequestScreenState extends State<EstRequestScreen> {
         : null;
     _isHod = widget.isHod ?? user?.hasRole('hod') ?? false;
 
-    _approvalBloc = EstApprovalBloc(
-      repository: context.read<EstRequestRepository>(),
-    );
+    final repository = context.read<EstRequestRepository>();
+
+    _listBloc = EstRequestListBloc(repository: repository)
+      ..add(const EstRequestListStarted());
+    _scrollController.addListener(_onScroll);
+
+    _approvalBloc = EstApprovalBloc(repository: repository);
     if (_isHod) _approvalBloc.add(const EstApprovalStarted());
   }
 
   @override
   void dispose() {
+    _listBloc.close();
     _approvalBloc.close();
+    _scrollController
+      ..removeListener(_onScroll)
+      ..dispose();
     _searchController.dispose();
     super.dispose();
   }
 
-  List<EstRequestItem> get _awaitingFeedback =>
-      _items.where((r) => r.awaitingFeedback).toList();
-
-  bool get _canAddRequest => _awaitingFeedback.isEmpty;
-
-  List<EstRequestItem> get _filtered {
-    final visible = _items.where((r) => !r.awaitingFeedback);
-    if (_query.trim().isEmpty) return visible.toList();
+  /// Pencarian hanya menyaring request yang SUDAH dimuat (server belum
+  /// punya parameter pencarian). Request di halaman yang belum digulir
+  /// belum ikut tersaring.
+  List<EstRequestItem> _filter(List<EstRequestItem> items) {
+    if (_query.trim().isEmpty) return items;
 
     final q = _query.trim().toLowerCase();
-    return visible.where((r) {
+    return items.where((r) {
       return r.requesterName.toLowerCase().contains(q) ||
           r.department.toLowerCase().contains(q) ||
           r.location.toLowerCase().contains(q) ||
@@ -108,98 +116,28 @@ class _EstRequestScreenState extends State<EstRequestScreen> {
     }).toList();
   }
 
-  Future<void> _giveFeedback(EstRequestItem item) async {
-    final rating = await showModalBottomSheet<int>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => EstRequestFeedbackSheet(description: item.description),
-    );
-
-    if (rating == null || !mounted) return;
-
-    setState(() {
-      _items = [
-        for (final r in _items)
-          if (r.id == item.id) r.copyWith(awaitingFeedback: false) else r,
-      ];
-    });
-
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Thank you for your feedback!')),
-    );
-  }
-
+  /// Buka form Add Request. Bila form menutup diri dengan `true` (request
+  /// tersimpan di server), daftar dimuat ulang supaya request baru muncul
+  /// paling atas.
+  ///
+  /// TODO(est): form belum terhubung ke API, jadi belum pernah `true`.
   Future<void> _addRequest() async {
-    final newItem = await Navigator.of(context).push<EstRequestItem>(
+    final saved = await Navigator.of(context).push<bool>(
       MaterialPageRoute(builder: (_) => const AddEstRequestScreen()),
     );
 
-    if (newItem == null || !mounted) return;
+    if (saved != true || !mounted) return;
 
-    setState(() => _items = [newItem, ..._items]);
+    _listBloc.add(const EstRequestListRefreshed());
+    setState(() {
+      // Kosongkan search supaya request baru tidak tersaring.
+      _searchController.clear();
+      _query = '';
+    });
 
-    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Request submitted')),
     );
-  }
-
-  Future<void> _onTapItem(EstRequestItem item) async {
-    switch (item.status) {
-      case EstRequestStatus.maintenancePlan:
-        await showModalBottomSheet<void>(
-          context: context,
-          isScrollControlled: true,
-          backgroundColor: Colors.transparent,
-          builder: (_) => MaintenancePlanSheet(item: item),
-        );
-      case EstRequestStatus.waitVerifyUser:
-      case EstRequestStatus.completed:
-        // Kalau requester verifikasi + kasih rating di layar detail, dia
-        // pop membawa rating (1-5) — di sini itemnya langsung dianggap
-        // selesai & feedback-nya sudah lunas, jadi tidak perlu gate
-        // [EstRequestFeedbackBanner] lagi setelahnya.
-        final rating = await Navigator.of(context).push<int>(
-          MaterialPageRoute(builder: (_) => EstRequestDetailScreen(item: item)),
-        );
-
-        if (rating == null || !mounted) return;
-
-        setState(() {
-          _items = [
-            for (final r in _items)
-              if (r.id == item.id)
-                r.copyWith(
-                  status: EstRequestStatus.completed,
-                  workDetail: r.workDetail == null
-                      ? null
-                      : EstWorkDetail(
-                          duration: r.workDetail!.duration,
-                          manPower: r.workDetail!.manPower,
-                          approvedBy: r.workDetail!.approvedBy,
-                          dateApprove: r.workDetail!.dateApprove,
-                          startDate: r.workDetail!.startDate,
-                          endDate: r.workDetail!.endDate,
-                          workBy: r.workDetail!.workBy,
-                          verification: 'Verified',
-                          feedbackUser: 'Rating: $rating/5',
-                        ),
-                )
-              else
-                r,
-          ];
-        });
-
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Thank you for your feedback!')),
-        );
-      case EstRequestStatus.onWaiting:
-      case EstRequestStatus.waitApprovalHod:
-        break;
-    }
   }
 
   /// Buka detail request dari tab Approve HOD. Sheet-nya pop `true`
@@ -256,6 +194,25 @@ class _EstRequestScreenState extends State<EstRequestScreen> {
         .firstWhere((s) => s.status != EstApprovalStatus.loading);
   }
 
+  /// Tarik-untuk-refresh daftar All Request; berhenti begitu datanya sudah
+  /// datang.
+  Future<void> _refreshRequests() async {
+    _listBloc.add(const EstRequestListRefreshed());
+    await _listBloc.stream
+        .firstWhere((s) => s.status != EstRequestListStatus.loading);
+  }
+
+  /// Dekat dasar daftar -> minta halaman berikutnya. Bloc sendiri yang
+  /// menolak bila sedang memuat atau sudah halaman terakhir.
+  void _onScroll() {
+    if (!_scrollController.hasClients) return;
+
+    final position = _scrollController.position;
+    if (position.maxScrollExtent - position.pixels < 300) {
+      _listBloc.add(const EstRequestListNextPageRequested());
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -265,19 +222,16 @@ class _EstRequestScreenState extends State<EstRequestScreen> {
         onBack: () => Navigator.of(context).pop(),
       ),
       // FAB oranye di kanan-bawah, sama pola dengan IT Request & HSE Work
-      // Request — menggantikan tombol "Add Request" full-width yang
-      // sebelumnya ada di atas list. Disembunyikan (bukan didisable) saat
-      // requester masih punya feedback tertunda; alasannya dijelaskan lewat
-      // banner kunci di dalam list (lihat _buildAllRequestList).
-      floatingActionButton: _canAddRequest
-          ? FloatingActionButton(
-              onPressed: _addRequest,
-              backgroundColor: AppColors.orange,
-              foregroundColor: Colors.white,
-              tooltip: 'Add Request',
-              child: const Icon(Icons.add),
-            )
-          : null,
+      // Request.
+      // TODO(est): sembunyikan saat summary.awaiting_verification > 0
+      // (requester wajib memberi rating dulu) begitu rating tersambung.
+      floatingActionButton: FloatingActionButton(
+        onPressed: _addRequest,
+        backgroundColor: AppColors.orange,
+        foregroundColor: Colors.white,
+        tooltip: 'Add Request',
+        child: const Icon(Icons.add),
+      ),
       body: SafeArea(
         top: false,
         child: Column(
@@ -363,13 +317,19 @@ class _EstRequestScreenState extends State<EstRequestScreen> {
           current.notice != null &&
           !identical(previous.notice, current.notice),
       listener: (context, state) {
+        final notice = state.notice!;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(state.notice!.message)),
+          SnackBar(content: Text(notice.message)),
         );
+        // Approve/reject mengubah status request di All Request
+        // (waiting_hod -> waiting / rejected).
+        if (!notice.isError) {
+          _listBloc.add(const EstRequestListRefreshed());
+        }
       },
       builder: (context, state) {
         if (state.isFirstLoad) {
-          return const Center(child: CircularProgressIndicator());
+          return const _ApprovalTabSkeleton();
         }
 
         if (state.status == EstApprovalStatus.failure) {
@@ -393,59 +353,173 @@ class _EstRequestScreenState extends State<EstRequestScreen> {
   }
 
   Widget _buildAllRequestList() {
-    final results = _filtered;
+    return BlocBuilder<EstRequestListBloc, EstRequestListState>(
+      bloc: _listBloc,
+      builder: (context, state) {
+        if (state.isFirstLoad) {
+          return const _RequestListSkeleton();
+        }
 
-    return ListView(
-      // Padding bawah ekstra (88) supaya baris terakhir tidak tertutup FAB
-      // "Add Request" yang mengambang, sama seperti di HSE.
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 88),
-      children: [
-        for (final item in _awaitingFeedback) ...[
-          EstRequestFeedbackBanner(
-            item: item,
-            onGiveFeedback: () => _giveFeedback(item),
-          ),
-          const SizedBox(height: 12),
-        ],
-        if (!_canAddRequest) ...[
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            decoration: BoxDecoration(
-              color: AppColors.accentBg,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.lock_outline, size: 16, color: AppColors.accent),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Complete the feedback above first to open '
-                    'a new request.',
-                    style: AppTextStyles.caption.copyWith(
-                      color: AppColors.text,
-                      height: 1.4,
+        if (state.status == EstRequestListStatus.failure) {
+          return AppErrorView(
+            message: state.errorMessage ?? 'Failed to load the request list.',
+            onRetry: () => _listBloc.add(const EstRequestListRefreshed()),
+          );
+        }
+
+        final results = _filter(state.items);
+
+        return RefreshIndicator(
+          onRefresh: _refreshRequests,
+          child: results.isEmpty
+              // ListView (bukan Center saja) supaya tarik-untuk-refresh
+              // tetap bisa dipakai saat daftar kosong.
+              ? ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  children: [
+                    const SizedBox(height: 120),
+                    Center(
+                      child: Text('No data', style: AppTextStyles.bodyMuted),
                     ),
-                  ),
+                  ],
+                )
+              : ListView.separated(
+                  controller: _scrollController,
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  // Padding bawah ekstra (88) supaya baris terakhir tidak
+                  // tertutup FAB "Add Request" yang mengambang, sama seperti
+                  // di HSE.
+                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 88),
+                  // +1 untuk skeleton di dasar saat halaman berikutnya
+                  // sedang dimuat.
+                  itemCount: results.length + (state.loadingMore ? 1 : 0),
+                  separatorBuilder: (_, __) => const SizedBox(height: 10),
+                  itemBuilder: (context, index) {
+                    if (index == results.length) {
+                      return const _RequestRowSkeleton();
+                    }
+
+                    // TODO(est): onTap membuka detail begitu GET /{id}
+                    // tersambung.
+                    return EstRequestRow(item: results[index]);
+                  },
+                ),
+        );
+      },
+    );
+  }
+}
+
+/// Skeleton layar penuh untuk load pertama daftar All Request.
+class _RequestListSkeleton extends StatelessWidget {
+  const _RequestListSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      physics: const NeverScrollableScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+      children: [
+        ShimmerList(
+          itemCount: 5,
+          itemBuilder: (context) => const _RequestRowSkeleton(),
+        ),
+      ],
+    );
+  }
+}
+
+/// Meniru [EstRequestRow]: nama + badge status, tipe + lokasi, dua baris
+/// deskripsi, lalu tanggal.
+class _RequestRowSkeleton extends StatelessWidget {
+  const _RequestRowSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return const ShimmerCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: ShimmerLine(width: 160, height: 14),
+                ),
+              ),
+              SizedBox(width: 8),
+              ShimmerBox(width: 72, height: 20, borderRadius: 20),
+            ],
+          ),
+          SizedBox(height: 10),
+          Row(
+            children: [
+              ShimmerBox(width: 52, height: 18, borderRadius: 20),
+              SizedBox(width: 8),
+              ShimmerLine(width: 110, height: 10),
+            ],
+          ),
+          SizedBox(height: 10),
+          ShimmerLine(height: 11),
+          SizedBox(height: 6),
+          ShimmerLine(width: 190, height: 11),
+          SizedBox(height: 10),
+          ShimmerLine(width: 70, height: 10),
+        ],
+      ),
+    );
+  }
+}
+
+/// Skeleton tab Approval EST selagi daftar pertama dimuat: baris keterangan
+/// jumlah, lalu kartu yang meniru [EstApproveHodCard] (judul, tipe + tanggal,
+/// deskripsi, dan baris tombol keputusan).
+class _ApprovalTabSkeleton extends StatelessWidget {
+  const _ApprovalTabSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      physics: const NeverScrollableScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+      children: [
+        const Padding(
+          padding: EdgeInsets.fromLTRB(2, 0, 0, 12),
+          child: AppShimmer(child: ShimmerLine(width: 160, height: 12)),
+        ),
+        ShimmerList(
+          itemCount: 4,
+          itemBuilder: (context) => const ShimmerCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ShimmerLine(width: 170, height: 14),
+                SizedBox(height: 10),
+                Row(
+                  children: [
+                    ShimmerBox(width: 64, height: 18, borderRadius: 20),
+                    Spacer(),
+                    ShimmerLine(width: 70, height: 10),
+                  ],
+                ),
+                SizedBox(height: 10),
+                ShimmerLine(height: 11),
+                SizedBox(height: 6),
+                ShimmerLine(width: 190, height: 11),
+                SizedBox(height: 14),
+                Row(
+                  children: [
+                    Spacer(),
+                    ShimmerBox(width: 78, height: 32, borderRadius: 8),
+                    SizedBox(width: 8),
+                    ShimmerBox(width: 78, height: 32, borderRadius: 8),
+                  ],
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 16),
-        ],
-        if (results.isEmpty)
-          Padding(
-            padding: const EdgeInsets.only(top: 24),
-            child: Center(
-              child: Text('No data', style: AppTextStyles.bodyMuted),
-            ),
-          )
-        else
-          for (var i = 0; i < results.length; i++) ...[
-            if (i > 0) const SizedBox(height: 10),
-            EstRequestRow(item: results[i], onTap: () => _onTapItem(results[i])),
-          ],
+        ),
       ],
     );
   }

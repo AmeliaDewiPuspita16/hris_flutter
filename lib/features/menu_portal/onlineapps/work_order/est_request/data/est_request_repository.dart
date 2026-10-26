@@ -1,15 +1,45 @@
 import '../../../../../../core/network/api_client.dart';
 import '../../../../../../core/network/api_config.dart';
 import '../domain/est_approval_page.dart';
+import '../domain/est_request_page.dart';
 
 /// Akses API EST Work Order. Tidak tahu soal HTTP — itu urusan
-/// `ApiClient`. Saat ini baru antrean approval HOD; daftar All Request,
-/// submit, dan lainnya menyusul.
+/// `ApiClient`. Saat ini: daftar All Request dan antrean approval HOD.
 class EstRequestRepository {
   EstRequestRepository({required ApiClient apiClient})
       : _apiClient = apiClient;
 
   final ApiClient _apiClient;
+
+  /// Daftar Work Order, terbaru di atas — `GET /est_work_order`.
+  ///
+  /// Berisi request SEMUA user (sama seperti daftar di web); [mine] `true`
+  /// membatasi ke milik sendiri. Server memaginasi hasilnya: minta halaman
+  /// berikutnya lewat [page], dan cek `meta.hasMore` pada hasilnya.
+  ///
+  /// [status] (`waiting_hod`, `waiting`, `progress`, `finished`, `rejected`)
+  /// dan [type] (`Repair` atau `Project`) menyaring di sisi server.
+  ///
+  /// Melempar `ApiException` bila gagal.
+  Future<EstRequestPage> fetchRequests({
+    int page = 1,
+    int perPage = 20,
+    bool mine = false,
+    String? status,
+    String? type,
+  }) async {
+    final envelope = await _apiClient.getEnvelope(
+      _pathWithQuery(ApiConfig.estRequest, {
+        'page': '$page',
+        'per_page': '$perPage',
+        if (mine) 'mine': '1',
+        if (status != null) 'status': status,
+        if (type != null) 'type': type,
+      })
+    );
+
+    return EstRequestPage.fromEnvelope(envelope);
+  }
 
   /// Antrean HOD: request dari department-nya yang masih `status = 0`
   /// (menunggu HOD).

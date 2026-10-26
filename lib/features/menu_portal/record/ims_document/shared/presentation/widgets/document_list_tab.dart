@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../../../../core/theme/app_colors.dart';
 import '../../../../../../../core/theme/app_text_styles.dart';
+import '../../../../../../../core/widgets/app_shimmer.dart';
 import '../../domain/master_document.dart';
 import '../bloc/master_document_list_bloc.dart';
 import '../bloc/master_document_list_event.dart';
@@ -33,7 +34,7 @@ class DocumentListTab extends StatelessWidget {
       child: BlocBuilder<MasterDocumentListBloc, MasterDocumentListState>(
         builder: (context, state) {
           if (state.status == MasterDocumentListStatus.loading && state.documents.isEmpty) {
-            return const Center(child: CircularProgressIndicator());
+            return const _DocumentListSkeleton();
           }
 
           if (state.status == MasterDocumentListStatus.failure && state.documents.isEmpty) {
@@ -111,6 +112,38 @@ class DocumentListTab extends StatelessWidget {
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Tidak dapat membuka website IMS.')),
+    );
+  }
+}
+
+/// Skeleton daftar dokumen selagi tab pertama dimuat. Meniru
+/// [MasterDocumentTile]: judul + keterangan, lalu baris aksi file
+/// (Download / Obsolete) berbentuk kotak memanjang.
+class _DocumentListSkeleton extends StatelessWidget {
+  const _DocumentListSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      physics: const NeverScrollableScrollPhysics(),
+      padding: const EdgeInsets.all(16),
+      children: [
+        ShimmerList(
+          itemCount: 5,
+          itemBuilder: (context) => const ShimmerCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ShimmerLine(width: 200, height: 14),
+                SizedBox(height: 8),
+                ShimmerLine(width: 130, height: 10),
+                SizedBox(height: 12),
+                ShimmerBox(height: 38, borderRadius: 10),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

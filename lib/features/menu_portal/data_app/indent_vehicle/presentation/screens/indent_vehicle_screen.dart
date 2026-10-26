@@ -6,6 +6,7 @@ import '../../../../../../core/network/api_exception.dart';
 import '../../../../../../core/theme/app_colors.dart';
 import '../../../../../../core/theme/app_text_styles.dart';
 import '../../../../../../core/widgets/app_error_view.dart';
+import '../../../../../../core/widgets/app_shimmer.dart';
 import '../../../../../../core/widgets/back_header.dart';
 import '../../../../../auth/presentation/bloc/auth/auth_bloc.dart';
 import '../../data/indent_vehicle_repository.dart';
@@ -465,7 +466,7 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
       bloc: _pendingBloc,
       builder: (context, state) {
         if (state.isFirstLoad) {
-          return const Center(child: CircularProgressIndicator());
+          return const _IndentCardList(skeleton: _PendingCardSkeleton());
         }
 
         if (state.status == IndentPendingStatus.failure) {
@@ -497,7 +498,7 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
       bloc: _approvalBloc,
       builder: (context, state) {
         if (state.isFirstLoad) {
-          return const Center(child: CircularProgressIndicator());
+          return const _IndentCardList(skeleton: _ApprovalCardSkeleton());
         }
 
         if (state.status == IndentApprovalStatus.failure) {
@@ -533,7 +534,7 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
       bloc: _requestBloc,
       builder: (context, state) {
         if (state.isFirstLoad) {
-          return const Center(child: CircularProgressIndicator());
+          return const _IndentCardList(skeleton: _RequestRowSkeleton());
         }
 
         if (state.status == IndentRequestListStatus.failure) {
@@ -574,22 +575,13 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
                   // Padding bawah ekstra (88) supaya baris terakhir tidak
                   // tertutup FAB.
                   padding: const EdgeInsets.fromLTRB(16, 4, 16, 88),
-                  // +1 untuk spinner kecil di dasar saat halaman berikutnya
+                  // +1 untuk skeleton di dasar saat halaman berikutnya
                   // sedang dimuat.
                   itemCount: results.length + (state.loadingMore ? 1 : 0),
                   separatorBuilder: (_, __) => const SizedBox(height: 10),
                   itemBuilder: (context, index) {
                     if (index == results.length) {
-                      return const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 12),
-                        child: Center(
-                          child: SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          ),
-                        ),
-                      );
+                      return const _RequestRowSkeleton();
                     }
 
                     final item = results[index];
@@ -632,5 +624,151 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
     _requestBloc.add(const IndentRequestListRefreshed());
     await _requestBloc.stream
         .firstWhere((s) => s.status != IndentRequestListStatus.loading);
+  }
+}
+
+/// Daftar skeleton layar penuh untuk load pertama tiap tab. [skeleton]
+/// adalah satu kartu palsu yang diulang, sehingga bentuknya mengikuti
+/// kartu aslinya.
+class _IndentCardList extends StatelessWidget {
+  const _IndentCardList({required this.skeleton});
+
+  final Widget skeleton;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      physics: const NeverScrollableScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+      children: [
+        ShimmerList(
+          itemCount: 4,
+          itemBuilder: (context) => skeleton,
+        ),
+      ],
+    );
+  }
+}
+
+/// Meniru [IndentPendingCard]: judul + badge driver, baris info, tombol
+/// Assign selebar kartu.
+class _PendingCardSkeleton extends StatelessWidget {
+  const _PendingCardSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const ShimmerCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: ShimmerLine(width: 150, height: 14),
+                ),
+              ),
+              SizedBox(width: 8),
+              ShimmerBox(width: 70, height: 20, borderRadius: 20),
+            ],
+          ),
+          SizedBox(height: 10),
+          ShimmerLine(width: 190, height: 11),
+          SizedBox(height: 6),
+          ShimmerLine(width: 130, height: 11),
+          SizedBox(height: 14),
+          ShimmerBox(height: 38, borderRadius: 10),
+        ],
+      ),
+    );
+  }
+}
+
+/// Meniru [IndentApprovalCard]: tanggal + jam, judul + badge, lokasi,
+/// keterangan, pemisah, dua tombol keputusan.
+class _ApprovalCardSkeleton extends StatelessWidget {
+  const _ApprovalCardSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const ShimmerCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              ShimmerLine(width: 80, height: 10),
+              SizedBox(width: 14),
+              ShimmerLine(width: 60, height: 10),
+            ],
+          ),
+          SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: ShimmerLine(width: 140, height: 14),
+                ),
+              ),
+              SizedBox(width: 8),
+              ShimmerBox(width: 70, height: 20, borderRadius: 20),
+            ],
+          ),
+          SizedBox(height: 10),
+          ShimmerLine(width: 160, height: 11),
+          SizedBox(height: 6),
+          ShimmerLine(height: 11),
+          SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(child: ShimmerBox(height: 34, borderRadius: 8)),
+              SizedBox(width: 10),
+              Expanded(child: ShimmerBox(height: 34, borderRadius: 8)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Meniru [IndentRequestRow]: judul + status, keterangan, lalu dua baris
+/// info (tanggal / driver).
+class _RequestRowSkeleton extends StatelessWidget {
+  const _RequestRowSkeleton({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const ShimmerCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: ShimmerLine(width: 150, height: 14),
+                ),
+              ),
+              SizedBox(width: 8),
+              ShimmerBox(width: 64, height: 20, borderRadius: 20),
+            ],
+          ),
+          SizedBox(height: 10),
+          ShimmerLine(height: 11),
+          SizedBox(height: 14),
+          Row(
+            children: [
+              ShimmerLine(width: 90, height: 10),
+              SizedBox(width: 16),
+              ShimmerLine(width: 70, height: 10),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 }

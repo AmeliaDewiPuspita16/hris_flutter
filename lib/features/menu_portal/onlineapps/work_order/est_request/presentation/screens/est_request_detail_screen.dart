@@ -6,7 +6,6 @@ import '../../../../../../../core/widgets/app_card.dart';
 import '../../../../../../../core/widgets/back_header.dart';
 import '../../../../../../../core/widgets/detail_field_tile.dart';
 import '../../domain/est_request_item.dart';
-import '../../domain/est_request_status.dart';
 import '../widgets/est_request_feedback_sheet.dart';
 
 /// Layar detail EST Request — pengganti PDF report ("Show Details") di
@@ -14,7 +13,7 @@ import '../widgets/est_request_feedback_sheet.dart';
 ///
 /// Menyusun ulang semua bagian PDF aslinya: identitas request, method &
 /// material/tools, durasi & approval, work implementation, dan feedback
-/// user. Kalau statusnya [EstRequestStatus.waitVerifyUser], ada CTA
+/// user. Kalau [EstRequestItem.canRate] true, ada CTA
 /// "Verifikasi & Beri Feedback" di bawah — mengembalikan rating lewat
 /// Navigator.pop supaya pemanggil (EstRequestScreen) bisa update status.
 class EstRequestDetailScreen extends StatelessWidget {
@@ -54,7 +53,7 @@ class EstRequestDetailScreen extends StatelessWidget {
               children: [
                 DetailFieldTile(label: 'Name', value: item.requesterName),
                 DetailFieldTile(label: 'Date', value: item.date),
-                DetailFieldTile(label: 'Type of Request', value: item.type.label),
+                DetailFieldTile(label: 'Type of Request', value: item.type),
                 DetailFieldTile(label: 'Location', value: item.location, showDivider: false),
               ],
             ),
@@ -119,7 +118,8 @@ class EstRequestDetailScreen extends StatelessWidget {
               ),
             ),
           ],
-          if (item.status == EstRequestStatus.waitVerifyUser) ...[
+          // Tombol mengikuti flag dari server, bukan status lokal.
+          if (item.canRate) ...[
             const SizedBox(height: 20),
             SizedBox(
               width: double.infinity,

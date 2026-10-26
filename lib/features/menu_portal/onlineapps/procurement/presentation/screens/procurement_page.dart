@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../../../core/theme/app_colors.dart';
 import '../../../../../../core/theme/app_text_styles.dart';
+import '../../../../../../core/widgets/app_shimmer.dart';
 import '../../../../../../core/widgets/app_text_field.dart';
 import '../../../../../../core/widgets/back_header.dart';
 import '../../data/procurement_repository.dart';
@@ -172,7 +173,16 @@ class _ProcurementViewState extends State<_ProcurementView> {
 
   Widget _buildBody(BuildContext context, ProcurementListState state) {
     if (state.isFirstLoad) {
-      return const Center(child: CircularProgressIndicator());
+      return ListView(
+        physics: const NeverScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+        children: [
+          ShimmerList(
+            itemCount: 5,
+            itemBuilder: (context) => const _PrCardSkeleton(),
+          ),
+        ],
+      );
     }
 
     // Galat hanya mengambil alih layar saat belum ada apa pun yang tampil.
@@ -209,15 +219,12 @@ class _ProcurementViewState extends State<_ProcurementView> {
       child: ListView.separated(
         controller: _scrollController,
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-        // Satu baris tambahan di bawah untuk spinner halaman berikutnya.
+        // Satu baris tambahan di bawah untuk skeleton halaman berikutnya.
         itemCount: state.items.length + (state.loadingMore ? 1 : 0),
         separatorBuilder: (_, __) => const SizedBox(height: 10),
         itemBuilder: (_, i) {
           if (i >= state.items.length) {
-            return const Padding(
-              padding: EdgeInsets.symmetric(vertical: 16),
-              child: Center(child: CircularProgressIndicator()),
-            );
+            return const _PrCardSkeleton();
           }
 
           return PrCard(
@@ -225,6 +232,47 @@ class _ProcurementViewState extends State<_ProcurementView> {
             onTap: () => _openDetail(state.items[i]),
           );
         },
+      ),
+    );
+  }
+}
+
+/// Skeleton satu [PrCard]: nomor PR + badge status, dua baris keterangan,
+/// lalu baris bawah (jumlah item / tanggal).
+class _PrCardSkeleton extends StatelessWidget {
+  const _PrCardSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return const ShimmerCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: ShimmerLine(width: 130, height: 14),
+                ),
+              ),
+              SizedBox(width: 8),
+              ShimmerBox(width: 64, height: 20, borderRadius: 20),
+            ],
+          ),
+          SizedBox(height: 10),
+          ShimmerLine(height: 11),
+          SizedBox(height: 6),
+          ShimmerLine(width: 170, height: 11),
+          SizedBox(height: 12),
+          Row(
+            children: [
+              ShimmerBox(width: 60, height: 18, borderRadius: 20),
+              Spacer(),
+              ShimmerLine(width: 70, height: 10),
+            ],
+          ),
+        ],
       ),
     );
   }

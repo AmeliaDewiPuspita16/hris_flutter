@@ -4,8 +4,8 @@ import '../../../../../../../core/theme/app_colors.dart';
 import '../../../../../../../core/theme/app_text_styles.dart';
 import '../../domain/est_request_item.dart';
 
-/// Bottom sheet "Response Request" — dibuka lewat baris dengan status
-/// [EstRequestStatus.maintenancePlan] (tombol hijau bermata di web).
+/// Bottom sheet "Response Request" — dibuka lewat tombol hijau bermata
+/// "Maintenance Plan" di web.
 ///
 /// Menampilkan ulang ringkasan request (Name/Type/Location/Description)
 /// ditambah kartu rencana kerja (Working Method & Material and Tools) dan
@@ -66,7 +66,7 @@ class MaintenancePlanSheet extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _InfoRow(label: 'Name', value: item.requesterName),
-                    _InfoRow(label: 'Type of Request', value: item.type.label.toUpperCase()),
+                    _InfoRow(label: 'Type of Request', value: item.type.toUpperCase()),
                     _InfoRow(label: 'Location', value: item.location),
                     _InfoRow(label: 'Description', value: item.description, showDivider: false),
                     const SizedBox(height: 16),

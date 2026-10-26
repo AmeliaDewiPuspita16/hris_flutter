@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_card.dart';
+import '../../../../core/widgets/app_shimmer.dart';
 import '../../../../core/widgets/status_badge.dart';
 import '../../../shared/domain/role.dart';
 import '../../domain/leave_history_entry.dart';
@@ -72,7 +73,7 @@ class _StatusTabState extends State<StatusTab> {
     return BlocBuilder<LeaveHistoryBloc, LeaveHistoryState>(
       builder: (context, state) {
         if (state.status == LeaveHistoryStatus.loading && state.items.isEmpty) {
-          return const Center(child: CircularProgressIndicator());
+          return const _HistorySkeleton();
         }
 
         if (state.status == LeaveHistoryStatus.failure && state.items.isEmpty) {
@@ -421,6 +422,45 @@ class _FilterChip extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Skeleton tab Status selagi riwayat cuti pertama dimuat: kartu dengan
+/// ikon tipe cuti di kiri, dua baris teks, dan badge status di kanan.
+class _HistorySkeleton extends StatelessWidget {
+  const _HistorySkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      physics: const NeverScrollableScrollPhysics(),
+      padding: const EdgeInsets.all(20),
+      children: [
+        ShimmerList(
+          itemCount: 6,
+          itemBuilder: (context) => const ShimmerCard(
+            child: Row(
+              children: [
+                ShimmerBox(width: 40, height: 40, borderRadius: 10),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      ShimmerLine(width: 120, height: 13),
+                      SizedBox(height: 8),
+                      ShimmerLine(width: 170, height: 10),
+                    ],
+                  ),
+                ),
+                SizedBox(width: 8),
+                ShimmerBox(width: 60, height: 20, borderRadius: 20),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

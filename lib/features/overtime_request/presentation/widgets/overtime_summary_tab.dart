@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_card.dart';
+import '../../../../core/widgets/app_shimmer.dart';
 import '../../domain/overtime_day.dart';
 import '../../domain/overtime_format.dart';
 import '../../domain/overtime_month.dart';
@@ -53,10 +54,7 @@ class OvertimeSummaryTab extends StatelessWidget {
     switch (state.status) {
       case OvertimeSummaryStatus.initial:
       case OvertimeSummaryStatus.loading:
-        return const Padding(
-          padding: EdgeInsets.symmetric(vertical: 48),
-          child: Center(child: CircularProgressIndicator()),
-        );
+        return const _OvertimeSkeleton();
 
       case OvertimeSummaryStatus.failure:
         return _ErrorState(
@@ -378,6 +376,82 @@ class _ErrorState extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Skeleton ringkasan lembur bulanan: kartu total (dua angka berdampingan)
+/// lalu kartu daftar hari dengan 4 baris, meniru [_TotalsCard] dan [_DayRow].
+class _OvertimeSkeleton extends StatelessWidget {
+  const _OvertimeSkeleton();
+
+  static const _dayRow = Padding(
+    padding: EdgeInsets.symmetric(vertical: 12),
+    child: Row(
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ShimmerLine(width: 110, height: 13),
+              SizedBox(height: 6),
+              ShimmerLine(width: 80, height: 10),
+            ],
+          ),
+        ),
+        SizedBox(width: 8),
+        ShimmerLine(width: 50, height: 13),
+      ],
+    ),
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    return const Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        ShimmerCard(
+          padding: EdgeInsets.symmetric(vertical: 18, horizontal: 12),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  children: [
+                    ShimmerLine(width: 80, height: 18),
+                    SizedBox(height: 8),
+                    ShimmerLine(width: 60, height: 10),
+                  ],
+                ),
+              ),
+              SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  children: [
+                    ShimmerLine(width: 50, height: 18),
+                    SizedBox(height: 8),
+                    ShimmerLine(width: 70, height: 10),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        SizedBox(height: 16),
+        ShimmerCard(
+          padding: EdgeInsets.symmetric(horizontal: 14),
+          child: Column(
+            children: [
+              _dayRow,
+              Divider(height: 1, color: AppColors.border),
+              _dayRow,
+              Divider(height: 1, color: AppColors.border),
+              _dayRow,
+              Divider(height: 1, color: AppColors.border),
+              _dayRow,
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

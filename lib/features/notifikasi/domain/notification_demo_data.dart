@@ -4,8 +4,6 @@ import 'notification_category.dart';
 import '../../leave_approval/domain/leave_approval_demo_data.dart';
 import '../../leave_approval/domain/leave_approval_status.dart';
 import '../../pengajuan/domain/leave_type.dart';
-import '../../menu_portal/onlineapps/work_order/est_request/domain/est_request_demo_data.dart';
-import '../../menu_portal/onlineapps/work_order/est_request/domain/est_request_status.dart';
 import '../../menu_portal/onlineapps/work_order/it_request/domain/approve_request_demo_data.dart';
 
 /// Data contoh untuk halaman Notifications.
@@ -14,12 +12,10 @@ import '../../menu_portal/onlineapps/work_order/it_request/domain/approve_reques
 /// relatif terhadap waktu sekarang supaya label "25m ago" / "Yesterday"
 /// selalu masuk akal kapan pun aplikasi dibuka.
 ///
-/// Entri IT dan EST Request DIBANGUN dari sumber yang sama dipakai
-/// `_itApprovalCount`/`_estApprovalCount` di BerandaScreen
-/// ([ApproveRequestDemoData], [EstRequestDemoData]) — bukan ditulis ulang
-/// manual — supaya angka di banner approval Beranda selalu sinkron dengan
-/// isi tab "Action" di sini. Begitu keduanya diganti API sungguhan,
-/// baris-baris ini tinggal diganti mapping dari response API yang sama.
+/// Entri IT DIBANGUN dari sumber yang sama dengan `_itApprovalCount` di
+/// BerandaScreen ([ApproveRequestDemoData]) — bukan ditulis ulang manual —
+/// supaya angkanya sinkron dengan tab "Action". Entri EST tidak ada di sini
+/// lagi karena EST sudah memakai API sungguhan (antrean approval HOD).
 ///
 /// Entri Leave (kategori Leave & Overtime) dibangun dari
 /// [LeaveApprovalDemoData] — sumber yang sama dengan halaman Leave
@@ -58,18 +54,6 @@ class NotificationDemoData {
           title: 'IT request from ${entry.value.requesterName}',
           body: entry.value.description,
           createdAt: reference.subtract(Duration(hours: 3 + entry.key)),
-          requiresDecision: true,
-        ),
-      // EST — cuma yang statusnya "Wait Approval HOD", sama seperti filter
-      // yang dipakai _estApprovalCount di Beranda.
-      for (final item in EstRequestDemoData.items()
-          .where((r) => r.status == EstRequestStatus.waitApprovalHod))
-        AppNotification(
-          id: 'n-est-${item.id}',
-          category: NotificationCategory.estRequest,
-          title: 'EST request from ${item.requesterName}',
-          body: item.description,
-          createdAt: reference.subtract(const Duration(hours: 8)),
           requiresDecision: true,
         ),
       AppNotification(

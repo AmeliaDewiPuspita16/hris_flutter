@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/widgets/app_card.dart';
+import '../../../../core/widgets/app_shimmer.dart';
 import '../../../../core/widgets/status_badge.dart';
 import '../../domain/leave_balance.dart';
 import '../../domain/leave_history_entry.dart';
@@ -141,10 +142,7 @@ class _BalanceSummaryCard extends StatelessWidget {
     return BlocBuilder<LeaveBalanceBloc, LeaveBalanceState>(
       builder: (context, state) {
         if (state.status == LeaveBalanceStatus.loading && state.balances.isEmpty) {
-          return const Padding(
-            padding: EdgeInsets.symmetric(vertical: 24),
-            child: Center(child: CircularProgressIndicator()),
-          );
+          return const _BalanceSkeleton();
         }
 
         if (state.status == LeaveBalanceStatus.failure && state.balances.isEmpty) {
@@ -292,10 +290,7 @@ class _RecentSummaryList extends StatelessWidget {
     return BlocBuilder<LeaveHistoryBloc, LeaveHistoryState>(
       builder: (context, state) {
         if (state.status == LeaveHistoryStatus.loading && state.items.isEmpty) {
-          return const Padding(
-            padding: EdgeInsets.symmetric(vertical: 24),
-            child: Center(child: CircularProgressIndicator()),
-          );
+          return const _RecentSummarySkeleton();
         }
 
         if (state.status == LeaveHistoryStatus.failure && state.items.isEmpty) {
@@ -378,6 +373,93 @@ class _RecentSummaryRow extends StatelessWidget {
             StatusBadge(status: entry.status, label: entry.statusLabel),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Skeleton kartu Leave Balance: judul + 2x2 kotak saldo, tinggi sel
+/// disamakan dengan sel aslinya supaya layout tidak melompat.
+class _BalanceSkeleton extends StatelessWidget {
+  const _BalanceSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: const AppShimmer(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                ShimmerLine(width: 100, height: 13),
+                Spacer(),
+                ShimmerLine(width: 80, height: 10),
+              ],
+            ),
+            SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(child: ShimmerBox(height: 86, borderRadius: 10)),
+                SizedBox(width: 6),
+                Expanded(child: ShimmerBox(height: 86, borderRadius: 10)),
+              ],
+            ),
+            SizedBox(height: 6),
+            Row(
+              children: [
+                Expanded(child: ShimmerBox(height: 86, borderRadius: 10)),
+                SizedBox(width: 6),
+                Expanded(child: ShimmerBox(height: 86, borderRadius: 10)),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Skeleton daftar aktivitas cuti bulan ini: kartu berisi 3 baris
+/// (tanggal + tipe di kiri, badge status di kanan) dipisah garis tipis.
+class _RecentSummarySkeleton extends StatelessWidget {
+  const _RecentSummarySkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return ShimmerCard(
+      padding: EdgeInsets.symmetric(horizontal: 14),
+      child: Column(
+        children: [
+          for (var i = 0; i < 3; i++) ...[
+            if (i > 0) const Divider(height: 1, color: AppColors.border),
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 12),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        ShimmerLine(width: 110, height: 13),
+                        SizedBox(height: 6),
+                        ShimmerLine(width: 70, height: 10),
+                      ],
+                    ),
+                  ),
+                  SizedBox(width: 8),
+                  ShimmerBox(width: 60, height: 20, borderRadius: 20),
+                ],
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }

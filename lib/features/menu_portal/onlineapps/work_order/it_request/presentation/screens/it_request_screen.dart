@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../../../../core/theme/app_colors.dart';
 import '../../../../../../../core/widgets/app_error_view.dart';
+import '../../../../../../../core/widgets/app_shimmer.dart';
 import '../../../../../../../core/widgets/back_header.dart';
 import '../../../../../../auth/presentation/bloc/auth/auth_bloc.dart';
 import '../../data/it_request_repository.dart';
@@ -195,7 +196,7 @@ class _ItRequestScreenState extends State<ItRequestScreen> {
       bloc: _approvalBloc,
       builder: (context, state) {
         if (state.isFirstLoad) {
-          return const Center(child: CircularProgressIndicator());
+          return const _ApprovalTabSkeleton();
         }
 
         if (state.status == ItRequestApprovalStatus.failure) {
@@ -250,6 +251,61 @@ class _ItRequestScreenState extends State<ItRequestScreen> {
         ),
         const SizedBox(height: 10),
         Expanded(child: IndexedStack(index: _tabIndex, children: children)),
+      ],
+    );
+  }
+}
+
+/// Skeleton tab Approval selagi daftar pertama dimuat: baris keterangan
+/// jumlah di atas, lalu kartu-kartu yang meniru [ApproveRequestCard]
+/// (requester + badge, deskripsi, dua tombol Reject / Approve).
+class _ApprovalTabSkeleton extends StatelessWidget {
+  const _ApprovalTabSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      physics: const NeverScrollableScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+      children: [
+        const Padding(
+          padding: EdgeInsets.fromLTRB(2, 0, 0, 12),
+          child: AppShimmer(child: ShimmerLine(width: 160, height: 12)),
+        ),
+        ShimmerList(
+          itemCount: 4,
+          itemBuilder: (context) => const ShimmerCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: ShimmerLine(width: 140, height: 14),
+                      ),
+                    ),
+                    SizedBox(width: 8),
+                    ShimmerBox(width: 60, height: 20, borderRadius: 20),
+                  ],
+                ),
+                SizedBox(height: 10),
+                ShimmerLine(height: 11),
+                SizedBox(height: 6),
+                ShimmerLine(width: 190, height: 11),
+                SizedBox(height: 14),
+                Row(
+                  children: [
+                    Expanded(child: ShimmerBox(height: 38, borderRadius: 10)),
+                    SizedBox(width: 10),
+                    Expanded(child: ShimmerBox(height: 38, borderRadius: 10)),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
       ],
     );
   }

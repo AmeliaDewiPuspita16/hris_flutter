@@ -5,6 +5,7 @@ import '../../../../../../../core/network/api_exception.dart';
 import '../../../../../../../core/theme/app_colors.dart';
 import '../../../../../../../core/theme/app_text_styles.dart';
 import '../../../../../../../core/widgets/app_error_view.dart';
+import '../../../../../../../core/widgets/app_shimmer.dart';
 import '../../data/it_request_repository.dart';
 import '../../domain/it_request_detail.dart';
 import '../../domain/it_request_item.dart';
@@ -209,7 +210,16 @@ class _ItFormAndMediaViewState extends State<_ItFormAndMediaView> {
 
   Widget _buildBody(BuildContext context, ItRequestListState state) {
     if (state.isFirstLoad) {
-      return const Center(child: CircularProgressIndicator());
+      return ListView(
+        physics: const NeverScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+        children: [
+          ShimmerList(
+            itemCount: 5,
+            itemBuilder: (context) => const _RequestCardSkeleton(),
+          ),
+        ],
+      );
     }
 
     if (state.status == ItRequestListStatus.failure && state.items.isEmpty) {
@@ -280,12 +290,47 @@ class _ItFormAndMediaViewState extends State<_ItFormAndMediaView> {
             ],
           if (state.loadingMore)
             const Padding(
-              padding: EdgeInsets.symmetric(vertical: 16),
-              child: Center(child: CircularProgressIndicator()),
+              padding: EdgeInsets.only(top: 10),
+              child: _RequestCardSkeleton(),
             ),
           // Ruang ekstra di bawah supaya kartu riwayat terakhir tidak
           // tertutup FAB yang mengambang di kanan-bawah.
           if (state.canAddRequest) const SizedBox(height: 72),
+        ],
+      ),
+    );
+  }
+}
+
+/// Skeleton satu [ItRequestCard]: judul + badge status, deskripsi dua
+/// baris, lalu tanggal.
+class _RequestCardSkeleton extends StatelessWidget {
+  const _RequestCardSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return const ShimmerCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: ShimmerLine(width: 150, height: 14),
+                ),
+              ),
+              SizedBox(width: 8),
+              ShimmerBox(width: 60, height: 20, borderRadius: 20),
+            ],
+          ),
+          SizedBox(height: 10),
+          ShimmerLine(height: 11),
+          SizedBox(height: 6),
+          ShimmerLine(width: 180, height: 11),
+          SizedBox(height: 10),
+          ShimmerLine(width: 70, height: 10),
         ],
       ),
     );

@@ -59,16 +59,17 @@ class ApiConfig {
   /// [ApiClient.getEnvelope].
   static const String itRequest = '/api/portal/apps/it_request';
 
-/// EST Work Order. Akar `/api/portal/apps/est_work_order` belum bisa
-/// dipanggil (endpoint daftar All Request belum ada), jadi tiap endpoint
-/// yang sudah tersedia ditulis lengkap di sini.
-static const String estRequestApprovals =
-    '/api/portal/apps/est_work_order/approvals';
+  /// EST Work Order - daftar semua request  di path ini (`?mine=1`, `status`,
+  /// `type`, `per_page`, `page`). Seperti [eprocurement] `summary` dan
+  /// `meta` bersebelahan dengan `data`, jadi diambil lewat
+  /// [ApiClient.getEnvelope].
+  static const String estRequest = '/api/portal/apps/est_work_order';
 
-static String estRequestApprove(int id) =>
-    '/api/portal/apps/est_work_order/$id/approve';
-static String estRequestReject(int id) =>
-    '/api/portal/apps/est_work_order/$id/reject';
+  /// Antrian keputusan HOD (hanya role 'hod).
+  static const String estRequestApprovals = '$estRequest/approvals';
+
+  static String estRequestApprove(int id) => '$estRequest/$id/approve';
+  static String estRequestReject(int id) => '$estRequest/$id/reject';
 
   /// Daftar driver untuk dropdown Asign Vehicle (role admin driver).
   /// Responnya array polos, bukan amplop {data: ...}

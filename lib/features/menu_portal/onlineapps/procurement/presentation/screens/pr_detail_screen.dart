@@ -7,6 +7,7 @@ import '../../../../../../core/theme/app_text_styles.dart';
 import '../../../../../../core/utils/currency_formatter.dart';
 import '../../../../../../core/utils/date_formatter.dart';
 import '../../../../../../core/widgets/app_card.dart';
+import '../../../../../../core/widgets/app_shimmer.dart';
 import '../../../../../../core/widgets/back_header.dart';
 import '../../../../../../core/widgets/detail_field_tile.dart';
 import '../../data/procurement_repository.dart';
@@ -289,10 +290,7 @@ class _PrDetailViewState extends State<_PrDetailView> {
 
     final pr = state.requisition;
     if (pr == null) {
-      return const SizedBox(
-        height: 260,
-        child: Center(child: CircularProgressIndicator()),
-      );
+      return const ShimmerDetailSections(rowsPerSection: [4, 2, 3]);
     }
 
     return Column(

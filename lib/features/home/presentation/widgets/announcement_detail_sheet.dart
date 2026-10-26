@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/utils/date_formatter.dart';
+import '../../../../core/widgets/app_shimmer.dart';
 import '../../domain/announcement.dart';
 import '../../domain/published_announcement.dart';
 
@@ -205,14 +206,11 @@ class _DetailPhoto extends StatelessWidget {
         fit: BoxFit.cover,
         loadingBuilder: (context, child, progress) {
           if (progress == null) return child;
-          return Container(
-            height: 180,
-            color: AppColors.neutralBg,
-            alignment: Alignment.center,
-            child: const SizedBox(
-              width: 20,
-              height: 20,
-              child: CircularProgressIndicator(strokeWidth: 2),
+          return const AppShimmer(
+            child: ShimmerBox(
+              width: double.infinity,
+              height: 180,
+              borderRadius: 12,
             ),
           );
         },
