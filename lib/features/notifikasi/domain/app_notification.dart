@@ -1,4 +1,5 @@
 import 'notification_category.dart';
+import 'notification_link.dart';
 
 /// Keputusan atas notifikasi yang menuntut tindakan.
 enum NotificationDecision { approved, rejected }
@@ -25,6 +26,8 @@ class AppNotification {
     this.decision,
     this.actionType = NotificationActionType.decision,
     this.refId,
+    this.serverId,
+    this.link,
   });
 
   final String id;
@@ -46,6 +49,16 @@ class AppNotification {
   /// id request di modul asalnya (mis. id indent untuk [assign]), supaya
   /// pemanggil bisa membuka request yang dimaksud. Null untuk yang lain.
   final String? refId;
+
+  /// id di tabel notifikasi server (`GET /api/portal/apps/notifications`).
+  /// Null untuk notifikasi yang dibangun di app sendiri (Leave, Assign) —
+  /// dibaca/dihapus hanya di lokal.
+  final int? serverId;
+
+  /// Tujuan saat di-tap. Null = tap hanya menandai sudah dibaca.
+  final NotificationLink? link;
+
+  bool get isFromServer => serverId != null;
 
   bool get needsAction => requiresDecision && decision == null;
 
@@ -73,6 +86,8 @@ class AppNotification {
       decision: decision ?? this.decision,
       actionType: actionType,
       refId: refId,
+      serverId: serverId,
+      link: link,
     );
   }
 }

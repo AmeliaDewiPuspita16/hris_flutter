@@ -137,4 +137,21 @@ class ApiConfig {
   /// sini; jumlahnya dari [leaveStatus]/`LeaveApprovalRepository` sendiri.
   static const String approvalsWaiting =
       '/api/portal/apps/notifications/approvals-waiting';
+
+  /// FCM token perangkat ini. POST `{token, platform}` setelah login dan
+  /// tiap kali token dirotasi; DELETE `?token=` saat logout. Token disimpan
+  /// server di tabel sendiri (project Firebase `biie-portal-hris`), terpisah
+  /// dari `users.fcm_token` milik app lama.
+  static const String deviceToken = '/api/portal/apps/device-token';
+
+  /// Isi tab Notifications dari server (`?unread=1`, `module`, `per_page`,
+  /// `page`). `summary.unread` dan `meta` bersebelahan dengan `data`, jadi
+  /// diambil lewat [ApiClient.getEnvelope].
+  static const String notifications = '/api/portal/apps/notifications';
+
+  static const String notificationsReadAll = '$notifications/read-all';
+  static String notificationRead(int id) => '$notifications/$id/read';
+
+  /// DELETE — membuang satu entri dari tab Notifications (geser untuk hapus).
+  static String notificationDetail(int id) => '$notifications/$id';
 }

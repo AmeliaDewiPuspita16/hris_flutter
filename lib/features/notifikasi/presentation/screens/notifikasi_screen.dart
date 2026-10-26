@@ -33,6 +33,8 @@ class NotifikasiScreen extends StatefulWidget {
     this.showBack = true,
     this.filterRequestToken = 0,
     this.onAssign,
+    this.onOpen,
+    this.onRefresh,
   });
 
   final List<AppNotification> notifications;
@@ -55,6 +57,14 @@ class NotifikasiScreen extends StatefulWidget {
   /// Pemanggil yang membuka sheet dan mengirim ke server; hasilnya kembali
   /// lewat [notifications]/[onChanged] seperti keputusan biasa.
   final ValueChanged<AppNotification>? onAssign;
+
+  /// Dipanggil saat sebuah notifikasi di-tap, setelah ditandai sudah dibaca.
+  /// Pemanggil yang membuka layar tujuannya ([AppNotification.link]).
+  final ValueChanged<AppNotification>? onOpen;
+
+  /// Tarik ke bawah untuk memuat ulang notifikasi dari server. Null = daftar
+  /// tidak bisa ditarik.
+  final Future<void> Function()? onRefresh;
 
   @override
   State<NotifikasiScreen> createState() => _NotifikasiScreenState();
@@ -87,6 +97,11 @@ class _NotifikasiScreenState extends State<NotifikasiScreen> {
   }
 
   void _markRead(String id) => _replace(id, (n) => n.copyWith(isRead: true));
+
+  void _open(AppNotification notification) {
+    if (!notification.isRead) _markRead(notification.id);
+    widget.onOpen?.call(notification);
+  }
 
   /// Keputusan sekaligus menandai sudah dibaca — begitu diputuskan,
   /// notifikasinya turun dari kelompok "Perlu tindakan".
@@ -139,19 +154,41 @@ class _NotifikasiScreenState extends State<NotifikasiScreen> {
             onSelected: (filter) => setState(() => _filter = filter),
           ),
           Expanded(
-            child: visible.isEmpty
-                ? const _EmptyState()
-                : _NotificationList(
-                    pending: pending,
-                    rest: rest,
-                    onDecide: _decide,
-                    onAssign: widget.onAssign,
-                    onRead: _markRead,
-                    onDismiss: _dismiss,
-                  ),
+            child: _withRefresh(
+              visible.isEmpty
+                  ? const _EmptyState()
+                  : _NotificationList(
+                      pending: pending,
+                      rest: rest,
+                      onDecide: _decide,
+                      onAssign: widget.onAssign,
+                      onOpen: _open,
+                      onDismiss: _dismiss,
+                    ),
+            ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _withRefresh(Widget child) {
+    final onRefresh = widget.onRefresh;
+    if (onRefresh == null) return child;
+
+    return RefreshIndicator(
+      onRefresh: onRefresh,
+      color: AppColors.primary,
+      // Keadaan kosong bukan daftar yang bisa di-scroll, jadi dibungkus
+      // supaya tetap bisa ditarik.
+      child: child is _NotificationList
+          ? child
+          : LayoutBuilder(
+              builder: (context, constraints) => SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: SizedBox(height: constraints.maxHeight, child: child),
+              ),
+            ),
     );
   }
 }
@@ -162,7 +199,7 @@ class _NotificationList extends StatelessWidget {
     required this.rest,
     required this.onDecide,
     required this.onAssign,
-    required this.onRead,
+    required this.onOpen,
     required this.onDismiss,
   });
 
@@ -170,7 +207,7 @@ class _NotificationList extends StatelessWidget {
   final List<AppNotification> rest;
   final void Function(String id, NotificationDecision decision) onDecide;
   final ValueChanged<AppNotification>? onAssign;
-  final ValueChanged<String> onRead;
+  final ValueChanged<AppNotification> onOpen;
   final ValueChanged<String> onDismiss;
 
   /// Mengelompokkan sisa notifikasi per hari, urutannya dipertahankan.
@@ -187,6 +224,7 @@ class _NotificationList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.only(bottom: 28),
       children: [
         if (pending.isNotEmpty) ...[
@@ -194,7 +232,7 @@ class _NotificationList extends StatelessWidget {
           for (final item in pending)
             NotificationTile(
               notification: item,
-              onTap: () => onRead(item.id),
+              onTap: () => onOpen(item),
               onDecide: (decision) => onDecide(item.id, decision),
               onAssign: onAssign == null ? null : () => onAssign!(item),
             ),
@@ -212,7 +250,7 @@ class _NotificationList extends StatelessWidget {
               background: const _DismissBackground(),
               child: NotificationTile(
                 notification: item,
-                onTap: () => onRead(item.id),
+                onTap: () => onOpen(item),
               ),
             ),
         ],

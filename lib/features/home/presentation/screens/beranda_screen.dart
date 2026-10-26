@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -5,6 +7,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/logging/app_logger.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/network/api_exception.dart';
+import '../../../../core/notifications/notification_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../data/announcement_repository.dart';
 import '../../data/approvals_waiting_repository.dart';
@@ -40,7 +43,10 @@ import '../../../hris_menu/domain/hris_menu_config.dart';
 import '../../../hris_menu/domain/hris_menu_item.dart';
 import '../../../hris_menu/presentation/screens/hris_menu_screen.dart';
 import '../../../notifikasi/domain/app_notification.dart';
+import '../../../notifikasi/data/notification_inbox_repository.dart';
 import '../../../notifikasi/domain/notification_demo_data.dart';
+import '../../../notifikasi/domain/notification_link.dart';
+import '../../../notifikasi/presentation/notification_routes.dart';
 import '../../../notifikasi/presentation/screens/notifikasi_screen.dart';
 import '../../../auth/domain/auth_user.dart';
 import '../../../shared/domain/role.dart';
@@ -75,6 +81,7 @@ class BerandaScreen extends StatefulWidget {
     this.announcementRepository,
     this.leaveApprovalRepository,
     this.approvalsWaitingRepository,
+    this.notificationInboxRepository,
   });
 
   final Role role;
@@ -96,6 +103,12 @@ class BerandaScreen extends StatefulWidget {
   /// (banner "Approvals waiting"). Diisi manual di test; kalau tidak, dibuat
   /// dari [ApiClient].
   final ApprovalsWaitingRepository? approvalsWaitingRepository;
+
+  /// Notifikasi server (IT, eProcurement, EST, Indent Vehicle) untuk tab
+  /// Notifications. Diisi manual di test; kalau tidak, diambil dari
+  /// RepositoryProvider (butuh token login, sama seperti
+  /// [approvalsWaitingRepository]).
+  final NotificationInboxRepository? notificationInboxRepository;
 
   @override
   State<BerandaScreen> createState() => _BerandaScreenState();
@@ -166,7 +179,16 @@ class _BerandaScreenState extends State<BerandaScreen> {
 
   Role get _role => widget.role;
 
-  int get _unreadCount => _notifications.where((n) => !n.isRead).length;
+  /// Notifikasi server belum dibaca yang TIDAK ikut termuat di
+  /// [_notifications] (tab hanya memuat yang terbaru), supaya badge lonceng
+  /// tetap sama dengan angka di server.
+  int _unreadBeyondLoaded = 0;
+
+  int get _unreadCount =>
+      _notifications.where((n) => !n.isRead).length + _unreadBeyondLoaded;
+
+  StreamSubscription<Map<String, dynamic>>? _pushTapSubscription;
+  StreamSubscription<Object>? _pushMessageSubscription;
 
   @override
   void initState() {
@@ -176,6 +198,153 @@ class _BerandaScreenState extends State<BerandaScreen> {
     _loadTodayAttendance();
     _loadApprovalsWaiting();
     _loadPendingAssignments();
+    _loadInbox();
+
+    _pushTapSubscription = NotificationService.taps.listen(_openFromPush);
+    // Push yang masuk selagi app terbuka: muat ulang supaya badge dan tab
+    // Notifications langsung ikut, tanpa perlu ditarik manual.
+    _pushMessageSubscription =
+        NotificationService.foregroundMessages.listen((_) => _loadInbox());
+
+    // App dibuka lewat tap notifikasi sebelum Beranda tampil (dari keadaan
+    // mati, atau masih di layar login) — tap-nya disimpan dan diproses di
+    // sini setelah frame pertama, saat Navigator sudah siap.
+    final pendingTap = NotificationService.takePendingTap();
+    if (pendingTap != null) {
+      WidgetsBinding.instance
+          .addPostFrameCallback((_) => _openFromPush(pendingTap));
+    }
+  }
+
+  @override
+  void dispose() {
+    _pushTapSubscription?.cancel();
+    _pushMessageSubscription?.cancel();
+    super.dispose();
+  }
+
+  /// Memuat notifikasi server dan menggabungkannya dengan notifikasi lokal
+  /// (Leave, Assign), urut dari yang terbaru.
+  ///
+  /// Gagal memuat tidak mengganggu notifikasi lain: cukup dicatat, sama
+  /// seperti [_loadPendingAssignments].
+  Future<void> _loadInbox() async {
+    try {
+      final page = await (widget.notificationInboxRepository ??
+              context.read<NotificationInboxRepository>())
+          .fetchLatest();
+      if (!mounted) return;
+
+      final loadedUnread = page.items.where((n) => !n.isRead).length;
+
+      setState(() {
+        _notifications = [
+          for (final n in _notifications)
+            if (!n.isFromServer) n,
+          ...page.items,
+        ]..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+        _unreadBeyondLoaded =
+            (page.unread - loadedUnread).clamp(0, page.unread).toInt();
+      });
+    } catch (e, stack) {
+      AppLogger.error('Notifikasi server gagal dimuat', e, stack);
+    }
+  }
+
+  NotificationInboxRepository? get _inboxRepository {
+    try {
+      return widget.notificationInboxRepository ??
+          context.read<NotificationInboxRepository>();
+    } catch (e, stack) {
+      AppLogger.error('NotificationInboxRepository tidak tersedia', e, stack);
+      return null;
+    }
+  }
+
+  /// Meneruskan perubahan notifikasi server di tab Notifications (dibaca,
+  /// tandai semua, dihapus) ke server, supaya tidak muncul lagi sebagai
+  /// belum dibaca saat dimuat ulang. Gagal cukup dicatat.
+  Future<void> _syncServerNotifications(
+    Map<String, AppNotification> before,
+    List<AppNotification> after,
+  ) async {
+    final repository = _inboxRepository;
+    if (repository == null) return;
+
+    final afterIds = {for (final n in after) n.id};
+    final newlyRead = [
+      for (final n in after)
+        if (n.isFromServer && n.isRead && before[n.id]?.isRead == false)
+          n.serverId!,
+    ];
+    final removed = [
+      for (final n in before.values)
+        if (n.isFromServer && !afterIds.contains(n.id)) n.serverId!,
+    ];
+
+    try {
+      // Semua jadi terbaca sekaligus = tombol "tandai semua": satu panggilan
+      // yang juga membersihkan notifikasi lama yang tidak termuat di tab.
+      final markedAll = newlyRead.isNotEmpty && after.every((n) => n.isRead);
+      if (markedAll) {
+        await repository.markAllRead();
+        if (mounted) setState(() => _unreadBeyondLoaded = 0);
+      } else {
+        for (final id in newlyRead) {
+          await repository.markRead(id);
+        }
+      }
+      for (final id in removed) {
+        await repository.delete(id);
+      }
+    } catch (e, stack) {
+      AppLogger.error('Status notifikasi gagal disimpan ke server', e, stack);
+    }
+  }
+
+  /// Tap pada notifikasi di tab Notifications: buka layar modulnya.
+  void _openNotification(AppNotification notification) {
+    final link = notification.link;
+    if (link != null) _openLink(link);
+  }
+
+  /// Tap pada push di system tray / notifikasi lokal. Notifikasinya
+  /// ditandai sudah dibaca lebih dulu, lalu layar modulnya dibuka.
+  void _openFromPush(Map<String, dynamic> data) {
+    final link = NotificationLink.fromData(data);
+    if (link == null || !mounted) return;
+
+    final serverId = link.notificationId;
+    if (serverId != null) {
+      final before = {for (final n in _notifications) n.id: n};
+      final updated = [
+        for (final n in _notifications)
+          n.serverId == serverId ? n.copyWith(isRead: true) : n,
+      ];
+      setState(() => _notifications = updated);
+
+      if (before['srv-$serverId'] != null) {
+        _syncServerNotifications(before, updated);
+      } else {
+        // Belum termuat di tab (push baru saja datang): tandai langsung,
+        // lalu muat ulang supaya entrinya muncul sudah terbaca.
+        _inboxRepository
+            ?.markRead(serverId)
+            .then((_) => _loadInbox())
+            .catchError((Object e, StackTrace stack) {
+          AppLogger.error('Notifikasi dari push gagal ditandai', e, stack);
+        });
+      }
+    }
+
+    _openLink(link);
+  }
+
+  void _openLink(NotificationLink link) {
+    final screen = NotificationRoutes.screenFor(link);
+    if (screen == null) return;
+
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));
   }
 
   Future<void> _loadAnnouncements() async {
@@ -228,8 +397,12 @@ class _BerandaScreenState extends State<BerandaScreen> {
 
   void _openTab(MainTab tab) {
     setState(() => _activeTab = tab);
-    // Data assign bisa berubah sejak Beranda dibuka (request baru lolos HOD).
-    if (tab == MainTab.notifications) _loadPendingAssignments();
+    // Data assign bisa berubah sejak Beranda dibuka (request baru lolos HOD),
+    // begitu juga notifikasi server.
+    if (tab == MainTab.notifications) {
+      _loadPendingAssignments();
+      _loadInbox();
+    }
   }
 
   void _openPayslip() {
@@ -333,6 +506,8 @@ class _BerandaScreenState extends State<BerandaScreen> {
   void _onNotificationsChanged(List<AppNotification> updated) {
     final before = {for (final n in _notifications) n.id: n};
     setState(() => _notifications = updated);
+
+    _syncServerNotifications(before, updated);
 
     for (final n in updated) {
       final requestId = LeaveApprovalRequest.idFromNotificationId(n.id);
@@ -502,6 +677,7 @@ class _BerandaScreenState extends State<BerandaScreen> {
         _loadLeaveApprovalCount(),
         _loadApprovalsWaiting(),
         _loadPendingAssignments(),
+        _loadInbox(),
       ]);
 
   int get _itApprovalCount => _approvalsWaiting.itRequest;
@@ -679,6 +855,11 @@ class _BerandaScreenState extends State<BerandaScreen> {
             notifications: _notifications,
             onChanged: _onNotificationsChanged,
             onAssign: _assignFromNotification,
+            onOpen: _openNotification,
+            onRefresh: () => Future.wait([
+              _loadInbox(),
+              _loadPendingAssignments(),
+            ]),
             initialFilter: _notificationFilter,
             filterRequestToken: _notificationFilterToken,
             showBack: false,

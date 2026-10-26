@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -66,8 +68,16 @@ class NotificationService {
       sound: true,
     );
 
-    FirebaseMessaging.onMessage.listen(_showForegroundNotification);
+    FirebaseMessaging.onMessage.listen((message) {
+      _foregroundMessages.add(message);
+      _showForegroundNotification(message);
+    });
     FirebaseMessaging.onMessageOpenedApp.listen(_handleNotificationTap);
+
+    // App dibuka dari keadaan mati lewat tap notifikasi: onMessageOpenedApp
+    // tidak terpanggil untuk kasus ini, pesannya harus diminta sendiri.
+    final initial = await _messaging.getInitialMessage();
+    if (initial != null) _handleNotificationTap(initial);
   }
 
   /// FCM token perangkat ini, dikirim ke backend supaya server tahu ke mana
@@ -91,6 +101,7 @@ class NotificationService {
     const iosInit = DarwinInitializationSettings();
     await _localNotifications.initialize(
       settings: const InitializationSettings(android: androidInit, iOS: iosInit),
+      onDidReceiveNotificationResponse: _handleLocalNotificationTap,
     );
 
     if (Platform.isAndroid) {
@@ -119,13 +130,61 @@ class NotificationService {
         ),
         iOS: const DarwinNotificationDetails(),
       ),
+      // Dibawa supaya tap pada notifikasi lokal ini bisa diarahkan ke layar
+      // yang sama dengan tap pada push dari system tray.
+      payload: jsonEncode(message.data),
     );
   }
 
   void _handleNotificationTap(RemoteMessage message) {
-    // TODO: arahkan ke layar terkait (mis. detail approval) berdasarkan
-    // `message.data` begitu konvensi payload dari backend sudah disepakati.
     AppLogger.info('Notifikasi di-tap, data: ${message.data}');
+    _emitTap(message.data);
+  }
+
+  void _handleLocalNotificationTap(NotificationResponse response) {
+    final payload = response.payload;
+    if (payload == null || payload.isEmpty) return;
+
+    try {
+      final data = jsonDecode(payload);
+      if (data is Map<String, dynamic>) _emitTap(data);
+    } catch (e, stack) {
+      AppLogger.error('Payload notifikasi lokal tidak terbaca', e, stack);
+    }
+  }
+
+  /// Tap pada notifikasi — dari system tray (app di background/terminated)
+  /// maupun dari notifikasi lokal saat app di foreground — berupa data
+  /// payload FCM-nya. Beranda yang mendengarkan dan membuka layar terkait.
+  ///
+  /// Static karena NotificationService dibuat lebih dari sekali (main.dart,
+  /// LoginBloc), sementara listener FCM-nya hanya dipasang sekali di init().
+  static final _taps = StreamController<Map<String, dynamic>>.broadcast();
+  static Stream<Map<String, dynamic>> get taps => _taps.stream;
+
+  /// Tap yang datang saat belum ada yang mendengarkan — mis. app dibuka dari
+  /// notifikasi dan user masih di splash/login. Diambil sekali oleh Beranda
+  /// lewat [takePendingTap] begitu ia tampil.
+  static Map<String, dynamic>? _pendingTap;
+
+  static Map<String, dynamic>? takePendingTap() {
+    final tap = _pendingTap;
+    _pendingTap = null;
+    return tap;
+  }
+
+  /// Pesan FCM yang datang selagi app terbuka, supaya Beranda bisa memuat
+  /// ulang isi tab Notifications tanpa menunggu ditarik manual.
+  static final _foregroundMessages = StreamController<RemoteMessage>.broadcast();
+  static Stream<RemoteMessage> get foregroundMessages =>
+      _foregroundMessages.stream;
+
+  static void _emitTap(Map<String, dynamic> data) {
+    if (_taps.hasListener) {
+      _taps.add(data);
+    } else {
+      _pendingTap = data;
+    }
   }
 
   @visibleForTesting
