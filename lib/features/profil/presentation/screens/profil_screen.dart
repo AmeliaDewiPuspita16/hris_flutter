@@ -181,105 +181,195 @@ class _ProfilView extends StatelessWidget {
     }
   }
 
+  /// Header: foto udara kawasan dengan gradasi hijau dari kiri, judul +
+  /// tagline, lalu panel putih bertepi gelombang berisi avatar, nama,
+  /// section, dan NIP.
   Widget _buildHeader(
       BuildContext context, EmployeeProfile p, ProfilPhotoState photoState) {
     final topInset = MediaQuery.paddingOf(context).top;
-    final heroHeight = topInset + 124;
-    const half = ProfileAvatar.size / 2;
+    // Foto berhenti sedikit di bawah puncak gelombang panel, supaya tidak
+    // ada celah krem di antara keduanya.
+    final heroHeight = topInset + 170;
+    final panelTop = topInset + 128;
+    const panelHeight = 142.0;
+    const avatarLeft = 20.0;
+    final canPop = Navigator.of(context).canPop();
 
-    return Column(
-      children: [
-        // Tinggi Stack sengaja memuat separuh avatar yang turun ke area
-        // krem, supaya avatar tetap bisa diketuk (hit-test tidak keluar batas).
-        SizedBox(
-          width: double.infinity,
-          height: heroHeight + half,
-          child: Stack(
-            alignment: Alignment.topCenter,
-            children: [
-              Container(
-                width: double.infinity,
-                height: heroHeight,
-                alignment: Alignment.topCenter,
-                padding: EdgeInsets.only(top: topInset + 16),
-                decoration: const BoxDecoration(
-                  // Sama dengan header Beranda (HomeTopHeader), supaya kedua
-                  // layar terasa satu identitas visual.
-                  image: DecorationImage(
-                    image: AssetImage('assets/images/header_bg.png'),
-                    fit: BoxFit.cover,
-                  ),
-                  borderRadius: BorderRadius.only(
-                    bottomLeft: Radius.circular(24),
-                    bottomRight: Radius.circular(24),
-                  ),
-                ),
-                child: const Text(
-                  'Profile',
-                  style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white),
+    // Tinggi Stack memuat seluruh panel, supaya avatar yang menumpuk di
+    // tepi gelombang tetap bisa diketuk (hit-test tidak keluar batas).
+    return SizedBox(
+      width: double.infinity,
+      height: panelTop + panelHeight,
+      child: Stack(
+        children: [
+          Positioned(
+            left: 0,
+            right: 0,
+            top: 0,
+            height: heroHeight,
+            child: const DecoratedBox(
+              decoration: BoxDecoration(
+                image: DecorationImage(
+                  image: AssetImage('assets/images/drone.png'),
+                  fit: BoxFit.cover,
+                  alignment: Alignment.centerRight,
                 ),
               ),
-              Positioned(
-                top: heroHeight - half,
-                child: ProfileAvatar(
-                  initials: p.initials,
-                  user: user,
-                  photo: photoState.photo,
-                  uploading: photoState.status == ProfilPhotoStatus.uploading,
-                  // Selama kamera/crop/upload berjalan, ketukan diabaikan.
-                  onTap: photoState.isBusy
-                      ? null
-                      : () => _onAvatarTap(context, photoState),
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                    stops: [0, 0.45, 1],
+                    colors: [
+                      Color(0xF20E4A34), // AppColors.primary, 95%
+                      Color(0xB30E4A34), // 70%
+                      Color(0x260E4A34), // 15%
+                    ],
+                  ),
                 ),
               ),
-            ],
+            ),
           ),
-        ),
-        const SizedBox(height: 12),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Text(
-            user?.name ?? p.name,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.w800,
-                color: AppColors.text,
-                height: 1.2),
+          Positioned(
+            left: canPop ? 8 : 24,
+            right: 16,
+            top: topInset + 12,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (canPop)
+                  IconButton(
+                    onPressed: () => Navigator.of(context).maybePop(),
+                    tooltip: 'Back',
+                    icon: const Icon(Icons.arrow_back_ios_new,
+                        size: 20, color: Colors.white),
+                  ),
+                const Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.only(top: 6),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Profile',
+                          style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white),
+                        ),
+                        // SizedBox(height: 4),
+                        // SizedBox(
+                        //   width: 190,
+                        //   child: Text(
+                        //     'Together for a Better Industrial Estate',
+                        //     style: TextStyle(
+                        //         fontSize: 12,
+                        //         fontWeight: FontWeight.w500,
+                        //         color: Colors.white,
+                        //         height: 1.35),
+                        //   ),
+                        // ),
+                      ],
+                    ),
+                  ),
+                ),
+                _HeaderIconButton(
+                  icon: Icons.settings,
+                  tooltip: 'Update Password',
+                  onTap: () => _onUpdatePasswordTap(context),
+                ),
+              ],
+            ),
           ),
-        ),
-        const SizedBox(height: 4),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Text(
-            user?.section ?? p.title,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-                fontSize: 13.5,
-                fontWeight: FontWeight.w500,
-                color: AppColors.textMid),
+          Positioned(
+            left: 0,
+            right: 0,
+            top: panelTop,
+            height: panelHeight,
+            child: ClipPath(
+              clipper: _WaveTopClipper(),
+              child: Container(
+                color: AppColors.card,
+                padding: const EdgeInsets.fromLTRB(
+                    avatarLeft + ProfileAvatar.size + 16, 44, 20, 0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      user?.name ?? p.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.text,
+                          height: 1.2),
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        const Icon(Icons.business_center,
+                            size: 15, color: AppColors.textMid),
+                        const SizedBox(width: 6),
+                        Flexible(
+                          child: Text(
+                            user?.section ?? p.title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                                fontSize: 13.5,
+                                fontWeight: FontWeight.w500,
+                                color: AppColors.textMid),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.fromLTRB(8, 4, 12, 4),
+                      decoration: BoxDecoration(
+                        color: AppColors.primaryLight,
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.badge,
+                              size: 15, color: AppColors.primaryMid),
+                          const SizedBox(width: 6),
+                          Text(
+                            'NIP: ${user?.nik ?? p.nip}',
+                            style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.primary,
+                                letterSpacing: 0.2),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
-        ),
-        const SizedBox(height: 8),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
-          decoration: BoxDecoration(
-            color: AppColors.primary,
-            borderRadius: BorderRadius.circular(999),
+          Positioned(
+            left: avatarLeft,
+            top: panelTop - 8,
+            child: ProfileAvatar(
+              initials: p.initials,
+              user: user,
+              photo: photoState.photo,
+              uploading: photoState.status == ProfilPhotoStatus.uploading,
+              // Selama kamera/crop/upload berjalan, ketukan diabaikan.
+              onTap: photoState.isBusy
+                  ? null
+                  : () => _onAvatarTap(context, photoState),
+            ),
           ),
-          child: Text(
-            'NIP: ${user?.nik ?? p.nip}',
-            style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: Colors.white,
-                letterSpacing: 0.2),
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -397,4 +487,52 @@ class _ProfilView extends StatelessWidget {
               fontWeight: FontWeight.w700)),
     );
   }
+}
+
+/// Tombol bulat hijau di pojok kanan atas header.
+class _HeaderIconButton extends StatelessWidget {
+  const _HeaderIconButton(
+      {required this.icon, required this.tooltip, required this.onTap});
+
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: AppColors.primaryMid,
+        shape: const CircleBorder(side: BorderSide(color: Colors.white24)),
+        child: InkWell(
+          customBorder: const CircleBorder(),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.all(9),
+            child: Icon(icon, size: 20, color: Colors.white),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Tepi atas bergelombang untuk panel identitas: rendah di kiri (tempat
+/// avatar), naik di tengah, lalu turun lagi ke kanan.
+class _WaveTopClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    final w = size.width;
+    return Path()
+      ..moveTo(0, 34)
+      ..cubicTo(w * 0.28, 4, w * 0.55, 0, w * 0.72, 22)
+      ..cubicTo(w * 0.84, 38, w * 0.94, 30, w, 14)
+      ..lineTo(w, size.height)
+      ..lineTo(0, size.height)
+      ..close();
+  }
+
+  @override
+  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
 }
