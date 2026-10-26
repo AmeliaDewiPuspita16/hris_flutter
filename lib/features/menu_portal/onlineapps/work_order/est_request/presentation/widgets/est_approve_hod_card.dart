@@ -14,7 +14,7 @@ import '../../domain/est_approval_item.dart';
 /// (merah lembut) dan Approve (hijau penuh).
 ///
 /// Mengetuk badan kartu memanggil [onTap] untuk membuka detail request +
-/// rencana kerja (lihat `MaintenancePlanSheet`) — HOD bisa baca dulu
+/// lampiran foto (lihat `EstApprovalDetailSheet`) — HOD bisa baca dulu
 /// sebelum memutuskan, atau langsung memutuskan lewat tombol di footer.
 class EstApproveHodCard extends StatelessWidget {
   const EstApproveHodCard({
@@ -126,9 +126,6 @@ class EstApproveHodCard extends StatelessWidget {
 
 /// Tombol keputusan HOD berbentuk pill. [filled] true = Approve (hijau
 /// penuh), false = Reject (latar merah lembut, teks merah).
-///
-/// Dipakai juga oleh `MaintenancePlanSheet` (dibungkus `Expanded` di
-/// sana) supaya tampilannya konsisten.
 class EstDecisionButton extends StatelessWidget {
   const EstDecisionButton({
     super.key,

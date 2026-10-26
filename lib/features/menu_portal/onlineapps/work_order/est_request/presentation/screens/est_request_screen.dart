@@ -22,6 +22,7 @@ import '../widgets/est_decision_dialog.dart';
 import '../widgets/est_request_row.dart';
 import '../widgets/est_request_tab_bar.dart';
 import 'add_est_request_screen.dart';
+import 'est_request_detail_screen.dart';
 
 /// Layar "EST Work Order" — daftar SEMUA request (bukan cuma milik sendiri),
 /// dari API, plus tombol Add Request.
@@ -33,9 +34,9 @@ import 'add_est_request_screen.dart';
 /// - HOD (`isHod: true`): tab All Request / Approve HOD, mengikuti pola
 ///   Form IT & Media / Approve Request di `ItRequestScreen`.
 ///
-/// Yang SUDAH tersambung ke API: daftar All Request (infinite scroll), tab
-/// Approve HOD. Yang belum: buka detail, rating, hapus, tambah, dan edit —
-/// dikerjakan bertahap.
+/// Yang SUDAH tersambung ke API: daftar All Request (infinite scroll),
+/// layar detail, tab Approve HOD. Yang belum: rating, hapus, tambah, dan
+/// edit — dikerjakan bertahap.
 class EstRequestScreen extends StatefulWidget {
   const EstRequestScreen({
     super.key,
@@ -114,6 +115,14 @@ class _EstRequestScreenState extends State<EstRequestScreen> {
           r.location.toLowerCase().contains(q) ||
           r.description.toLowerCase().contains(q);
     }).toList();
+  }
+
+  /// Buka layar detail. Semua baris bisa diketuk: semua user boleh melihat
+  /// WO siapa pun, dan flag `can_*` di detail yang menentukan aksinya.
+  void _openDetail(EstRequestItem item) {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => EstRequestDetailScreen(item: item)),
+    );
   }
 
   /// Buka form Add Request. Bila form menutup diri dengan `true` (request
@@ -399,9 +408,11 @@ class _EstRequestScreenState extends State<EstRequestScreen> {
                       return const _RequestRowSkeleton();
                     }
 
-                    // TODO(est): onTap membuka detail begitu GET /{id}
-                    // tersambung.
-                    return EstRequestRow(item: results[index]);
+                    final item = results[index];
+                    return EstRequestRow(
+                      item: item,
+                      onTap: () => _openDetail(item),
+                    );
                   },
                 ),
         );

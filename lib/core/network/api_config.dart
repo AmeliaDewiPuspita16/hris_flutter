@@ -59,13 +59,17 @@ class ApiConfig {
   /// [ApiClient.getEnvelope].
   static const String itRequest = '/api/portal/apps/it_request';
 
-  /// EST Work Order - daftar semua request  di path ini (`?mine=1`, `status`,
-  /// `type`, `per_page`, `page`). Seperti [eprocurement] `summary` dan
+  /// EST Work Order — daftar semua request di path ini (`?mine=1`, `status`,
+  /// `type`, `per_page`, `page`). Seperti [eprocurement], `summary` dan
   /// `meta` bersebelahan dengan `data`, jadi diambil lewat
   /// [ApiClient.getEnvelope].
   static const String estRequest = '/api/portal/apps/est_work_order';
 
-  /// Antrian keputusan HOD (hanya role 'hod).
+  /// Detail satu WO (rencana kerja, laporan selesai, timeline progress).
+  /// `data`-nya satu objek, jadi cukup [ApiClient.get].
+  static String estRequestDetail(int id) => '$estRequest/$id';
+
+  /// Antrean keputusan HOD (hanya role `hod`).
   static const String estRequestApprovals = '$estRequest/approvals';
 
   static String estRequestApprove(int id) => '$estRequest/$id/approve';

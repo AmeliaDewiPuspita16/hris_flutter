@@ -1,11 +1,10 @@
 import '../../../../../../core/utils/json_value.dart';
 import 'est_json.dart';
-import 'est_maintenance_plan.dart';
 import 'est_request_status.dart';
-import 'est_work_detail.dart';
 
 /// Satu baris di daftar "All Request" EST, dari
-/// `GET /api/portal/apps/est_work_order`.
+/// `GET /api/portal/apps/est_work_order`. Detail lengkapnya (rencana kerja,
+/// laporan selesai, timeline) ada di [EstRequestDetail].
 ///
 /// Bentuknya mengikuti respons server apa adanya. Hak aksi
 /// ([canEdit], [canDelete], [canRate]) dihitung SERVER; aplikasi hanya
@@ -28,8 +27,6 @@ class EstRequestItem {
     this.canEdit = false,
     this.canDelete = false,
     this.canRate = false,
-    this.plan,
-    this.workDetail,
   });
 
   final int id;
@@ -68,12 +65,6 @@ class EstRequestItem {
 
   /// True kalau requester boleh memverifikasi + memberi rating sekarang.
   final bool canRate;
-
-  /// Rencana kerja dan laporan pekerjaan. Daftar tidak membawanya, jadi
-  /// selalu null di sini; baru terisi dari layar detail
-  /// (`GET /est_work_order/{id}`).
-  final EstMaintenancePlan? plan;
-  final EstWorkDetail? workDetail;
 
   /// Melempar [FormatException] bila `id` tidak terbaca — tanpa id, aksi
   /// apa pun pada request ini tidak bisa dikirim.
