@@ -12,6 +12,9 @@ import 'leave_approval_status.dart';
 /// Mencakup semua jenis di [LeaveType] — Annual Leave, Permission, Off in
 /// Lieu, Overtime, dan Medical Check — sesuai baris "approval" pada
 /// requirement HRIS (Leave approval, Off in lieu approval, Overtime approval).
+///
+/// Untuk keperluan layar Approvals, jenis-jenis itu dikelompokkan jadi dua
+/// kategori: Overtime ([isOvertime]) dan Leave (semua selain overtime).
 class LeaveApprovalRequest {
   const LeaveApprovalRequest({
     required this.id,
@@ -68,6 +71,13 @@ class LeaveApprovalRequest {
   final String? decisionNote;
 
   bool get isPending => status == LeaveApprovalStatus.pending;
+
+  /// Kategori approval: overtime vs semua jenis cuti/izin lainnya.
+  ///
+  /// SEMENTARA diturunkan dari [type]. Saat approval overtime punya model
+  /// dan sumber datanya sendiri (realisasi lembur dari absensi), getter ini
+  /// cukup diganti tanpa menyentuh layar.
+  bool get isOvertime => type == LeaveType.lembur;
 
   String get dateLabel {
     final start = DateFormatter.shortDateID(startDate);

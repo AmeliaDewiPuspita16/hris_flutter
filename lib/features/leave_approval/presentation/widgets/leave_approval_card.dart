@@ -10,17 +10,18 @@ import '../../domain/leave_approval_request.dart';
 import '../../domain/leave_approval_status.dart';
 import 'leave_approval_status_x.dart';
 
-/// Kartu satu pengajuan di halaman Leave Approvals.
+/// Kartu satu pengajuan di halaman Approvals.
 ///
 /// Yang masih pending menampilkan tombol Reject/Approve langsung di kartu;
 /// yang sudah diputuskan menampilkan badge status dan siapa yang memutuskan.
 /// Tap kartu = buka detail lengkap.
 ///
-/// Sengaja diringkas jadi satu baris teks ([LeaveApprovalRequest.summaryLine])
-/// untuk jenis + tanggal + durasi, bukan dua chip berwarna (jenis, durasi)
-/// ditambah baris tanggal terpisah berikon kalender — supaya satu kartu
-/// tidak penuh dengan gaya visual yang berbeda-beda (chip, ikon, badge)
-/// sekaligus. Detail lengkap tetap ada di [showLeaveApprovalDetailSheet].
+/// Tampilannya sengaja polos: jenis pengajuan ditulis sebagai teks tebal,
+/// lalu satu baris abu-abu untuk tanggal, jam, dan durasi. Tidak ada ikon
+/// atau chip berwarna per jenis — kartu yang penuh warna-warni bersaing
+/// dengan tombol Reject/Approve. Satu-satunya penanda warna adalah Overtime
+/// (teks `violet`, sama dengan menu Overtime Request dan tombol filternya).
+/// Detail lengkap tetap ada di [showLeaveApprovalDetailSheet].
 class LeaveApprovalCard extends StatelessWidget {
   const LeaveApprovalCard({
     super.key,
@@ -44,10 +45,14 @@ class LeaveApprovalCard extends StatelessWidget {
   bool get _showActions =>
       request.isPending && onApprove != null && onReject != null;
 
+  /// Tanggal · jam · durasi, tanpa nama jenis (sudah tampil di atasnya).
+  String get _metaLine {
+    final time = request.timeLabel == null ? '' : ' · ${request.timeLabel}';
+    return '${request.dateLabel}$time · ${request.durationLabel}';
+  }
+
   @override
   Widget build(BuildContext context) {
-    final type = request.type;
-
     return AppCard(
       padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
       onTap: onTap,
@@ -91,25 +96,23 @@ class LeaveApprovalCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          Row(
-            children: [
-              Icon(type.icon, size: 14, color: type.color),
-              const SizedBox(width: 6),
-              Expanded(
-                child: Text(
-                  request.summaryLine,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTextStyles.body.copyWith(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
+          Text(
+            request.type.label,
+            style: AppTextStyles.body.copyWith(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: request.isOvertime ? AppColors.violet : AppColors.text,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            _metaLine,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: AppTextStyles.caption,
           ),
           if (request.reason != null) ...[
-            const SizedBox(height: 6),
+            const SizedBox(height: 8),
             Text(
               request.reason!,
               maxLines: 1,

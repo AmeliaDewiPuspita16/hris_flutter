@@ -140,7 +140,7 @@ class HrisMenuConfig {
         ),
         HrisMenuItem(
           id: 'approvals',
-          label: 'Leave Approvals',
+          label: 'Approvals',
           icon: Icons.task_alt,
           group: HrisMenuGroup.leave,
           color: AppColors.primary,

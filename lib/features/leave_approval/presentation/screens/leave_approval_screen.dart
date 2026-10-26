@@ -19,13 +19,24 @@ import '../widgets/leave_decision_sheet.dart';
 
 enum _ApprovalTab { pending, history }
 
-/// Halaman Leave Approvals untuk HOD: pengajuan bawahan (Annual Leave,
-/// Permission, Off in Lieu, Overtime, Medical Check) yang menunggu
-/// keputusan, beserta riwayat keputusan yang sudah diambil.
+/// Kategori approval untuk tombol filter. Cuma dua
+/// kelompok (Leave dan Overtime), bukan per jenis cuti — jenis cuti
+/// dibedakan lewat label di kartu.
+enum _ApprovalCategory { leave, overtime }
+
+/// Halaman Approvals untuk HOD: pengajuan bawahan yang menunggu keputusan,
+/// beserta riwayat keputusan yang sudah diambil.
 ///
-/// Halaman ini sumber data approval Leave yang sebenarnya — BUKAN turunan
-/// dari tab Notifications. Angka "pending" di badge menu HRIS dan banner
-/// Beranda dibaca dari [repository] yang sama.
+/// Melayani dua kategori: Leave (Annual Leave, Permission, Medical Check,
+/// Off in Lieu) dan Overtime. Di atas daftar ada dua tombol filter "Leave"
+/// dan "Overtime" (ketuk lagi untuk melepas). Tombol ini baru tampil kalau
+/// memang ada pengajuan overtime, jadi tampilan tidak berubah selama
+/// approval overtime belum tersedia. Tidak ada search: daftar pending satu
+/// HOD biasanya hanya beberapa item.
+///
+/// Halaman ini sumber data approval yang sebenarnya — BUKAN turunan dari
+/// tab Notifications. Angka "pending" di badge menu HRIS dan banner Beranda
+/// dibaca dari [repository] yang sama.
 ///
 /// Dibuka lewat push dari menu HRIS atau banner Beranda, jadi header punya
 /// tombol kembali ([showBack]).
@@ -97,16 +108,10 @@ class _LeaveApprovalView extends StatefulWidget {
 }
 
 class _LeaveApprovalViewState extends State<_LeaveApprovalView> {
-  final _searchController = TextEditingController();
-
   _ApprovalTab _tab = _ApprovalTab.pending;
-  String _query = '';
 
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
-  }
+  /// Null = semua kategori.
+  _ApprovalCategory? _category;
 
   // ── Aksi ───────────────────────────────────────────────────────────
 
@@ -149,23 +154,15 @@ class _LeaveApprovalViewState extends State<_LeaveApprovalView> {
 
   // ── Penyaringan ────────────────────────────────────────────────────
 
-  bool get _hasActiveFilter => _query.trim().isNotEmpty;
-
-  // Filter jenis (chip All/Annual Leave/…) sengaja dihapus — search sudah
-  // menyaring berdasarkan nama jenis lewat haystack di bawah, dan daftar
-  // pending satu HOD biasanya cuma beberapa item, jadi chip kategori
-  // terpisah cuma menambah baris berwarna tanpa banyak manfaat. Mudah
-  // dikembalikan nanti kalau volumenya jadi besar.
-  List<LeaveApprovalRequest> _applyFilter(List<LeaveApprovalRequest> items) {
-    final query = _query.trim().toLowerCase();
-    if (query.isEmpty) return items;
-
-    return items.where((r) {
-      final haystack = '${r.requesterName} ${r.department} ${r.position} '
-              '${r.type.label} ${r.reason ?? ''}'
-          .toLowerCase();
-      return haystack.contains(query);
-    }).toList();
+  List<LeaveApprovalRequest> _applyFilter(
+    List<LeaveApprovalRequest> items,
+    _ApprovalCategory? category,
+  ) {
+    return switch (category) {
+      null => items,
+      _ApprovalCategory.leave => items.where((r) => !r.isOvertime).toList(),
+      _ApprovalCategory.overtime => items.where((r) => r.isOvertime).toList(),
+    };
   }
 
   // ── Tampilan ───────────────────────────────────────────────────────
@@ -300,7 +297,7 @@ class _LeaveApprovalViewState extends State<_LeaveApprovalView> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          HeaderTitleRow(title: 'Leave Approvals', showBack: widget.showBack),
+          HeaderTitleRow(title: 'Approvals', showBack: widget.showBack),
           Container(
             padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
@@ -343,18 +340,31 @@ class _LeaveApprovalViewState extends State<_LeaveApprovalView> {
 
     final isPendingTab = _tab == _ApprovalTab.pending;
     final source = isPendingTab ? state.pending : state.history;
-    final filtered = _applyFilter(source);
+
+    // Tombol filter disembunyikan selama belum ada pengajuan overtime sama
+    // sekali. Kalau tombol tidak tampil, kategori dianggap "semua" supaya
+    // pilihan lama tidak menyaring diam-diam.
+    final showFilters = state.items.any((r) => r.isOvertime);
+    final category = showFilters ? _category : null;
+    final filtered = _applyFilter(source, category);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _buildSearchBar(),
-        const SizedBox(height: 12),
+        if (showFilters) ...[
+          _buildFilterBar(category),
+          const SizedBox(height: 12),
+        ] else
+          const SizedBox(height: 16),
         Expanded(
           child: RefreshIndicator(
             onRefresh: _refresh,
             child: filtered.isEmpty
-                ? _buildEmpty(isPendingTab, hasAnyInTab: source.isNotEmpty)
+                ? _buildEmpty(
+                    isPendingTab,
+                    hasAnyInTab: source.isNotEmpty,
+                    hasActiveFilter: category != null,
+                  )
                 : _buildList(state, filtered, isPendingTab),
           ),
         ),
@@ -362,41 +372,71 @@ class _LeaveApprovalViewState extends State<_LeaveApprovalView> {
     );
   }
 
-  Widget _buildSearchBar() {
+  /// Dua tombol filter selebar sama: Leave dan Overtime.
+  Widget _buildFilterBar(_ApprovalCategory? category) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-      child: SizedBox(
-        height: 38,
-        child: TextField(
-          controller: _searchController,
-          onChanged: (value) => setState(() => _query = value),
-          style: const TextStyle(fontSize: 13, color: AppColors.text),
-          decoration: InputDecoration(
-            hintText: 'Search name, department, reason',
-            hintStyle:
-                const TextStyle(fontSize: 12.5, color: AppColors.textMuted),
-            prefixIcon:
-                const Icon(Icons.search, size: 18, color: AppColors.textMuted),
-            suffixIcon: _query.isEmpty
-                ? null
-                : IconButton(
-                    icon: const Icon(
-                      Icons.close,
-                      size: 16,
-                      color: AppColors.textMuted,
-                    ),
-                    onPressed: () {
-                      _searchController.clear();
-                      setState(() => _query = '');
-                    },
-                  ),
-            filled: true,
-            fillColor: Colors.white,
-            contentPadding: EdgeInsets.zero,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(20),
-              borderSide: BorderSide.none,
-            ),
+      child: Row(
+        children: [
+          _buildFilterButton(
+            value: _ApprovalCategory.leave,
+            label: 'Leave',
+            icon: Icons.event_available_outlined,
+            // Sama dengan warna menu Leave Request (bukan hijau primary).
+            color: AppColors.accent,
+            selected: category,
+          ),
+          const SizedBox(width: 10),
+          _buildFilterButton(
+            value: _ApprovalCategory.overtime,
+            label: 'Overtime',
+            icon: Icons.more_time_outlined,
+            color: AppColors.violet,
+            selected: category,
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Tombol filter: putih dengan ikon berwarna saat tidak aktif, terisi
+  /// warna kategorinya saat aktif. Ketuk lagi untuk melepas. Ikon dan warna
+  /// sama dengan menu Leave Request dan Overtime Request.
+  Widget _buildFilterButton({
+    required _ApprovalCategory value,
+    required String label,
+    required IconData icon,
+    required Color color,
+    required _ApprovalCategory? selected,
+  }) {
+    final active = selected == value;
+
+    return Expanded(
+      child: InkWell(
+        onTap: () => setState(() => _category = active ? null : value),
+        borderRadius: BorderRadius.circular(20),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          height: 38,
+          decoration: BoxDecoration(
+            color: active ? color : Colors.white,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 16, color: active ? Colors.white : color),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: TextStyle(
+                  fontFamily: AppTextStyles.fontFamily,
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w700,
+                  color: active ? Colors.white : AppColors.textMuted,
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -408,6 +448,14 @@ class _LeaveApprovalViewState extends State<_LeaveApprovalView> {
     List<LeaveApprovalRequest> items,
     bool isPendingTab,
   ) {
+    final rows = <Object>[
+      if (isPendingTab)
+        items.length == 1
+            ? '1 request waiting for your decision'
+            : '${items.length} requests waiting for your decision',
+      ...items,
+    ];
+
     return ListView.separated(
       // Selalu bisa ditarik walau isinya sedikit, supaya refresh tetap
       // berfungsi.
@@ -418,22 +466,19 @@ class _LeaveApprovalViewState extends State<_LeaveApprovalView> {
         20,
         MediaQuery.paddingOf(context).bottom + 24,
       ),
-      itemCount: items.length + (isPendingTab ? 1 : 0),
+      itemCount: rows.length,
       separatorBuilder: (_, __) => const SizedBox(height: 10),
       itemBuilder: (context, index) {
-        if (isPendingTab && index == 0) {
+        final row = rows[index];
+
+        if (row is String) {
           return Padding(
             padding: const EdgeInsets.only(bottom: 2),
-            child: Text(
-              items.length == 1
-                  ? '1 request waiting for your decision'
-                  : '${items.length} requests waiting for your decision',
-              style: AppTextStyles.caption,
-            ),
+            child: Text(row, style: AppTextStyles.caption),
           );
         }
 
-        final request = items[isPendingTab ? index - 1 : index];
+        final request = row as LeaveApprovalRequest;
 
         return LeaveApprovalCard(
           request: request,
@@ -450,13 +495,21 @@ class _LeaveApprovalViewState extends State<_LeaveApprovalView> {
     );
   }
 
-  Widget _buildEmpty(bool isPendingTab, {required bool hasAnyInTab}) {
+  Widget _buildEmpty(
+    bool isPendingTab, {
+    required bool hasAnyInTab,
+    required bool hasActiveFilter,
+  }) {
     // Ada isi di tab ini tapi tersaring habis → pesan pencarian; kalau tab
     // memang kosong → pesan sesuai tab.
-    final filteredOut = hasAnyInTab && _hasActiveFilter;
+    final filteredOut = hasAnyInTab && hasActiveFilter;
 
     final (icon, title, subtitle) = filteredOut
-        ? (Icons.search_off_rounded, 'No data found', 'Try a different search or filter.')
+        ? (
+            Icons.search_off_rounded,
+            'No data found',
+            'Try a different filter.',
+          )
         : isPendingTab
             ? (
                 Icons.check_circle_outline_rounded,
@@ -527,7 +580,7 @@ class _ErrorState extends StatelessWidget {
   }
 }
 
-/// Skeleton daftar approval cuti selagi data pertama dimuat. Meniru
+/// Skeleton daftar approval selagi data pertama dimuat. Meniru
 /// [LeaveApprovalCard]: nama + departemen + status, tanggal, alasan, lalu
 /// dua tombol keputusan.
 class _ApprovalListSkeleton extends StatelessWidget {
