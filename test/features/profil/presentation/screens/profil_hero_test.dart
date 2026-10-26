@@ -5,12 +5,19 @@ import 'package:hris_mobile/features/auth/domain/auth_user.dart';
 import 'package:hris_mobile/features/auth/presentation/bloc/auth/auth_bloc.dart';
 import 'package:hris_mobile/features/profil/data/profil_repository.dart';
 import 'package:hris_mobile/features/profil/presentation/screens/profil_screen.dart';
+import 'package:hris_mobile/features/profil/presentation/widgets/profile_avatar.dart';
 import 'package:hris_mobile/features/shared/domain/role.dart';
 
 import '../../../../fixtures/login_response.dart';
 import '../../../../support/auth_harness.dart';
 
 void main() {
+  // Header juga memuat gambar cover, jadi pencarian Image dibatasi ke avatar.
+  final avatarImage = find.descendant(
+    of: find.byType(ProfileAvatar),
+    matching: find.byType(Image),
+  );
+
   Future<void> pumpProfil(WidgetTester tester, {AuthUser? user}) {
     final harness = AuthHarness();
     final authBloc = AuthBloc(repository: harness.repository);
@@ -42,7 +49,7 @@ void main() {
     final user = AuthUser.fromJson(loginResponseUser());
     await pumpProfil(tester, user: user);
 
-    final image = tester.widget<Image>(find.byType(Image));
+    final image = tester.widget<Image>(avatarImage);
     expect((image.image as NetworkImage).url, user.photoUrl);
   });
 
@@ -57,7 +64,7 @@ void main() {
     );
 
     expect(find.text('AP'), findsOneWidget);
-    expect(find.byType(Image), findsNothing);
+    expect(avatarImage, findsNothing);
   });
 
   testWidgets('tidak lagi menampilkan data demo saat pengguna tersedia',

@@ -1,4 +1,5 @@
 import '../../../core/network/api_config.dart';
+import '../../profil/domain/profile_cover.dart';
 
 /// Pengguna yang sedang masuk, hasil pemetaan `data.user` dari API login.
 ///
@@ -22,6 +23,7 @@ class AuthUser {
     this.image,
     this.avatar,
     this.roles = const [],
+    this.cover,
   });
 
   final int id;
@@ -45,6 +47,10 @@ class AuthUser {
   /// (`guard_name`, `pivot`, timestamp) dibuang karena tidak dipakai.
   final List<String> roles;
 
+  /// Cover kartu profil (objek `cover` di respons login). Null kalau server
+  /// belum mengirimnya — header Profil memakai gambar bawaan.
+  final ProfileCover? cover;
+
   factory AuthUser.fromJson(Map<String, dynamic> json) {
     return AuthUser(
       id: _asInt(json['id']) ?? 0,
@@ -60,6 +66,7 @@ class AuthUser {
       image: _asString(json['image']),
       avatar: _asString(json['avatar']),
       roles: _rolesFrom(json['roles']),
+      cover: ProfileCover.fromJson(json['cover']),
     );
   }
 
@@ -82,8 +89,27 @@ class AuthUser {
       'roles': [
         for (final role in roles) {'name': role},
       ],
+      'cover': cover?.toJson(),
     };
   }
+
+  /// Salinan dengan [cover] baru, mis. setelah user mengganti cover.
+  AuthUser copyWithCover(ProfileCover? cover) => AuthUser(
+        id: id,
+        name: name,
+        email: email,
+        nik: nik,
+        phone: phone,
+        section: section,
+        departmentId: departmentId,
+        subDepartmentId: subDepartmentId,
+        dateOfBirth: dateOfBirth,
+        gender: gender,
+        image: image,
+        avatar: avatar,
+        roles: roles,
+        cover: cover,
+      );
 
   /// Nama panggilan untuk sapaan di Beranda.
   String get firstName => _nameParts.isEmpty ? '' : _nameParts.first;

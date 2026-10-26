@@ -32,6 +32,16 @@ class ApiConfig {
   /// salah atau password baru tidak valid dibalas 422 dengan `errors`.
   static const String updatePassword = '/api/update_password';
 
+  /// Cover kartu profil saat ini (`data.cover`) beserta daftar preset
+  /// (`data.presets`) untuk layar "Change cover".
+  static const String profileCover = '/api/profile_cover';
+
+  /// Ganti cover, multipart dengan salah satu dari: `preset=<key>`,
+  /// berkas `cover` (JPG/PNG, maks 6 MB, min 800x300 px), atau `keep=1`
+  /// (atur ulang posisi gambar upload). Gambar boleh disertai
+  /// `position[size|x|y]`. Responsnya `data.cover` yang baru.
+  static const String updateProfileCover = '/api/update_profile_cover';
+
   /// Daftar departemen aktif — dipakai buat ngisi dropdown, misalnya di
   /// form pengumuman. Server yang urus filter `is_active` dan urutannya.
   static const String department = '/api/data/department';

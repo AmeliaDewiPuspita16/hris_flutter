@@ -37,9 +37,14 @@ class AuthSession {
       throw const FormatException('Respons login tidak memuat access_token');
     }
 
-    final user = json['user'];
+    var user = json['user'];
     if (user is! Map<String, dynamic>) {
       throw const FormatException('Respons login tidak memuat data user');
+    }
+
+    // Cover boleh dikirim di dalam `user` maupun sejajar dengannya.
+    if (user['cover'] == null && json['cover'] is Map) {
+      user = {...user, 'cover': json['cover']};
     }
 
     final tokenType = json['token_type'];

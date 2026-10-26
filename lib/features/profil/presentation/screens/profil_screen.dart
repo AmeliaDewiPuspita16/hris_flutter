@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/logging/app_logger.dart';
+import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/widgets/app_card.dart';
@@ -13,11 +15,14 @@ import '../../data/photo_picker_service.dart';
 import '../../data/profil_repository.dart';
 import '../../domain/employee_profile.dart';
 import '../../domain/photo_source.dart';
+import '../../domain/profile_cover.dart';
 import '../bloc/photo/profil_photo_bloc.dart';
 import '../bloc/photo/profil_photo_event.dart';
 import '../bloc/photo/profil_photo_state.dart';
+import '../widgets/cover_background.dart';
 import '../widgets/photo_source_sheet.dart';
 import '../widgets/profile_avatar.dart';
+import 'change_cover_screen.dart';
 import 'profile_photo_viewer_screen.dart';
 import 'update_password_screen.dart';
 
@@ -29,7 +34,10 @@ import 'update_password_screen.dart';
 /// Dependents disembunyikan dulu karena datanya masih demo — menunggu API
 /// HRIS dari Openbravo. Layarnya (DataDiriScreen, KontrakScreen, dst.)
 /// sengaja tidak dihapus.
-class ProfilScreen extends StatelessWidget {
+///
+/// Saat dibuka, cover diambil ulang diam-diam dari server — bisa saja
+/// diganti lewat web sejak login.
+class ProfilScreen extends StatefulWidget {
   const ProfilScreen({
     super.key,
     required this.role,
@@ -51,13 +59,44 @@ class ProfilScreen extends StatelessWidget {
   final PhotoPickerService? picker;
 
   @override
+  State<ProfilScreen> createState() => _ProfilScreenState();
+}
+
+class _ProfilScreenState extends State<ProfilScreen> {
+  late final ProfilRepository _repository =
+      widget.repository ?? context.read<ProfilRepository>();
+
+  @override
+  void initState() {
+    super.initState();
+    _syncCover();
+  }
+
+  Future<void> _syncCover() async {
+    if (widget.user == null) return;
+    final ProfileCover? cover;
+    try {
+      cover = (await _repository.fetchCover()).cover;
+    } on ApiException catch (e) {
+      // Header tetap memakai cover dari sesi; tidak perlu mengganggu user.
+      AppLogger.info('Gagal mengambil cover profil (${e.message})');
+      return;
+    }
+    final user = widget.user;
+    if (!mounted || cover == null || user == null || cover == user.cover) {
+      return;
+    }
+    context.read<AuthBloc>().add(AuthUserRefreshed(user.copyWithCover(cover)));
+  }
+
+  @override
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (_) => ProfilPhotoBloc(
-        repository: repository ?? context.read<ProfilRepository>(),
-        picker: picker ?? PhotoPickerService(),
+        repository: _repository,
+        picker: widget.picker ?? PhotoPickerService(),
       ),
-      child: _ProfilView(role: role, user: user),
+      child: _ProfilView(role: widget.role, user: widget.user),
     );
   }
 }
@@ -156,6 +195,17 @@ class _ProfilView extends StatelessWidget {
     }
   }
 
+  Future<void> _onChangeCoverTap(BuildContext context) async {
+    final u = user;
+    if (u == null) return;
+    final cover = await Navigator.of(context).push<ProfileCover>(
+      MaterialPageRoute(builder: (_) => ChangeCoverScreen(user: u)),
+    );
+    if (cover == null || !context.mounted) return;
+    context.read<AuthBloc>().add(AuthUserRefreshed(u.copyWithCover(cover)));
+    _toast(context, 'Cover updated');
+  }
+
   Future<void> _onAvatarTap(
       BuildContext context, ProfilPhotoState photoState) async {
     final hasPhoto = photoState.photo != null || user?.photoUrl != null;
@@ -181,8 +231,9 @@ class _ProfilView extends StatelessWidget {
     }
   }
 
-  /// Header: foto udara kawasan dengan gradasi hijau dari kiri, judul +
-  /// tagline, lalu panel putih bertepi gelombang berisi avatar, nama,
+  /// Header: cover pilihan user (atau foto udara kawasan bila server belum
+  /// mengirim cover) dengan gradasi gelap dari kiri, judul, tombol Change
+  /// cover, lalu panel putih bertepi gelombang berisi avatar, nama,
   /// section, dan NIP.
   Widget _buildHeader(
       BuildContext context, EmployeeProfile p, ProfilPhotoState photoState) {
@@ -207,28 +258,30 @@ class _ProfilView extends StatelessWidget {
             right: 0,
             top: 0,
             height: heroHeight,
-            child: const DecoratedBox(
-              decoration: BoxDecoration(
-                image: DecorationImage(
-                  image: AssetImage('assets/images/drone.png'),
-                  fit: BoxFit.cover,
-                  alignment: Alignment.centerRight,
-                ),
-              ),
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.centerLeft,
-                    end: Alignment.centerRight,
-                    stops: [0, 0.45, 1],
-                    colors: [
-                      Color(0xF20E4A34), // AppColors.primary, 95%
-                      Color(0xB30E4A34), // 70%
-                      Color(0x260E4A34), // 15%
-                    ],
-                  ),
-                ),
-              ),
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                CoverBackground(cover: user?.cover),
+                // Cover bawaan tetap bernuansa hijau seperti desain awal;
+                // cover pilihan user cukup digelapkan sedikit dari kiri.
+                if (user?.cover == null)
+                  const DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
+                        stops: [0, 0.45, 1],
+                        colors: [
+                          Color(0xF20E4A34), // AppColors.primary, 95%
+                          Color(0xB30E4A34), // 70%
+                          Color(0x260E4A34), // 15%
+                        ],
+                      ),
+                    ),
+                  )
+                else
+                  const CoverReadabilityOverlay(),
+              ],
             ),
           ),
           Positioned(
@@ -274,11 +327,13 @@ class _ProfilView extends StatelessWidget {
                     ),
                   ),
                 ),
-                _HeaderIconButton(
-                  icon: Icons.settings,
-                  tooltip: 'Update Password',
-                  onTap: () => _onUpdatePasswordTap(context),
-                ),
+                // _HeaderIconButton(
+                //   icon: Icons.settings,
+                //   tooltip: 'Update Password',
+                //   onTap: () => _onUpdatePasswordTap(context),
+                // ),
+                if (user != null)
+                  _ChangeCoverButton(onTap: () => _onChangeCoverTap(context)),
               ],
             ),
           ),
@@ -535,4 +590,37 @@ class _WaveTopClipper extends CustomClipper<Path> {
 
   @override
   bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
+}
+
+/// Pil "Change cover" di pojok kanan atas header, seperti di web portal.
+class _ChangeCoverButton extends StatelessWidget {
+  const _ChangeCoverButton({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.black.withValues(alpha: 0.35),
+      shape: const StadiumBorder(side: BorderSide(color: Colors.white24)),
+      child: InkWell(
+        customBorder: const StadiumBorder(),
+        onTap: onTap,
+        child: const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.image_outlined, size: 16, color: Colors.white),
+              SizedBox(width: 6),
+              Text(
+                'Change cover',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }

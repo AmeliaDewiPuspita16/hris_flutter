@@ -4,6 +4,7 @@ import '../../../core/network/api_client.dart';
 import '../../../core/network/api_config.dart';
 import '../../../core/network/api_exception.dart';
 import '../../auth/domain/auth_user.dart';
+import '../domain/profile_cover.dart';
 
 /// Data profil milik user yang sedang login. Tidak tahu soal HTTP — itu
 /// urusan [ApiClient]; tidak tahu soal sesi — itu urusan `AuthBloc`.
@@ -63,5 +64,52 @@ class ProfilRepository {
         'new_password_confirmation': confirmation,
       },
     );
+  }
+
+  /// Cover saat ini beserta pilihan preset-nya.
+  Future<ProfileCoverData> fetchCover() async {
+    final data = await _apiClient.get(ApiConfig.profileCover);
+    final rawPresets = data['presets'];
+    return ProfileCoverData(
+      cover: ProfileCover.fromJson(data['cover']),
+      presets: rawPresets is List
+          ? rawPresets.map(CoverPreset.fromJson).whereType<CoverPreset>().toList()
+          : const [],
+    );
+  }
+
+  /// Memasang preset [preset] (gambar upload lama dihapus server).
+  Future<ProfileCover> selectCoverPreset(String preset) =>
+      _updateCover(fields: {'preset': preset});
+
+  /// Mengunggah [file] sebagai cover dengan posisi [position].
+  Future<ProfileCover> uploadCover(File file, CoverPosition position) =>
+      _updateCover(
+        fields: position.toFields(),
+        files: {
+          'cover': [file.path],
+        },
+      );
+
+  /// Hanya mengatur ulang posisi gambar upload yang sudah ada.
+  Future<ProfileCover> repositionCover(CoverPosition position) =>
+      _updateCover(fields: {'keep': '1', ...position.toFields()});
+
+  Future<ProfileCover> _updateCover({
+    required Map<String, String> fields,
+    Map<String, List<String>>? files,
+  }) async {
+    final data = await _apiClient.postMultipart(
+      ApiConfig.updateProfileCover,
+      fields: fields,
+      files: files,
+    );
+    final cover = ProfileCover.fromJson(data['cover']);
+    if (cover == null) {
+      throw const ApiException.server(
+        'The cover was saved, but the server response was not recognized.',
+      );
+    }
+    return cover;
   }
 }
