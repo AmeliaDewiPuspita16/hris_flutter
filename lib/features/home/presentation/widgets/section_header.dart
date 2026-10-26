@@ -11,6 +11,7 @@ class SectionHeader extends StatelessWidget {
     this.actionLabel,
     this.actionIcon,
     this.onActionTap,
+    this.horizontalPadding = 20,
   });
 
   final String title;
@@ -21,10 +22,15 @@ class SectionHeader extends StatelessWidget {
 
   final VoidCallback? onActionTap;
 
+  /// Jarak kiri-kanan header. Default 20 = sejajar dengan kartu di Beranda.
+  /// Isi 0 kalau pemanggil sudah memberi padding horizontal sendiri,
+  /// supaya tidak terjadi padding ganda (judul jadi menjorok ke dalam).
+  final double horizontalPadding;
+
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [

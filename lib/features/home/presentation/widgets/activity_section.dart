@@ -7,23 +7,56 @@ import '../../domain/activity_entry.dart';
 
 /// Daftar aktivitas terbaru di bagian paling bawah Beranda.
 class ActivitySection extends StatelessWidget {
-  const ActivitySection({super.key, required this.activities});
+  const ActivitySection({
+    super.key,
+    required this.activities,
+    this.enabled = true,
+  });
 
   final List<ActivityEntry> activities;
 
+  /// false = tampil redup dengan penanda "Soon", pola yang sama dengan item
+  /// menu HRIS yang `isReady: false`. Dipakai selama API aktivitas belum ada.
+  final bool enabled;
+
   @override
   Widget build(BuildContext context) {
+    // Hanya aktivitas terbaru yang tampil (lihat ActivityFeed): yang paling
+    // lama otomatis tergeser keluar saat ada aktivitas baru.
+    final visible = ActivityFeed.latest(activities);
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text('Recent Activity', style: AppTextStyles.sectionTitle),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('Recent Activity', style: AppTextStyles.sectionTitle),
+              if (!enabled) const Text('Soon', style: AppTextStyles.caption),
+            ],
+          ),
           const SizedBox(height: 12),
-          for (final activity in activities)
+          if (visible.isEmpty)
+            const Text(
+              'No recent activity',
+              style: TextStyle(
+                fontFamily: AppTextStyles.fontFamily,
+                fontSize: 12,
+                color: AppColors.textMuted,
+              ),
+            ),
+          for (final activity in visible)
             Padding(
               padding: const EdgeInsets.only(bottom: 8),
-              child: _ActivityTile(activity: activity),
+              child: IgnorePointer(
+                ignoring: !enabled,
+                child: Opacity(
+                  opacity: enabled ? 1 : 0.45,
+                  child: _ActivityTile(activity: activity),
+                ),
+              ),
             ),
         ],
       ),
@@ -84,7 +117,7 @@ class _ActivityTile extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           Text(
-            activity.time,
+            activity.timeLabel(),
             style: const TextStyle(
               fontFamily: AppTextStyles.fontFamily,
               fontSize: 10,

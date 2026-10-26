@@ -12,6 +12,8 @@ import 'est_approval_state.dart';
 ///
 /// Hanya dimulai untuk akun berperan `hod` — antrean ini milik HOD
 /// department, akun lain tidak punya apa-apa untuk diputuskan.
+/// Kalau server tetap menolak ([EstApprovalState.denied]), layar menyembunyikan
+/// tabnya.
 class EstApprovalBloc
     extends Bloc<EstApprovalEvent, EstApprovalState> {
   EstApprovalBloc({required EstRequestRepository repository})
@@ -47,6 +49,7 @@ class EstApprovalBloc
         status: EstApprovalStatus.success,
         items: page.items,
         pending: page.pending,
+        denied: false,
       ));
     } on ApiException catch (e) {
       if (token != _requestToken) return;
@@ -58,6 +61,8 @@ class EstApprovalBloc
         items: const [],
         pending: 0,
         errorMessage: e.message,
+        // 401/403: akun ini memang tidak berhak, bukan sekadar gagal muat.
+        denied: e.kind == ApiErrorKind.unauthorized,
       ));
     } catch (e, stack) {
       if (token != _requestToken) return;

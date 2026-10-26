@@ -20,8 +20,8 @@ import '../../../../core/widgets/app_shimmer.dart';
 ///   jatuh ke Notifications juga sampai halaman approval masing-masing
 ///   dibuat).
 ///
-/// SEMENTARA: ditampilkan tanpa gerbang role — pemetaan HOD per-departemen
-/// dari API belum ada, sama seperti catatan role di auth_gate.dart.
+/// Gerbang role (hanya `hod`) dipasang oleh pemanggil di BerandaScreen,
+/// bukan di widget ini. Pemetaan HOD per-departemen dari API belum ada.
 /// Sembunyikan otomatis kalau totalnya 0 (dan bukan sedang [isLoading]).
 class ApprovalSummaryBanner extends StatelessWidget {
   const ApprovalSummaryBanner({

@@ -26,6 +26,7 @@ class EstApprovalState {
     this.busyIds = const {},
     this.errorMessage,
     this.notice,
+    this.denied = false,
   });
 
   final EstApprovalStatus status;
@@ -46,6 +47,11 @@ class EstApprovalState {
 
   final EstApprovalNotice? notice;
 
+  /// True bila server menolak akun ini membuka antrean (401/403), mis. bukan
+  /// HOD atau tidak punya departemen. Layar memakainya untuk menyembunyikan
+  /// tab "Approve HOD" sepenuhnya, bukan membiarkannya tampil kosong.
+  final bool denied;
+
   /// Muat pertama kali: spinner penuh. Saat refresh, daftar lama tetap tampil.
   bool get isFirstLoad =>
       status == EstApprovalStatus.loading && items.isEmpty;
@@ -57,6 +63,7 @@ class EstApprovalState {
     Set<int>? busyIds,
     Object? errorMessage = _unset,
     EstApprovalNotice? notice,
+    bool? denied,
   }) {
     return EstApprovalState(
       status: status ?? this.status,
@@ -66,6 +73,7 @@ class EstApprovalState {
       errorMessage:
           errorMessage == _unset ? this.errorMessage : errorMessage as String?,
       notice: notice ?? this.notice,
+      denied: denied ?? this.denied,
     );
   }
 }
