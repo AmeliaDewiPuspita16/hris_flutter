@@ -1,4 +1,4 @@
-package com.example.hris_mobile
+package id.co.biie.portal.hris
 
 import io.flutter.embedding.android.FlutterActivity
 

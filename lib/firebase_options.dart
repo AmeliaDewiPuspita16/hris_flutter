@@ -52,21 +52,19 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyDiE2ZUIeYKmmAAgh_uiYaaw-ujIjgmqmE',
-    appId: '1:796029371727:android:ba48a8daa596926f89313a',
+    appId: '1:796029371727:android:8a45ae3635ba478389313a',
     messagingSenderId: '796029371727',
     projectId: 'biie-portal-hris',
     storageBucket: 'biie-portal-hris.firebasestorage.app',
   );
-
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyDPqpGC2MjmXoyf6rkQVswHxn75Gx7xm88',
-    appId: '1:796029371727:ios:f5c5e03ef2a3028a89313a',
+    appId: '1:796029371727:ios:648357799ea5d19589313a',
     messagingSenderId: '796029371727',
     projectId: 'biie-portal-hris',
     storageBucket: 'biie-portal-hris.firebasestorage.app',
-    iosBundleId: 'com.example.hrisMobile',
+    iosBundleId: 'id.co.biie.portal.hris',
   );
-
   static const FirebaseOptions macos = FirebaseOptions(
     apiKey: 'AIzaSyDPqpGC2MjmXoyf6rkQVswHxn75Gx7xm88',
     appId: '1:796029371727:ios:f5c5e03ef2a3028a89313a',
