@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/config/feature_flags.dart';
 import '../../../../core/logging/app_logger.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/network/api_exception.dart';
@@ -540,13 +541,14 @@ class _BerandaScreenState extends State<BerandaScreen> {
     );
   }
 
-  /// Indent Vehicle: buka halamannya langsung di tab Supervisor Approval
-  /// (tab 1). Banner Approvals waiting memang hanya untuk yang berhak
-  /// approve, jadi tidak perlu bercabang menurut role.
+  /// Indent Vehicle: buka halamannya langsung di tab Supervisor Approval.
+  /// Banner Approvals waiting hanya tampil untuk HOD, yang memang berhak atas
+  /// tab itu (kalau tidak, layar otomatis jatuh ke List of User Requests).
   void _openIndentVehicleApproval() {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => const IndentVehicleScreen(initialTabIndex: 1),
+        builder: (_) =>
+            const IndentVehicleScreen(initialTab: IndentTab.supervisorApproval),
       ),
     );
   }
@@ -774,8 +776,11 @@ class _BerandaScreenState extends State<BerandaScreen> {
                     subtitle: '18 employees · Update leave balance',
                     onTap: _openKelolaTim,
                   ),
-                const ActivitySection(
-                  activities: HomeDemoData.recentActivities,
+                // Redup + "Soon" sampai API aktivitas ada (data masih demo).
+                // Aktifkan lewat FeatureFlags.recentActivity.
+                ActivitySection(
+                  activities: HomeDemoData.recentActivities(),
+                  enabled: FeatureFlags.recentActivity,
                 ),
               ],
             ),

@@ -59,6 +59,8 @@ class AnnouncementSection extends StatelessWidget {
         children: [
           SectionHeader(
             title: 'Announcements',
+            // Section ini sudah dibungkus padding 20 di atas.
+            horizontalPadding: 0,
             actionLabel: canCreate ? '+ New' : null,
             onActionTap: canCreate ? onCreateTap : null,
           ),

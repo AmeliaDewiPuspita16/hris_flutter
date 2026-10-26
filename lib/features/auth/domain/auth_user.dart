@@ -125,6 +125,15 @@ class AuthUser {
   bool get canManageItRequest =>
       hasRole('it media') || hasRole('admin');
 
+  /// Admin driver (`driver-admin`) dan admin umum (`admin`) — berhak melihat
+  /// tab Pending Vehicle Assignment di Indent Vehicle (menetapkan plat &
+  /// driver).
+  ///
+  /// Hanya untuk menyembunyikan tab; server tetap penentu terakhir (akun
+  /// yang tidak berhak dibalas `admin: false`, jadi tab-nya kosong).
+  bool get canAssignIndentVehicle =>
+      hasRole('driver-admin') || hasRole('admin');
+
   /// Atasan (role `hod`) — berhak melihat shortcut approval di Beranda.
   ///
   /// Sama seperti getter lain di sini: hanya untuk menampilkan/menyembunyikan

@@ -33,35 +33,50 @@ import '../widgets/indent_tab_bar.dart';
 import '../widgets/indent_delete_dialog.dart';
 import 'add_indent_screen.dart';
 
+/// Tab di layar Indent Vehicle. Urutan deklarasi = urutan tampil.
+enum IndentTab {
+  /// Admin driver menetapkan plat & driver lewat tombol Assign.
+  /// Hanya untuk role `driver-admin` (`AuthUser.canAssignIndentVehicle`).
+  pendingAssignment('Pending Vehicle Assignment'),
+
+  /// Atasan approve/reject request. Hanya untuk role `hod`.
+  supervisorApproval('Supervisor Approval'),
+
+  /// Daftar semua request milik user — tampil untuk semua akun.
+  requests('List of User Requests');
+
+  const IndentTab(this.label);
+
+  final String label;
+}
+
 /// Layar "Indent Vehicle" (menu Data). Urutan dari atas: search, tab bar,
 /// lalu isi tab yang aktif.
 ///
-/// - Tab 0 "Pending Vehicle Assignment" — admin driver menetapkan plat &
-///   driver lewat tombol Assign, lewat API. Isinya hanya terisi untuk
-///   akun `driver-admin` (server yang menentukan).
-/// - Tab 1 "Supervisor Approval"       — atasan (role `hod`) approve/reject
-///   request lewat API. Yang di-approve masuk ke antrean admin di server.
-/// - Tab 2 "List of User Requests"     — daftar semua request, dari API.
+/// Tab yang tampil ditentukan role akun (`data.user.roles` di respons
+/// login), lihat [IndentTab]. Akun biasa hanya melihat "List of User
+/// Requests" — tab bar disembunyikan kalau tabnya cuma satu.
 class IndentVehicleScreen extends StatefulWidget {
-  const IndentVehicleScreen({super.key, this.initialTabIndex = 2});
+  const IndentVehicleScreen({super.key, this.initialTab = IndentTab.requests});
 
-  /// Tab yang aktif saat layar dibuka. Default 2 (List of User Requests)
-  /// karena itu tampilan yang dilihat semua user; admin driver / HOD nanti
-  /// bisa dibuka langsung ke tab 0 / 1.
-  final int initialTabIndex;
+  /// Tab yang aktif saat layar dibuka. Default [IndentTab.requests] karena
+  /// itu tampilan yang dilihat semua user. Kalau akun tidak berhak atas tab
+  /// yang diminta, jatuh ke [IndentTab.requests].
+  final IndentTab initialTab;
 
   @override
   State<IndentVehicleScreen> createState() => _IndentVehicleScreenState();
 }
 
 class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
-  static const _tabLabels = [
-    'Pending Vehicle Assignment',
-    'Supervisor Approval',
-    'List of User Requests',
-  ];
+  /// Tab yang boleh dilihat akun ini, urut seperti [IndentTab]. Dibangun
+  /// sekali di [initState] dari role.
+  late final List<IndentTab> _tabs;
 
-  late int _tabIndex = widget.initialTabIndex;
+  /// Index ke [_tabs] (bukan ke enum).
+  late int _tabIndex;
+
+  IndentTab get _activeTab => _tabs[_tabIndex];
 
   // Daftar "List of User Requests" dipegang bloc (data dari API). Dibuat di
   // sini, bukan lewat BlocProvider, supaya handler di State ini bisa
@@ -69,14 +84,14 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
   late final IndentRequestListBloc _requestBloc;
   final _requestScrollController = ScrollController();
 
-  // Tab Pending Vehicle Assignment juga dipegang bloc. Dimulai untuk semua
-  // akun: server membalas `admin: false` (tanpa data) untuk yang bukan
-  // driver-admin, jadi tidak perlu mencocokkan nama role di sini.
+  // Tab Pending Vehicle Assignment juga dipegang bloc. Hanya dimulai untuk
+  // akun `driver-admin` (server membalas `admin: false` untuk akun lain).
   late final IndentPendingBloc _pendingBloc;
   // Tab Supervisor Approval juga dipegang bloc. Hanya dimulai untuk akun
   // berperan `hod`: server membalas 404 untuk akun lain.
   late final IndentApprovalBloc _approvalBloc;
   late final bool _isHod;
+  late final bool _canAssign;
   final _searchController = TextEditingController();
   String _query = '';
 
@@ -90,7 +105,17 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
     )..add(const IndentRequestListStarted());
     _requestScrollController.addListener(_onRequestScroll);
 
-    _isHod = user?.hasRole('hod') ?? false;
+    _isHod = user?.isHod ?? false;
+    _canAssign = user?.canAssignIndentVehicle ?? false;
+
+    _tabs = [
+      if (_canAssign) IndentTab.pendingAssignment,
+      if (_isHod) IndentTab.supervisorApproval,
+      IndentTab.requests,
+    ];
+    final initial = _tabs.indexOf(widget.initialTab);
+    _tabIndex = initial >= 0 ? initial : _tabs.indexOf(IndentTab.requests);
+
     _approvalBloc = IndentApprovalBloc(
       repository: context.read<IndentVehicleRepository>(),
     );
@@ -98,7 +123,8 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
 
     _pendingBloc = IndentPendingBloc(
       repository: context.read<IndentVehicleRepository>(),
-    )..add(const IndentPendingStarted());
+    );
+    if (_canAssign) _pendingBloc.add(const IndentPendingStarted());
   }
 
   @override
@@ -315,7 +341,7 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
     setState(() {
       // Pastikan hasilnya langsung kelihatan, dan kosongkan search supaya
       // request baru tidak tersaring.
-      _tabIndex = 2;
+      _tabIndex = _tabs.indexOf(IndentTab.requests);
       _searchController.clear();
       _query = '';
     });
@@ -336,7 +362,7 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
       // FAB oranye di kanan-bawah, sama pola dengan IT Request, HSE, dan EST.
       // Cuma muncul di tab List of User Requests — tab lain (assign &
       // approval) bukan tempat membuat request baru.
-      floatingActionButton: _tabIndex == 2
+      floatingActionButton: _activeTab == IndentTab.requests
           ? FloatingActionButton(
               onPressed: _addIndent,
               backgroundColor: AppColors.orange,
@@ -393,23 +419,29 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   _buildSearchField(),
-                  const SizedBox(height: 12),
-                  BlocBuilder<IndentPendingBloc, IndentPendingState>(
-                    bloc: _pendingBloc,
-                    builder: (context, pendingState) =>
-                        BlocBuilder<IndentApprovalBloc, IndentApprovalState>(
-                      bloc: _approvalBloc,
-                      builder: (context, approvalState) => IndentTabBar(
-                        labels: _tabLabels,
-                        activeIndex: _tabIndex,
-                        badgeCounts: {
-                          0: pendingState.items.length,
-                          1: approvalState.items.length,
-                        },
-                        onChanged: (i) => setState(() => _tabIndex = i),
+                  // Akun biasa hanya punya satu tab: tab bar tidak perlu.
+                  if (_tabs.length > 1) ...[
+                    const SizedBox(height: 12),
+                    BlocBuilder<IndentPendingBloc, IndentPendingState>(
+                      bloc: _pendingBloc,
+                      builder: (context, pendingState) =>
+                          BlocBuilder<IndentApprovalBloc, IndentApprovalState>(
+                        bloc: _approvalBloc,
+                        builder: (context, approvalState) => IndentTabBar(
+                          labels: [for (final tab in _tabs) tab.label],
+                          activeIndex: _tabIndex,
+                          badgeCounts: {
+                            for (var i = 0; i < _tabs.length; i++)
+                              if (_tabs[i] == IndentTab.pendingAssignment)
+                                i: pendingState.items.length
+                              else if (_tabs[i] == IndentTab.supervisorApproval)
+                                i: approvalState.items.length,
+                          },
+                          onChanged: (i) => setState(() => _tabIndex = i),
+                        ),
                       ),
                     ),
-                  ),
+                  ],
                 ],
               ),
             ),
@@ -418,11 +450,7 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
             Expanded(
               child: IndexedStack(
                 index: _tabIndex,
-                children: [
-                  _buildPendingAssignment(),
-                  _buildSupervisorApproval(),
-                  _buildListOfRequests(),
-                ],
+                children: [for (final tab in _tabs) _buildTab(tab)],
               ),
             ),
           ],
@@ -430,6 +458,17 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
       ),
       ),
     );
+  }
+
+  Widget _buildTab(IndentTab tab) {
+    switch (tab) {
+      case IndentTab.pendingAssignment:
+        return _buildPendingAssignment();
+      case IndentTab.supervisorApproval:
+        return _buildSupervisorApproval();
+      case IndentTab.requests:
+        return _buildListOfRequests();
+    }
   }
 
   Widget _buildSearchField() {
