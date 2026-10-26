@@ -9,7 +9,7 @@
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>com.example.hrisMobile</string>
+	<string>id.co.biie.portal.hris</string>
 	<key>PROJECT_ID</key>
 	<string>biie-portal-hris</string>
 	<key>STORAGE_BUCKET</key>
@@ -25,6 +25,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:796029371727:ios:f5c5e03ef2a3028a89313a</string>
+	<string>1:796029371727:ios:648357799ea5d19589313a</string>
 </dict>
 </plist>

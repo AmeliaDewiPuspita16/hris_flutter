@@ -22,6 +22,8 @@ import 'features/menu_portal/data_app/indent_vehicle/data/indent_vehicle_reposit
 import 'features/menu_portal/onlineapps/procurement/data/procurement_repository.dart';
 import 'features/menu_portal/onlineapps/work_order/est_request/data/est_request_repository.dart';
 import 'features/menu_portal/onlineapps/work_order/it_request/data/it_request_repository.dart';
+import 'features/notifikasi/data/device_token_repository.dart';
+import 'features/notifikasi/data/notification_inbox_repository.dart';
 import 'features/overtime_request/data/overtime_repository.dart';
 import 'features/pengajuan/data/pengajuan_repository.dart';
 import 'features/profil/data/profil_repository.dart';
@@ -51,11 +53,18 @@ Future<void> main() async {
   // yang perlu Authorization header.
   final apiClient = ApiClient();
 
+  // Satu instance: AuthRepository memakainya untuk mendaftarkan FCM token
+  // ke server (login, buka app, token dirotasi) dan mencabutnya saat logout.
+  final notificationService = NotificationService();
+
   runApp(
     MyApp(
       authRepository: AuthRepository(
         apiClient: apiClient,
         storage: SecureSessionStorage(),
+        deviceTokens: DeviceTokenRepository(apiClient: apiClient),
+        fcmToken: notificationService.getToken,
+        fcmTokenRefreshes: notificationService.onTokenRefresh,
       ),
       departmentRepository: DepartmentRepository(apiClient: apiClient),
       announcementRepository: AnnouncementRepository(apiClient: apiClient),
@@ -69,6 +78,8 @@ Future<void> main() async {
       overtimeRepository: OvertimeRepository(apiClient: apiClient),
       approvalsWaitingRepository:
           ApprovalsWaitingRepository(apiClient: apiClient),
+      notificationInboxRepository:
+          NotificationInboxRepository(apiClient: apiClient),
     ),
   );
 
@@ -77,7 +88,7 @@ Future<void> main() async {
   // chrome), window tidak otomatis fokus, dan Notification.requestPermission()
   // browser bisa tidak pernah resolve kalau tab-nya tidak fokus -- kalau ini
   // di-await sebelum runApp(), seluruh app macet di splash screen.
-  unawaited(NotificationService().init());
+  unawaited(notificationService.init());
 }
 
 class MyApp extends StatelessWidget {
@@ -95,6 +106,7 @@ class MyApp extends StatelessWidget {
     PengajuanRepository? pengajuanRepository,
     OvertimeRepository? overtimeRepository,
     ApprovalsWaitingRepository? approvalsWaitingRepository,
+    NotificationInboxRepository? notificationInboxRepository,
   })  : departmentRepository = departmentRepository ??
             DepartmentRepository(apiClient: ApiClient()),
         announcementRepository = announcementRepository ??
@@ -116,7 +128,9 @@ class MyApp extends StatelessWidget {
         overtimeRepository =
             overtimeRepository ?? OvertimeRepository(apiClient: ApiClient()),
         approvalsWaitingRepository = approvalsWaitingRepository ??
-            ApprovalsWaitingRepository(apiClient: ApiClient());
+            ApprovalsWaitingRepository(apiClient: ApiClient()),
+        notificationInboxRepository = notificationInboxRepository ??
+            NotificationInboxRepository(apiClient: ApiClient());
 
   final AuthRepository authRepository;
   final DepartmentRepository departmentRepository;
@@ -130,6 +144,7 @@ class MyApp extends StatelessWidget {
   final PengajuanRepository pengajuanRepository;
   final OvertimeRepository overtimeRepository;
   final ApprovalsWaitingRepository approvalsWaitingRepository;
+  final NotificationInboxRepository notificationInboxRepository;
 
   @override
   Widget build(BuildContext context) {
@@ -151,6 +166,7 @@ class MyApp extends StatelessWidget {
         RepositoryProvider.value(value: pengajuanRepository),
         RepositoryProvider.value(value: overtimeRepository),
         RepositoryProvider.value(value: approvalsWaitingRepository),
+        RepositoryProvider.value(value: notificationInboxRepository),
       ],
       child: BlocProvider(
         create: (_) =>

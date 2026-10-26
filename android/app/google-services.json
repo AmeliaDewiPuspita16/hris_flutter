@@ -7,9 +7,9 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:796029371727:android:ba48a8daa596926f89313a",
+        "mobilesdk_app_id": "1:796029371727:android:8a45ae3635ba478389313a",
         "android_client_info": {
-          "package_name": "com.example.hris_mobile"
+          "package_name": "id.co.biie.portal.hris"
         }
       },
       "oauth_client": [],

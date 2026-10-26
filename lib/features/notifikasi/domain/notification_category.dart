@@ -62,6 +62,13 @@ class NotificationCategory {
     background: AppColors.estRequestBg,
   );
 
+  static const procurement = NotificationCategory(
+    label: 'Procurement',
+    icon: Icons.trending_up_outlined,
+    color: AppColors.accent,
+    background: AppColors.accentBg,
+  );
+
   static const indentVehicle = NotificationCategory(
     label: 'Indent vehicle',
     icon: Icons.directions_car_outlined,

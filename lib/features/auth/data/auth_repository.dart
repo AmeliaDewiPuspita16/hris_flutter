@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import '../../../core/logging/app_logger.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_config.dart';
 import '../../../core/network/api_exception.dart';
+import '../../notifikasi/data/device_token_repository.dart';
 import '../domain/auth_session.dart';
 import 'session_storage.dart';
 
@@ -10,11 +13,34 @@ class AuthRepository {
   AuthRepository({
     required ApiClient apiClient,
     required SessionStorage storage,
+    DeviceTokenRepository? deviceTokens,
+    Future<String?> Function()? fcmToken,
+    Stream<String>? fcmTokenRefreshes,
   })  : _apiClient = apiClient,
-        _storage = storage;
+        _storage = storage,
+        _deviceTokens = deviceTokens,
+        _fcmToken = fcmToken {
+    // FCM bisa merotasi token kapan saja (reinstall, clear data). Yang baru
+    // didaftarkan ulang hanya kalau ada sesi — tanpa sesi, server tidak tahu
+    // token itu milik siapa.
+    fcmTokenRefreshes?.listen((token) {
+      if (_apiClient.authorizationHeader != null) {
+        unawaited(_registerDevice(token));
+      }
+    });
+  }
 
   final ApiClient _apiClient;
   final SessionStorage _storage;
+
+  /// Pendaftaran push notification. Keduanya null (mis. di test) berarti
+  /// push dimatikan — login/logout tetap berjalan seperti biasa.
+  final DeviceTokenRepository? _deviceTokens;
+  final Future<String?> Function()? _fcmToken;
+
+  /// Token yang terakhir berhasil didaftarkan, supaya logout mencabut token
+  /// yang memang tercatat di server.
+  String? _registeredToken;
 
   /// Menukar kredensial dengan sesi baru, menyimpannya, lalu memasang
   /// token-nya ke [ApiClient].
@@ -63,6 +89,10 @@ class AuthRepository {
 
     await _storage.write(session);
     _apiClient.setToken(session.token, tokenType: session.tokenType);
+
+    // Tidak di-await: login tidak boleh menunggu, apalagi gagal, hanya
+    // karena pendaftaran push bermasalah.
+    if (fcmToken != null) unawaited(_registerDevice(fcmToken));
     return session;
   }
 
@@ -77,6 +107,11 @@ class AuthRepository {
     if (session == null) return null;
 
     _apiClient.setToken(session.token, tokenType: session.tokenType);
+
+    // Didaftarkan ulang tiap app dibuka: token bisa saja berganti selagi app
+    // tertutup, dan sesi lama (sebelum fitur push ada) belum pernah
+    // mendaftarkan token sama sekali.
+    unawaited(_registerCurrentDevice());
     return session;
   }
 
@@ -88,6 +123,10 @@ class AuthRepository {
   /// harus bisa keluar dari aplikasi.
   Future<void> logout() async {
     if (_apiClient.authorizationHeader != null) {
+      // Sebelum token sesi dicabut: endpoint-nya butuh Authorization. Tanpa
+      // ini HP tetap menerima push milik akun yang sudah keluar.
+      await _unregisterDevice();
+
       try {
         await _apiClient.post(ApiConfig.logout);
       } on ApiException catch (e) {
@@ -99,5 +138,41 @@ class AuthRepository {
 
     await _storage.clear();
     _apiClient.setToken(null);
+  }
+
+  Future<void> _registerCurrentDevice() async {
+    final provider = _fcmToken;
+    if (provider == null || _deviceTokens == null) return;
+
+    final token = await provider();
+    if (token != null) await _registerDevice(token);
+  }
+
+  Future<void> _registerDevice(String token) async {
+    final deviceTokens = _deviceTokens;
+    if (deviceTokens == null) return;
+
+    try {
+      await deviceTokens.register(token);
+      _registeredToken = token;
+    } catch (e, stack) {
+      AppLogger.error('Gagal mendaftarkan FCM token ke server', e, stack);
+    }
+  }
+
+  Future<void> _unregisterDevice() async {
+    final deviceTokens = _deviceTokens;
+    if (deviceTokens == null) return;
+
+    final token = _registeredToken ?? await _fcmToken?.call();
+    if (token == null) return;
+
+    try {
+      await deviceTokens.unregister(token);
+    } catch (e, stack) {
+      AppLogger.error('Gagal mencabut FCM token di server', e, stack);
+    } finally {
+      _registeredToken = null;
+    }
   }
 }

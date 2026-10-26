@@ -149,25 +149,25 @@ class _Brand extends StatelessWidget {
           semanticLabel: 'Logo Bintan Industrial Estate',
         ),
         const SizedBox(height: 24),
-        const Text(
-          'BIIE Portal',
-          style: TextStyle(
-            fontFamily: AppTextStyles.fontFamily,
-            fontSize: 32,
-            fontWeight: FontWeight.w700,
-            color: Colors.white,
-            letterSpacing: -0.5,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          'PT Bintan Inti Industrial Estate',
-          style: TextStyle(
-            fontFamily: AppTextStyles.fontFamily,
-            fontSize: 14,
-            color: Colors.white.withValues(alpha: 0.8),
-          ),
-        ),
+        // const Text(
+        //   'BIIE Portal',
+        //   style: TextStyle(
+        //     fontFamily: AppTextStyles.fontFamily,
+        //     fontSize: 32,
+        //     fontWeight: FontWeight.w700,
+        //     color: Colors.white,
+        //     letterSpacing: -0.5,
+        //   ),
+        // ),R
+        // const SizedBox(height: 8),
+        // Text(
+        //   'PT Bintan Inti Industrial Estate',
+        //   style: TextStyle(
+        //     fontFamily: AppTextStyles.fontFamily,
+        //     fontSize: 14,
+        //     color: Colors.white.withValues(alpha: 0.8),
+        //   ),
+        // ),
       ],
     );
   }
