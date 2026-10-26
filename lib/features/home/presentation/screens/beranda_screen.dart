@@ -724,10 +724,9 @@ class _BerandaScreenState extends State<BerandaScreen> {
                   onActionTap: _openAttendance,
                   onRetry: _loadTodayAttendance,
                 ),
-                // SEMENTARA: tanpa gerbang role dulu (lihat catatan di
-                // ApprovalSummaryBanner) — dulu ini TeamBanner di bawah Main
-                // Menu, dipindah ke sini (pola awal HRIS: di bawah header, di
-                // atas Main Menu) sekaligus digabung 3 modul.
+                // Shortcut approval hanya untuk HOD (role `hod`). Selama belum
+                // ada sesi (mis. saat pratinjau), jatuh ke role demo.
+                if (widget.user?.isHod ?? (_role == Role.hod))
                 ApprovalSummaryBanner(
                   isLoading: _loadingApprovalsWaiting,
                   leaveCount: _leaveApprovalCount,

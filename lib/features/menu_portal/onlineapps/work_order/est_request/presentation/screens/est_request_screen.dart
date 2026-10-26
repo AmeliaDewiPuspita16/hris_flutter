@@ -283,25 +283,42 @@ class _EstRequestScreenState extends State<EstRequestScreen> {
                       ),
                     ),
                   ),
-                  if (_isHod) ...[
-                    const SizedBox(height: 12),
+                  if (_isHod)
                     BlocBuilder<EstApprovalBloc, EstApprovalState>(
                       bloc: _approvalBloc,
                       buildWhen: (previous, current) =>
-                          previous.pending != current.pending,
-                      builder: (context, state) => EstRequestTabBar(
-                        labels: const ['All Request', 'Approve HOD'],
-                        activeIndex: _tabIndex,
-                        badgeCounts: {1: state.pending},
-                        onChanged: (i) => setState(() => _tabIndex = i),
-                      ),
+                          previous.pending != current.pending ||
+                          previous.denied != current.denied,
+                      builder: (context, state) {
+                        // Server menolak akun ini: tab disembunyikan, bukan
+                        // dibiarkan tampil kosong.
+                        if (state.denied) return const SizedBox.shrink();
+
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 12),
+                          child: EstRequestTabBar(
+                            labels: const ['All Request', 'Approve HOD'],
+                            activeIndex: _tabIndex,
+                            badgeCounts: {1: state.pending},
+                            onChanged: (i) => setState(() => _tabIndex = i),
+                          ),
+                        );
+                      },
                     ),
-                  ],
                 ],
               ),
             ),
             Expanded(
-              child: _isHod ? _buildHodTabs() : _buildAllRequestList(),
+              child: !_isHod
+                  ? _buildAllRequestList()
+                  : BlocBuilder<EstApprovalBloc, EstApprovalState>(
+                      bloc: _approvalBloc,
+                      buildWhen: (previous, current) =>
+                          previous.denied != current.denied,
+                      builder: (context, state) => state.denied
+                          ? _buildAllRequestList()
+                          : _buildHodTabs(),
+                    ),
             ),
           ],
         ),

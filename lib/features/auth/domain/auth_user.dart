@@ -125,6 +125,12 @@ class AuthUser {
   bool get canManageItRequest =>
       hasRole('it media') || hasRole('admin');
 
+  /// Atasan (role `hod`) — berhak melihat shortcut approval di Beranda.
+  ///
+  /// Sama seperti getter lain di sini: hanya untuk menampilkan/menyembunyikan
+  /// UI, server tetap penentu terakhir.
+  bool get isHod => hasRole('hod');
+
   bool hasRole(String role) {
     final target = role.toLowerCase();
     return roles.any((r) => r.toLowerCase() == target);
