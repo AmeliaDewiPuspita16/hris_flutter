@@ -341,7 +341,14 @@ class ApiClient {
   String _redactedBody(Map<String, dynamic>? body) {
     if (body == null || body.isEmpty) return '';
 
-    const secretKeys = {'password', 'password_confirmation', 'token'};
+    const secretKeys = {
+      'password',
+      'password_confirmation',
+      'current_password',
+      'new_password',
+      'new_password_confirmation',
+      'token',
+    };
     final safe = {
       for (final entry in body.entries)
         entry.key:

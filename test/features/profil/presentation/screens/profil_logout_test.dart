@@ -5,6 +5,7 @@ import 'package:hris_mobile/features/auth/domain/auth_session.dart';
 import 'package:hris_mobile/features/auth/presentation/bloc/auth/auth_bloc.dart';
 import 'package:hris_mobile/features/auth/presentation/bloc/auth/auth_event.dart';
 import 'package:hris_mobile/features/auth/presentation/bloc/auth/auth_state.dart';
+import 'package:hris_mobile/features/profil/data/profil_repository.dart';
 import 'package:hris_mobile/features/profil/presentation/screens/profil_screen.dart';
 import 'package:hris_mobile/features/shared/domain/role.dart';
 
@@ -23,7 +24,12 @@ void main() {
       MaterialApp(
         home: BlocProvider.value(
           value: authBloc,
-          child: const Scaffold(body: ProfilScreen(role: Role.hrPublisher)),
+          child: Scaffold(
+            body: ProfilScreen(
+              role: Role.hrPublisher,
+              repository: ProfilRepository(apiClient: harness.apiClient),
+            ),
+          ),
         ),
       ),
     );

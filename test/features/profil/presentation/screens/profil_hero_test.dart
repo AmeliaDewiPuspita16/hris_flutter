@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hris_mobile/features/auth/domain/auth_user.dart';
 import 'package:hris_mobile/features/auth/presentation/bloc/auth/auth_bloc.dart';
+import 'package:hris_mobile/features/profil/data/profil_repository.dart';
 import 'package:hris_mobile/features/profil/presentation/screens/profil_screen.dart';
 import 'package:hris_mobile/features/shared/domain/role.dart';
 
@@ -11,13 +12,18 @@ import '../../../../support/auth_harness.dart';
 
 void main() {
   Future<void> pumpProfil(WidgetTester tester, {AuthUser? user}) {
-    final authBloc = AuthBloc(repository: AuthHarness().repository);
+    final harness = AuthHarness();
+    final authBloc = AuthBloc(repository: harness.repository);
     return tester.pumpWidget(
       MaterialApp(
         home: BlocProvider.value(
           value: authBloc,
           child: Scaffold(
-            body: ProfilScreen(role: Role.hrPublisher, user: user),
+            body: ProfilScreen(
+              role: Role.hrPublisher,
+              user: user,
+              repository: ProfilRepository(apiClient: harness.apiClient),
+            ),
           ),
         ),
       ),
@@ -82,5 +88,30 @@ void main() {
     expect(find.text('Budi Santoso'), findsOneWidget);
     expect(find.text('HR Publisher'), findsOneWidget);
     expect(find.text('NIP: 0000'), findsOneWidget);
+  });
+
+  testWidgets('menampilkan data login kecuali role', (tester) async {
+    await pumpProfil(tester, user: AuthUser.fromJson(loginResponseUser()));
+
+    expect(find.text('ariputra@biie.co.id'), findsOneWidget);
+    expect(find.text('082269859515'), findsOneWidget);
+    expect(find.text('Male'), findsOneWidget);
+    expect(find.text('gmo'), findsNothing);
+  });
+
+  testWidgets('menu HRIS yang datanya masih demo disembunyikan',
+      (tester) async {
+    await pumpProfil(tester, user: AuthUser.fromJson(loginResponseUser()));
+
+    expect(find.text('Update Password'), findsOneWidget);
+    for (final hidden in [
+      'Personal Data',
+      'Employment Contract',
+      'Bank Account',
+      'Address',
+      'Dependents',
+    ]) {
+      expect(find.text(hidden), findsNothing);
+    }
   });
 }

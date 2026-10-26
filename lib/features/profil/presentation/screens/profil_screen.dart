@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/widgets/app_card.dart';
+import '../../../../core/widgets/detail_field_tile.dart';
+import '../../../../core/widgets/profile_ui.dart';
 import '../../../auth/domain/auth_user.dart';
 import '../../../auth/presentation/bloc/auth/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth/auth_event.dart';
@@ -15,23 +18,17 @@ import '../bloc/photo/profil_photo_event.dart';
 import '../bloc/photo/profil_photo_state.dart';
 import '../widgets/photo_source_sheet.dart';
 import '../widgets/profile_avatar.dart';
-import 'data_diri_screen.dart';
-import 'kontrak_screen.dart';
 import 'profile_photo_viewer_screen.dart';
-import 'rekening_screen.dart';
-import 'alamat_screen.dart';
-import 'tanggungan_screen.dart';
-
-class _CategoryItem {
-  const _CategoryItem(this.icon, this.label, this.subtitle, this.builder);
-  final IconData icon;
-  final String label;
-  final String subtitle;
-  final WidgetBuilder builder;
-}
+import 'update_password_screen.dart';
 
 /// Layar Profil. Hanya menyediakan [ProfilPhotoBloc] untuk ganti foto;
 /// tampilannya ada di [_ProfilView].
+///
+/// Isinya data `user` dari respons login, menu Update Password, dan Logout.
+/// Menu Personal Data, Employment Contract, Bank Account, Address, dan
+/// Dependents disembunyikan dulu karena datanya masih demo — menunggu API
+/// HRIS dari Openbravo. Layarnya (DataDiriScreen, KontrakScreen, dst.)
+/// sengaja tidak dihapus.
 class ProfilScreen extends StatelessWidget {
   const ProfilScreen({
     super.key,
@@ -75,14 +72,6 @@ class _ProfilView extends StatelessWidget {
   Widget build(BuildContext context) {
     final p = EmployeeProfile.of(role);
 
-    final categories = <_CategoryItem>[
-      _CategoryItem(Icons.badge_outlined, 'Personal Data', 'Identity and personal contact', (_) => DataDiriScreen(profile: p, user: user)),
-      _CategoryItem(Icons.description_outlined, 'Employment Contract', 'Contract period and status', (_) => KontrakScreen(profile: p)),
-      _CategoryItem(Icons.account_balance_outlined, 'Bank Account', 'Account for payments', (_) => RekeningScreen(profile: p)),
-      _CategoryItem(Icons.location_on_outlined, 'Address', 'Residential and ID card address', (_) => AlamatScreen(profile: p)),
-      _CategoryItem(Icons.family_restroom_outlined, 'Dependents', 'Covered family members', (_) => TanggunganScreen(profile: p)),
-    ];
-
     return BlocConsumer<ProfilPhotoBloc, ProfilPhotoState>(
       listenWhen: (previous, current) => previous.status != current.status,
       listener: _onPhotoStateChanged,
@@ -105,11 +94,19 @@ class _ProfilView extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        for (var i = 0; i < categories.length; i++) ...[
-                          if (i > 0) const SizedBox(height: 10),
-                          _buildMenuTile(context, categories[i]),
-                        ],
-                        const SizedBox(height: 14),
+                        const SectionLabel('USER INFORMATION'),
+                        const SizedBox(height: 8),
+                        _buildInfoCard(p),
+                        const SizedBox(height: 18),
+                        const SectionLabel('SECURITY'),
+                        const SizedBox(height: 8),
+                        _buildMenuTile(
+                          icon: Icons.lock_outline,
+                          label: 'Update Password',
+                          subtitle: 'Change your sign-in password',
+                          onTap: () => _onUpdatePasswordTap(context),
+                        ),
+                        const SizedBox(height: 18),
                         _buildLogoutButton(context),
                         const SizedBox(height: 12),
                       ],
@@ -135,7 +132,8 @@ class _ProfilView extends StatelessWidget {
         }
         _toast(context, 'Profile photo updated');
       case ProfilPhotoStatus.failure:
-        _toast(context, state.errorMessage ?? 'Failed to change the profile photo.');
+        _toast(context,
+            state.errorMessage ?? 'Failed to change the profile photo.');
       case ProfilPhotoStatus.initial:
       case ProfilPhotoStatus.picking:
       case ProfilPhotoStatus.uploading:
@@ -149,7 +147,17 @@ class _ProfilView extends StatelessWidget {
       ..showSnackBar(SnackBar(content: Text(message)));
   }
 
-  Future<void> _onAvatarTap(BuildContext context, ProfilPhotoState photoState) async {
+  Future<void> _onUpdatePasswordTap(BuildContext context) async {
+    final changed = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(builder: (_) => const UpdatePasswordScreen()),
+    );
+    if (changed == true && context.mounted) {
+      _toast(context, 'Password updated');
+    }
+  }
+
+  Future<void> _onAvatarTap(
+      BuildContext context, ProfilPhotoState photoState) async {
     final hasPhoto = photoState.photo != null || user?.photoUrl != null;
     final action = await showPhotoSourceSheet(context, hasPhoto: hasPhoto);
     if (action == null || !context.mounted) return;
@@ -163,13 +171,18 @@ class _ProfilView extends StatelessWidget {
           ),
         ));
       case PhotoSheetAction.camera:
-        context.read<ProfilPhotoBloc>().add(const ProfilPhotoPickRequested(PhotoSource.camera));
+        context
+            .read<ProfilPhotoBloc>()
+            .add(const ProfilPhotoPickRequested(PhotoSource.camera));
       case PhotoSheetAction.gallery:
-        context.read<ProfilPhotoBloc>().add(const ProfilPhotoPickRequested(PhotoSource.gallery));
+        context
+            .read<ProfilPhotoBloc>()
+            .add(const ProfilPhotoPickRequested(PhotoSource.gallery));
     }
   }
 
-  Widget _buildHeader(BuildContext context, EmployeeProfile p, ProfilPhotoState photoState) {
+  Widget _buildHeader(
+      BuildContext context, EmployeeProfile p, ProfilPhotoState photoState) {
     final topInset = MediaQuery.paddingOf(context).top;
     final heroHeight = topInset + 124;
     const half = ProfileAvatar.size / 2;
@@ -203,7 +216,10 @@ class _ProfilView extends StatelessWidget {
                 ),
                 child: const Text(
                   'Profile',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Colors.white),
+                  style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white),
                 ),
               ),
               Positioned(
@@ -214,7 +230,9 @@ class _ProfilView extends StatelessWidget {
                   photo: photoState.photo,
                   uploading: photoState.status == ProfilPhotoStatus.uploading,
                   // Selama kamera/crop/upload berjalan, ketukan diabaikan.
-                  onTap: photoState.isBusy ? null : () => _onAvatarTap(context, photoState),
+                  onTap: photoState.isBusy
+                      ? null
+                      : () => _onAvatarTap(context, photoState),
                 ),
               ),
             ],
@@ -226,7 +244,23 @@ class _ProfilView extends StatelessWidget {
           child: Text(
             user?.name ?? p.name,
             textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: AppColors.text, height: 1.2),
+            style: const TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.w800,
+                color: AppColors.text,
+                height: 1.2),
+          ),
+        ),
+        const SizedBox(height: 4),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Text(
+            user?.section ?? p.title,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+                fontSize: 13.5,
+                fontWeight: FontWeight.w500,
+                color: AppColors.textMid),
           ),
         ),
         const SizedBox(height: 8),
@@ -238,19 +272,71 @@ class _ProfilView extends StatelessWidget {
           ),
           child: Text(
             'NIP: ${user?.nik ?? p.nip}',
-            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white, letterSpacing: 0.2),
+            style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+                letterSpacing: 0.2),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildMenuTile(BuildContext context, _CategoryItem c) {
+  /// Data `user` dari respons login, kecuali role. Field yang kosong di
+  /// server jatuh ke data demo [p] (atau "-" bila demo pun tidak punya).
+  Widget _buildInfoCard(EmployeeProfile p) {
+    final u = user;
+    final birthDate = u == null
+        ? p.birthDate
+        : DateFormatter.dayMonthYearFromIso(u.dateOfBirth) ?? '-';
+
+    return AppCard(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        children: [
+          DetailFieldTile(label: 'Email', value: u?.email ?? p.email),
+          DetailFieldTile(
+              label: 'Phone No.',
+              value: _orDash(u == null ? p.phone : u.phone)),
+          DetailFieldTile(label: 'Date of Birth', value: birthDate),
+          DetailFieldTile(
+              label: 'Gender',
+              value: _genderLabel(u?.gender),
+              showDivider: false),
+        ],
+      ),
+    );
+  }
+
+  static String _orDash(String? value) =>
+      value == null || value.trim().isEmpty ? '-' : value;
+
+  /// Server mengirim `male`/`female`; kode L/P juga diterima.
+  static String _genderLabel(String? raw) {
+    switch (raw?.trim().toLowerCase()) {
+      case 'male' || 'm' || 'l' || 'laki-laki':
+        return 'Male';
+      case 'female' || 'f' || 'p' || 'perempuan':
+        return 'Female';
+      case null || '':
+        return '-';
+      default:
+        return raw!;
+    }
+  }
+
+  Widget _buildMenuTile({
+    required IconData icon,
+    required String label,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
     return AppCard(
       padding: EdgeInsets.zero,
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
-        onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: c.builder)),
+        onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           child: Row(
@@ -263,20 +349,27 @@ class _ProfilView extends StatelessWidget {
                   color: AppColors.primary.withValues(alpha: 0.10),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(c.icon, size: 22, color: AppColors.primary),
+                child: Icon(icon, size: 22, color: AppColors.primary),
               ),
               const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(c.label, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.text)),
+                    Text(label,
+                        style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.text)),
                     const SizedBox(height: 2),
-                    Text(c.subtitle, style: const TextStyle(fontSize: 12.5, color: AppColors.textMuted)),
+                    Text(subtitle,
+                        style: const TextStyle(
+                            fontSize: 12.5, color: AppColors.textMuted)),
                   ],
                 ),
               ),
-              const Icon(Icons.chevron_right, size: 18, color: AppColors.textMuted),
+              const Icon(Icons.chevron_right,
+                  size: 18, color: AppColors.textMuted),
             ],
           ),
         ),
@@ -297,7 +390,11 @@ class _ProfilView extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 14),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
-      child: const Text('Logout', style: TextStyle(color: AppColors.rejected, fontSize: 14, fontWeight: FontWeight.w700)),
+      child: const Text('Logout',
+          style: TextStyle(
+              color: AppColors.rejected,
+              fontSize: 14,
+              fontWeight: FontWeight.w700)),
     );
   }
 }

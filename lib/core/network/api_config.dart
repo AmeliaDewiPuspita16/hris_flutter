@@ -26,6 +26,12 @@ class ApiConfig {
   /// berbentuk sama dengan login: `access_token`, `token_type`, `user`.
   static const String uploadProfile = '/api/upload_profile';
 
+  /// Ganti password user yang sedang login. Body: `current_password`,
+  /// `new_password` (min. 8 karakter, beda dari yang lama), dan
+  /// `new_password_confirmation`. Berhasil: `data: null`. Password lama
+  /// salah atau password baru tidak valid dibalas 422 dengan `errors`.
+  static const String updatePassword = '/api/update_password';
+
   /// Daftar departemen aktif — dipakai buat ngisi dropdown, misalnya di
   /// form pengumuman. Server yang urus filter `is_active` dan urutannya.
   static const String department = '/api/data/department';

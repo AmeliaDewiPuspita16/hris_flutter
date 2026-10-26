@@ -45,4 +45,23 @@ class ProfilRepository {
       );
     }
   }
+
+  /// Mengganti password user yang sedang login. Token sesi tidak berubah.
+  ///
+  /// Melempar [ApiException] bila gagal, termasuk galat validasi dari
+  /// server (mis. password lama salah) dengan pesan field pertama.
+  Future<void> updatePassword({
+    required String currentPassword,
+    required String newPassword,
+    required String confirmation,
+  }) {
+    return _apiClient.postAction(
+      ApiConfig.updatePassword,
+      body: {
+        'current_password': currentPassword,
+        'new_password': newPassword,
+        'new_password_confirmation': confirmation,
+      },
+    );
+  }
 }
