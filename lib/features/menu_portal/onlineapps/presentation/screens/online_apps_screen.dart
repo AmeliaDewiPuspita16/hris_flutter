@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../../../../core/theme/app_colors.dart';
-import '../../../../../core/theme/app_text_styles.dart';
-import '../../../../../core/widgets/back_header.dart';
 import '../../domain/online_apps_demo_data.dart';
 import '../../procurement/presentation/screens/procurement_page.dart';
 import '../../work_order/domain/request_type.dart';
@@ -10,6 +7,7 @@ import '../../work_order/est_request/presentation/screens/est_request_screen.dar
 import '../../work_order/it_request/presentation/screens/it_request_screen.dart';
 import '../../work_order/presentation/widgets/choose_request_type_sheet.dart';
 import '../../hse_work_request/presentation/screens/hse_work_request_list_screen.dart';
+import '../../../shared/presentation/widgets/portal_category_page.dart';
 import '../widgets/online_app_tile.dart';
 
 /// Halaman daftar Online Apps, dibuka dari salah satu 4 menu utama di
@@ -58,41 +56,12 @@ class OnlineAppsScreen extends StatelessWidget {
       ),
     );
 
-    return Scaffold(
-      backgroundColor: AppColors.bg,
-      appBar: BackHeader(
-        title: 'Online Apps',
-        onBack: () => Navigator.of(context).pop(),
-      ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-        children: [
-          const Padding(
-            padding: EdgeInsets.only(bottom: 4, left: 4),
-            child: Text(
-              'ECOSYSTEM',
-              style: TextStyle(
-                fontFamily: AppTextStyles.fontFamily,
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textMuted,
-                letterSpacing: 0.5,
-              ),
-            ),
-          ),
-          const Padding(
-            padding: EdgeInsets.only(bottom: 16, left: 4),
-            child: Text(
-              'Akses tools operasional dan sistem manajemen internal.',
-              style: AppTextStyles.bodyMuted,
-            ),
-          ),
-          for (var i = 0; i < items.length; i++) ...[
-            if (i > 0) const SizedBox(height: 10),
-            OnlineAppTile(item: items[i]),
-          ],
-        ],
-      ),
+    return PortalCategoryPage(
+      title: 'Online Apps',
+      subtitle: 'Akses tools operasional dan sistem manajemen internal.',
+      illustrationAsset: PortalCategoryPage.monitorIllustration,
+      sectionLabel: 'ECOSYSTEM',
+      children: [for (final item in items) OnlineAppTile(item: item)],
     );
   }
 }

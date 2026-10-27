@@ -1,14 +1,11 @@
 import 'package:flutter/material.dart';
 
-import '../../../../../core/theme/app_colors.dart';
-import '../../../../../core/theme/app_text_styles.dart';
-import '../../../../../core/widgets/not_ready.dart';
-import '../../../shared/presentation/widgets/menu_list_tile.dart';
+import '../../../shared/presentation/widgets/portal_category_card.dart';
 import '../../domain/online_app_item.dart';
 
-/// Satu baris di halaman Online Apps: ikon, judul + departemen, dan chevron
-/// di kanan. Tampilan baris sendiri ada di [MenuListTile] — di sini cuma
-/// menentukan subtitle-nya berupa nama departemen.
+/// Satu kartu di halaman Online Apps. Tampilannya ada di
+/// [PortalCategoryCard] (dipakai bersama Records dan Data); badge-nya berisi
+/// nama departemen.
 class OnlineAppTile extends StatelessWidget {
   const OnlineAppTile({super.key, required this.item});
 
@@ -16,21 +13,13 @@ class OnlineAppTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return NotReady(
-      isReady: item.isReady,
-      child: MenuListTile(
-        icon: item.icon,
-        label: item.label,
-        color: item.color,
-        background: item.background,
-        onTap: item.onTap,
-        subtitle: Text(
-          item.department,
-          style: AppTextStyles.caption.copyWith(
-            color: AppColors.textMuted
-          ),
-        )
-      ),
+    return PortalCategoryCard(
+      icon: item.icon,
+      label: item.label,
+      owners: [item.department],
+      color: item.color,
+      background: item.background,
+      onTap: item.onTap,
     );
   }
 }

@@ -22,6 +22,9 @@ class AppColors {
   static const orange = Color(0xFFF97316);
   static const orangeBg = Color(0xFFFFF1E6);
 
+  static const pink = Color(0xFFD6457F); // Tenant Feedback di Online Apps
+  static const pinkBg = Color(0xFFFDEBF3);
+
   static const bannerAccent = Color(0xFFB7E4C7);
 
   // Warna netral (abu/putih)

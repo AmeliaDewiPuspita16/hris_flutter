@@ -2,9 +2,9 @@ import 'package:flutter/widgets.dart';
 
 /// Satu baris kategori di halaman Data (Award & Recognition, Budget
 /// Department, dst). Bentuknya sama persis dengan `RecordItem` — folder
-/// Data dan Record memang dua menu berbeda, tapi tile-nya sudah dipakai
-/// bareng lewat `MenuListTile`/`OwnerBadgeRow`, jadi modelnya juga
-/// disamakan biar gampang dirawat.
+/// Data dan Record memang dua menu berbeda, tapi kartunya dipakai bareng
+/// lewat `PortalCategoryCard`, jadi modelnya juga disamakan biar gampang
+/// dirawat.
 class DataItem {
   const DataItem({
     required this.icon,

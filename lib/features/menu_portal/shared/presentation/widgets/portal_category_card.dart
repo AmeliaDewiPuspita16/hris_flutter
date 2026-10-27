@@ -5,7 +5,7 @@ import '../../../../../core/theme/app_text_styles.dart';
 import '../../../../../core/widgets/not_ready.dart';
 import 'owner_badge_row.dart';
 
-/// Satu kartu kategori di halaman Records dan Data: kotak ikon bergradasi warna
+/// Satu kartu kategori di halaman Records, Data, dan Online Apps: kotak ikon bergradasi warna
 /// kategori, judul + badge owner (bisa lebih dari satu) bernada sama, dan
 /// tombol chevron bulat di kanan. Latar kartu memudar dari putih ke tint
 /// warna kategori.

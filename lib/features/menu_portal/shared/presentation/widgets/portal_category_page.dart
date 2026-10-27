@@ -5,7 +5,8 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/theme/app_text_styles.dart';
 
-/// Kerangka halaman daftar kategori Menu Portal (Records, Data): header
+/// Kerangka halaman daftar kategori Menu Portal (Records, Data, Online
+/// Apps): header
 /// bergambar di atas, lalu [children] (kartu kategori) berjarak 12px.
 /// Header ikut tergulir bersama daftar.
 class PortalCategoryPage extends StatelessWidget {
@@ -14,11 +15,25 @@ class PortalCategoryPage extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.children,
+    this.illustrationAsset = folderIllustration,
+    this.sectionLabel,
   });
+
+  static const folderIllustration =
+      'assets/icons/header-folder-illustration.svg';
+  static const monitorIllustration =
+      'assets/icons/header-monitor-illustration.svg';
 
   final String title;
   final String subtitle;
   final List<Widget> children;
+
+  /// SVG hiasan di kanan header.
+  final String illustrationAsset;
+
+  /// Label kecil huruf kapital di atas daftar, mis. "ECOSYSTEM". Null =
+  /// tanpa label.
+  final String? sectionLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -38,13 +53,29 @@ class PortalCategoryPage extends StatelessWidget {
             _PortalHeader(
               title: title,
               subtitle: subtitle,
+              illustrationAsset: illustrationAsset,
               onBack: () => Navigator.of(context).pop(),
             ),
             Padding(
               padding: EdgeInsets.fromLTRB(
                   16, 4, 16, 24 + MediaQuery.paddingOf(context).bottom),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  if (sectionLabel case final label?)
+                    Padding(
+                      padding: const EdgeInsets.only(left: 4, bottom: 10),
+                      child: Text(
+                        label,
+                        style: const TextStyle(
+                          fontFamily: AppTextStyles.fontFamily,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textMuted,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ),
                   for (var i = 0; i < children.length; i++) ...[
                     if (i > 0) const SizedBox(height: 12),
                     children[i],
@@ -65,11 +96,13 @@ class _PortalHeader extends StatelessWidget {
   const _PortalHeader({
     required this.title,
     required this.subtitle,
+    required this.illustrationAsset,
     required this.onBack,
   });
 
   final String title;
   final String subtitle;
+  final String illustrationAsset;
   final VoidCallback onBack;
 
   @override
@@ -103,7 +136,7 @@ class _PortalHeader extends StatelessWidget {
           right: 4,
           bottom: 12,
           child: SvgPicture.asset(
-            'assets/icons/header-folder-illustration.svg',
+            illustrationAsset,
             width: 150,
             // Latar & judul tetap terbaca untuk pembaca layar; ilustrasi
             // hanya hiasan.
