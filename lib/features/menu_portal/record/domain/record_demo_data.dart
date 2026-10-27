@@ -48,8 +48,8 @@ class RecordDemoData {
           icon: Icons.fact_check_outlined,
           label: 'IMS Document',
           owners: const ['Fauzi'],
-          color: AppColors.estRequest,
-          background: AppColors.estRequestBg,
+          color: AppColors.orange,
+          background: AppColors.orangeBg,
           onTap: onImsDocument,
         ),
         RecordItem(

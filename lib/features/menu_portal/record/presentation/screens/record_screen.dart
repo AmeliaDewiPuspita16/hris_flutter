@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
 
-import '../../../../../core/theme/app_colors.dart';
-import '../../../../../core/theme/app_text_styles.dart';
-import '../../../../../core/widgets/back_header.dart';
 import '../../domain/record_demo_data.dart';
 import '../../ims_document/domain/ims_document_menu_data.dart';
 import '../../ims_document/master_document_file/presentation/screens/master_document_file_screen.dart';
 import '../../ims_document/master_edited_file/presentation/screens/master_edited_file_screen.dart';
 import '../../ims_document/presentation/widgets/ims_document_menu_sheet.dart';
+import '../../../shared/presentation/widgets/portal_category_page.dart';
 import '../widgets/record_tile.dart';
 
 /// Halaman daftar Records, dibuka dari salah satu 4 menu utama di
@@ -34,11 +32,14 @@ class RecordScreen extends StatelessWidget {
         MaterialPageRoute(builder: (_) => MasterEditedFileScreen()),
       ),
       onIsoAttachment: () => _showComingSoon(context, 'ISO Attachment'),
-      onAddMasterDocument: () => _showComingSoon(context, 'Add Master Document'),
+      onAddMasterDocument: () =>
+          _showComingSoon(context, 'Add Master Document'),
       onAddMasterEdited: () => _showComingSoon(context, 'Add Master Edited'),
       onRequest: () => _showComingSoon(context, 'Request'),
-      onHistoryRequestUser: () => _showComingSoon(context, 'History Request User'),
-      onImsDocumentRequest: () => _showComingSoon(context, 'IMS Document Request'),
+      onHistoryRequestUser: () =>
+          _showComingSoon(context, 'History Request User'),
+      onImsDocumentRequest: () =>
+          _showComingSoon(context, 'IMS Document Request'),
     );
 
     showModalBottomSheet<void>(
@@ -62,41 +63,10 @@ class RecordScreen extends StatelessWidget {
       onPhotoVideo: null,
     );
 
-    return Scaffold(
-      backgroundColor: AppColors.bg,
-      appBar: BackHeader(
-        title: 'Records',
-        onBack: () => Navigator.of(context).pop(),
-      ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-        children: [
-          const Padding(
-            padding: EdgeInsets.only(bottom: 4, left: 4),
-            child: Text(
-              'DOCUMENT CENTER',
-              style: TextStyle(
-                fontFamily: AppTextStyles.fontFamily,
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                color: AppColors.textMuted,
-                letterSpacing: 0.5,
-              ),
-            ),
-          ),
-          const Padding(
-            padding: EdgeInsets.only(bottom: 16, left: 4),
-            child: Text(
-              'Akses dokumen dan arsip perusahaan berdasarkan kategori.',
-              style: AppTextStyles.bodyMuted,
-            ),
-          ),
-          for (var i = 0; i < items.length; i++) ...[
-            if (i > 0) const SizedBox(height: 10),
-            RecordTile(item: items[i]),
-          ],
-        ],
-      ),
+    return PortalCategoryPage(
+      title: 'Records',
+      subtitle: 'Akses dokumen dan arsip perusahaan berdasarkan kategori.',
+      children: [for (final item in items) RecordTile(item: item)],
     );
   }
 }

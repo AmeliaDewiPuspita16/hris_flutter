@@ -28,6 +28,8 @@ dependencies:
   firebase_messaging: ^16.7.0
   flutter_local_notifications: ^22.3.2
   pdfrx: ^2.10.1
+  # Ilustrasi & latar header SVG (mis. halaman Records) di assets/icons/.
+  flutter_svg: ^2.3.0
 
 dev_dependencies:
   flutter_test:

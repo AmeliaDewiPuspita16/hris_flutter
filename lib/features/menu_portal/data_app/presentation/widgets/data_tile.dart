@@ -1,14 +1,10 @@
 import 'package:flutter/material.dart';
 
-import '../../../../../core/widgets/not_ready.dart';
-import '../../../shared/presentation/widgets/menu_list_tile.dart';
-import '../../../shared/presentation/widgets/owner_badge_row.dart';
+import '../../../shared/presentation/widgets/portal_category_card.dart';
 import '../../domain/data_item.dart';
 
-/// Satu baris di halaman Data: ikon, judul + badge owner, dan chevron di
-/// kanan. Pola sama persis dengan `RecordTile` — tampilan baris sendiri
-/// ada di [MenuListTile], di sini cuma menentukan subtitle-nya berupa
-/// [OwnerBadgeRow].
+/// Satu kartu kategori di halaman Data. Tampilannya ada di
+/// [PortalCategoryCard] (dipakai bersama halaman Records).
 class DataTile extends StatelessWidget {
   const DataTile({super.key, required this.item});
 
@@ -16,16 +12,13 @@ class DataTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return NotReady(
-      isReady: item.isReady,
-      child: MenuListTile(
-        icon: item.icon,
-        label: item.label,
-        color: item.color,
-        background: item.background,
-        onTap: item.onTap,
-        subtitle: OwnerBadgeRow(owners: item.owners),
-      ),
+    return PortalCategoryCard(
+      icon: item.icon,
+      label: item.label,
+      owners: item.owners,
+      color: item.color,
+      background: item.background,
+      onTap: item.onTap,
     );
   }
 }

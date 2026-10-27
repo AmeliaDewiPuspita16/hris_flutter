@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="420" height="320" viewBox="0 0 420 320">
+<defs>
+ <linearGradient id="folder" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#78C5A4"/><stop offset="1" stop-color="#24765C"/></linearGradient>
+ <linearGradient id="paper" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#FFFDF3"/><stop offset="1" stop-color="#F2EBD7"/></linearGradient>
+ <linearGradient id="back" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#6BBE94"/><stop offset="1" stop-color="#185E48"/></linearGradient>
+ <filter id="shadow" x="-30%" y="-30%" width="160%" height="170%"><feDropShadow dx="0" dy="10" stdDeviation="9" flood-color="#245A48" flood-opacity=".18"/></filter>
+</defs>
+<ellipse cx="210" cy="278" rx="154" ry="22" fill="#BBDCC8" opacity=".38"/>
+<path d="M63 235C32 198 47 151 91 139c-2-42 39-70 78-51 27-43 87-35 104 7 46-6 73 36 56 70 35 29 23 75-13 87z" fill="#E5F3E4"/>
+<g opacity=".95">
+ <path d="M281 238c-4-37 14-68 45-84-1 33-12 62-45 84z" fill="#78BD8B"/>
+ <path d="M299 247c13-40 41-59 70-63-12 34-36 55-70 63z" fill="#A2D4A0"/>
+ <path d="M283 253c-22-29-26-56-15-82 21 24 28 51 15 82z" fill="#4A9D78"/>
+</g>
+<g filter="url(#shadow)">
+ <path d="M132 88l124 16 44 36-8 128-139-15-34-27z" fill="url(#back)"/>
+ <path d="M105 91q0-12 13-10l118 15 45 36-4 127q0 10-11 8l-125-15q-10-2-10-13z" fill="url(#paper)"/>
+ <path d="M236 96l1 34 43 5z" fill="#E7DFC7"/>
+ <path d="M130 130l91 12M130 154l112 15M130 178l91 12M130 202l75 10" stroke="#D5D8B3" stroke-width="10" stroke-linecap="round"/>
+ <path d="M67 173l73-2 35 20 82 13q12 2 12 15v60q0 14-14 11L70 266q-14-2-14-16v-62q0-15 11-15z" fill="#1F7057"/>
+ <path d="M57 164l78 4 34 19 88 15q12 2 12 15v52q0 14-14 12L57 255q-13-2-13-15v-61q0-16 13-15z" fill="url(#folder)"/>
+ <path d="M57 164l78 4 34 19 88 15" fill="none" stroke="#8ED0B1" stroke-width="5" stroke-linecap="round"/>
+</g>
+<g fill="#E9C95B"><path d="M69 75l4 11 11 4-11 4-4 11-4-11-11-4 11-4z"/><path d="M330 61l3 8 8 3-8 3-3 8-3-8-8-3 8-3z"/></g>
+<g fill="#4C9B75"><path d="M351 96l3 7 7 3-7 3-3 7-3-7-7-3 7-3z"/><circle cx="91" cy="110" r="4"/></g>
+</svg>
