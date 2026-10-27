@@ -302,35 +302,44 @@ class _ItFormAndMediaViewState extends State<_ItFormAndMediaView> {
   }
 }
 
-/// Skeleton satu [ItRequestCard]: judul + badge status, deskripsi dua
-/// baris, lalu tanggal.
+/// Skeleton satu [ItRequestCard]: kotak ikon di kiri, lalu baris jenis +
+/// badge status, deskripsi dua baris, dan tanggal.
 class _RequestCardSkeleton extends StatelessWidget {
   const _RequestCardSkeleton();
 
   @override
   Widget build(BuildContext context) {
     return const ShimmerCard(
-      child: Column(
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: ShimmerLine(width: 150, height: 14),
+          ShimmerBox(width: 46, height: 46, borderRadius: 12),
+          SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: ShimmerLine(width: 110, height: 11),
+                      ),
+                    ),
+                    SizedBox(width: 8),
+                    ShimmerBox(width: 70, height: 20, borderRadius: 20),
+                  ],
                 ),
-              ),
-              SizedBox(width: 8),
-              ShimmerBox(width: 60, height: 20, borderRadius: 20),
-            ],
+                SizedBox(height: 10),
+                ShimmerLine(height: 12),
+                SizedBox(height: 6),
+                ShimmerLine(width: 160, height: 12),
+                SizedBox(height: 10),
+                ShimmerLine(width: 80, height: 10),
+              ],
+            ),
           ),
-          SizedBox(height: 10),
-          ShimmerLine(height: 11),
-          SizedBox(height: 6),
-          ShimmerLine(width: 180, height: 11),
-          SizedBox(height: 10),
-          ShimmerLine(width: 70, height: 10),
         ],
       ),
     );

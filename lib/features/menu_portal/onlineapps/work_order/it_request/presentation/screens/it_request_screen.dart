@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../../../../core/theme/app_colors.dart';
 import '../../../../../../../core/widgets/app_error_view.dart';
 import '../../../../../../../core/widgets/app_shimmer.dart';
-import '../../../../../../../core/widgets/back_header.dart';
 import '../../../../../../auth/presentation/bloc/auth/auth_bloc.dart';
+import '../../../../../shared/presentation/widgets/portal_category_page.dart';
 import '../../data/it_request_repository.dart';
 import '../../domain/approve_request_item.dart';
 import '../bloc/approval/it_request_approval_bloc.dart';
@@ -20,14 +21,15 @@ import '../widgets/report_tab.dart';
 
 /// Tab-tab di [ItRequestScreen], urut sama dengan web.
 enum ItRequestTab {
-  form('Form IT & Media'),
-  approve('Approve Request'),
-  list('List Request'),
-  report('Report');
+  form('Form IT & Media', Icons.grid_view_rounded),
+  approve('Approve Request', Icons.check_circle_outline_rounded),
+  list('List Request', Icons.format_list_bulleted_rounded),
+  report('Report', Icons.description_outlined);
 
-  const ItRequestTab(this.label);
+  const ItRequestTab(this.label, this.icon);
 
   final String label;
+  final IconData icon;
 }
 
 /// Halaman IT Request.
@@ -104,23 +106,43 @@ class _ItRequestScreenState extends State<ItRequestScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.bg,
-      appBar: BackHeader(
-        title: 'IT Request',
-        onBack: () => Navigator.of(context).pop(),
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      // Header terang, jadi ikon status bar harus gelap — sama dengan
+      // `PortalCategoryPage`.
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.dark,
+        statusBarBrightness: Brightness.light,
       ),
-      body: BlocListener<ItRequestApprovalBloc, ItRequestApprovalState>(
-        bloc: _approvalBloc,
-        listenWhen: (previous, current) =>
-            current.notice != null &&
-            !identical(previous.notice, current.notice),
-        listener: (context, state) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.notice!.message)),
-          );
-        },
-        child: _tabs.length == 1 ? const ItFormAndMediaTab() : _buildTabView(),
+      child: Scaffold(
+        backgroundColor: AppColors.bg,
+        body: BlocListener<ItRequestApprovalBloc, ItRequestApprovalState>(
+          bloc: _approvalBloc,
+          listenWhen: (previous, current) =>
+              current.notice != null &&
+              !identical(previous.notice, current.notice),
+          listener: (context, state) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(state.notice!.message)),
+            );
+          },
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              PortalHeader(
+                title: 'IT Request',
+                subtitle: 'Submit your IT needs easily and track their status.',
+                illustrationAsset: PortalCategoryPage.monitorIllustration,
+                onBack: () => Navigator.of(context).pop(),
+              ),
+              Expanded(
+                child: _tabs.length == 1
+                    ? const ItFormAndMediaTab()
+                    : _buildTabView(),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -236,12 +258,12 @@ class _ItRequestScreenState extends State<ItRequestScreen> {
 
     return Column(
       children: [
-        const SizedBox(height: 12),
         BlocBuilder<ItRequestApprovalBloc, ItRequestApprovalState>(
           bloc: _approvalBloc,
           buildWhen: (previous, current) => previous.pending != current.pending,
           builder: (context, state) => ItRequestTabBar(
             labels: [for (final tab in _tabs) tab.label],
+            icons: [for (final tab in _tabs) tab.icon],
             activeIndex: _tabIndex,
             badgeCounts: {
               if (approveIndex >= 0) approveIndex: state.pending,
@@ -249,7 +271,7 @@ class _ItRequestScreenState extends State<ItRequestScreen> {
             onChanged: (i) => setState(() => _tabIndex = i),
           ),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 12),
         Expanded(child: IndexedStack(index: _tabIndex, children: children)),
       ],
     );

@@ -147,7 +147,7 @@ class ItRequestRepository {
       return ItRequestDetail.fromJson(data);
     } on FormatException {
       throw const ApiException.server(
-        'Respons terkirim, tapi respons server tidak dikenali.',
+        'Response sent, but the server reply was not recognized.',
       );
     }
   }
@@ -180,7 +180,7 @@ class ItRequestRepository {
       return ItRequestDetail.fromJson(data);
     } on FormatException {
       throw const ApiException.server(
-        'Foto terkirim, tapi respons server tidak dikenali.',
+        'Photo sent, but the server reply was not recognized.',
       );
     }
   }

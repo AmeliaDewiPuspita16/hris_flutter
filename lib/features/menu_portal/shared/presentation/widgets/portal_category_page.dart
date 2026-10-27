@@ -23,6 +23,8 @@ class PortalCategoryPage extends StatelessWidget {
       'assets/icons/header-folder-illustration.svg';
   static const monitorIllustration =
       'assets/icons/header-monitor-illustration.svg';
+  static const laptopIllustration =
+      'assets/icons/header-laptop-illustration.svg';
 
   final String title;
   final String subtitle;
@@ -50,7 +52,7 @@ class PortalCategoryPage extends StatelessWidget {
         body: ListView(
           padding: EdgeInsets.zero,
           children: [
-            _PortalHeader(
+            PortalHeader(
               title: title,
               subtitle: subtitle,
               illustrationAsset: illustrationAsset,
@@ -91,15 +93,24 @@ class PortalCategoryPage extends StatelessWidget {
 }
 
 /// Latar `header-background.svg` sampai ke balik status bar, tombol kembali
-/// bulat, judul besar + keterangan, dan ilustrasi map di kanan.
-class _PortalHeader extends StatelessWidget {
-  const _PortalHeader({
+/// bulat, label kecil opsional ([eyebrow]), judul besar + keterangan, dan
+/// ilustrasi di kanan. Dipakai [PortalCategoryPage] dan juga layar modul
+/// seperti IT Request.
+///
+/// Tidak mengatur gaya status bar sendiri — layar pemakainya yang membungkus
+/// dengan `AnnotatedRegion` (lihat [PortalCategoryPage]).
+class PortalHeader extends StatelessWidget {
+  const PortalHeader({
+    super.key,
+    this.eyebrow,
     required this.title,
     required this.subtitle,
     required this.illustrationAsset,
     required this.onBack,
   });
 
+  /// Label kecil huruf kapital di atas judul, mis. "IT REQUEST".
+  final String? eyebrow;
   final String title;
   final String subtitle;
   final String illustrationAsset;
@@ -150,6 +161,19 @@ class _PortalHeader extends StatelessWidget {
             children: [
               _BackButton(onTap: onBack),
               const SizedBox(height: 18),
+              if (eyebrow case final eyebrow?) ...[
+                Text(
+                  eyebrow,
+                  style: const TextStyle(
+                    fontFamily: AppTextStyles.fontFamily,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.primaryMid,
+                    letterSpacing: 0.6,
+                  ),
+                ),
+                const SizedBox(height: 4),
+              ],
               Text(
                 title,
                 style: const TextStyle(

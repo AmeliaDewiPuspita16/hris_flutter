@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="480" viewBox="0 0 720 480">
+<defs>
+ <linearGradient id="frame" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#58c9a4"/><stop offset="1" stop-color="#087760"/></linearGradient>
+ <linearGradient id="leaf" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#c5ed6c"/><stop offset=".55" stop-color="#59c47b"/><stop offset="1" stop-color="#138c70"/></linearGradient>
+ <linearGradient id="base" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#e2fff0"/><stop offset=".6" stop-color="#83dabb"/><stop offset="1" stop-color="#159779"/></linearGradient>
+ <linearGradient id="gear" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#7adbb8"/><stop offset="1" stop-color="#168a71"/></linearGradient>
+ <filter id="shadow" x="-25%" y="-25%" width="150%" height="160%"><feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#26785e" flood-opacity=".16"/></filter>
+</defs>
+<ellipse cx="360" cy="416" rx="320" ry="35" fill="#c7f0df" opacity=".75"/>
+<!-- cloud -->
+<path d="M180 164C144 160 130 128 148 101c12-18 34-24 54-15 10-35 42-53 74-43 26 8 41 29 41 55 28-8 55 9 58 35 3 20-14 33-37 35Z" fill="#c9f1e4"/>
+<path d="M414 177c-25-5-36-28-23-48 10-16 29-20 46-13 9-24 31-36 54-28 20 7 31 25 30 44 22-5 42 8 44 28 2 14-11 25-29 26Z" fill="#d8f6e9"/>
+<!-- rear leaves -->
+<g>
+<path d="M190 371C112 338 92 270 110 211c57 31 91 88 80 160Z" fill="url(#leaf)"/>
+<path d="M193 380C130 376 76 337 61 290c54 0 107 38 132 90Z" fill="url(#leaf)"/>
+<path d="M527 365C524 285 572 210 629 179c17 65-20 139-102 186Z" fill="url(#leaf)"/>
+<path d="M525 378c40-57 91-82 139-70-24 48-78 76-139 70Z" fill="url(#leaf)"/>
+<path d="M190 365 119 232M189 374 81 304M530 358 617 200M532 371 646 317" stroke="#168b6b" stroke-width="2.5" opacity=".65"/>
+</g>
+<!-- laptop display -->
+<g filter="url(#shadow)">
+<path d="M210 121 505 143Q530 145 527 169L506 347Q503 366 482 364L187 342Q165 340 168 318L188 145Q191 119 210 121Z" fill="#08745f"/>
+<path d="M194 117 484 140Q508 142 505 165L486 337Q484 357 462 355L173 334Q151 332 154 310L173 142Q176 116 194 117Z" fill="url(#frame)"/>
+<path d="M202 137 472 157Q489 158 487 175L470 316Q468 333 451 332L185 313Q168 312 170 294L187 155Q189 136 202 137Z" fill="#fcfffd"/>
+<circle cx="331" cy="145" r="4" fill="#b5ead6"/>
+<path d="M239 181 428 195Q442 196 440 210L430 288Q428 302 414 301L225 287Q212 286 214 272L224 194Q226 180 239 181Z" fill="#e2f9ed"/>
+</g>
+<!-- settings gear -->
+<g transform="translate(319 239)" filter="url(#shadow)" fill="url(#gear)">
+<rect x="-7" y="-43" width="14" height="86" rx="4"/><rect x="-43" y="-7" width="86" height="14" rx="4"/>
+<rect x="-7" y="-43" width="14" height="86" rx="4" transform="rotate(45)"/><rect x="-7" y="-43" width="14" height="86" rx="4" transform="rotate(22.5)"/><rect x="-7" y="-43" width="14" height="86" rx="4" transform="rotate(67.5)"/>
+<circle r="30"/><circle r="15" fill="#eafff5"/>
+</g>
+<!-- paper plane -->
+<path d="M361 247 411 225 390 272 381 254Z" fill="#39bc99"/><path d="M361 247 381 254 411 225 377 261Z" fill="#16856c"/><path d="M381 254 390 272 397 250Z" fill="#6ad6b3"/>
+<!-- laptop base -->
+<g filter="url(#shadow)">
+<path d="M174 337 485 359Q498 360 489 371L435 408Q427 413 411 412L112 389Q98 388 111 378L160 343Q166 337 174 337Z" fill="url(#base)" stroke="#b6eed8" stroke-width="2"/>
+<path d="M194 354 372 367 333 388 155 375Z" fill="#55c8a4"/>
+<path d="M239 382 302 387 283 397 220 392Z" fill="#bdf1dd"/>
+<path d="M111 389 411 412Q427 413 435 408L431 417Q426 423 410 422L112 399Q96 397 102 391Z" fill="#159777"/>
+</g>
+<!-- foreground leaf -->
+<path d="M456 400C443 358 457 318 486 294c18 43 5 86-30 106Z" fill="url(#leaf)"/><path d="M458 395 484 309" stroke="#168b6b" stroke-width="2.5" opacity=".6"/>
+<!-- bubbles -->
+<defs><radialGradient id="bubble"><stop stop-color="#b8f0d2"/><stop offset="1" stop-color="#36b58e"/></radialGradient></defs>
+<circle cx="85" cy="144" r="12" fill="url(#bubble)"/><circle cx="582" cy="68" r="18" fill="url(#bubble)"/><circle cx="668" cy="215" r="10" fill="url(#bubble)"/>
+<circle cx="90" cy="140" r="4" fill="#e0f9b7" opacity=".8"/><circle cx="588" cy="62" r="6" fill="#e0f9b7" opacity=".7"/>
+<!-- sparkles -->
+<path d="M135 174Q138 184 147 186Q138 189 135 199Q132 189 123 186Q132 183 135 174Z" fill="#ffd35a"/>
+<path d="M611 100Q614 110 623 112Q614 115 611 125Q608 115 599 112Q608 109 611 100Z" fill="#ffd35a"/>
+<path d="M74 229Q77 239 86 241Q77 244 74 254Q71 244 62 241Q71 238 74 229Z" fill="#79cf75"/>
+</svg>

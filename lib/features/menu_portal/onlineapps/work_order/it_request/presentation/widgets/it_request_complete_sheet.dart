@@ -89,7 +89,7 @@ class _ItRequestCompleteSheetState extends State<ItRequestCompleteSheet> {
     try {
       picked = await pick();
     } catch (e) {
-      if (mounted) setState(() => _photoError = 'Tidak bisa membuka galeri.');
+      if (mounted) setState(() => _photoError = 'Unable to open the gallery.');
       return;
     }
 
