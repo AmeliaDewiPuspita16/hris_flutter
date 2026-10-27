@@ -34,7 +34,7 @@ class DataScreen extends StatelessWidget {
 
     return PortalCategoryPage(
       title: 'Data',
-      subtitle: 'Data referensi lintas departemen di satu tempat.',
+      subtitle: 'Data reference cross-department in one place.',
       children: [for (final item in items) DataTile(item: item)],
     );
   }

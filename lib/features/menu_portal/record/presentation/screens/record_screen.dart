@@ -65,7 +65,7 @@ class RecordScreen extends StatelessWidget {
 
     return PortalCategoryPage(
       title: 'Records',
-      subtitle: 'Akses dokumen dan arsip perusahaan berdasarkan kategori.',
+      subtitle: 'Access document and company archives by category.',
       children: [for (final item in items) RecordTile(item: item)],
     );
   }
