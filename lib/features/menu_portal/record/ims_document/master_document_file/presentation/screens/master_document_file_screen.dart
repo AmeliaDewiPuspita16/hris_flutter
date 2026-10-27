@@ -5,7 +5,7 @@ import '../../../../../../../core/logging/app_logger.dart';
 import '../../../../../../../core/network/api_exception.dart';
 import '../../../../../../../core/theme/app_colors.dart';
 import '../../../../../../../core/widgets/app_error_view.dart';
-import '../../../../../../../core/widgets/back_header.dart';
+import '../../../../../shared/presentation/widgets/portal_category_page.dart';
 import '../../data/master_document_repository.dart';
 import '../../../shared/domain/document_category.dart';
 import '../../../shared/presentation/widgets/document_tabbed_view.dart';
@@ -32,12 +32,11 @@ class _MasterDocumentFileScreenState extends State<MasterDocumentFileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.bg,
-      appBar: BackHeader(
-        title: 'Document File',
-        onBack: () => Navigator.of(context).pop(),
-      ),
+    return PortalModulePage(
+      eyebrow: 'IMS DOCUMENT',
+      title: 'Document File',
+      subtitle: 'Read controlled IMS documents by category.',
+      illustrationAsset: PortalCategoryPage.folderIllustration,
       body: FutureBuilder<List<DocumentCategory>>(
         future: _categories,
         builder: (context, snapshot) {

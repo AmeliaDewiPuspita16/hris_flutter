@@ -92,6 +92,53 @@ class PortalCategoryPage extends StatelessWidget {
   }
 }
 
+/// Kerangka layar modul (Document File, Procurement, dst): [PortalHeader]
+/// tetap di atas, lalu [body] mengisi sisa layar — body-lah yang
+/// menggulir, bukan header.
+class PortalModulePage extends StatelessWidget {
+  const PortalModulePage({
+    super.key,
+    this.eyebrow,
+    required this.title,
+    required this.subtitle,
+    required this.illustrationAsset,
+    required this.body,
+  });
+
+  final String? eyebrow;
+  final String title;
+  final String subtitle;
+  final String illustrationAsset;
+  final Widget body;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.dark,
+        statusBarBrightness: Brightness.light,
+      ),
+      child: Scaffold(
+        backgroundColor: AppColors.bg,
+        body: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            PortalHeader(
+              eyebrow: eyebrow,
+              title: title,
+              subtitle: subtitle,
+              illustrationAsset: illustrationAsset,
+              onBack: () => Navigator.of(context).pop(),
+            ),
+            Expanded(child: body),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 /// Latar `header-background.svg` sampai ke balik status bar, tombol kembali
 /// bulat, label kecil opsional ([eyebrow]), judul besar + keterangan, dan
 /// ilustrasi di kanan. Dipakai [PortalCategoryPage] dan juga layar modul

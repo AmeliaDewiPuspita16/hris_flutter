@@ -59,7 +59,7 @@ class _DocumentTabbedViewState extends State<DocumentTabbedView> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
           child: AppTextField(
             controller: _searchController,
             hint: widget.searchHint,

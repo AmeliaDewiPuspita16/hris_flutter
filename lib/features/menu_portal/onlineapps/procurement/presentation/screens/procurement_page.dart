@@ -3,11 +3,10 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../../../../core/theme/app_colors.dart';
 import '../../../../../../core/theme/app_text_styles.dart';
 import '../../../../../../core/widgets/app_shimmer.dart';
 import '../../../../../../core/widgets/app_text_field.dart';
-import '../../../../../../core/widgets/back_header.dart';
+import '../../../../shared/presentation/widgets/portal_category_page.dart';
 import '../../data/procurement_repository.dart';
 import '../../domain/purchase_requisition_summary.dart';
 import '../bloc/list/procurement_list_bloc.dart';
@@ -135,24 +134,22 @@ class _ProcurementViewState extends State<_ProcurementView> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.bg,
-      appBar: BackHeader(
-        title: 'Procurement Monitoring',
-        onBack: () => Navigator.of(context).pop(),
-      ),
+    return PortalModulePage(
+      eyebrow: 'PROCUREMENT',
+      title: 'Procurement Monitoring',
+      subtitle: 'Track purchase requisitions and their approval progress.',
+      illustrationAsset: PortalCategoryPage.laptopIllustration,
       body: BlocBuilder<ProcurementListBloc, ProcurementListState>(
         builder: (context, state) {
           return Column(
             children: [
               Padding(
-                padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
                 child: AppTextField(
                   controller: _searchController,
                   hint: 'Nomor PR, requestor, atau purpose',
                   icon: Icons.search,
                   onChanged: _onSearchChanged,
-                  label: 'Search',
                 ),
               ),
               PrStatusFilterBar(

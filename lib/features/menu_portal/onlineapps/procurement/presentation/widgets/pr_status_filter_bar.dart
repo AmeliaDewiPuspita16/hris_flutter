@@ -29,14 +29,14 @@ class PrStatusFilterBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      // Ruang bawah untuk bayangan pill aktif.
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 6),
       child: Row(
         children: [
           _FilterChip(
             label: 'Semua',
             count: counts.all,
             color: AppColors.primary,
-            background: AppColors.primaryLight,
             active: selected == null,
             onTap: () => onChanged(null),
           ),
@@ -46,7 +46,6 @@ class PrStatusFilterBar extends StatelessWidget {
               label: status.shortLabel,
               count: counts.countFor(status.code),
               color: status.color,
-              background: status.background,
               active: selected == status.code,
               onTap: () => onChanged(status.code),
             ),
@@ -62,7 +61,6 @@ class _FilterChip extends StatelessWidget {
     required this.label,
     required this.count,
     required this.color,
-    required this.background,
     required this.active,
     required this.onTap,
   });
@@ -70,7 +68,6 @@ class _FilterChip extends StatelessWidget {
   final String label;
   final int count;
   final Color color;
-  final Color background;
   final bool active;
   final VoidCallback onTap;
 
@@ -82,26 +79,37 @@ class _FilterChip extends StatelessWidget {
 
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+      borderRadius: BorderRadius.circular(22),
+      // Gaya pill sama dengan `ItRequestTabBar`, tapi chip aktif memakai
+      // warna statusnya sendiri.
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        height: 42,
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: active ? background : AppColors.card,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: active ? color : AppColors.border,
-            width: active ? 1.4 : 1,
-          ),
+          color: active ? color : AppColors.card,
+          borderRadius: BorderRadius.circular(22),
+          border: active ? null : Border.all(color: AppColors.border),
+          boxShadow: active
+              ? [
+                  BoxShadow(
+                    color: color.withValues(alpha: 0.25),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ]
+              : null,
         ),
         child: Text(
           '$label ($count)',
           style: TextStyle(
             fontFamily: AppTextStyles.fontFamily,
-            fontSize: 11,
-            fontWeight: active ? FontWeight.w700 : FontWeight.w600,
+            fontSize: 11.5,
+            fontWeight: FontWeight.w600,
             color: active
-                ? color
-                : (empty ? AppColors.textMuted : AppColors.textMid),
+                ? Colors.white
+                : (empty ? AppColors.textMuted : AppColors.text),
           ),
         ),
       ),

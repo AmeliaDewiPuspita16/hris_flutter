@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../../../../../core/theme/app_colors.dart';
-import '../../../../../../../core/widgets/back_header.dart';
+import '../../../../../shared/presentation/widgets/portal_category_page.dart';
 import '../../data/master_edited_document_repository.dart';
 import '../../../shared/presentation/widgets/document_tabbed_view.dart';
 
@@ -22,12 +21,11 @@ class MasterEditedFileScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.bg,
-      appBar: BackHeader(
-        title: 'Edited File',
-        onBack: () => Navigator.of(context).pop(),
-      ),
+    return PortalModulePage(
+      eyebrow: 'IMS DOCUMENT',
+      title: 'Edited File',
+      subtitle: 'Browse IMS documents that are being revised.',
+      illustrationAsset: PortalCategoryPage.folderIllustration,
       body: DocumentTabbedView(
         tabs: [
           DocumentTabSpec(label: 'Manual', fetcher: repository.fetchManualDocuments),

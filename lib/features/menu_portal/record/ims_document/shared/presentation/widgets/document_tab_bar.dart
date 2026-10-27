@@ -29,7 +29,8 @@ class DocumentTabBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      // Ruang bawah untuk bayangan pill aktif.
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 6),
       child: Row(
         children: [
           for (var i = 0; i < labels.length; i++) ...[
@@ -59,13 +60,26 @@ class _TabChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      borderRadius: BorderRadius.circular(22),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        height: 42,
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        alignment: Alignment.center,
+        // Gaya pill sama dengan `ItRequestTabBar`.
         decoration: BoxDecoration(
-          color: active ? AppColors.primary : Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: active ? AppColors.primary : AppColors.border, width: 1.5),
+          color: active ? AppColors.primary : AppColors.card,
+          borderRadius: BorderRadius.circular(22),
+          border: active ? null : Border.all(color: AppColors.border),
+          boxShadow: active
+              ? [
+                  BoxShadow(
+                    color: AppColors.primary.withValues(alpha: 0.25),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ]
+              : null,
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -74,9 +88,9 @@ class _TabChip extends StatelessWidget {
               label,
               style: TextStyle(
                 fontFamily: AppTextStyles.fontFamily,
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                color: active ? Colors.white : AppColors.textMuted,
+                fontSize: 11.5,
+                fontWeight: FontWeight.w600,
+                color: active ? Colors.white : AppColors.text,
               ),
             ),
             if (count case final count?) ...[
