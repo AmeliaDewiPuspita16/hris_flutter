@@ -175,4 +175,18 @@ class ApiConfig {
 
   /// DELETE — membuang satu entri dari tab Notifications (geser untuk hapus).
   static String notificationDetail(int id) => '$notifications/$id';
+
+  /// Daftar dokumen master IMS satu kategori, paginasi standar Laravel
+  /// (`current_page`, `data`, `last_page`, dst. sejajar di akar respons).
+  /// Query: `category`, `search` (nomor dokumen / judul), `per_page`, `page`.
+  static const String imsDocuments = '/api/record/ims/documents';
+
+  /// Kategori dokumen IMS (tab Manual, SOP, WI, Form, Annex, Form Template)
+  /// beserta jumlah dokumennya.
+  static const String imsDocumentCategories = '$imsDocuments/categories';
+
+  /// PDF revisi terkini untuk dibaca di aplikasi (`Content-Disposition:
+  /// inline`), bukan JSON. Galatnya JSON `{message}`: 401, 403 (Daily
+  /// Worker), 404, 422 (Form Template, bukan PDF).
+  static String imsDocumentPdf(int id) => '$imsDocuments/$id/pdf';
 }

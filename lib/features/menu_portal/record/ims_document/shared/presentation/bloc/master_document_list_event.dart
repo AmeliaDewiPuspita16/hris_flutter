@@ -4,12 +4,25 @@ sealed class MasterDocumentListEvent {
   const MasterDocumentListEvent();
 }
 
-/// Tab dibuka — muat daftar.
+/// Tab dibuka — muat halaman pertama.
 class MasterDocumentListStarted extends MasterDocumentListEvent {
   const MasterDocumentListStarted();
 }
 
-/// Tarik-untuk-muat-ulang.
+/// Tarik-untuk-muat-ulang. Kembali ke halaman pertama.
 class MasterDocumentListRefreshed extends MasterDocumentListEvent {
   const MasterDocumentListRefreshed();
+}
+
+/// Kata kunci pencarian berubah (sudah di-debounce pemanggil) — muat ulang
+/// dari halaman pertama.
+class MasterDocumentListSearched extends MasterDocumentListEvent {
+  const MasterDocumentListSearched(this.query);
+
+  final String query;
+}
+
+/// Daftar tergulir mendekati ujung — muat halaman berikutnya.
+class MasterDocumentListNextPageRequested extends MasterDocumentListEvent {
+  const MasterDocumentListNextPageRequested();
 }

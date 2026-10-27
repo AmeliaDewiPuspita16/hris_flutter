@@ -14,7 +14,8 @@ import '../../domain/master_document.dart';
 /// tautan keluar, bukan chevron.
 ///
 /// - "Lihat Dokumen" memanggil [onView] untuk membaca PDF di aplikasi
-///   (tanpa opsi simpan), jadi ikon kanannya chevron.
+///   (tanpa opsi simpan), jadi ikon kanannya chevron. Tidak tampil untuk
+///   dokumen non-PDF (Form Template).
 /// - "Unduh di Web" langsung memanggil [onDownload]; konfirmasi
 ///   pengalihannya ditangani pemanggil (lihat `DocumentListTab`).
 /// - "Obsolete" munculin dialog konfirmasi dulu (padanan modal "Dokumen
@@ -68,13 +69,14 @@ class MasterDocumentTile extends StatelessWidget {
             style: AppTextStyles.body.copyWith(fontSize: 13, height: 1.4),
           ),
           const SizedBox(height: 10),
-          _FileActionRow(
-            icon: Icons.visibility_outlined,
-            label: 'Lihat Dokumen',
-            onTap: () => onView(document),
-            showDivider: true,
-            trailingIcon: Icons.chevron_right_rounded,
-          ),
+          if (document.isPdf)
+            _FileActionRow(
+              icon: Icons.visibility_outlined,
+              label: 'Lihat Dokumen',
+              onTap: () => onView(document),
+              showDivider: true,
+              trailingIcon: Icons.chevron_right_rounded,
+            ),
           _FileActionRow(
             icon: Icons.file_download_outlined,
             label: 'Unduh di Web',

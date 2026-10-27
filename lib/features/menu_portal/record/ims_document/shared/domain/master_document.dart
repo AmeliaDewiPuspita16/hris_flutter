@@ -2,13 +2,18 @@
 /// halaman Document File.
 class MasterDocument {
   const MasterDocument({
+    this.id,
     required this.docNo,
     required this.title,
     required this.hierarchy,
     required this.downloadUrl,
     this.obsoleteUrl,
     this.viewUrl,
+    this.isPdf = true,
   });
+
+  /// Id dari server; null untuk data demo (Master Edited File).
+  final int? id;
 
   final String docNo;
   final String title;
@@ -28,4 +33,8 @@ class MasterDocument {
   /// terpisah dari [downloadUrl] karena unduhan resmi tetap lewat website.
   /// Null selama data masih demo; viewer lalu menampilkan PDF contoh.
   final String? viewUrl;
+
+  /// False untuk Form Template (berkas Word/Excel) — server membalas 422
+  /// kalau PDF-nya diminta, jadi tombol "Lihat Dokumen" disembunyikan.
+  final bool isPdf;
 }

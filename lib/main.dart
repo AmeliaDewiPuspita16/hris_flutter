@@ -28,6 +28,7 @@ import 'features/overtime_request/data/overtime_repository.dart';
 import 'features/pengajuan/data/pengajuan_repository.dart';
 import 'features/profil/data/profil_repository.dart';
 import 'features/shared/data/department_repository.dart';
+import 'features/menu_portal/record/ims_document/master_document_file/data/master_document_repository.dart';
 import 'firebase_options.dart';
 
 Future<void> main() async {
@@ -80,6 +81,7 @@ Future<void> main() async {
           ApprovalsWaitingRepository(apiClient: apiClient),
       notificationInboxRepository:
           NotificationInboxRepository(apiClient: apiClient),
+      masterDocumentRepository: MasterDocumentRepository(apiClient: apiClient),
     ),
   );
 
@@ -107,6 +109,7 @@ class MyApp extends StatelessWidget {
     OvertimeRepository? overtimeRepository,
     ApprovalsWaitingRepository? approvalsWaitingRepository,
     NotificationInboxRepository? notificationInboxRepository,
+    MasterDocumentRepository? masterDocumentRepository,
   })  : departmentRepository = departmentRepository ??
             DepartmentRepository(apiClient: ApiClient()),
         announcementRepository = announcementRepository ??
@@ -130,7 +133,9 @@ class MyApp extends StatelessWidget {
         approvalsWaitingRepository = approvalsWaitingRepository ??
             ApprovalsWaitingRepository(apiClient: ApiClient()),
         notificationInboxRepository = notificationInboxRepository ??
-            NotificationInboxRepository(apiClient: ApiClient());
+            NotificationInboxRepository(apiClient: ApiClient()),
+        masterDocumentRepository = masterDocumentRepository ??
+            MasterDocumentRepository(apiClient: ApiClient());
 
   final AuthRepository authRepository;
   final DepartmentRepository departmentRepository;
@@ -145,6 +150,7 @@ class MyApp extends StatelessWidget {
   final OvertimeRepository overtimeRepository;
   final ApprovalsWaitingRepository approvalsWaitingRepository;
   final NotificationInboxRepository notificationInboxRepository;
+  final MasterDocumentRepository masterDocumentRepository;
 
   @override
   Widget build(BuildContext context) {
@@ -167,6 +173,7 @@ class MyApp extends StatelessWidget {
         RepositoryProvider.value(value: overtimeRepository),
         RepositoryProvider.value(value: approvalsWaitingRepository),
         RepositoryProvider.value(value: notificationInboxRepository),
+        RepositoryProvider.value(value: masterDocumentRepository),
       ],
       child: BlocProvider(
         create: (_) =>

@@ -28,7 +28,7 @@ class RecordScreen extends StatelessWidget {
   void _openImsDocument(BuildContext context) {
     final items = ImsDocumentMenuData.items(
       onMasterDocumentFile: () => Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => MasterDocumentFileScreen()),
+        MaterialPageRoute(builder: (_) => const MasterDocumentFileScreen()),
       ),
       onMasterEditedFile: () => Navigator.of(context).push(
         MaterialPageRoute(builder: (_) => MasterEditedFileScreen()),

@@ -3,17 +3,17 @@ import 'package:flutter/material.dart';
 import '../../../../../../../core/theme/app_colors.dart';
 import '../../../../../../../core/theme/app_text_styles.dart';
 import '../../../../../../../core/widgets/app_text_field.dart';
-import '../../domain/master_document.dart';
+import '../../domain/master_document_page.dart';
 import 'document_list_tab.dart';
 import 'document_tab_bar.dart';
 
-/// Satu tab pada [DocumentTabbedView]: label chip + method repository yang
-/// mengisi daftarnya.
+/// Satu tab pada [DocumentTabbedView]: label chip + pengambil halaman
+/// daftarnya.
 class DocumentTabSpec {
   const DocumentTabSpec({required this.label, required this.fetcher});
 
   final String label;
-  final Future<List<MasterDocument>> Function() fetcher;
+  final MasterDocumentFetcher fetcher;
 }
 
 /// Badan halaman dokumen bertab: kolom search, deret chip tab, lalu daftar
@@ -23,9 +23,18 @@ class DocumentTabSpec {
 /// `MasterEditedFileScreen` (4 tab) — keduanya cukup memberi [tabs] dan
 /// membungkusnya dengan Scaffold + `BackHeader` sendiri.
 class DocumentTabbedView extends StatefulWidget {
-  const DocumentTabbedView({super.key, required this.tabs});
+  const DocumentTabbedView({
+    super.key,
+    required this.tabs,
+    this.searchHint = 'Nomor dokumen, judul, atau departemen',
+    this.pdfHeaders = const {},
+  });
 
   final List<DocumentTabSpec> tabs;
+  final String searchHint;
+
+  /// Diteruskan ke viewer PDF (mis. `Authorization`).
+  final Map<String, String> pdfHeaders;
 
   @override
   State<DocumentTabbedView> createState() => _DocumentTabbedViewState();
@@ -54,7 +63,7 @@ class _DocumentTabbedViewState extends State<DocumentTabbedView> {
           padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
           child: AppTextField(
             controller: _searchController,
-            hint: 'Nomor dokumen, judul, atau departemen',
+            hint: widget.searchHint,
             icon: Icons.search,
             label: 'Search',
             onChanged: (value) => setState(() => _searchQuery = value),
@@ -80,6 +89,7 @@ class _DocumentTabbedViewState extends State<DocumentTabbedView> {
             key: ValueKey(_tabIndex),
             fetcher: tabs[_tabIndex].fetcher,
             searchQuery: _searchQuery,
+            pdfHeaders: widget.pdfHeaders,
           ),
         ),
       ],

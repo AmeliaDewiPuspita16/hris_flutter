@@ -1,20 +1,20 @@
-import '../../shared/domain/master_document.dart';
+import '../../shared/domain/master_document_page.dart';
 import 'seeds/edited_annex_documents_seed.dart';
 import 'seeds/edited_manual_documents_seed.dart';
 import 'seeds/edited_sop_documents_seed.dart';
 import 'seeds/edited_wi_documents_seed.dart';
 
-/// Repository untuk halaman "Master Edited File". Sama seperti
-/// [MasterDocumentRepository], untuk sementara mengembalikan data demo
-/// statis karena endpoint API modul Record belum tersedia (auth dan menu lain
-/// sudah terintegrasi, Record belum). Karena itu constructor-nya tanpa
+/// Repository untuk halaman "Master Edited File". Untuk sementara
+/// mengembalikan data demo statis karena endpoint-nya belum tersedia
+/// (Master Document File sudah tersambung ke API). Karena itu constructor-nya tanpa
 /// `ApiClient` dan screen-nya membuat sendiri instance-nya, tidak lewat
 /// `RepositoryProvider` di `main.dart`.
 ///
 /// Begitu endpoint-nya siap: tambahkan `ApiClient` ke constructor, daftarkan
 /// lewat `RepositoryProvider` di `main.dart`, lalu ganti isi method di bawah
-/// dengan pemanggilan `ApiClient` — signature method & model [MasterDocument]
-/// tidak perlu berubah.
+/// dengan pemanggilan `ApiClient` (lihat `MasterDocumentRepository`) — signature
+/// method tidak perlu berubah. Selama masih demo, pencarian dilakukan lokal
+/// lewat [MasterDocumentPage.local].
 ///
 /// Master Edited File hanya punya 4 kategori (Manual, SOP, WI, ANNEX) dan
 /// tidak punya Form/Form Template. Model yang dipakai sama dengan Master
@@ -26,27 +26,27 @@ class MasterEditedDocumentRepository {
   static const _simulatedLatency = Duration(milliseconds: 500);
 
   /// Dokumen pada tab "Manual". Data: [editedManualDocumentsSeed].
-  Future<List<MasterDocument>> fetchManualDocuments() async {
+  Future<MasterDocumentPage> fetchManualDocuments({required int page, required String search}) async {
     await Future.delayed(_simulatedLatency);
-    return editedManualDocumentsSeed;
+    return MasterDocumentPage.local(editedManualDocumentsSeed, search);
   }
 
   /// Dokumen pada tab "Standart Operational Procedure". Data:
   /// [editedSopDocumentsSeed].
-  Future<List<MasterDocument>> fetchSopDocuments() async {
+  Future<MasterDocumentPage> fetchSopDocuments({required int page, required String search}) async {
     await Future.delayed(_simulatedLatency);
-    return editedSopDocumentsSeed;
+    return MasterDocumentPage.local(editedSopDocumentsSeed, search);
   }
 
   /// Dokumen pada tab "Work Instruction". Data: [editedWiDocumentsSeed].
-  Future<List<MasterDocument>> fetchWiDocuments() async {
+  Future<MasterDocumentPage> fetchWiDocuments({required int page, required String search}) async {
     await Future.delayed(_simulatedLatency);
-    return editedWiDocumentsSeed;
+    return MasterDocumentPage.local(editedWiDocumentsSeed, search);
   }
 
   /// Dokumen pada tab "ANNEX". Data: [editedAnnexDocumentsSeed].
-  Future<List<MasterDocument>> fetchAnnexDocuments() async {
+  Future<MasterDocumentPage> fetchAnnexDocuments({required int page, required String search}) async {
     await Future.delayed(_simulatedLatency);
-    return editedAnnexDocumentsSeed;
+    return MasterDocumentPage.local(editedAnnexDocumentsSeed, search);
   }
 }
