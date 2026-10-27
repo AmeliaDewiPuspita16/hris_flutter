@@ -9,13 +9,11 @@ import '../../../shared/presentation/widgets/document_tabbed_view.dart';
 /// WI, ANNEX), dibuka dari opsi "Master Edited File" di bottom sheet
 /// `ImsDocumentMenuSheet`.
 ///
-/// Tampilannya sama dengan `MasterDocumentFileScreen`: yang beda hanya
-/// jumlah tab, dan dokumen edited hanya punya aksi "Download" (tanpa
-/// "Obsolete").
+/// Tampilannya sama dengan `MasterDocumentFileScreen`; yang beda hanya
+/// jumlah tab.
 ///
-/// [repository] masih data demo statis (endpoint Record belum tersedia),
-/// jadi dibuat sendiri lewat konstruktor bila tidak diisi — pola sama dengan
-/// `MasterDocumentFileScreen`.
+/// [repository] masih data demo statis (endpoint-nya belum tersedia), jadi
+/// dibuat sendiri lewat konstruktor bila tidak diisi.
 class MasterEditedFileScreen extends StatelessWidget {
   MasterEditedFileScreen({super.key, MasterEditedDocumentRepository? repository})
       : repository = repository ?? MasterEditedDocumentRepository();

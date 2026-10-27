@@ -47,7 +47,7 @@ class _MasterDocumentFileScreenState extends State<MasterDocumentFileScreen> {
               AppLogger.error('Kategori dokumen IMS gagal dimuat', error, snapshot.stackTrace);
             }
             return AppErrorView(
-              message: error is ApiException ? error.message : 'Gagal memuat kategori dokumen.',
+              message: error is ApiException ? error.message : 'Failed to load document categories.',
               onRetry: () => setState(() => _categories = _repository.fetchCategories()),
             );
           }
@@ -59,19 +59,20 @@ class _MasterDocumentFileScreenState extends State<MasterDocumentFileScreen> {
 
           if (categories.isEmpty) {
             return AppErrorView(
-              message: 'Belum ada kategori dokumen.',
+              message: 'No document categories yet.',
               onRetry: () => setState(() => _categories = _repository.fetchCategories()),
             );
           }
 
           return DocumentTabbedView(
             // Server hanya mencari di nomor dokumen dan judul.
-            searchHint: 'Nomor dokumen atau judul',
+            searchHint: 'Search document number or title',
             pdfHeaders: _repository.pdfHeaders,
             tabs: [
               for (final category in categories)
                 DocumentTabSpec(
-                  label: category.count == null ? category.label : '${category.label} (${category.count})',
+                  label: category.label,
+                  count: category.count,
                   fetcher: ({required page, required search}) => _repository.fetchDocuments(
                     category: category.key,
                     page: page,

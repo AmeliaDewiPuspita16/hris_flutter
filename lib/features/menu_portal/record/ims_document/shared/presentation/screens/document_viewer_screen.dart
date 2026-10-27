@@ -17,9 +17,8 @@ import '../../domain/master_document.dart';
 
 /// Layar baca dokumen master di dalam aplikasi — hanya untuk dilihat.
 ///
-/// Sengaja tanpa tombol simpan/bagikan/cetak dan seleksi teks dimatikan,
-/// karena unduhan resmi tetap lewat website IMS (file diberi cap & butuh
-/// approval).
+/// Sengaja tanpa tombol simpan/bagikan/cetak dan seleksi teks dimatikan —
+/// dokumen master hanya boleh dibaca, tidak diunduh.
 ///
 /// Byte PDF diambil sendiri lewat `http` lalu dirender dari memori dengan
 /// `PdfViewer.data`, bukan `PdfViewer.uri` — yang terakhir menyimpan salinan
@@ -65,11 +64,11 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen> {
     try {
       response = await http.get(uri, headers: widget.headers).timeout(ApiConfig.timeout);
     } on TimeoutException {
-      throw const _ViewerError('Server terlalu lama merespons. Coba lagi.');
+      throw const _ViewerError('The server took too long to respond. Please try again.');
     } on SocketException {
-      throw const _ViewerError('Tidak dapat terhubung ke server. Periksa koneksi Anda.');
+      throw const _ViewerError('Unable to reach the server. Check your connection.');
     } on http.ClientException {
-      throw const _ViewerError('Tidak dapat terhubung ke server. Periksa koneksi Anda.');
+      throw const _ViewerError('Unable to reach the server. Check your connection.');
     }
 
     AppLogger.info('GET $uri -> ${response.statusCode}');
@@ -89,11 +88,11 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen> {
     }
 
     return switch (response.statusCode) {
-      401 => 'Sesi Anda berakhir. Silakan login ulang.',
-      403 => 'Akun ini tidak memiliki akses ke dokumen IMS.',
-      404 => 'File dokumen tidak ditemukan.',
-      422 => 'Dokumen ini bukan PDF dan tidak bisa dibuka di aplikasi.',
-      _ => 'Dokumen gagal dimuat. Coba lagi.',
+      401 => 'Your session has expired. Please log in again.',
+      403 => 'This account does not have access to IMS documents.',
+      404 => 'Document file not found.',
+      422 => 'This document is not a PDF and cannot be viewed in the app.',
+      _ => 'Failed to load the document. Please try again.',
     };
   }
 
@@ -121,7 +120,7 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen> {
           if (snapshot.hasError) {
             final error = snapshot.error;
             return AppErrorView(
-              message: error is _ViewerError ? error.message : 'Dokumen gagal dimuat. Coba lagi.',
+              message: error is _ViewerError ? error.message : 'Failed to load the document. Please try again.',
               onRetry: () => setState(() => _bytes = _load()),
             );
           }
@@ -153,7 +152,7 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen> {
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: Text(
-          'File dokumen rusak atau bukan PDF.',
+          'The document file is corrupted or not a PDF.',
           textAlign: TextAlign.center,
           style: AppTextStyles.bodyMuted,
         ),

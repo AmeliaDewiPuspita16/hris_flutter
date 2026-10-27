@@ -93,13 +93,12 @@ void main() {
     expect(first.docNo, 'BIIE-HM-001 Rev 4');
     expect(first.hierarchy, 'IMS');
     expect(first.isPdf, isTrue);
-    expect(first.obsoleteUrl, isNotNull);
+    expect(first.updatedAt, DateTime.parse('2026-08-04T16:34:39+07:00').toLocal());
     // Host 127.0.0.1 dari server diganti base URL aplikasi.
     expect(first.viewUrl, '${ApiConfig.baseUrl}/api/record/ims/documents/1237/pdf');
 
     final template = page.items.last;
     expect(template.isPdf, isFalse);
-    expect(template.obsoleteUrl, isNull);
   });
 
   test('fetchCategories membaca list kategori', () async {

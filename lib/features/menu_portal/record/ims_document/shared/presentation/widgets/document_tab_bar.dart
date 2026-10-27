@@ -12,11 +12,16 @@ class DocumentTabBar extends StatelessWidget {
   const DocumentTabBar({
     super.key,
     required this.labels,
+    this.counts = const [],
     required this.selectedIndex,
     required this.onChanged,
   });
 
   final List<String> labels;
+
+  /// Jumlah dokumen per tab, sejajar dengan [labels]; null/kosong = tanpa
+  /// angka.
+  final List<int?> counts;
   final int selectedIndex;
   final ValueChanged<int> onChanged;
 
@@ -31,6 +36,7 @@ class DocumentTabBar extends StatelessWidget {
             if (i > 0) const SizedBox(width: 8),
             _TabChip(
               label: labels[i],
+              count: i < counts.length ? counts[i] : null,
               active: selectedIndex == i,
               onTap: () => onChanged(i),
             ),
@@ -42,9 +48,10 @@ class DocumentTabBar extends StatelessWidget {
 }
 
 class _TabChip extends StatelessWidget {
-  const _TabChip({required this.label, required this.active, required this.onTap});
+  const _TabChip({required this.label, this.count, required this.active, required this.onTap});
 
   final String label;
+  final int? count;
   final bool active;
   final VoidCallback onTap;
 
@@ -60,14 +67,38 @@ class _TabChip extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: active ? AppColors.primary : AppColors.border, width: 1.5),
         ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontFamily: AppTextStyles.fontFamily,
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-            color: active ? Colors.white : AppColors.textMuted,
-          ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                fontFamily: AppTextStyles.fontFamily,
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: active ? Colors.white : AppColors.textMuted,
+              ),
+            ),
+            if (count case final count?) ...[
+              const SizedBox(width: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 1),
+                decoration: BoxDecoration(
+                  color: active ? Colors.white.withValues(alpha: 0.2) : AppColors.neutralBg,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  '$count',
+                  style: TextStyle(
+                    fontFamily: AppTextStyles.fontFamily,
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w700,
+                    color: active ? Colors.white : AppColors.textMid,
+                  ),
+                ),
+              ),
+            ],
+          ],
         ),
       ),
     );

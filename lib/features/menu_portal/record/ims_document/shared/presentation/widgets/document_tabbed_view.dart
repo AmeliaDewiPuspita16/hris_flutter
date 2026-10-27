@@ -1,23 +1,22 @@
 import 'package:flutter/material.dart';
 
-import '../../../../../../../core/theme/app_colors.dart';
-import '../../../../../../../core/theme/app_text_styles.dart';
 import '../../../../../../../core/widgets/app_text_field.dart';
 import '../../domain/master_document_page.dart';
 import 'document_list_tab.dart';
 import 'document_tab_bar.dart';
 
-/// Satu tab pada [DocumentTabbedView]: label chip + pengambil halaman
-/// daftarnya.
+/// Satu tab pada [DocumentTabbedView]: label chip, jumlah dokumen (opsional),
+/// dan pengambil halaman daftarnya.
 class DocumentTabSpec {
-  const DocumentTabSpec({required this.label, required this.fetcher});
+  const DocumentTabSpec({required this.label, required this.fetcher, this.count});
 
   final String label;
+  final int? count;
   final MasterDocumentFetcher fetcher;
 }
 
 /// Badan halaman dokumen bertab: kolom search, deret chip tab, lalu daftar
-/// dokumen tab yang aktif.
+/// dokumen tab yang aktif. Dokumen hanya bisa dilihat di aplikasi.
 ///
 /// Dipakai bersama oleh `MasterDocumentFileScreen` (6 tab) dan
 /// `MasterEditedFileScreen` (4 tab) — keduanya cukup memberi [tabs] dan
@@ -26,7 +25,7 @@ class DocumentTabbedView extends StatefulWidget {
   const DocumentTabbedView({
     super.key,
     required this.tabs,
-    this.searchHint = 'Nomor dokumen, judul, atau departemen',
+    this.searchHint = 'Search document number, title, or department',
     this.pdfHeaders = const {},
   });
 
@@ -65,22 +64,16 @@ class _DocumentTabbedViewState extends State<DocumentTabbedView> {
             controller: _searchController,
             hint: widget.searchHint,
             icon: Icons.search,
-            label: 'Search',
             onChanged: (value) => setState(() => _searchQuery = value),
           ),
         ),
         DocumentTabBar(
           labels: [for (final tab in tabs) tab.label],
+          counts: [for (final tab in tabs) tab.count],
           selectedIndex: _tabIndex,
           onChanged: (index) => setState(() => _tabIndex = index),
         ),
         const SizedBox(height: 12),
-        // Catatan di muka: dokumen tidak bisa diunduh di aplikasi, jadi user
-        // tahu sebelum menekan tombolnya.
-        const Padding(
-          padding: EdgeInsets.fromLTRB(16, 0, 16, 4),
-          child: _WebDownloadNote(),
-        ),
         Expanded(
           child: DocumentListTab(
             // Ganti key tiap pindah tab supaya BlocProvider di dalamnya
@@ -93,43 +86,6 @@ class _DocumentTabbedViewState extends State<DocumentTabbedView> {
           ),
         ),
       ],
-    );
-  }
-}
-
-/// Catatan kecil: unduh dokumen hanya lewat website IMS.
-class _WebDownloadNote extends StatelessWidget {
-  const _WebDownloadNote();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: AppColors.primaryLight,
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Padding(
-            padding: EdgeInsets.only(top: 1),
-            child: Icon(Icons.info_outline_rounded,
-                size: 16, color: AppColors.primary),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              'Dokumen hanya dapat diunduh melalui website IMS '
-              '(memerlukan approval).',
-              style: AppTextStyles.caption.copyWith(
-                color: AppColors.primary,
-                height: 1.4,
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

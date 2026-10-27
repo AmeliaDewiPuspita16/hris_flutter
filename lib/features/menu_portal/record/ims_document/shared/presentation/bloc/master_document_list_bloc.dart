@@ -57,7 +57,7 @@ class MasterDocumentListBloc
       emit(state.copyWith(
         status: MasterDocumentListStatus.failure,
         documents: const [],
-        errorMessage: e is ApiException ? e.message : 'Gagal memuat daftar dokumen. Coba lagi.',
+        errorMessage: e is ApiException ? e.message : 'Failed to load documents. Please try again.',
       ));
     }
   }

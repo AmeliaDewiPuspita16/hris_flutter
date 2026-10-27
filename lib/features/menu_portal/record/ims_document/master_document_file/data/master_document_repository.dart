@@ -3,7 +3,6 @@ import '../../../../../../core/network/api_client.dart';
 import '../../../../../../core/network/api_config.dart';
 import '../../../../../../core/network/page_meta.dart';
 import '../../../../../../core/utils/json_value.dart';
-import '../../shared/data/ims_web_links.dart';
 import '../../shared/domain/document_category.dart';
 import '../../shared/domain/master_document.dart';
 import '../../shared/domain/master_document_page.dart';
@@ -85,10 +84,9 @@ class MasterDocumentRepository {
       docNo: docNo,
       title: json['title']?.toString() ?? '',
       hierarchy: textOrNull(json['department']) ?? '-',
-      downloadUrl: ImsWebLinks.documentsPage,
-      obsoleteUrl: json['has_obsolete'] == true ? ImsWebLinks.documentsPage : null,
       viewUrl: '${ApiConfig.baseUrl}${ApiConfig.imsDocumentPdf(id)}',
       isPdf: json['is_pdf'] != false,
+      updatedAt: dateOrNull(json['updated_at'])?.toLocal(),
     );
   }
 

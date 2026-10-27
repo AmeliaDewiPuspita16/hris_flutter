@@ -18,8 +18,7 @@ import 'seeds/edited_wi_documents_seed.dart';
 ///
 /// Master Edited File hanya punya 4 kategori (Manual, SOP, WI, ANNEX) dan
 /// tidak punya Form/Form Template. Model yang dipakai sama dengan Master
-/// Document File; bedanya `obsoleteUrl` selalu null karena dokumen edited
-/// tidak punya versi obsolete.
+/// Document File.
 class MasterEditedDocumentRepository {
   MasterEditedDocumentRepository();
 

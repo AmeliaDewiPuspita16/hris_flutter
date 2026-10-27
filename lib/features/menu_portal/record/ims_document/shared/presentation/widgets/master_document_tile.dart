@@ -2,96 +2,137 @@ import 'package:flutter/material.dart';
 
 import '../../../../../../../core/theme/app_colors.dart';
 import '../../../../../../../core/theme/app_text_styles.dart';
+import '../../../../../../../core/utils/date_formatter.dart';
 import '../../../../../../../core/widgets/app_card.dart';
 import '../../../../../../../core/widgets/status_badge.dart';
 import '../../domain/master_document.dart';
 
 /// Satu baris dokumen master pada tab Manual/SOP/WI/dst.
 ///
-/// Dokumen tidak diunduh di aplikasi — "Unduh di Web" dan "Obsolete" hanya
-/// mengarahkan user ke website IMS, karena file diberi cap dan butuh
-/// approval saat diunduh. Itu sebabnya ikon di kanan baris itu berupa ikon
-/// tautan keluar, bukan chevron.
-///
-/// - "Lihat Dokumen" memanggil [onView] untuk membaca PDF di aplikasi
-///   (tanpa opsi simpan), jadi ikon kanannya chevron. Tidak tampil untuk
-///   dokumen non-PDF (Form Template).
-/// - "Unduh di Web" langsung memanggil [onDownload]; konfirmasi
-///   pengalihannya ditangani pemanggil (lihat `DocumentListTab`).
-/// - "Obsolete" munculin dialog konfirmasi dulu (padanan modal "Dokumen
-///   Obsolete" di web) sebelum [onObsolete] dipanggil, supaya orang sadar
-///   dokumen yang dibuka sudah tidak berlaku.
+/// Seluruh kartu bisa di-tap untuk membaca PDF-nya di aplikasi lewat
+/// [onView] — dokumen hanya bisa dilihat, tidak diunduh. Dokumen non-PDF
+/// (Form Template) tidak bisa dibuka: kartunya tidak bisa di-tap dan diberi
+/// keterangan "Preview not available".
 class MasterDocumentTile extends StatelessWidget {
   const MasterDocumentTile({
     super.key,
     required this.document,
     required this.onView,
-    required this.onDownload,
-    required this.onObsolete,
   });
 
   final MasterDocument document;
   final ValueChanged<MasterDocument> onView;
-  final ValueChanged<MasterDocument> onDownload;
-  final ValueChanged<MasterDocument> onObsolete;
-
-  Future<void> _handleObsoleteTap(BuildContext context) async {
-    final confirmed = await _confirmObsoleteDownload(context);
-    if (confirmed) onObsolete(document);
-  }
 
   @override
   Widget build(BuildContext context) {
+    final viewable = document.isPdf;
+    final updatedAt = document.updatedAt;
+
     return AppCard(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      child: Column(
+      padding: const EdgeInsets.fromLTRB(14, 14, 10, 14),
+      onTap: viewable ? () => onView(document) : null,
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Text(
+          _FileIcon(viewable: viewable),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
                   document.docNo,
                   style: AppTextStyles.body.copyWith(
+                    fontSize: 13.5,
                     fontWeight: FontWeight.w700,
                     color: AppColors.primary,
                   ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              _HierarchyBadge(label: document.hierarchy),
-            ],
-          ),
-          const SizedBox(height: 4),
-          Text(
-            document.title,
-            style: AppTextStyles.body.copyWith(fontSize: 13, height: 1.4),
-          ),
-          const SizedBox(height: 10),
-          if (document.isPdf)
-            _FileActionRow(
-              icon: Icons.visibility_outlined,
-              label: 'Lihat Dokumen',
-              onTap: () => onView(document),
-              showDivider: true,
-              trailingIcon: Icons.chevron_right_rounded,
+                const SizedBox(height: 3),
+                Text(
+                  document.title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyles.body.copyWith(
+                    fontSize: 12.5,
+                    height: 1.4,
+                    color: AppColors.textMid,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 6,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    _HierarchyBadge(label: document.hierarchy),
+                    if (updatedAt != null)
+                      _MetaText(
+                        icon: Icons.schedule_rounded,
+                        text: 'Updated ${DateFormatter.shortDate(updatedAt)}',
+                      ),
+                    if (!viewable)
+                      const _MetaText(
+                        icon: Icons.visibility_off_outlined,
+                        text: 'Preview not available',
+                      ),
+                  ],
+                ),
+              ],
             ),
-          _FileActionRow(
-            icon: Icons.file_download_outlined,
-            label: 'Unduh di Web',
-            onTap: () => onDownload(document),
-            showDivider: document.obsoleteUrl != null,
           ),
-          if (document.obsoleteUrl != null)
-            _FileActionRow(
-              icon: Icons.history_outlined,
-              label: 'Obsolete',
-              onTap: () => _handleObsoleteTap(context),
-              showDivider: false,
+          if (viewable)
+            const Padding(
+              padding: EdgeInsets.only(left: 4, top: 10),
+              child: Icon(Icons.chevron_right_rounded, size: 22, color: AppColors.textMuted),
             ),
         ],
       ),
+    );
+  }
+}
+
+/// Kotak ikon berkas di kiri kartu: merah bata untuk PDF (bisa dibuka),
+/// abu-abu untuk berkas lain.
+class _FileIcon extends StatelessWidget {
+  const _FileIcon({required this.viewable});
+
+  final bool viewable;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 42,
+      height: 42,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: viewable ? AppColors.hseRequestBg : AppColors.neutralBg,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Icon(
+        viewable ? Icons.picture_as_pdf_outlined : Icons.insert_drive_file_outlined,
+        size: 22,
+        color: viewable ? AppColors.hseRequest : AppColors.neutral,
+      ),
+    );
+  }
+}
+
+class _MetaText extends StatelessWidget {
+  const _MetaText({required this.icon, required this.text});
+
+  final IconData icon;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 13, color: AppColors.textMuted),
+        const SizedBox(width: 4),
+        Text(text, style: AppTextStyles.caption.copyWith(color: AppColors.textMuted)),
+      ],
     );
   }
 }
@@ -134,163 +175,4 @@ class _HierarchyBadge extends StatelessWidget {
 
     return StatusBadge.custom(label: label, color: color, background: background);
   }
-}
-
-/// Satu baris aksi berkas (Lihat Dokumen / Unduh di Web / Obsolete) — padanan
-/// `PrAttachmentTile`: ikon + label di kiri, [trailingIcon] di kanan (default
-/// ikon tautan keluar, menandakan user dibawa ke website), seluruh baris bisa
-/// di-tap.
-/// Menggantikan tombol solid oranye selebar kartu di versi sebelumnya.
-class _FileActionRow extends StatelessWidget {
-  const _FileActionRow({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-    required this.showDivider,
-    this.trailingIcon = Icons.open_in_new_rounded,
-  });
-
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-  final bool showDivider;
-  final IconData trailingIcon;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        border: showDivider
-            ? const Border(bottom: BorderSide(color: AppColors.border))
-            : null,
-      ),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Row(
-            children: [
-              Icon(icon, size: 17, color: AppColors.primary),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  label,
-                  style: AppTextStyles.body.copyWith(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.primary,
-                  ),
-                ),
-              ),
-              Icon(trailingIcon, size: 16, color: AppColors.textMuted),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Dialog konfirmasi sebelum membuka dokumen obsolete di website — padanan modal
-/// "Dokumen Obsolete" di web (ikon seru bulat, judul, dua paragraf
-/// peringatan, tombol "Batal" & "Ya, Download").
-///
-/// Return `true` kalau orang menekan "Lanjut ke Web", `false` untuk "Batal"
-/// atau dialog ditutup dengan cara lain (tap di luar, tombol back).
-Future<bool> _confirmObsoleteDownload(BuildContext context) async {
-  final confirmed = await showDialog<bool>(
-    context: context,
-    builder: (dialogContext) => Dialog(
-      backgroundColor: Colors.white,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(24, 28, 24, 20),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 56,
-              height: 56,
-              alignment: Alignment.center,
-              decoration: const BoxDecoration(color: AppColors.orangeBg, shape: BoxShape.circle),
-              child: const Icon(Icons.priority_high_rounded, color: AppColors.orange, size: 30),
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'Dokumen Obsolete',
-              style: TextStyle(
-                fontFamily: AppTextStyles.fontFamily,
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: AppColors.text,
-              ),
-            ),
-            const SizedBox(height: 10),
-            RichText(
-              textAlign: TextAlign.center,
-              text: TextSpan(
-                style: AppTextStyles.body.copyWith(fontSize: 12.5, color: AppColors.textMid, height: 1.5),
-                children: const [
-                  TextSpan(text: 'Dokumen yang akan Anda buka adalah '),
-                  TextSpan(
-                    text: 'dokumen yang sudah tidak berlaku (obsolete)',
-                    style: TextStyle(fontWeight: FontWeight.w700),
-                  ),
-                  TextSpan(text: '.'),
-                ],
-              ),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              'Dokumen ini hanya boleh digunakan sebagai referensi historis. '
-              'Jangan gunakan dokumen ini sebagai acuan proses yang aktif.',
-              textAlign: TextAlign.center,
-              style: AppTextStyles.body.copyWith(fontSize: 12.5, color: AppColors.textMuted, height: 1.5),
-            ),
-            const SizedBox(height: 20),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => Navigator.of(dialogContext).pop(false),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.textMid,
-                      side: const BorderSide(color: AppColors.border),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                    ),
-                    child: const Text(
-                      'Batal',
-                      style: TextStyle(fontFamily: AppTextStyles.fontFamily, fontWeight: FontWeight.w700, fontSize: 13),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () => Navigator.of(dialogContext).pop(true),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.present,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      elevation: 0,
-                    ),
-                    icon: const Icon(Icons.open_in_new_rounded, size: 16),
-                    label: const Text(
-                      'Lanjut ke Web',
-                      style: TextStyle(fontFamily: AppTextStyles.fontFamily, fontWeight: FontWeight.w700, fontSize: 13),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    ),
-  );
-
-  return confirmed ?? false;
 }

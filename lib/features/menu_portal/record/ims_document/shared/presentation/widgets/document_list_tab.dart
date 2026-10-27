@@ -12,9 +12,7 @@ import '../../domain/master_document_page.dart';
 import '../bloc/master_document_list_bloc.dart';
 import '../bloc/master_document_list_event.dart';
 import '../bloc/master_document_list_state.dart';
-import '../../data/ims_web_links.dart';
 import '../screens/document_viewer_screen.dart';
-import 'ims_web_download_dialog.dart';
 import 'master_document_tile.dart';
 
 /// Isi satu tab dokumen (Manual, SOP, dst) — daftar dokumen dari [fetcher]
@@ -22,9 +20,7 @@ import 'master_document_tile.dart';
 ///
 /// Dipakai ulang oleh Master Document File (API) dan Master Edited File
 /// (data demo), tinggal beda [fetcher]-nya — sama seperti
-/// `MasterDocumentListBloc` yang didesain generik per kategori. Dokumen tanpa
-/// `obsoleteUrl` otomatis tidak menampilkan tombol "Obsolete" karena diatur
-/// oleh [MasterDocumentTile].
+/// `MasterDocumentListBloc` yang didesain generik per kategori.
 class DocumentListTab extends StatelessWidget {
   const DocumentListTab({
     super.key,
@@ -121,7 +117,7 @@ class _DocumentListViewState extends State<_DocumentListView> {
 
         if (state.status == MasterDocumentListStatus.failure) {
           return AppErrorView(
-            message: state.errorMessage ?? 'Gagal memuat dokumen.',
+            message: state.errorMessage ?? 'Failed to load documents.',
             onRetry: () => context.read<MasterDocumentListBloc>().add(const MasterDocumentListRefreshed()),
           );
         }
@@ -138,8 +134,8 @@ class _DocumentListViewState extends State<_DocumentListView> {
                   children: [
                     Text(
                       state.search.trim().isEmpty
-                          ? 'Belum ada dokumen di kategori ini.'
-                          : 'Tidak ada dokumen yang cocok dengan pencarian.',
+                          ? 'No documents in this category yet.'
+                          : 'No documents match your search.',
                       textAlign: TextAlign.center,
                       style: AppTextStyles.bodyMuted,
                     ),
@@ -148,11 +144,15 @@ class _DocumentListViewState extends State<_DocumentListView> {
               : ListView.separated(
                   controller: _scrollController,
                   physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.all(16),
-                  itemCount: documents.length + (state.loadingMore ? 1 : 0),
-                  separatorBuilder: (_, __) => const SizedBox(height: 10),
+                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+                  // Baris pertama: jumlah dokumen; terakhir: spinner halaman
+                  // berikutnya.
+                  itemCount: documents.length + 1 + (state.loadingMore ? 1 : 0),
+                  separatorBuilder: (_, index) => SizedBox(height: index == 0 ? 8 : 10),
                   itemBuilder: (context, index) {
-                    if (index >= documents.length) {
+                    if (index == 0) return _ResultCount(total: state.meta.total);
+
+                    if (index > documents.length) {
                       return const Padding(
                         padding: EdgeInsets.symmetric(vertical: 8),
                         child: Center(
@@ -164,13 +164,9 @@ class _DocumentListViewState extends State<_DocumentListView> {
                       );
                     }
 
-                    final document = documents[index];
-
                     return MasterDocumentTile(
-                      document: document,
+                      document: documents[index - 1],
                       onView: (doc) => _view(context, doc),
-                      onDownload: (doc) => _download(context, doc),
-                      onObsolete: (doc) => _openOnWeb(context, doc.obsoleteUrl ?? doc.downloadUrl),
                     );
                   },
                 ),
@@ -187,33 +183,28 @@ class _DocumentListViewState extends State<_DocumentListView> {
       ),
     );
   }
+}
 
-  /// Dokumen tidak diunduh di aplikasi: tampilkan penjelasan dulu, lalu
-  /// arahkan ke website IMS kalau user setuju.
-  Future<void> _download(BuildContext context, MasterDocument doc) async {
-    final confirmed = await showImsWebDownloadDialog(context);
-    if (!confirmed || !context.mounted) return;
-    await _openOnWeb(context, doc.downloadUrl);
-  }
+/// "18 documents" di atas daftar — total dari server, bukan yang termuat.
+class _ResultCount extends StatelessWidget {
+  const _ResultCount({required this.total});
 
-  /// Buka [url] di browser; kasih tahu user kalau gagal.
-  ///
-  /// TODO(api): API belum mengirim alamat unduh di website, jadi
-  /// [MasterDocument.downloadUrl] / `obsoleteUrl` sementara berisi
-  /// `ImsWebLinks.documentsPage`.
-  Future<void> _openOnWeb(BuildContext context, String url) async {
-    final opened = await ImsWebLinks.open(url);
-    if (opened || !context.mounted) return;
+  final int total;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Tidak dapat membuka website IMS.')),
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      total == 1 ? '1 document' : '$total documents',
+      style: AppTextStyles.caption.copyWith(
+        color: AppColors.textMuted,
+        fontWeight: FontWeight.w600,
+      ),
     );
   }
 }
 
-/// Skeleton daftar dokumen selagi tab pertama dimuat. Meniru
-/// [MasterDocumentTile]: judul + keterangan, lalu baris aksi file
-/// (Download / Obsolete) berbentuk kotak memanjang.
+/// Skeleton daftar dokumen selagi tab dimuat. Meniru [MasterDocumentTile]:
+/// kotak ikon di kiri, nomor dokumen + judul + badge di kanan.
 class _DocumentListSkeleton extends StatelessWidget {
   const _DocumentListSkeleton();
 
@@ -226,14 +217,23 @@ class _DocumentListSkeleton extends StatelessWidget {
         ShimmerList(
           itemCount: 5,
           itemBuilder: (context) => const ShimmerCard(
-            child: Column(
+            child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                ShimmerLine(width: 200, height: 14),
-                SizedBox(height: 8),
-                ShimmerLine(width: 130, height: 10),
-                SizedBox(height: 12),
-                ShimmerBox(height: 38, borderRadius: 10),
+                ShimmerBox(width: 42, height: 42, borderRadius: 12),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      ShimmerLine(width: 150, height: 13),
+                      SizedBox(height: 8),
+                      ShimmerLine(height: 10),
+                      SizedBox(height: 12),
+                      ShimmerLine(width: 110, height: 16),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),

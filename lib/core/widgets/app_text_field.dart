@@ -6,7 +6,7 @@ import 'field_label_row.dart';
 class AppTextField extends StatelessWidget {
   const AppTextField({
     super.key,
-    required this.label,
+    this.label,
     required this.controller,
     this.hint,
     this.icon,
@@ -19,7 +19,8 @@ class AppTextField extends StatelessWidget {
     this.minLines,
   });
 
-  final String label;
+  /// Null = tanpa label di atas field (mis. kolom search).
+  final String? label;
   final TextEditingController controller;
   final String? hint;
   final IconData? icon;
@@ -39,8 +40,10 @@ class AppTextField extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        FieldLabelRow(label: label, required: required),
-        const SizedBox(height: 6),
+        if (label case final label?) ...[
+          FieldLabelRow(label: label, required: required),
+          const SizedBox(height: 6),
+        ],
         TextField(
           controller: controller,
           obscureText: obscureText,
