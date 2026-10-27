@@ -54,36 +54,24 @@ class _ItFormAndMediaViewState extends State<_ItFormAndMediaView> {
   /// Sisa ruang gulir yang memicu pemuatan halaman berikutnya.
   static const _loadMoreThreshold = 320.0;
 
-  final _scrollController = ScrollController();
-
   /// Id item yang rinciannya sedang diambil sebelum modal feedback dibuka —
   /// null berarti tidak ada yang sedang dalam proses. Cuma satu banner yang
   /// bisa "loading" sekaligus, jadi satu id sudah cukup.
   int? _loadingFeedbackId;
 
-  @override
-  void initState() {
-    super.initState();
-    _scrollController.addListener(_onScroll);
-  }
-
-  @override
-  void dispose() {
-    _scrollController.removeListener(_onScroll);
-    _scrollController.dispose();
-    super.dispose();
-  }
-
-  void _onScroll() {
-    if (!_scrollController.hasClients) return;
-
-    final remaining = _scrollController.position.maxScrollExtent -
-        _scrollController.position.pixels;
-    if (remaining > _loadMoreThreshold) return;
+  /// Lewat notifikasi, bukan `ScrollController` sendiri: daftar ini harus
+  /// memakai `PrimaryScrollController` supaya geraknya menyatu dengan
+  /// header `PortalModulePage` di `ItRequestScreen`.
+  bool _onScroll(ScrollNotification notification) {
+    if (notification.depth != 0 || notification.metrics.axis != Axis.vertical) {
+      return false;
+    }
+    if (notification.metrics.extentAfter > _loadMoreThreshold) return false;
 
     context
         .read<ItRequestListBloc>()
         .add(const ItRequestListNextPageRequested());
+    return false;
   }
 
   /// Item MILIK USER LOGIN yang sudah dikerjakan tapi belum dinilai —
@@ -120,7 +108,8 @@ class _ItFormAndMediaViewState extends State<_ItFormAndMediaView> {
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() => _loadingFeedbackId = null);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.message)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(e.message)));
       return;
     }
     if (!mounted) return;
@@ -130,7 +119,8 @@ class _ItFormAndMediaViewState extends State<_ItFormAndMediaView> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => ItRequestFeedbackSheet(detail: detail, repository: repository),
+      builder: (_) =>
+          ItRequestFeedbackSheet(detail: detail, repository: repository),
     );
 
     if (result == null || !mounted) return;
@@ -236,67 +226,70 @@ class _ItFormAndMediaViewState extends State<_ItFormAndMediaView> {
 
     return RefreshIndicator(
       onRefresh: _refresh,
-      child: ListView(
-        controller: _scrollController,
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-        children: [
-          for (final item in awaiting) ...[
-            ItRequestFeedbackBanner(
-              item: item,
-              onGiveFeedback: () => _giveFeedback(item),
-              loading: _loadingFeedbackId == item.id,
-            ),
-            const SizedBox(height: 12),
-          ],
-          // Server bilang masih ada yang menunggu rating, tapi tidak ada
-          // satu pun yang kebetulan termuat di halaman ini untuk ditampilkan
-          // sebagai banner di atas — tetap kasih tahu kenapa FAB terkunci.
-          if (!state.canAddRequest && awaiting.isEmpty)
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              decoration: BoxDecoration(
-                color: AppColors.accentBg,
-                borderRadius: BorderRadius.circular(10),
+      child: NotificationListener<ScrollNotification>(
+        onNotification: _onScroll,
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+          children: [
+            for (final item in awaiting) ...[
+              ItRequestFeedbackBanner(
+                item: item,
+                onGiveFeedback: () => _giveFeedback(item),
+                loading: _loadingFeedbackId == item.id,
               ),
-              child: Row(
-                children: [
-                  const Icon(Icons.lock_outline,
-                      size: 16, color: AppColors.accent),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Complete the feedback for finished requests first '
-                      'to open a new request.',
-                      style: AppTextStyles.caption
-                          .copyWith(color: AppColors.text, height: 1.4),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          if (history.isEmpty && awaiting.isEmpty)
-            Padding(
-              padding: const EdgeInsets.only(top: 24),
-              child: Center(
-                child: Text('No data', style: AppTextStyles.bodyMuted),
-              ),
-            )
-          else
-            for (var i = 0; i < history.length; i++) ...[
-              if (i > 0) const SizedBox(height: 10),
-              ItRequestCard(
-                  item: history[i], onTap: () => _openDetail(history[i])),
+              const SizedBox(height: 12),
             ],
-          if (state.loadingMore)
-            const Padding(
-              padding: EdgeInsets.only(top: 10),
-              child: _RequestCardSkeleton(),
-            ),
-          // Ruang ekstra di bawah supaya kartu riwayat terakhir tidak
-          // tertutup FAB yang mengambang di kanan-bawah.
-          if (state.canAddRequest) const SizedBox(height: 72),
-        ],
+            // Server bilang masih ada yang menunggu rating, tapi tidak ada
+            // satu pun yang kebetulan termuat di halaman ini untuk ditampilkan
+            // sebagai banner di atas — tetap kasih tahu kenapa FAB terkunci.
+            if (!state.canAddRequest && awaiting.isEmpty)
+              Container(
+                width: double.infinity,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                decoration: BoxDecoration(
+                  color: AppColors.accentBg,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.lock_outline,
+                        size: 16, color: AppColors.accent),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Complete the feedback for finished requests first '
+                        'to open a new request.',
+                        style: AppTextStyles.caption
+                            .copyWith(color: AppColors.text, height: 1.4),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            if (history.isEmpty && awaiting.isEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 24),
+                child: Center(
+                  child: Text('No data', style: AppTextStyles.bodyMuted),
+                ),
+              )
+            else
+              for (var i = 0; i < history.length; i++) ...[
+                if (i > 0) const SizedBox(height: 10),
+                ItRequestCard(
+                    item: history[i], onTap: () => _openDetail(history[i])),
+              ],
+            if (state.loadingMore)
+              const Padding(
+                padding: EdgeInsets.only(top: 10),
+                child: _RequestCardSkeleton(),
+              ),
+            // Ruang ekstra di bawah supaya kartu riwayat terakhir tidak
+            // tertutup FAB yang mengambang di kanan-bawah.
+            if (state.canAddRequest) const SizedBox(height: 72),
+          ],
+        ),
       ),
     );
   }

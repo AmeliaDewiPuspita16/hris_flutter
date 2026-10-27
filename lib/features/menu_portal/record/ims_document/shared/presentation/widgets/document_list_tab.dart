@@ -63,14 +63,7 @@ class _DocumentListViewState extends State<_DocumentListView> {
   /// Sisa ruang gulir yang memicu pemuatan halaman berikutnya.
   static const _loadMoreThreshold = 320.0;
 
-  final _scrollController = ScrollController();
   Timer? _debounce;
-
-  @override
-  void initState() {
-    super.initState();
-    _scrollController.addListener(_onScroll);
-  }
 
   @override
   void didUpdateWidget(covariant _DocumentListView oldWidget) {
@@ -87,18 +80,18 @@ class _DocumentListViewState extends State<_DocumentListView> {
   @override
   void dispose() {
     _debounce?.cancel();
-    _scrollController.removeListener(_onScroll);
-    _scrollController.dispose();
     super.dispose();
   }
 
-  void _onScroll() {
-    if (!_scrollController.hasClients) return;
-
-    final remaining = _scrollController.position.maxScrollExtent - _scrollController.position.pixels;
-    if (remaining > _loadMoreThreshold) return;
+  /// Lewat notifikasi, bukan `ScrollController` sendiri: daftar ini harus
+  /// memakai `PrimaryScrollController` supaya geraknya menyatu dengan
+  /// header `PortalModulePage`.
+  bool _onScroll(ScrollNotification notification) {
+    if (notification.depth != 0 || notification.metrics.axis != Axis.vertical) return false;
+    if (notification.metrics.extentAfter > _loadMoreThreshold) return false;
 
     context.read<MasterDocumentListBloc>().add(const MasterDocumentListNextPageRequested());
+    return false;
   }
 
   Future<void> _refresh() async {
@@ -141,34 +134,36 @@ class _DocumentListViewState extends State<_DocumentListView> {
                     ),
                   ],
                 )
-              : ListView.separated(
-                  controller: _scrollController,
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
-                  // Baris pertama: jumlah dokumen; terakhir: spinner halaman
-                  // berikutnya.
-                  itemCount: documents.length + 1 + (state.loadingMore ? 1 : 0),
-                  separatorBuilder: (_, index) => SizedBox(height: index == 0 ? 8 : 10),
-                  itemBuilder: (context, index) {
-                    if (index == 0) return _ResultCount(total: state.meta.total);
+              : NotificationListener<ScrollNotification>(
+                  onNotification: _onScroll,
+                  child: ListView.separated(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+                    // Baris pertama: jumlah dokumen; terakhir: spinner halaman
+                    // berikutnya.
+                    itemCount: documents.length + 1 + (state.loadingMore ? 1 : 0),
+                    separatorBuilder: (_, index) => SizedBox(height: index == 0 ? 8 : 10),
+                    itemBuilder: (context, index) {
+                      if (index == 0) return _ResultCount(total: state.meta.total);
 
-                    if (index > documents.length) {
-                      return const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 8),
-                        child: Center(
-                          child: SizedBox.square(
-                            dimension: 22,
-                            child: CircularProgressIndicator(strokeWidth: 2.4, color: AppColors.primary),
+                      if (index > documents.length) {
+                        return const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 8),
+                          child: Center(
+                            child: SizedBox.square(
+                              dimension: 22,
+                              child: CircularProgressIndicator(strokeWidth: 2.4, color: AppColors.primary),
+                            ),
                           ),
-                        ),
-                      );
-                    }
+                        );
+                      }
 
-                    return MasterDocumentTile(
-                      document: documents[index - 1],
-                      onView: (doc) => _view(context, doc),
-                    );
-                  },
+                      return MasterDocumentTile(
+                        document: documents[index - 1],
+                        onView: (doc) => _view(context, doc),
+                      );
+                    },
+                  ),
                 ),
         );
       },

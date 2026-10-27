@@ -47,7 +47,6 @@ class ListRequestTab extends StatefulWidget {
 class _ListRequestTabState extends State<ListRequestTab> {
   static const _loadMoreThreshold = 320.0;
 
-  final _scrollController = ScrollController();
   late final ItRequestRepository _repository;
   late final ItRequestListBloc _waitingBloc;
   late final ItRequestListBloc _progressBloc;
@@ -66,26 +65,26 @@ class _ListRequestTabState extends State<ListRequestTab> {
     _progressBloc =
         ItRequestListBloc(repository: _repository, status: _kProgressCode)
           ..add(const ItRequestListStarted());
-    _scrollController.addListener(_onScroll);
   }
 
   @override
   void dispose() {
-    _scrollController.removeListener(_onScroll);
-    _scrollController.dispose();
     _waitingBloc.close();
     _progressBloc.close();
     super.dispose();
   }
 
-  void _onScroll() {
-    if (!_scrollController.hasClients) return;
-
-    final remaining = _scrollController.position.maxScrollExtent -
-        _scrollController.position.pixels;
-    if (remaining > _loadMoreThreshold) return;
+  /// Lewat notifikasi, bukan `ScrollController` sendiri: daftar ini harus
+  /// memakai `PrimaryScrollController` supaya geraknya menyatu dengan
+  /// header `PortalModulePage` di `ItRequestScreen`.
+  bool _onScroll(ScrollNotification notification) {
+    if (notification.depth != 0 || notification.metrics.axis != Axis.vertical) {
+      return false;
+    }
+    if (notification.metrics.extentAfter > _loadMoreThreshold) return false;
 
     _activeBloc.add(const ItRequestListNextPageRequested());
+    return false;
   }
 
   Future<void> _refresh() async {
@@ -100,7 +99,8 @@ class _ListRequestTabState extends State<ListRequestTab> {
   void _selectFilter(String filter) {
     if (filter == _filter) return;
     setState(() => _filter = filter);
-    if (_scrollController.hasClients) _scrollController.jumpTo(0);
+    final controller = PrimaryScrollController.maybeOf(context);
+    if (controller != null && controller.hasClients) controller.jumpTo(0);
   }
 
   void _openDetail(ItRequestItem item) {
@@ -153,39 +153,41 @@ class _ListRequestTabState extends State<ListRequestTab> {
 
     return RefreshIndicator(
       onRefresh: _refresh,
-      child: ListView(
-        controller: _scrollController,
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: _CounterChip(
-                  label: 'On Waiting',
-                  count: _countOf(waitingState),
-                  color: AppColors.pending,
-                  background: AppColors.pendingBg,
-                  active: _filter == _kWaitingCode,
-                  onTap: () => _selectFilter(_kWaitingCode),
+      child: NotificationListener<ScrollNotification>(
+        onNotification: _onScroll,
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: _CounterChip(
+                    label: 'On Waiting',
+                    count: _countOf(waitingState),
+                    color: AppColors.pending,
+                    background: AppColors.pendingBg,
+                    active: _filter == _kWaitingCode,
+                    onTap: () => _selectFilter(_kWaitingCode),
+                  ),
                 ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _CounterChip(
-                  label: 'On Progress',
-                  count: _countOf(progressState),
-                  color: AppColors.inProgress,
-                  background: AppColors.inProgressBg,
-                  active: _filter == _kProgressCode,
-                  onTap: () => _selectFilter(_kProgressCode),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _CounterChip(
+                    label: 'On Progress',
+                    count: _countOf(progressState),
+                    color: AppColors.inProgress,
+                    background: AppColors.inProgressBg,
+                    active: _filter == _kProgressCode,
+                    onTap: () => _selectFilter(_kProgressCode),
+                  ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          ..._buildList(context, state),
-        ],
+              ],
+            ),
+            const SizedBox(height: 14),
+            ..._buildList(context, state),
+          ],
+        ),
       ),
     );
   }

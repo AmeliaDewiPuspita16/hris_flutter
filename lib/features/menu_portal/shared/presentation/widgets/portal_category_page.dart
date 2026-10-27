@@ -25,6 +25,7 @@ class PortalCategoryPage extends StatelessWidget {
       'assets/icons/header-monitor-illustration.svg';
   static const laptopIllustration =
       'assets/icons/header-laptop-illustration.svg';
+  static const carIllustration = 'assets/icons/header-car-illustration.svg';
 
   final String title;
   final String subtitle;
@@ -93,9 +94,15 @@ class PortalCategoryPage extends StatelessWidget {
 }
 
 /// Kerangka layar modul (Document File, Procurement, dst): [PortalHeader]
-/// tetap di atas, lalu [body] mengisi sisa layar — body-lah yang
-/// menggulir, bukan header.
-class PortalModulePage extends StatelessWidget {
+/// ikut tergulir ke atas sampai hilang, lalu [body] mengisi layar penuh.
+/// Bagian atas [body] (kolom search, chip tab) jadi terlihat "menempel" di
+/// bawah status bar, sementara daftar di dalamnya tetap bisa digulir.
+///
+/// Daftar di dalam [body] tidak boleh memakai `ScrollController` sendiri —
+/// harus `PrimaryScrollController` bawaan supaya geraknya terhubung dengan
+/// header (aturan `NestedScrollView`). Paginasi cukup lewat
+/// `NotificationListener<ScrollNotification>`.
+class PortalModulePage extends StatefulWidget {
   const PortalModulePage({
     super.key,
     this.eyebrow,
@@ -103,6 +110,7 @@ class PortalModulePage extends StatelessWidget {
     required this.subtitle,
     required this.illustrationAsset,
     required this.body,
+    this.floatingActionButton,
   });
 
   final String? eyebrow;
@@ -110,9 +118,28 @@ class PortalModulePage extends StatelessWidget {
   final String subtitle;
   final String illustrationAsset;
   final Widget body;
+  final Widget? floatingActionButton;
+
+  @override
+  State<PortalModulePage> createState() => _PortalModulePageState();
+}
+
+class _PortalModulePageState extends State<PortalModulePage> {
+  /// Jarak gulir header sampai penutup status bar tampil penuh.
+  static const _statusBarFadeDistance = 24.0;
+
+  final _outerController = ScrollController();
+
+  @override
+  void dispose() {
+    _outerController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
+    final topInset = MediaQuery.paddingOf(context).top;
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
@@ -121,21 +148,93 @@ class PortalModulePage extends StatelessWidget {
       ),
       child: Scaffold(
         backgroundColor: AppColors.bg,
-        body: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+        floatingActionButton: widget.floatingActionButton,
+        body: Stack(
           children: [
-            PortalHeader(
-              eyebrow: eyebrow,
-              title: title,
-              subtitle: subtitle,
-              illustrationAsset: illustrationAsset,
-              onBack: () => Navigator.of(context).pop(),
+            // Area gulir dimulai di bawah status bar supaya [body] berhenti
+            // tepat di bawahnya. Latar header tetap tergambar sampai ke balik
+            // status bar lewat `backgroundBleed` + `Clip.none`.
+            Padding(
+              padding: EdgeInsets.only(top: topInset),
+              child: MediaQuery.removePadding(
+                context: context,
+                removeTop: true,
+                child: NestedScrollView(
+                  controller: _outerController,
+                  clipBehavior: Clip.none,
+                  headerSliverBuilder: (context, _) => [
+                    SliverToBoxAdapter(
+                      child: PortalHeader(
+                        eyebrow: widget.eyebrow,
+                        title: widget.title,
+                        subtitle: widget.subtitle,
+                        illustrationAsset: widget.illustrationAsset,
+                        backgroundBleed: topInset,
+                        onBack: () => Navigator.of(context).pop(),
+                      ),
+                    ),
+                  ],
+                  body: widget.body,
+                ),
+              ),
             ),
-            Expanded(child: body),
+            // Penutup status bar: transparan saat header utuh, lalu
+            // menebal begitu header mulai tergulir supaya teks header tidak
+            // terlihat lewat di balik jam/baterai.
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              height: topInset,
+              child: IgnorePointer(
+                child: ListenableBuilder(
+                  listenable: _outerController,
+                  builder: (context, _) {
+                    final offset = _outerController.hasClients
+                        ? _outerController.offset
+                        : 0.0;
+                    final opacity =
+                        (offset / _statusBarFadeDistance).clamp(0.0, 1.0);
+                    return ColoredBox(
+                      color: AppColors.bg.withValues(alpha: opacity),
+                    );
+                  },
+                ),
+              ),
+            ),
           ],
         ),
       ),
     );
+  }
+}
+
+/// Pembungkus tiap tab di dalam `IndexedStack` pada [PortalModulePage].
+///
+/// `NestedScrollView` menggerakkan SEMUA daftar yang memakai
+/// PrimaryScrollController-nya, termasuk tab yang sedang tersembunyi. Jadi
+/// hanya tab [active] yang diberi controller itu; tab lain dilepas.
+///
+/// Semua tab — aktif atau tidak — harus selalu dibungkus widget ini, supaya
+/// bentuk pohon widgetnya tetap sama dan state tab tidak dibuat ulang saat
+/// pindah tab.
+class PortalTabScrollScope extends StatelessWidget {
+  const PortalTabScrollScope({
+    super.key,
+    required this.active,
+    required this.child,
+  });
+
+  final bool active;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final controller = PrimaryScrollController.maybeOf(context);
+    if (active && controller != null) {
+      return PrimaryScrollController(controller: controller, child: child);
+    }
+    return PrimaryScrollController.none(child: child);
   }
 }
 
@@ -154,6 +253,7 @@ class PortalHeader extends StatelessWidget {
     required this.subtitle,
     required this.illustrationAsset,
     required this.onBack,
+    this.backgroundBleed = 0,
   });
 
   /// Label kecil huruf kapital di atas judul, mis. "IT REQUEST".
@@ -163,13 +263,23 @@ class PortalHeader extends StatelessWidget {
   final String illustrationAsset;
   final VoidCallback onBack;
 
+  /// Seberapa jauh latar digambar melewati sisi atas header — dipakai
+  /// [PortalModulePage], yang meletakkan header di bawah status bar tapi
+  /// latarnya tetap harus sampai ke balik status bar.
+  final double backgroundBleed;
+
   @override
   Widget build(BuildContext context) {
     final topInset = MediaQuery.paddingOf(context).top;
 
     return Stack(
+      clipBehavior: Clip.none,
       children: [
-        Positioned.fill(
+        Positioned(
+          top: -backgroundBleed,
+          left: 0,
+          right: 0,
+          bottom: 0,
           child: SvgPicture.asset('assets/icons/header-background.svg',
               fit: BoxFit.cover),
         ),

@@ -26,9 +26,11 @@ class IndentTabBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 36,
+      // 42 pill + ruang bawah untuk bayangan pill aktif.
+      height: 48,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.only(bottom: 6),
         itemCount: labels.length,
         separatorBuilder: (_, __) => const SizedBox(width: 8),
         itemBuilder: (context, index) {
@@ -37,14 +39,25 @@ class IndentTabBar extends StatelessWidget {
 
           return InkWell(
             onTap: () => onChanged(index),
-            borderRadius: BorderRadius.circular(20),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+            borderRadius: BorderRadius.circular(22),
+            // Gaya pill sama dengan `ItRequestTabBar` dan `DocumentTabBar`.
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 180),
+              padding: const EdgeInsets.symmetric(horizontal: 14),
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 color: active ? AppColors.primary : AppColors.card,
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(22),
                 border: active ? null : Border.all(color: AppColors.border),
+                boxShadow: active
+                    ? [
+                        BoxShadow(
+                          color: AppColors.primary.withValues(alpha: 0.25),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ]
+                    : null,
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -53,9 +66,9 @@ class IndentTabBar extends StatelessWidget {
                     labels[index],
                     style: TextStyle(
                       fontFamily: AppTextStyles.fontFamily,
-                      fontSize: 10.5,
-                      fontWeight: FontWeight.w700,
-                      color: active ? Colors.white : AppColors.textMid,
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w600,
+                      color: active ? Colors.white : AppColors.text,
                     ),
                   ),
                   if (badge != null && badge > 0) ...[

@@ -66,35 +66,29 @@ class _ProcurementViewState extends State<_ProcurementView> {
   static const _loadMoreThreshold = 320.0;
 
   final _searchController = TextEditingController();
-  final _scrollController = ScrollController();
 
   Timer? _debounce;
-
-  @override
-  void initState() {
-    super.initState();
-    _scrollController.addListener(_onScroll);
-  }
 
   @override
   void dispose() {
     _debounce?.cancel();
     _searchController.dispose();
-    _scrollController.removeListener(_onScroll);
-    _scrollController.dispose();
     super.dispose();
   }
 
-  void _onScroll() {
-    if (!_scrollController.hasClients) return;
-
-    final remaining = _scrollController.position.maxScrollExtent -
-        _scrollController.position.pixels;
-    if (remaining > _loadMoreThreshold) return;
+  /// Lewat notifikasi, bukan `ScrollController` sendiri: daftar ini harus
+  /// memakai `PrimaryScrollController` supaya geraknya menyatu dengan
+  /// header `PortalModulePage`.
+  bool _onScroll(ScrollNotification notification) {
+    if (notification.depth != 0 || notification.metrics.axis != Axis.vertical) {
+      return false;
+    }
+    if (notification.metrics.extentAfter > _loadMoreThreshold) return false;
 
     context.read<ProcurementListBloc>().add(
           const ProcurementListNextPageRequested(),
         );
+    return false;
   }
 
   /// Menunda pengiriman kata kunci supaya mengetik satu kalimat tidak jadi
@@ -135,8 +129,7 @@ class _ProcurementViewState extends State<_ProcurementView> {
   @override
   Widget build(BuildContext context) {
     return PortalModulePage(
-      eyebrow: 'PROCUREMENT',
-      title: 'Procurement Monitoring',
+      title: 'E-Procurement',
       subtitle: 'Track purchase requisitions and their approval progress.',
       illustrationAsset: PortalCategoryPage.laptopIllustration,
       body: BlocBuilder<ProcurementListBloc, ProcurementListState>(
@@ -147,7 +140,7 @@ class _ProcurementViewState extends State<_ProcurementView> {
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
                 child: AppTextField(
                   controller: _searchController,
-                  hint: 'Nomor PR, requestor, atau purpose',
+                  hint: 'PR Number, requestor, or purpose',
                   icon: Icons.search,
                   onChanged: _onSearchChanged,
                 ),
@@ -198,7 +191,7 @@ class _ProcurementViewState extends State<_ProcurementView> {
       return RefreshIndicator(
         onRefresh: _refresh,
         child: ListView(
-          controller: _scrollController,
+          physics: const AlwaysScrollableScrollPhysics(),
           children: [
             SizedBox(
               height: 240,
@@ -213,22 +206,24 @@ class _ProcurementViewState extends State<_ProcurementView> {
 
     return RefreshIndicator(
       onRefresh: _refresh,
-      child: ListView.separated(
-        controller: _scrollController,
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-        // Satu baris tambahan di bawah untuk skeleton halaman berikutnya.
-        itemCount: state.items.length + (state.loadingMore ? 1 : 0),
-        separatorBuilder: (_, __) => const SizedBox(height: 10),
-        itemBuilder: (_, i) {
-          if (i >= state.items.length) {
-            return const _PrCardSkeleton();
-          }
+      child: NotificationListener<ScrollNotification>(
+        onNotification: _onScroll,
+        child: ListView.separated(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+          // Satu baris tambahan di bawah untuk skeleton halaman berikutnya.
+          itemCount: state.items.length + (state.loadingMore ? 1 : 0),
+          separatorBuilder: (_, __) => const SizedBox(height: 10),
+          itemBuilder: (_, i) {
+            if (i >= state.items.length) {
+              return const _PrCardSkeleton();
+            }
 
-          return PrCard(
-            requisition: state.items[i],
-            onTap: () => _openDetail(state.items[i]),
-          );
-        },
+            return PrCard(
+              requisition: state.items[i],
+              onTap: () => _openDetail(state.items[i]),
+            );
+          },
+        ),
       ),
     );
   }

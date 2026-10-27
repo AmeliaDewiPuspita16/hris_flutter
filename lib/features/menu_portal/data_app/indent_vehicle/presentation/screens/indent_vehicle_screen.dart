@@ -8,8 +8,9 @@ import '../../../../../../core/theme/app_colors.dart';
 import '../../../../../../core/theme/app_text_styles.dart';
 import '../../../../../../core/widgets/app_error_view.dart';
 import '../../../../../../core/widgets/app_shimmer.dart';
-import '../../../../../../core/widgets/back_header.dart';
+import '../../../../../../core/widgets/app_text_field.dart';
 import '../../../../../auth/presentation/bloc/auth/auth_bloc.dart';
+import '../../../../shared/presentation/widgets/portal_category_page.dart';
 import '../../data/indent_vehicle_repository.dart';
 import '../../domain/indent_approval_item.dart';
 import '../../domain/indent_assign_result.dart';
@@ -92,7 +93,6 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
   // sini, bukan lewat BlocProvider, supaya handler di State ini bisa
   // memakainya langsung.
   late final IndentRequestListBloc _requestBloc;
-  final _requestScrollController = ScrollController();
 
   // Tab Pending Vehicle Assignment juga dipegang bloc. Hanya dimulai untuk
   // akun `driver-admin` (server membalas `admin: false` untuk akun lain).
@@ -117,7 +117,6 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
       repository: context.read<IndentVehicleRepository>(),
       currentUserId: user?.id,
     );
-    _requestScrollController.addListener(_onRequestScroll);
 
     _isHod = user?.isHod ?? false;
     _canAssign = user?.canAssignIndentVehicle ?? false;
@@ -170,9 +169,6 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
     _approvalBloc.close();
     _pendingBloc.close();
     _driverCubit.close();
-    _requestScrollController
-      ..removeListener(_onRequestScroll)
-      ..dispose();
     _searchController.dispose();
     super.dispose();
   }
@@ -422,12 +418,11 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.bg,
-      appBar: BackHeader(
-        title: 'Indent Vehicle',
-        onBack: () => Navigator.of(context).pop(),
-      ),
+    return PortalModulePage(
+      eyebrow: 'INDENT VEHICLE',
+      title: 'Indent Vehicle',
+      subtitle: 'Book a company vehicle and track its approval and driver.',
+      illustrationAsset: PortalCategoryPage.carIllustration,
       // FAB oranye di kanan-bawah, sama pola dengan IT Request, HSE, dan EST.
       // Cuma muncul di tab List of User Requests — tab lain (assign &
       // approval) bukan tempat membuat request baru.
@@ -483,7 +478,8 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
             // Search paling atas (fixed, di luar area scroll), tab bar di
             // bawahnya — urutan yang sama dengan EstRequestScreen.
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              // Header sudah punya jarak bawah sendiri.
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -523,11 +519,20 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
               ),
             ),
             // IndexedStack: semua tab tetap "hidup" di belakang layar,
-            // jadi posisi scroll tab list tidak reset saat pindah tab.
+            // jadi data & state tab tidak hilang saat pindah tab.
+            //
+            // Tab tersembunyi dilepas dari scroll header, lihat
+            // `PortalTabScrollScope`.
             Expanded(
               child: IndexedStack(
                 index: _tabIndex,
-                children: [for (final tab in _tabs) _buildTab(tab)],
+                children: [
+                  for (var i = 0; i < _tabs.length; i++)
+                    PortalTabScrollScope(
+                      active: i == _tabIndex,
+                      child: _buildTab(_tabs[i]),
+                    ),
+                ],
               ),
             ),
           ],
@@ -551,31 +556,11 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
   }
 
   Widget _buildSearchField() {
-    return TextField(
+    return AppTextField(
       controller: _searchController,
+      hint: 'Search request...',
+      icon: Icons.search,
       onChanged: (v) => setState(() => _query = v),
-      style: AppTextStyles.body,
-      decoration: InputDecoration(
-        hintText: 'Search request...',
-        hintStyle: AppTextStyles.body.copyWith(color: AppColors.textMuted),
-        prefixIcon:
-            const Icon(Icons.search, size: 19, color: AppColors.textMuted),
-        filled: true,
-        fillColor: Colors.white,
-        contentPadding: const EdgeInsets.symmetric(vertical: 4),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: AppColors.border, width: 1.5),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: AppColors.border, width: 1.5),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: AppColors.primaryMid, width: 1.5),
-        ),
-      ),
     );
   }
 
@@ -711,38 +696,40 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
                     ),
                   ],
                 )
-              : ListView.separated(
-                  controller: _requestScrollController,
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  // Padding bawah ekstra (88) supaya baris terakhir tidak
-                  // tertutup FAB.
-                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 88),
-                  // +1 untuk skeleton di dasar saat halaman berikutnya
-                  // sedang dimuat.
-                  itemCount: results.length + (state.loadingMore ? 1 : 0),
-                  separatorBuilder: (_, __) => const SizedBox(height: 10),
-                  itemBuilder: (context, index) {
-                    if (index == results.length) {
-                      return const _RequestRowSkeleton();
-                    }
+              : NotificationListener<ScrollNotification>(
+                  onNotification: _onRequestScroll,
+                  child: ListView.separated(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    // Padding bawah ekstra (88) supaya baris terakhir tidak
+                    // tertutup FAB.
+                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 88),
+                    // +1 untuk skeleton di dasar saat halaman berikutnya
+                    // sedang dimuat.
+                    itemCount: results.length + (state.loadingMore ? 1 : 0),
+                    separatorBuilder: (_, __) => const SizedBox(height: 10),
+                    itemBuilder: (context, index) {
+                      if (index == results.length) {
+                        return const _RequestRowSkeleton();
+                      }
 
-                    final item = results[index];
-                    if (item.needsFeedback) {
-                      return IndentFeedbackBanner(
+                      final item = results[index];
+                      if (item.needsFeedback) {
+                        return IndentFeedbackBanner(
+                          item: item,
+                          onGiveFeedback: () => _giveFeedback(
+                            id: item.id,
+                            destination: item.destination,
+                            date: item.date,
+                          ),
+                        );
+                      }
+                      return IndentRequestRow(
                         item: item,
-                        onGiveFeedback: () => _giveFeedback(
-                          id: item.id,
-                          destination: item.destination,
-                          date: item.date,
-                        ),
+                        onDelete: () => _deleteIndent(item),
+                        onEdit: () => _editIndent(item),
                       );
-                    }
-                    return IndentRequestRow(
-                      item: item,
-                      onDelete: () => _deleteIndent(item),
-                      onEdit: () => _editIndent(item),
-                    );
-                  },
+                    },
+                  ),
                 ),
         );
       },
@@ -751,13 +738,19 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
 
   /// Dekat dasar daftar -> minta halaman berikutnya. Bloc sendiri yang
   /// menolak bila sedang memuat atau sudah halaman terakhir.
-  void _onRequestScroll() {
-    if (!_requestScrollController.hasClients) return;
-
-    final position = _requestScrollController.position;
-    if (position.maxScrollExtent - position.pixels < 300) {
+  ///
+  /// Lewat notifikasi, bukan `ScrollController` sendiri: daftar ini harus
+  /// memakai `PrimaryScrollController` supaya geraknya menyatu dengan
+  /// header `PortalModulePage`.
+  bool _onRequestScroll(ScrollNotification notification) {
+    if (notification.depth != 0 ||
+        notification.metrics.axis != Axis.vertical) {
+      return false;
+    }
+    if (notification.metrics.extentAfter < 300) {
       _requestBloc.add(const IndentRequestListNextPageRequested());
     }
+    return false;
   }
 
   /// Menunggu sampai muat ulang selesai supaya indikator tarik-refresh

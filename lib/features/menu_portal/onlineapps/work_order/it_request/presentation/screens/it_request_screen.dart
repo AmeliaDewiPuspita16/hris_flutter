@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../../../../../core/theme/app_colors.dart';
 import '../../../../../../../core/widgets/app_error_view.dart';
 import '../../../../../../../core/widgets/app_shimmer.dart';
 import '../../../../../../auth/presentation/bloc/auth/auth_bloc.dart';
@@ -106,43 +104,23 @@ class _ItRequestScreenState extends State<ItRequestScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      // Header terang, jadi ikon status bar harus gelap — sama dengan
-      // `PortalCategoryPage`.
-      value: const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.dark,
-        statusBarBrightness: Brightness.light,
-      ),
-      child: Scaffold(
-        backgroundColor: AppColors.bg,
-        body: BlocListener<ItRequestApprovalBloc, ItRequestApprovalState>(
-          bloc: _approvalBloc,
-          listenWhen: (previous, current) =>
-              current.notice != null &&
-              !identical(previous.notice, current.notice),
-          listener: (context, state) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.notice!.message)),
-            );
-          },
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              PortalHeader(
-                title: 'IT Request',
-                subtitle: 'Submit your IT needs easily and track their status.',
-                illustrationAsset: PortalCategoryPage.monitorIllustration,
-                onBack: () => Navigator.of(context).pop(),
-              ),
-              Expanded(
-                child: _tabs.length == 1
-                    ? const ItFormAndMediaTab()
-                    : _buildTabView(),
-              ),
-            ],
-          ),
-        ),
+    // Header ikut tergulir sampai hilang; tab bar lalu menempel di bawah
+    // status bar (lihat `PortalModulePage`).
+    return PortalModulePage(
+      title: 'IT Request',
+      subtitle: 'Submit your IT needs easily and track their status.',
+      illustrationAsset: PortalCategoryPage.monitorIllustration,
+      body: BlocListener<ItRequestApprovalBloc, ItRequestApprovalState>(
+        bloc: _approvalBloc,
+        listenWhen: (previous, current) =>
+            current.notice != null &&
+            !identical(previous.notice, current.notice),
+        listener: (context, state) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(state.notice!.message)),
+          );
+        },
+        child: _tabs.length == 1 ? const ItFormAndMediaTab() : _buildTabView(),
       ),
     );
   }
@@ -241,18 +219,25 @@ class _ItRequestScreenState extends State<ItRequestScreen> {
     );
   }
 
+  Widget _buildTab(ItRequestTab tab) => switch (tab) {
+        ItRequestTab.form => const ItFormAndMediaTab(),
+        ItRequestTab.approve => _buildApprovalTab(),
+        ItRequestTab.list => const ListRequestTab(),
+        ItRequestTab.report => const ReportTab(),
+      };
+
   Widget _buildTabView() {
     // IndexedStack menjaga semua tab tetap "hidup" di belakang layar, jadi
-    // scroll position dan state form/filter tiap tab tidak reset saat
-    // pindah-pindah tab.
+    // state form/filter tiap tab tidak reset saat pindah-pindah tab.
+    //
+    // Tab tersembunyi dilepas dari scroll header, lihat
+    // [PortalTabScrollScope].
     final children = [
-      for (final tab in _tabs)
-        switch (tab) {
-          ItRequestTab.form => const ItFormAndMediaTab(),
-          ItRequestTab.approve => _buildApprovalTab(),
-          ItRequestTab.list => const ListRequestTab(),
-          ItRequestTab.report => const ReportTab(),
-        },
+      for (var i = 0; i < _tabs.length; i++)
+        PortalTabScrollScope(
+          active: i == _tabIndex,
+          child: _buildTab(_tabs[i]),
+        ),
     ];
     final approveIndex = _tabs.indexOf(ItRequestTab.approve);
 
