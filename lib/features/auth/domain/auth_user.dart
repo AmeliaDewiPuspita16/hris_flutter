@@ -160,6 +160,13 @@ class AuthUser {
   bool get canAssignIndentVehicle =>
       hasRole('driver-admin') || hasRole('admin');
 
+  /// Driver kendaraan (role `driver`) — di Indent Vehicle hanya melihat
+  /// perjalanan yang ditugaskan kepadanya (tab My Assignments).
+  ///
+  /// Server yang menyaring isinya per driver; pemeriksaan di sini hanya
+  /// untuk menentukan tab apa yang tampil.
+  bool get isDriver => hasRole('driver');
+
   /// Atasan (role `hod`) — berhak melihat shortcut approval di Beranda.
   ///
   /// Sama seperti getter lain di sini: hanya untuk menampilkan/menyembunyikan

@@ -12,4 +12,9 @@ class FeatureFlags {
   /// aktivitas: isinya sekarang masih data contoh
   /// ([HomeDemoData.recentActivities]), sama untuk semua akun.
   static const recentActivity = false;
+
+  /// PRATINJAU SAJA: tampilkan tab "My Assignments" (Indent Vehicle) di akun
+  /// apa pun dengan data contoh, tanpa memeriksa role `driver` dan tanpa
+  /// memanggil API. Matikan (`false`) sebelum rilis.
+  static const previewIndentDriverTab = false;
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../../../core/config/feature_flags.dart';
 import '../../../../../../core/logging/app_logger.dart';
 import '../../../../../../core/network/api_exception.dart';
 import '../../../../../../core/theme/app_colors.dart';
@@ -12,11 +13,13 @@ import '../../../../../auth/presentation/bloc/auth/auth_bloc.dart';
 import '../../data/indent_vehicle_repository.dart';
 import '../../domain/indent_approval_item.dart';
 import '../../domain/indent_assign_result.dart';
+import '../../domain/indent_assigned_item.dart';
 import '../../domain/indent_pending_item.dart';
 import '../../domain/indent_request_item.dart';
 import '../bloc/approval/indent_approval_bloc.dart';
 import '../bloc/approval/indent_approval_event.dart';
 import '../bloc/approval/indent_approval_state.dart';
+import '../bloc/driver/indent_driver_cubit.dart';
 import '../bloc/list/indent_request_list_bloc.dart';
 import '../bloc/list/indent_request_list_event.dart';
 import '../bloc/list/indent_request_list_state.dart';
@@ -24,6 +27,8 @@ import '../bloc/pending/indent_pending_bloc.dart';
 import '../bloc/pending/indent_pending_event.dart';
 import '../bloc/pending/indent_pending_state.dart';
 import '../widgets/indent_assign_sheet.dart';
+import '../widgets/indent_driver_assignment_tab.dart';
+import '../widgets/indent_finish_dialog.dart';
 import '../widgets/indent_feedback_banner.dart';
 import '../widgets/indent_feedback_sheet.dart';
 import '../widgets/indent_pending_assignment_tab.dart';
@@ -35,6 +40,10 @@ import 'add_indent_screen.dart';
 
 /// Tab di layar Indent Vehicle. Urutan deklarasi = urutan tampil.
 enum IndentTab {
+  /// Perjalanan yang ditugaskan ke driver yang login. Hanya untuk role
+  /// `driver` (`AuthUser.isDriver`); driver tidak melihat tab lain.
+  driverAssignments('My Assignments'),
+
   /// Admin driver menetapkan plat & driver lewat tombol Assign.
   /// Hanya untuk role `driver-admin` (`AuthUser.canAssignIndentVehicle`).
   pendingAssignment('Pending Vehicle Assignment'),
@@ -42,7 +51,8 @@ enum IndentTab {
   /// Atasan approve/reject request. Hanya untuk role `hod`.
   supervisorApproval('Supervisor Approval'),
 
-  /// Daftar semua request milik user — tampil untuk semua akun.
+  /// Daftar semua request milik user — tampil untuk semua akun kecuali
+  /// driver.
   requests('List of User Requests');
 
   const IndentTab(this.label);
@@ -92,6 +102,10 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
   late final IndentApprovalBloc _approvalBloc;
   late final bool _isHod;
   late final bool _canAssign;
+  late final bool _isDriver;
+
+  // Tab My Assignments (role `driver`): hanya dimuat untuk driver.
+  late final IndentDriverCubit _driverCubit;
   final _searchController = TextEditingController();
   String _query = '';
 
@@ -102,19 +116,42 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
     _requestBloc = IndentRequestListBloc(
       repository: context.read<IndentVehicleRepository>(),
       currentUserId: user?.id,
-    )..add(const IndentRequestListStarted());
+    );
     _requestScrollController.addListener(_onRequestScroll);
 
     _isHod = user?.isHod ?? false;
     _canAssign = user?.canAssignIndentVehicle ?? false;
+    _isDriver = user?.isDriver ?? false;
+    // TODO(debug): hapus setelah nama role dipastikan.
+    AppLogger.info(
+      'Indent roles=${user?.roles} isHod=$_isHod canAssign=$_canAssign',
+    );
+
+    // Pratinjau (FeatureFlags.previewIndentDriverTab): tab driver tampil di
+    // akun mana pun dengan data contoh; tab lain tidak disembunyikan.
+    final previewDriverTab = FeatureFlags.previewIndentDriverTab && !_isDriver;
+    final showDriverTab = _isDriver || previewDriverTab;
 
     _tabs = [
+      if (showDriverTab) IndentTab.driverAssignments,
       if (_canAssign) IndentTab.pendingAssignment,
       if (_isHod) IndentTab.supervisorApproval,
-      IndentTab.requests,
+      // Driver hanya melihat tugasnya sendiri, bukan daftar semua request.
+      if (!_isDriver) IndentTab.requests,
     ];
     final initial = _tabs.indexOf(widget.initialTab);
-    _tabIndex = initial >= 0 ? initial : _tabs.indexOf(IndentTab.requests);
+    final requestsIndex = _tabs.indexOf(IndentTab.requests);
+    _tabIndex =
+        initial >= 0 ? initial : (requestsIndex >= 0 ? requestsIndex : 0);
+
+    // Daftar request hanya dimuat bila tabnya ada.
+    if (!_isDriver) _requestBloc.add(const IndentRequestListStarted());
+
+    _driverCubit = IndentDriverCubit(
+      repository: context.read<IndentVehicleRepository>(),
+      useDemoData: previewDriverTab,
+    );
+    if (showDriverTab) _driverCubit.load();
 
     _approvalBloc = IndentApprovalBloc(
       repository: context.read<IndentVehicleRepository>(),
@@ -132,6 +169,7 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
     _requestBloc.close();
     _approvalBloc.close();
     _pendingBloc.close();
+    _driverCubit.close();
     _requestScrollController
       ..removeListener(_onRequestScroll)
       ..dispose();
@@ -160,6 +198,18 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
       return r.name.toLowerCase().contains(q) ||
           r.destination.toLowerCase().contains(q) ||
           r.remark.toLowerCase().contains(q);
+    }).toList();
+  }
+
+  List<IndentAssignedItem> _filterAssigned(List<IndentAssignedItem> items) {
+    if (_query.trim().isEmpty) return items;
+
+    final q = _query.trim().toLowerCase();
+    return items.where((r) {
+      return r.name.toLowerCase().contains(q) ||
+          r.destination.toLowerCase().contains(q) ||
+          r.remark.toLowerCase().contains(q) ||
+          (r.vehicle ?? '').toLowerCase().contains(q);
     }).toList();
   }
 
@@ -210,6 +260,25 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
   /// ke server lewat [IndentPendingBloc]; request keluar dari daftar pending
   /// hanya bila server sukses. Hasilnya (berhasil/gagal) ditampilkan oleh
   /// BlocListener di [build].
+  /// Driver menutup perjalanan: konfirmasi dulu, lalu kirim ke server. Yang
+  /// berhasil hilang dari daftar driver; requester baru bisa memberi rating
+  /// setelah ini.
+  Future<void> _finishTrip(IndentAssignedItem item) async {
+    final confirmed = await IndentFinishDialog.show(context, item);
+    if (!confirmed || !mounted) return;
+
+    final error = await _driverCubit.finish(item);
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          error ?? 'Trip finished. The requester can now rate it.',
+        ),
+      ),
+    );
+  }
+
   Future<void> _assign(IndentPendingItem item) async {
     final result = await showModalBottomSheet<IndentAssignResult>(
       context: context,
@@ -427,17 +496,25 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
                       builder: (context, pendingState) =>
                           BlocBuilder<IndentApprovalBloc, IndentApprovalState>(
                         bloc: _approvalBloc,
-                        builder: (context, approvalState) => IndentTabBar(
-                          labels: [for (final tab in _tabs) tab.label],
-                          activeIndex: _tabIndex,
-                          badgeCounts: {
-                            for (var i = 0; i < _tabs.length; i++)
-                              if (_tabs[i] == IndentTab.pendingAssignment)
-                                i: pendingState.items.length
-                              else if (_tabs[i] == IndentTab.supervisorApproval)
-                                i: approvalState.items.length,
-                          },
-                          onChanged: (i) => setState(() => _tabIndex = i),
+                        builder: (context, approvalState) =>
+                            BlocBuilder<IndentDriverCubit, IndentDriverState>(
+                          bloc: _driverCubit,
+                          builder: (context, driverState) => IndentTabBar(
+                            labels: [for (final tab in _tabs) tab.label],
+                            activeIndex: _tabIndex,
+                            badgeCounts: {
+                              for (var i = 0; i < _tabs.length; i++)
+                                if (_tabs[i] == IndentTab.pendingAssignment)
+                                  i: pendingState.items.length
+                                else if (_tabs[i] ==
+                                    IndentTab.supervisorApproval)
+                                  i: approvalState.items.length
+                                else if (_tabs[i] ==
+                                    IndentTab.driverAssignments)
+                                  i: driverState.items.length,
+                            },
+                            onChanged: (i) => setState(() => _tabIndex = i),
+                          ),
                         ),
                       ),
                     ),
@@ -462,6 +539,8 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
 
   Widget _buildTab(IndentTab tab) {
     switch (tab) {
+      case IndentTab.driverAssignments:
+        return _buildDriverAssignments();
       case IndentTab.pendingAssignment:
         return _buildPendingAssignment();
       case IndentTab.supervisorApproval:
@@ -497,6 +576,30 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
           borderSide: const BorderSide(color: AppColors.primaryMid, width: 1.5),
         ),
       ),
+    );
+  }
+
+  Widget _buildDriverAssignments() {
+    return BlocBuilder<IndentDriverCubit, IndentDriverState>(
+      bloc: _driverCubit,
+      builder: (context, state) {
+        if (state.isFirstLoad) {
+          return const _IndentCardList(skeleton: _PendingCardSkeleton());
+        }
+
+        if (state.status == IndentDriverStatus.failure) {
+          return AppErrorView(
+            message: state.errorMessage ?? 'Failed to load your trips.',
+            onRetry: _driverCubit.load,
+          );
+        }
+
+        return IndentDriverAssignmentTab(
+          items: _filterAssigned(state.items),
+          onRefresh: _driverCubit.load,
+          onFinish: _finishTrip,
+        );
+      },
     );
   }
 
