@@ -9,6 +9,7 @@ import '../bloc/master_document_list_bloc.dart';
 import '../bloc/master_document_list_event.dart';
 import '../bloc/master_document_list_state.dart';
 import '../../data/ims_web_links.dart';
+import '../screens/document_viewer_screen.dart';
 import 'ims_web_download_dialog.dart';
 import 'master_document_tile.dart';
 
@@ -66,6 +67,7 @@ class DocumentListTab extends StatelessWidget {
 
               return MasterDocumentTile(
                 document: document,
+                onView: (doc) => _view(context, doc),
                 onDownload: (doc) => _download(context, doc),
                 onObsolete: (doc) => _openOnWeb(context, doc.obsoleteUrl ?? doc.downloadUrl),
               );
@@ -92,6 +94,13 @@ class DocumentListTab extends StatelessWidget {
             doc.title.toLowerCase().contains(keyword) ||
             doc.hierarchy.toLowerCase().contains(keyword))
         .toList(growable: false);
+  }
+
+  /// Baca PDF di aplikasi, tanpa opsi simpan — lihat [DocumentViewerScreen].
+  void _view(BuildContext context, MasterDocument doc) {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => DocumentViewerScreen(document: doc)),
+    );
   }
 
   /// Dokumen tidak diunduh di aplikasi: tampilkan penjelasan dulu, lalu

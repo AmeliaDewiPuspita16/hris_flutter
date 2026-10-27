@@ -7,6 +7,7 @@ class MasterDocument {
     required this.hierarchy,
     required this.downloadUrl,
     this.obsoleteUrl,
+    this.viewUrl,
   });
 
   final String docNo;
@@ -22,4 +23,9 @@ class MasterDocument {
   /// "Obsolete" tidak ditampilkan (lihat tab Manual di web, semua barisnya
   /// begini; tab lain seperti SOP punya keduanya).
   final String? obsoleteUrl;
+
+  /// Alamat PDF untuk dibaca di aplikasi (lihat `DocumentViewerScreen`) —
+  /// terpisah dari [downloadUrl] karena unduhan resmi tetap lewat website.
+  /// Null selama data masih demo; viewer lalu menampilkan PDF contoh.
+  final String? viewUrl;
 }

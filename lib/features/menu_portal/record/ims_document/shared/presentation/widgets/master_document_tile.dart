@@ -8,11 +8,13 @@ import '../../domain/master_document.dart';
 
 /// Satu baris dokumen master pada tab Manual/SOP/WI/dst.
 ///
-/// Dokumen tidak diunduh di aplikasi — kedua aksi ("Unduh di Web" dan
-/// "Obsolete") hanya mengarahkan user ke website IMS, karena file diberi
-/// cap dan butuh approval saat diunduh. Itu sebabnya ikon di kanan baris
-/// berupa ikon tautan keluar, bukan chevron.
+/// Dokumen tidak diunduh di aplikasi — "Unduh di Web" dan "Obsolete" hanya
+/// mengarahkan user ke website IMS, karena file diberi cap dan butuh
+/// approval saat diunduh. Itu sebabnya ikon di kanan baris itu berupa ikon
+/// tautan keluar, bukan chevron.
 ///
+/// - "Lihat Dokumen" memanggil [onView] untuk membaca PDF di aplikasi
+///   (tanpa opsi simpan), jadi ikon kanannya chevron.
 /// - "Unduh di Web" langsung memanggil [onDownload]; konfirmasi
 ///   pengalihannya ditangani pemanggil (lihat `DocumentListTab`).
 /// - "Obsolete" munculin dialog konfirmasi dulu (padanan modal "Dokumen
@@ -22,11 +24,13 @@ class MasterDocumentTile extends StatelessWidget {
   const MasterDocumentTile({
     super.key,
     required this.document,
+    required this.onView,
     required this.onDownload,
     required this.onObsolete,
   });
 
   final MasterDocument document;
+  final ValueChanged<MasterDocument> onView;
   final ValueChanged<MasterDocument> onDownload;
   final ValueChanged<MasterDocument> onObsolete;
 
@@ -64,6 +68,13 @@ class MasterDocumentTile extends StatelessWidget {
             style: AppTextStyles.body.copyWith(fontSize: 13, height: 1.4),
           ),
           const SizedBox(height: 10),
+          _FileActionRow(
+            icon: Icons.visibility_outlined,
+            label: 'Lihat Dokumen',
+            onTap: () => onView(document),
+            showDivider: true,
+            trailingIcon: Icons.chevron_right_rounded,
+          ),
           _FileActionRow(
             icon: Icons.file_download_outlined,
             label: 'Unduh di Web',
@@ -123,9 +134,10 @@ class _HierarchyBadge extends StatelessWidget {
   }
 }
 
-/// Satu baris aksi berkas (Unduh di Web / Obsolete) — padanan
-/// `PrAttachmentTile`: ikon + label di kiri, ikon tautan keluar di kanan
-/// (menandakan user dibawa ke website), seluruh baris bisa di-tap.
+/// Satu baris aksi berkas (Lihat Dokumen / Unduh di Web / Obsolete) — padanan
+/// `PrAttachmentTile`: ikon + label di kiri, [trailingIcon] di kanan (default
+/// ikon tautan keluar, menandakan user dibawa ke website), seluruh baris bisa
+/// di-tap.
 /// Menggantikan tombol solid oranye selebar kartu di versi sebelumnya.
 class _FileActionRow extends StatelessWidget {
   const _FileActionRow({
@@ -133,12 +145,14 @@ class _FileActionRow extends StatelessWidget {
     required this.label,
     required this.onTap,
     required this.showDivider,
+    this.trailingIcon = Icons.open_in_new_rounded,
   });
 
   final IconData icon;
   final String label;
   final VoidCallback onTap;
   final bool showDivider;
+  final IconData trailingIcon;
 
   @override
   Widget build(BuildContext context) {
@@ -167,8 +181,7 @@ class _FileActionRow extends StatelessWidget {
                   ),
                 ),
               ),
-              const Icon(Icons.open_in_new_rounded,
-                  size: 16, color: AppColors.textMuted),
+              Icon(trailingIcon, size: 16, color: AppColors.textMuted),
             ],
           ),
         ),
