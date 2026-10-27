@@ -304,13 +304,13 @@ class _ProfilView extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'Profile',
-                          style: TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.white),
-                        ),
+                        // Text(
+                        //   'Profile',
+                        //   style: TextStyle(
+                        //       fontSize: 24,
+                        //       fontWeight: FontWeight.w700,
+                        //       color: Colors.white),
+                        // ),
                         // SizedBox(height: 4),
                         // SizedBox(
                         //   width: 190,
@@ -615,7 +615,10 @@ class _ChangeCoverButton extends StatelessWidget {
               SizedBox(width: 6),
               Text(
                 'Change cover',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white),
+                style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white),
               ),
             ],
           ),

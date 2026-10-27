@@ -96,13 +96,13 @@ class CoverReadabilityOverlay extends StatelessWidget {
     return const IgnorePointer(
       child: DecoratedBox(
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.centerLeft,
-            end: Alignment.centerRight,
-            stops: [0, 0.55, 1],
-            colors: [Color(0x99000000), Color(0x33000000), Color(0x00000000)],
-          ),
-        ),
+            // gradient: LinearGradient(
+            //   begin: Alignment.centerLeft,
+            //   end: Alignment.centerRight,
+            //   stops: [0, 0.55, 1],
+            //   colors: [Color(0x99000000), Color(0x33000000), Color(0x00000000)],
+            // ),
+            ),
         child: SizedBox.expand(),
       ),
     );
