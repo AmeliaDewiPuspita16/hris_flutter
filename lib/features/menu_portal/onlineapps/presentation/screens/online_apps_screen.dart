@@ -6,7 +6,6 @@ import '../../work_order/domain/request_type.dart';
 import '../../work_order/est_request/presentation/screens/est_request_screen.dart';
 import '../../work_order/it_request/presentation/screens/it_request_screen.dart';
 import '../../work_order/presentation/widgets/choose_request_type_sheet.dart';
-import '../../hse_work_request/presentation/screens/hse_work_request_list_screen.dart';
 import '../../../shared/presentation/widgets/portal_category_page.dart';
 import '../widgets/online_app_tile.dart';
 

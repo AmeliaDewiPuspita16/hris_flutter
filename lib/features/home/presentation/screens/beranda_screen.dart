@@ -498,8 +498,9 @@ class _BerandaScreenState extends State<BerandaScreen> {
   /// Gagal memuat tidak mengganggu notifikasi lain: cukup dicatat.
   Future<void> _loadPendingAssignments() async {
     try {
-      final items =
-          await context.read<IndentVehicleRepository>().fetchPendingAssignments();
+      final items = await context
+          .read<IndentVehicleRepository>()
+          .fetchPendingAssignments();
       if (!mounted) return;
 
       setState(() {
@@ -630,6 +631,7 @@ class _BerandaScreenState extends State<BerandaScreen> {
         _loadLeaveApprovalCount(),
         _loadApprovalsWaiting(),
         _loadPendingAssignments(),
+        _loadServerNotifications(),
       ]);
 
   int get _itApprovalCount => _approvalsWaiting.itRequest;
@@ -858,20 +860,20 @@ class _BerandaScreenState extends State<BerandaScreen> {
                 // Shortcut approval hanya untuk HOD (role `hod`). Selama belum
                 // ada sesi (mis. saat pratinjau), jatuh ke role demo.
                 if (widget.user?.isHod ?? (_role == Role.hod))
-                ApprovalSummaryBanner(
-                  isLoading: _loadingApprovalsWaiting,
-                  leaveCount: _leaveApprovalCount,
-                  itCount: _itApprovalCount,
-                  estCount: _estApprovalCount,
-                  indentVehicleCount: _indentVehicleApprovalCount,
-                  eprocurementCount: _eprocurementApprovalCount,
-                  onTapAll: _openApprovalNotifications,
-                  onTapLeave: _openLeaveApproval,
-                  onTapIt: _openItApproval,
-                  onTapEst: _openEstApproval,
-                  onTapIndentVehicle: _openIndentVehicleApproval,
-                  onTapEprocurement: _openEprocurementApproval,
-                ),
+                  ApprovalSummaryBanner(
+                    isLoading: _loadingApprovalsWaiting,
+                    leaveCount: _leaveApprovalCount,
+                    itCount: _itApprovalCount,
+                    estCount: _estApprovalCount,
+                    indentVehicleCount: _indentVehicleApprovalCount,
+                    eprocurementCount: _eprocurementApprovalCount,
+                    onTapAll: _openApprovalNotifications,
+                    onTapLeave: _openLeaveApproval,
+                    onTapIt: _openItApproval,
+                    onTapEst: _openEstApproval,
+                    onTapIndentVehicle: _openIndentVehicleApproval,
+                    onTapEprocurement: _openEprocurementApproval,
+                  ),
                 //PendingRequestCard(
                 //  count: 2,
                 //  description: 'Overtime · Business Trip',
