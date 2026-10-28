@@ -28,13 +28,26 @@ class MasterEditedFileScreen extends StatelessWidget {
       illustrationAsset: PortalCategoryPage.folderIllustration,
       body: DocumentTabbedView(
         tabs: [
-          DocumentTabSpec(label: 'Manual', fetcher: repository.fetchManualDocuments),
+          DocumentTabSpec(
+            label: 'Manual',
+            count: repository.manualCount,
+            fetcher: repository.fetchManualDocuments,
+          ),
           DocumentTabSpec(
             label: 'Standart Operational Procedure',
+            count: repository.sopCount,
             fetcher: repository.fetchSopDocuments,
           ),
-          DocumentTabSpec(label: 'Work Instruction', fetcher: repository.fetchWiDocuments),
-          DocumentTabSpec(label: 'ANNEX', fetcher: repository.fetchAnnexDocuments),
+          DocumentTabSpec(
+            label: 'Work Instruction',
+            count: repository.wiCount,
+            fetcher: repository.fetchWiDocuments,
+          ),
+          DocumentTabSpec(
+            label: 'ANNEX',
+            count: repository.annexCount,
+            fetcher: repository.fetchAnnexDocuments,
+          ),
         ],
       ),
     );

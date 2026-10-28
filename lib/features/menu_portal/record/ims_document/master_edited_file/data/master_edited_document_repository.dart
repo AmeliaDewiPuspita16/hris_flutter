@@ -24,6 +24,15 @@ class MasterEditedDocumentRepository {
 
   static const _simulatedLatency = Duration(milliseconds: 500);
 
+  /// Jumlah dokumen per kategori untuk angka di chip tab — dihitung dari
+  /// data demo yang sama dengan daftarnya, jadi tidak bisa selisih. Begitu
+  /// endpoint siap, ganti dengan `count` dari server (seperti
+  /// `MasterDocumentRepository.fetchCategories`).
+  int get manualCount => editedManualDocumentsSeed.length;
+  int get sopCount => editedSopDocumentsSeed.length;
+  int get wiCount => editedWiDocumentsSeed.length;
+  int get annexCount => editedAnnexDocumentsSeed.length;
+
   /// Dokumen pada tab "Manual". Data: [editedManualDocumentsSeed].
   Future<MasterDocumentPage> fetchManualDocuments({required int page, required String search}) async {
     await Future.delayed(_simulatedLatency);
