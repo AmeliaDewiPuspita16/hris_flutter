@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../../core/theme/app_text_styles.dart';
+import '../../../../../../core/widgets/flash_highlight.dart';
 import '../../domain/indent_approval_item.dart';
 import 'indent_approval_card.dart';
 
@@ -18,6 +19,7 @@ class IndentSupervisorApprovalTab extends StatelessWidget {
     required this.onReject,
     required this.onRefresh,
     this.busyIds = const {},
+    this.highlightId,
   });
 
   final List<IndentApprovalItem> items;
@@ -28,6 +30,9 @@ class IndentSupervisorApprovalTab extends StatelessWidget {
   /// id request yang keputusannya sedang dikirim; kartunya diredupkan dan
   /// tidak bisa disentuh sampai server membalas.
   final Set<String> busyIds;
+
+  /// id request dari notifikasi yang di-tap; kartunya dikedipkan.
+  final String? highlightId;
 
   @override
   Widget build(BuildContext context) {
@@ -56,14 +61,18 @@ class IndentSupervisorApprovalTab extends StatelessWidget {
               itemBuilder: (context, index) {
                 final item = items[index];
                 final busy = busyIds.contains(item.id);
-                return Opacity(
-                  opacity: busy ? 0.5 : 1,
-                  child: IgnorePointer(
-                    ignoring: busy,
-                    child: IndentApprovalCardAlt(
-                      item: item,
-                      onApprove: () => onApprove(item),
-                      onReject: () => onReject(item),
+                return FlashHighlight(
+                  key: ValueKey('hl-${item.id}'),
+                  active: item.id == highlightId,
+                  child: Opacity(
+                    opacity: busy ? 0.5 : 1,
+                    child: IgnorePointer(
+                      ignoring: busy,
+                      child: IndentApprovalCardAlt(
+                        item: item,
+                        onApprove: () => onApprove(item),
+                        onReject: () => onReject(item),
+                      ),
                     ),
                   ),
                 );

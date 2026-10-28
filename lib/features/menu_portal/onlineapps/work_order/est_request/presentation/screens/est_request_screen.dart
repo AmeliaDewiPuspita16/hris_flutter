@@ -45,6 +45,7 @@ class EstRequestScreen extends StatefulWidget {
     super.key,
     this.isHod,
     this.initialTabIndex = 0,
+    this.highlightId,
   });
 
   /// Null berarti dihitung dari role `hod` user yang sedang login lewat
@@ -55,6 +56,10 @@ class EstRequestScreen extends StatefulWidget {
   /// Dipakai tag "EST" di banner approval Beranda untuk masuk langsung ke
   /// tab Approve HOD. Diabaikan kalau bukan HOD.
   final int initialTabIndex;
+
+  /// id request dari notifikasi approver yang di-tap; kartunya dikedipkan
+  /// di tab Approve HOD. Null = tanpa penanda.
+  final int? highlightId;
 
   @override
   State<EstRequestScreen> createState() => _EstRequestScreenState();
@@ -369,6 +374,7 @@ class _EstRequestScreenState extends State<EstRequestScreen> {
           items: state.items,
           pending: state.pending,
           busyIds: state.busyIds,
+          highlightId: widget.highlightId,
           onRefresh: _refreshApprovals,
           onOpenDetail: _openApprovalDetail,
           onApprove: (item) => _decide(item, approved: true),

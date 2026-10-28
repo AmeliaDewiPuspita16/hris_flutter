@@ -44,6 +44,7 @@ class ItRequestScreen extends StatefulWidget {
     this.isItTeam,
     this.isHod,
     this.initialTab = ItRequestTab.form,
+    this.highlightId,
   });
 
   /// Null berarti dihitung dari role user yang sedang login lewat
@@ -58,6 +59,11 @@ class ItRequestScreen extends StatefulWidget {
   /// Tab yang aktif saat layar ini dibuka. Kalau tab itu tidak tampil
   /// untuk role user, jatuh ke Form IT & Media.
   final ItRequestTab initialTab;
+
+  /// id request dari notifikasi approver/petugas yang di-tap; kartunya
+  /// dikedipkan di tab [initialTab] (Approve Request atau List Request).
+  /// Null = tanpa penanda.
+  final int? highlightId;
 
   @override
   State<ItRequestScreen> createState() => _ItRequestScreenState();
@@ -211,6 +217,11 @@ class _ItRequestScreenState extends State<ItRequestScreen> {
           items: state.items,
           pending: state.pending,
           busyIds: state.busyIds,
+          // Hanya tab yang dibuka dari notifikasi yang mengedipkan (semua
+          // tab dibangun bersamaan, yang tersembunyi tidak boleh ikut).
+          highlightId: widget.initialTab == ItRequestTab.approve
+              ? widget.highlightId
+              : null,
           onRefresh: _refreshApprovals,
           onApprove: (item) => _decide(item, approved: true),
           onReject: (item) => _decide(item, approved: false),
@@ -222,7 +233,11 @@ class _ItRequestScreenState extends State<ItRequestScreen> {
   Widget _buildTab(ItRequestTab tab) => switch (tab) {
         ItRequestTab.form => const ItFormAndMediaTab(),
         ItRequestTab.approve => _buildApprovalTab(),
-        ItRequestTab.list => const ListRequestTab(),
+        ItRequestTab.list => ListRequestTab(
+            highlightId: widget.initialTab == ItRequestTab.list
+                ? widget.highlightId
+                : null,
+          ),
         ItRequestTab.report => const ReportTab(),
       };
 

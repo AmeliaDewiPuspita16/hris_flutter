@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../../../core/theme/app_text_styles.dart';
+import '../../../../../../../core/widgets/flash_highlight.dart';
 import '../../domain/approve_request_item.dart';
 import 'approve_request_card.dart';
 
@@ -21,6 +22,7 @@ class ApproveRequestTab extends StatelessWidget {
     required this.onRefresh,
     required this.pending,
     this.busyIds = const {},
+    this.highlightId,
   });
 
   final List<ApproveRequestItem> items;
@@ -35,8 +37,21 @@ class ApproveRequestTab extends StatelessWidget {
   /// id request yang keputusannya sedang dikirim; kartunya dikunci.
   final Set<int> busyIds;
 
+  /// id request dari notifikasi yang di-tap; kartunya dikedipkan.
+  final int? highlightId;
+
   @override
   Widget build(BuildContext context) {
+    // Dari notifikasi: request yang dimaksud dinaikkan ke paling atas
+    // (antrean bisa panjang dan dibangun malas, jadi tanpa ini bisa di luar
+    // layar) lalu dikedipkan.
+    final ordered = [...items];
+    final target = highlightId;
+    if (target != null) {
+      final at = ordered.indexWhere((r) => r.id == target);
+      if (at > 0) ordered.insert(0, ordered.removeAt(at));
+    }
+
     return RefreshIndicator(
       onRefresh: onRefresh,
       child: items.isEmpty
@@ -59,7 +74,7 @@ class ApproveRequestTab extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
               // +1 untuk baris keterangan jumlah di atas, supaya ikut
               // ter-scroll bersama kartu.
-              itemCount: items.length + 1,
+              itemCount: ordered.length + 1,
               separatorBuilder: (_, index) =>
                   SizedBox(height: index == 0 ? 0 : 10),
               itemBuilder: (context, index) {
@@ -73,16 +88,20 @@ class ApproveRequestTab extends StatelessWidget {
                   );
                 }
 
-                final item = items[index - 1];
+                final item = ordered[index - 1];
                 final busy = busyIds.contains(item.id);
-                return Opacity(
-                  opacity: busy ? 0.5 : 1,
-                  child: IgnorePointer(
-                    ignoring: busy,
-                    child: ApproveRequestCard(
-                      item: item,
-                      onApprove: () => onApprove(item),
-                      onReject: () => onReject(item),
+                return FlashHighlight(
+                  key: ValueKey('hl-${item.id}'),
+                  active: item.id == highlightId,
+                  child: Opacity(
+                    opacity: busy ? 0.5 : 1,
+                    child: IgnorePointer(
+                      ignoring: busy,
+                      child: ApproveRequestCard(
+                        item: item,
+                        onApprove: () => onApprove(item),
+                        onReject: () => onReject(item),
+                      ),
                     ),
                   ),
                 );
