@@ -30,6 +30,7 @@ import '../../../menu_portal/onlineapps/work_order/est_request/presentation/scre
 import '../../../menu_portal/onlineapps/work_order/it_request/presentation/screens/it_request_screen.dart';
 import '../../../menu_portal/record/presentation/screens/record_screen.dart';
 import '../../../menu_portal/data_app/presentation/screens/data_screen.dart';
+import '../../../notifikasi/data/notification_inbox_repository.dart';
 import '../../../notifikasi/domain/notification_category.dart';
 import '../../../notifikasi/domain/notification_filter.dart';
 import '../widgets/approval_summary_banner.dart';
@@ -181,86 +182,6 @@ class _BerandaScreenState extends State<BerandaScreen> {
     _loadServerNotifications();
   }
 
-  /// Notifikasi IT Request, EST, Indent Vehicle, dan eProcurement dari
-  /// server (`GET /api/portal/apps/notifications`). Yang lokal (assign,
-  /// Leave) dipertahankan; yang dari server diganti seluruhnya.
-  ///
-  /// Lewat [context.read], bukan instance baru, karena endpoint ini butuh
-  /// token login (lihat [_approvalsWaitingRepository]).
-  Future<void> _loadServerNotifications() async {
-    try {
-      final page =
-          await context.read<NotificationInboxRepository>().fetchLatest();
-      if (!mounted) return;
-
-      setState(() {
-        _notifications = [
-          for (final n in _notifications)
-            if (!n.isFromServer) n,
-          ...page.items,
-        ];
-      });
-    } catch (e, stack) {
-      AppLogger.error('Notifikasi server gagal dimuat', e, stack);
-    }
-  }
-
-  Future<void> _refreshNotifications() => Future.wait([
-        _loadServerNotifications(),
-        _loadPendingAssignments(),
-      ]);
-
-  /// Perubahan baca/hapus pada notifikasi server diteruskan ke backend.
-  /// Gagal cukup dicatat — tampilan lokal tidak dibatalkan, dan pemuatan
-  /// berikutnya akan menyamakan lagi dengan server.
-  Future<void> _syncServerNotifications(
-    Map<String, AppNotification> before,
-    List<AppNotification> updated,
-  ) async {
-    final repository = context.read<NotificationInboxRepository>();
-    final remaining = {for (final n in updated) n.id};
-
-    final newlyRead = [
-      for (final n in updated)
-        if (n.serverId != null && n.isRead && before[n.id]?.isRead == false)
-          n.serverId!,
-    ];
-    final removed = [
-      for (final n in before.values)
-        if (n.serverId != null && !remaining.contains(n.id)) n.serverId!,
-    ];
-
-    try {
-      // Lebih dari satu sekaligus = tombol "tandai semua dibaca".
-      if (newlyRead.length > 1) {
-        await repository.markAllRead();
-      } else {
-        for (final id in newlyRead) {
-          await repository.markRead(id);
-        }
-      }
-      for (final id in removed) {
-        await repository.delete(id);
-      }
-    } catch (e, stack) {
-      AppLogger.error('Status notifikasi gagal dikirim ke server', e, stack);
-    }
-  }
-
-  /// Notifikasi server di-tap: buka halaman modulnya, lalu muat ulang
-  /// karena status request bisa berubah di sana.
-  Future<void> _openNotification(AppNotification notification) async {
-    final link = notification.link;
-    if (link == null) return;
-    final screen = NotificationRoutes.screenFor(link);
-    if (screen == null) return;
-
-    await Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));
-    if (!mounted) return;
-    _refreshNotifications();
-    _loadApprovalsWaiting();
-  }
-
   Future<void> _loadAnnouncements() async {
     setState(() {
       _loadingAnnouncements = true;
@@ -312,7 +233,10 @@ class _BerandaScreenState extends State<BerandaScreen> {
   void _openTab(MainTab tab) {
     setState(() => _activeTab = tab);
     // Data assign bisa berubah sejak Beranda dibuka (request baru lolos HOD).
-    if (tab == MainTab.notifications) _refreshNotifications();
+    if (tab == MainTab.notifications) {
+      _loadPendingAssignments();
+      _loadServerNotifications();
+    }
   }
 
   void _openPayslip() {
@@ -433,6 +357,90 @@ class _BerandaScreenState extends State<BerandaScreen> {
     }
   }
 
+  /// Memuat notifikasi dari server (`GET /api/portal/apps/notifications`:
+  /// IT Request, EST, Indent Vehicle, eProcurement). Yang dari server
+  /// diganti seluruhnya oleh hasil terbaru; notifikasi lokal (Leave,
+  /// Assign) dibiarkan. Gagal memuat cukup dicatat.
+  Future<void> _loadServerNotifications() async {
+    try {
+      final page =
+          await context.read<NotificationInboxRepository>().fetchLatest();
+      if (!mounted) return;
+
+      setState(() {
+        _notifications = [
+          for (final n in _notifications)
+            if (!n.isFromServer) n,
+          ...page.items,
+        ];
+      });
+    } catch (e, stack) {
+      AppLogger.error('Notifikasi server gagal dimuat', e, stack);
+    }
+  }
+
+  /// Tarik ke bawah di tab Notifications.
+  Future<void> _refreshNotifications() async {
+    await Future.wait([
+      _loadServerNotifications(),
+      _loadPendingAssignments(),
+    ]);
+  }
+
+  /// Perubahan di tab Notifications (dibaca / dibuang) diteruskan ke server
+  /// supaya tidak muncul "belum dibaca" lagi setelah dimuat ulang.
+  void _syncServerNotifications(
+    Map<String, AppNotification> before,
+    List<AppNotification> updated,
+  ) {
+    final repository = context.read<NotificationInboxRepository>();
+    final remaining = {for (final n in updated) n.id};
+
+    final newlyRead = [
+      for (final n in updated)
+        if (n.isFromServer && n.isRead && before[n.id]?.isRead == false) n,
+    ];
+    final removed = [
+      for (final n in before.values)
+        if (n.isFromServer && !remaining.contains(n.id)) n,
+    ];
+
+    Future<void> run(Future<void> Function() call, String label) async {
+      try {
+        await call();
+      } catch (e, stack) {
+        AppLogger.error('$label gagal disinkronkan', e, stack);
+      }
+    }
+
+    if (newlyRead.length > 1) {
+      run(repository.markAllRead, 'Tandai semua dibaca');
+    } else {
+      for (final n in newlyRead) {
+        run(() => repository.markRead(n.serverId!), 'Tandai dibaca');
+      }
+    }
+    for (final n in removed) {
+      run(() => repository.delete(n.serverId!), 'Hapus notifikasi');
+    }
+  }
+
+  /// Tap notifikasi server -> buka halaman modulnya (lihat
+  /// [NotificationRoutes]). Tanpa tujuan, tap hanya menandai dibaca.
+  void _openNotification(AppNotification notification) {
+    final link = notification.link;
+    if (link == null) return;
+
+    final screen = NotificationRoutes.screenFor(link);
+    if (screen == null) return;
+
+    Navigator.of(context)
+        .push(MaterialPageRoute(builder: (_) => screen))
+        .then((_) {
+      if (mounted) _loadServerNotifications();
+    });
+  }
+
   Future<void> _pushLeaveDecision(
     String requestId,
     NotificationDecision decision,
@@ -458,8 +466,9 @@ class _BerandaScreenState extends State<BerandaScreen> {
   /// Gagal memuat tidak mengganggu notifikasi lain: cukup dicatat.
   Future<void> _loadPendingAssignments() async {
     try {
-      final items =
-          await context.read<IndentVehicleRepository>().fetchPendingAssignments();
+      final items = await context
+          .read<IndentVehicleRepository>()
+          .fetchPendingAssignments();
       if (!mounted) return;
 
       setState(() {
@@ -819,20 +828,20 @@ class _BerandaScreenState extends State<BerandaScreen> {
                 // Shortcut approval hanya untuk HOD (role `hod`). Selama belum
                 // ada sesi (mis. saat pratinjau), jatuh ke role demo.
                 if (widget.user?.isHod ?? (_role == Role.hod))
-                ApprovalSummaryBanner(
-                  isLoading: _loadingApprovalsWaiting,
-                  leaveCount: _leaveApprovalCount,
-                  itCount: _itApprovalCount,
-                  estCount: _estApprovalCount,
-                  indentVehicleCount: _indentVehicleApprovalCount,
-                  eprocurementCount: _eprocurementApprovalCount,
-                  onTapAll: _openApprovalNotifications,
-                  onTapLeave: _openLeaveApproval,
-                  onTapIt: _openItApproval,
-                  onTapEst: _openEstApproval,
-                  onTapIndentVehicle: _openIndentVehicleApproval,
-                  onTapEprocurement: _openEprocurementApproval,
-                ),
+                  ApprovalSummaryBanner(
+                    isLoading: _loadingApprovalsWaiting,
+                    leaveCount: _leaveApprovalCount,
+                    itCount: _itApprovalCount,
+                    estCount: _estApprovalCount,
+                    indentVehicleCount: _indentVehicleApprovalCount,
+                    eprocurementCount: _eprocurementApprovalCount,
+                    onTapAll: _openApprovalNotifications,
+                    onTapLeave: _openLeaveApproval,
+                    onTapIt: _openItApproval,
+                    onTapEst: _openEstApproval,
+                    onTapIndentVehicle: _openIndentVehicleApproval,
+                    onTapEprocurement: _openEprocurementApproval,
+                  ),
                 //PendingRequestCard(
                 //  count: 2,
                 //  description: 'Overtime · Business Trip',

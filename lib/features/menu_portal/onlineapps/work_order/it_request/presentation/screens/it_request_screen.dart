@@ -44,6 +44,7 @@ class ItRequestScreen extends StatefulWidget {
     this.isItTeam,
     this.isHod,
     this.initialTab = ItRequestTab.form,
+    this.highlightId,
   });
 
   /// Null berarti dihitung dari role user yang sedang login lewat
@@ -59,6 +60,11 @@ class ItRequestScreen extends StatefulWidget {
   /// untuk role user, jatuh ke Form IT & Media.
   final ItRequestTab initialTab;
 
+  /// id request dari notifikasi yang di-tap; kartunya dikedipkan di
+  /// [initialTab] (Form IT & Media, Approve Request, atau List Request).
+  /// Null = tanpa penanda.
+  final int? highlightId;
+
   @override
   State<ItRequestScreen> createState() => _ItRequestScreenState();
 }
@@ -66,6 +72,11 @@ class ItRequestScreen extends StatefulWidget {
 class _ItRequestScreenState extends State<ItRequestScreen> {
   late final List<ItRequestTab> _tabs;
   late int _tabIndex;
+
+  /// Tab yang benar-benar aktif saat layar dibuka (bisa beda dari
+  /// [ItRequestScreen.initialTab] kalau role tidak punya tab itu). Hanya tab
+  /// ini yang mengedipkan kartu — semua tab dibangun bersamaan.
+  late final ItRequestTab _highlightTab;
 
   // Hanya dimulai untuk akun berperan `hod` — antrean approval milik HOD.
   late final ItRequestApprovalBloc _approvalBloc;
@@ -89,6 +100,7 @@ class _ItRequestScreenState extends State<ItRequestScreen> {
     ];
     final initial = _tabs.indexOf(widget.initialTab);
     _tabIndex = initial < 0 ? 0 : initial;
+    _highlightTab = _tabs[_tabIndex];
 
     _approvalBloc = ItRequestApprovalBloc(
       repository: context.read<ItRequestRepository>(),
@@ -120,10 +132,15 @@ class _ItRequestScreenState extends State<ItRequestScreen> {
             SnackBar(content: Text(state.notice!.message)),
           );
         },
-        child: _tabs.length == 1 ? const ItFormAndMediaTab() : _buildTabView(),
+        child: _tabs.length == 1
+            ? ItFormAndMediaTab(highlightId: _highlightFor(ItRequestTab.form))
+            : _buildTabView(),
       ),
     );
   }
+
+  int? _highlightFor(ItRequestTab tab) =>
+      tab == _highlightTab ? widget.highlightId : null;
 
   /// Keputusan HOD, dikirim ke server lewat [ItRequestApprovalBloc]. Ada
   /// dialog konfirmasi dulu karena keputusan tidak bisa dibatalkan dari
@@ -211,6 +228,7 @@ class _ItRequestScreenState extends State<ItRequestScreen> {
           items: state.items,
           pending: state.pending,
           busyIds: state.busyIds,
+          highlightId: _highlightFor(ItRequestTab.approve),
           onRefresh: _refreshApprovals,
           onApprove: (item) => _decide(item, approved: true),
           onReject: (item) => _decide(item, approved: false),
@@ -220,9 +238,11 @@ class _ItRequestScreenState extends State<ItRequestScreen> {
   }
 
   Widget _buildTab(ItRequestTab tab) => switch (tab) {
-        ItRequestTab.form => const ItFormAndMediaTab(),
+        ItRequestTab.form =>
+          ItFormAndMediaTab(highlightId: _highlightFor(ItRequestTab.form)),
         ItRequestTab.approve => _buildApprovalTab(),
-        ItRequestTab.list => const ListRequestTab(),
+        ItRequestTab.list =>
+          ListRequestTab(highlightId: _highlightFor(ItRequestTab.list)),
         ItRequestTab.report => const ReportTab(),
       };
 

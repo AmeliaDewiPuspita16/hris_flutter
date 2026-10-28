@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../../../../core/theme/app_colors.dart';
 import '../../../../../../../core/theme/app_text_styles.dart';
 import '../../../../../../../core/widgets/app_error_view.dart';
+import '../../../../../../../core/widgets/flash_highlight.dart';
 import '../../data/it_request_repository.dart';
 import '../../domain/it_request_detail.dart';
 import '../../domain/it_request_item.dart';
@@ -35,10 +36,13 @@ const _kProgressCode = 'progress';
 /// Filter Month/Year/Status seperti di web belum diimplementasikan di
 /// iterasi ini — cuma dua counter utamanya dulu.
 class ListRequestTab extends StatefulWidget {
-  const ListRequestTab({super.key, this.repository});
+  const ListRequestTab({super.key, this.repository, this.highlightId});
 
   /// Diisi test; di aplikasi diambil dari [RepositoryProvider].
   final ItRequestRepository? repository;
+
+  /// id request dari notifikasi petugas yang di-tap; barisnya dikedipkan.
+  final int? highlightId;
 
   @override
   State<ListRequestTab> createState() => _ListRequestTabState();
@@ -223,7 +227,14 @@ class _ListRequestTabState extends State<ListRequestTab> {
       else
         for (var i = 0; i < items.length; i++) ...[
           if (i > 0) const SizedBox(height: 10),
-          ListRequestRow(item: items[i], onTap: () => _openDetail(items[i])),
+          FlashHighlight(
+            key: ValueKey('hl-${items[i].id}'),
+            active: items[i].id == widget.highlightId,
+            child: ListRequestRow(
+              item: items[i],
+              onTap: () => _openDetail(items[i]),
+            ),
+          ),
         ],
       if (state.loadingMore)
         const Padding(

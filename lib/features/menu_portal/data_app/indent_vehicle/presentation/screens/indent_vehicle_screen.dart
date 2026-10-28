@@ -9,6 +9,7 @@ import '../../../../../../core/theme/app_text_styles.dart';
 import '../../../../../../core/widgets/app_error_view.dart';
 import '../../../../../../core/widgets/app_shimmer.dart';
 import '../../../../../../core/widgets/app_text_field.dart';
+import '../../../../../../core/widgets/flash_highlight.dart';
 import '../../../../../auth/presentation/bloc/auth/auth_bloc.dart';
 import '../../../../shared/presentation/widgets/portal_category_page.dart';
 import '../../data/indent_vehicle_repository.dart';
@@ -68,12 +69,21 @@ enum IndentTab {
 /// login), lihat [IndentTab]. Akun biasa hanya melihat "List of User
 /// Requests" — tab bar disembunyikan kalau tabnya cuma satu.
 class IndentVehicleScreen extends StatefulWidget {
-  const IndentVehicleScreen({super.key, this.initialTab = IndentTab.requests});
+  const IndentVehicleScreen({
+    super.key,
+    this.initialTab = IndentTab.requests,
+    this.highlightId,
+  });
 
   /// Tab yang aktif saat layar dibuka. Default [IndentTab.requests] karena
   /// itu tampilan yang dilihat semua user. Kalau akun tidak berhak atas tab
   /// yang diminta, jatuh ke [IndentTab.requests].
   final IndentTab initialTab;
+
+  /// id request dari notifikasi yang di-tap. Kartunya dikedipkan di
+  /// [initialTab] (di tab Requests ia juga dinaikkan ke paling atas supaya
+  /// pasti kelihatan). Null = tanpa penanda.
+  final String? highlightId;
 
   @override
   State<IndentVehicleScreen> createState() => _IndentVehicleScreenState();
@@ -83,6 +93,11 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
   /// Tab yang boleh dilihat akun ini, urut seperti [IndentTab]. Dibangun
   /// sekali di [initState] dari role.
   late final List<IndentTab> _tabs;
+
+  /// Tab tempat [IndentVehicleScreen.highlightId] dikedipkan: tab yang aktif
+  /// saat layar dibuka. Tab lain tidak ikut, walau id yang sama ada di sana
+  /// (satu request bisa muncul di beberapa tab).
+  IndentTab? _highlightTab;
 
   /// Index ke [_tabs] (bukan ke enum).
   late int _tabIndex;
@@ -142,6 +157,7 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
     final requestsIndex = _tabs.indexOf(IndentTab.requests);
     _tabIndex =
         initial >= 0 ? initial : (requestsIndex >= 0 ? requestsIndex : 0);
+    if (widget.highlightId != null) _highlightTab = _tabs[_tabIndex];
 
     // Daftar request hanya dimuat bila tabnya ada.
     if (!_isDriver) _requestBloc.add(const IndentRequestListStarted());
@@ -172,6 +188,9 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
     _searchController.dispose();
     super.dispose();
   }
+
+  String? _highlightFor(IndentTab tab) =>
+      tab == _highlightTab ? widget.highlightId : null;
 
   List<IndentRequestItem> _filterRequests(List<IndentRequestItem> items) {
     if (_query.trim().isEmpty) return items;
@@ -606,6 +625,7 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
         return IndentPendingAssignmentTab(
           items: _filterPending(state.items),
           busyIds: state.busyIds,
+          highlightId: _highlightFor(IndentTab.pendingAssignment),
           onRefresh: _refreshPending,
           onAssign: _assign,
         );
@@ -638,6 +658,7 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
         return IndentSupervisorApprovalTab(
           items: _filterApprovals(state.items),
           busyIds: state.busyIds,
+          highlightId: _highlightFor(IndentTab.supervisorApproval),
           onRefresh: _refreshApprovals,
           onApprove: (item) => _decide(item, approved: true),
           onReject: (item) => _decide(item, approved: false),
@@ -681,6 +702,15 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
           ...filtered.where((r) => !r.needsFeedback),
         ];
 
+        // Dari notifikasi: request yang dimaksud dinaikkan ke paling atas
+        // (daftar ini panjang dan malas dibangun, jadi tanpa ini bisa saja
+        // di luar layar) lalu dikedipkan.
+        final highlightId = _highlightFor(IndentTab.requests);
+        if (highlightId != null) {
+          final at = results.indexWhere((r) => r.id == highlightId);
+          if (at > 0) results.insert(0, results.removeAt(at));
+        }
+
         return RefreshIndicator(
           onRefresh: _refreshRequests,
           child: results.isEmpty
@@ -713,20 +743,25 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
                       }
 
                       final item = results[index];
-                      if (item.needsFeedback) {
-                        return IndentFeedbackBanner(
-                          item: item,
-                          onGiveFeedback: () => _giveFeedback(
-                            id: item.id,
-                            destination: item.destination,
-                            date: item.date,
-                          ),
-                        );
-                      }
-                      return IndentRequestRow(
-                        item: item,
-                        onDelete: () => _deleteIndent(item),
-                        onEdit: () => _editIndent(item),
+                      final Widget row = item.needsFeedback
+                          ? IndentFeedbackBanner(
+                              item: item,
+                              onGiveFeedback: () => _giveFeedback(
+                                id: item.id,
+                                destination: item.destination,
+                                date: item.date,
+                              ),
+                            )
+                          : IndentRequestRow(
+                              item: item,
+                              onDelete: () => _deleteIndent(item),
+                              onEdit: () => _editIndent(item),
+                            );
+
+                      return FlashHighlight(
+                        key: ValueKey('hl-${item.id}'),
+                        active: item.id == highlightId,
+                        child: row,
                       );
                     },
                   ),

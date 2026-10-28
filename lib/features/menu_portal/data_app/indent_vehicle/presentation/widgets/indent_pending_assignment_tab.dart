@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../../core/theme/app_text_styles.dart';
+import '../../../../../../core/widgets/flash_highlight.dart';
 import '../../domain/indent_pending_item.dart';
 import 'indent_pending_card.dart';
 
@@ -17,6 +18,7 @@ class IndentPendingAssignmentTab extends StatelessWidget {
     required this.onAssign,
     required this.onRefresh,
     this.busyIds = const {},
+    this.highlightId,
   });
 
   final List<IndentPendingItem> items;
@@ -26,6 +28,9 @@ class IndentPendingAssignmentTab extends StatelessWidget {
   /// id request yang penugasannya sedang dikirim; kartunya diredupkan dan
   /// tidak bisa disentuh sampai server membalas.
   final Set<String> busyIds;
+
+  /// id request dari notifikasi yang di-tap; kartunya dikedipkan.
+  final String? highlightId;
 
   @override
   Widget build(BuildContext context) {
@@ -54,13 +59,17 @@ class IndentPendingAssignmentTab extends StatelessWidget {
               itemBuilder: (context, index) {
                 final item = items[index];
                 final busy = busyIds.contains(item.id);
-                return Opacity(
-                  opacity: busy ? 0.5 : 1,
-                  child: IgnorePointer(
-                    ignoring: busy,
-                    child: IndentPendingCard(
-                      item: item,
-                      onAssign: () => onAssign(item),
+                return FlashHighlight(
+                  key: ValueKey('hl-${item.id}'),
+                  active: item.id == highlightId,
+                  child: Opacity(
+                    opacity: busy ? 0.5 : 1,
+                    child: IgnorePointer(
+                      ignoring: busy,
+                      child: IndentPendingCard(
+                        item: item,
+                        onAssign: () => onAssign(item),
+                      ),
                     ),
                   ),
                 );
