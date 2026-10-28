@@ -60,7 +60,6 @@ import '../widgets/home_top_header.dart';
 import '../widgets/layanan_section.dart';
 // import '../widgets/pending_request_card.dart';
 import '../widgets/saldo_section.dart';
-import '../widgets/team_banner.dart';
 
 /// Halaman Beranda + shell navigasi utama.
 ///
@@ -770,16 +769,6 @@ class _BerandaScreenState extends State<BerandaScreen> {
                       (_role == Role.hrPublisher),
                   onCreateTap: _openCreateAnnouncement,
                 ),
-                if (_role == Role.admin)
-                  // SEMENTARA
-                  TeamBanner(
-                    icon: Icons.groups_outlined,
-                    iconColor: AppColors.primaryMid,
-                    iconBackground: AppColors.primaryLight,
-                    title: 'Manage Department Team',
-                    subtitle: '18 employees · Update leave balance',
-                    onTap: _openKelolaTim,
-                  ),
                 // Redup + "Soon" sampai API aktivitas ada (data masih demo).
                 // Aktifkan lewat FeatureFlags.recentActivity.
                 ActivitySection(

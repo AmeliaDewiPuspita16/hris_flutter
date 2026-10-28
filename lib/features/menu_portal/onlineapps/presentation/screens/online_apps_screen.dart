@@ -51,9 +51,7 @@ class OnlineAppsScreen extends StatelessWidget {
       ),
       onTenantFeedback: null,
       onWorkOrder: () => _openWorkOrder(context),
-      onHseWorkRequest: () => Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => HseWorkRequestListScreen()),
-      ),
+      onHseWorkRequest: null,
     );
 
     return PortalCategoryPage(
