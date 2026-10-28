@@ -5,8 +5,9 @@ import '../../../../../../../core/theme/app_colors.dart';
 import '../../../../../../../core/theme/app_text_styles.dart';
 import '../../../../../../../core/widgets/app_error_view.dart';
 import '../../../../../../../core/widgets/app_shimmer.dart';
-import '../../../../../../../core/widgets/back_header.dart';
+import '../../../../../../../core/widgets/app_text_field.dart';
 import '../../../../../../auth/presentation/bloc/auth/auth_bloc.dart';
+import '../../../../../shared/presentation/widgets/portal_category_page.dart';
 import '../../data/est_request_repository.dart';
 import '../../domain/est_approval_item.dart';
 import '../../domain/est_request_item.dart';
@@ -24,8 +25,10 @@ import '../widgets/est_request_tab_bar.dart';
 import 'add_est_request_screen.dart';
 import 'est_request_detail_screen.dart';
 
-/// Layar "EST Work Order" — daftar SEMUA request (bukan cuma milik sendiri),
-/// dari API, plus tombol Add Request.
+/// Layar "EST Request" — daftar SEMUA request (bukan cuma milik sendiri),
+/// dari API, plus tombol Add Request. Kerangkanya `PortalModulePage`, sama
+/// seperti IT Request dan Indent Vehicle: header bergambar ikut tergulir,
+/// search dan tab menempel di bawah status bar.
 ///
 /// Pembagian requester vs HOD mengikuti role `hod` user yang login (lewat
 /// `AuthBloc`), sama seperti `ItRequestScreen`.
@@ -63,7 +66,6 @@ class _EstRequestScreenState extends State<EstRequestScreen> {
   // Daftar All Request dipegang bloc (data dari API). Dibuat di sini, bukan
   // lewat BlocProvider, supaya handler di State ini bisa memakainya langsung.
   late final EstRequestListBloc _listBloc;
-  final _scrollController = ScrollController();
 
   final _searchController = TextEditingController();
   String _query = '';
@@ -85,7 +87,6 @@ class _EstRequestScreenState extends State<EstRequestScreen> {
 
     _listBloc = EstRequestListBloc(repository: repository)
       ..add(const EstRequestListStarted());
-    _scrollController.addListener(_onScroll);
 
     _approvalBloc = EstApprovalBloc(repository: repository);
     if (_isHod) _approvalBloc.add(const EstApprovalStarted());
@@ -95,9 +96,6 @@ class _EstRequestScreenState extends State<EstRequestScreen> {
   void dispose() {
     _listBloc.close();
     _approvalBloc.close();
-    _scrollController
-      ..removeListener(_onScroll)
-      ..dispose();
     _searchController.dispose();
     super.dispose();
   }
@@ -218,23 +216,27 @@ class _EstRequestScreenState extends State<EstRequestScreen> {
 
   /// Dekat dasar daftar -> minta halaman berikutnya. Bloc sendiri yang
   /// menolak bila sedang memuat atau sudah halaman terakhir.
-  void _onScroll() {
-    if (!_scrollController.hasClients) return;
-
-    final position = _scrollController.position;
-    if (position.maxScrollExtent - position.pixels < 300) {
+  ///
+  /// Lewat notifikasi, bukan `ScrollController` sendiri: daftar ini harus
+  /// memakai `PrimaryScrollController` supaya geraknya menyatu dengan
+  /// header `PortalModulePage`.
+  bool _onListScroll(ScrollNotification notification) {
+    if (notification.depth != 0 ||
+        notification.metrics.axis != Axis.vertical) {
+      return false;
+    }
+    if (notification.metrics.extentAfter < 300) {
       _listBloc.add(const EstRequestListNextPageRequested());
     }
+    return false;
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.bg,
-      appBar: BackHeader(
-        title: 'EST Work Order',
-        onBack: () => Navigator.of(context).pop(),
-      ),
+    return PortalModulePage(
+      title: 'EST Request',
+      subtitle: 'Submit repair and project requests and track their status.',
+      illustrationAsset: PortalCategoryPage.monitorIllustration,
       // FAB oranye di kanan-bawah, sama pola dengan IT Request & HSE Work
       // Request.
       // TODO(est): sembunyikan saat summary.awaiting_verification > 0
@@ -250,38 +252,19 @@ class _EstRequestScreenState extends State<EstRequestScreen> {
         top: false,
         child: Column(
           children: [
-            // Search dipindah ke atas (fixed, di luar area scroll) dan tab
-            // "All Request"/"Approve HOD" ditaruh di bawahnya — mengikuti
-            // urutan search-lalu-filter di HseWorkRequestListScreen.
+            // Search paling atas (fixed, di luar area scroll), tab bar di
+            // bawahnya — urutan yang sama dengan IndentVehicleScreen.
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              // Header sudah punya jarak bawah sendiri.
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  TextField(
+                  AppTextField(
                     controller: _searchController,
+                    hint: 'Search request...',
+                    icon: Icons.search,
                     onChanged: (v) => setState(() => _query = v),
-                    style: AppTextStyles.body,
-                    decoration: InputDecoration(
-                      hintText: 'Search request...',
-                      hintStyle: AppTextStyles.body.copyWith(color: AppColors.textMuted),
-                      prefixIcon: const Icon(Icons.search, size: 19, color: AppColors.textMuted),
-                      filled: true,
-                      fillColor: Colors.white,
-                      contentPadding: const EdgeInsets.symmetric(vertical: 4),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: const BorderSide(color: AppColors.border, width: 1.5),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: const BorderSide(color: AppColors.border, width: 1.5),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: const BorderSide(color: AppColors.primaryMid, width: 1.5),
-                      ),
-                    ),
                   ),
                   if (_isHod)
                     BlocBuilder<EstApprovalBloc, EstApprovalState>(
@@ -298,6 +281,10 @@ class _EstRequestScreenState extends State<EstRequestScreen> {
                           padding: const EdgeInsets.only(top: 12),
                           child: EstRequestTabBar(
                             labels: const ['All Request', 'Approve HOD'],
+                            icons: const [
+                              Icons.format_list_bulleted_rounded,
+                              Icons.check_circle_outline_rounded,
+                            ],
                             activeIndex: _tabIndex,
                             badgeCounts: {1: state.pending},
                             onChanged: (i) => setState(() => _tabIndex = i),
@@ -330,9 +317,17 @@ class _EstRequestScreenState extends State<EstRequestScreen> {
   /// saat pindah ke Approve HOD, jadi posisi scroll & isi pencarian tidak
   /// reset — sama seperti alasan IndexedStack di ItRequestScreen.
   Widget _buildHodTabs() {
+    // Tab tersembunyi dilepas dari scroll header, lihat
+    // `PortalTabScrollScope`.
     final tabs = [
-      _buildAllRequestList(),
-      _buildApprovalTab(),
+      PortalTabScrollScope(
+        active: _tabIndex == 0,
+        child: _buildAllRequestList(),
+      ),
+      PortalTabScrollScope(
+        active: _tabIndex == 1,
+        child: _buildApprovalTab(),
+      ),
     ];
 
     return IndexedStack(index: _tabIndex, children: tabs);
@@ -402,41 +397,43 @@ class _EstRequestScreenState extends State<EstRequestScreen> {
 
         return RefreshIndicator(
           onRefresh: _refreshRequests,
-          child: results.isEmpty
-              // ListView (bukan Center saja) supaya tarik-untuk-refresh
-              // tetap bisa dipakai saat daftar kosong.
-              ? ListView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  children: [
-                    const SizedBox(height: 120),
-                    Center(
-                      child: Text('No data', style: AppTextStyles.bodyMuted),
-                    ),
-                  ],
-                )
-              : ListView.separated(
-                  controller: _scrollController,
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  // Padding bawah ekstra (88) supaya baris terakhir tidak
-                  // tertutup FAB "Add Request" yang mengambang, sama seperti
-                  // di HSE.
-                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 88),
-                  // +1 untuk skeleton di dasar saat halaman berikutnya
-                  // sedang dimuat.
-                  itemCount: results.length + (state.loadingMore ? 1 : 0),
-                  separatorBuilder: (_, __) => const SizedBox(height: 10),
-                  itemBuilder: (context, index) {
-                    if (index == results.length) {
-                      return const _RequestRowSkeleton();
-                    }
+          child: NotificationListener<ScrollNotification>(
+            onNotification: _onListScroll,
+            child: results.isEmpty
+                // ListView (bukan Center saja) supaya tarik-untuk-refresh
+                // tetap bisa dipakai saat daftar kosong.
+                ? ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    children: [
+                      const SizedBox(height: 120),
+                      Center(
+                        child: Text('No data', style: AppTextStyles.bodyMuted),
+                      ),
+                    ],
+                  )
+                : ListView.separated(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    // Padding bawah ekstra (88) supaya baris terakhir tidak
+                    // tertutup FAB "Add Request" yang mengambang, sama
+                    // seperti di HSE.
+                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 88),
+                    // +1 untuk skeleton di dasar saat halaman berikutnya
+                    // sedang dimuat.
+                    itemCount: results.length + (state.loadingMore ? 1 : 0),
+                    separatorBuilder: (_, __) => const SizedBox(height: 10),
+                    itemBuilder: (context, index) {
+                      if (index == results.length) {
+                        return const _RequestRowSkeleton();
+                      }
 
-                    final item = results[index];
-                    return EstRequestRow(
-                      item: item,
-                      onTap: () => _openDetail(item),
-                    );
-                  },
-                ),
+                      final item = results[index];
+                      return EstRequestRow(
+                        item: item,
+                        onTap: () => _openDetail(item),
+                      );
+                    },
+                  ),
+          ),
         );
       },
     );
