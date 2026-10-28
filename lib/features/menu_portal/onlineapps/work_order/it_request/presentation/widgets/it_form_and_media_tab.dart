@@ -6,6 +6,7 @@ import '../../../../../../../core/theme/app_colors.dart';
 import '../../../../../../../core/theme/app_text_styles.dart';
 import '../../../../../../../core/widgets/app_error_view.dart';
 import '../../../../../../../core/widgets/app_shimmer.dart';
+import '../../../../../../../core/widgets/flash_highlight.dart';
 import '../../data/it_request_repository.dart';
 import '../../domain/it_request_detail.dart';
 import '../../domain/it_request_item.dart';
@@ -27,10 +28,13 @@ import 'it_request_feedback_sheet.dart';
 /// sebagai tab pertama untuk tim IT — isinya sama karena tim IT juga bisa
 /// mengajukan permintaan sendiri seperti staff lain.
 class ItFormAndMediaTab extends StatelessWidget {
-  const ItFormAndMediaTab({super.key, this.repository});
+  const ItFormAndMediaTab({super.key, this.repository, this.highlightId});
 
   /// Diisi test; di aplikasi diambil dari [RepositoryProvider].
   final ItRequestRepository? repository;
+
+  /// id request dari notifikasi yang di-tap; kartunya dikedipkan.
+  final int? highlightId;
 
   @override
   Widget build(BuildContext context) {
@@ -38,13 +42,15 @@ class ItFormAndMediaTab extends StatelessWidget {
       create: (_) => ItRequestListBloc(
         repository: repository ?? context.read<ItRequestRepository>(),
       )..add(const ItRequestListStarted()),
-      child: const _ItFormAndMediaView(),
+      child: _ItFormAndMediaView(highlightId: highlightId),
     );
   }
 }
 
 class _ItFormAndMediaView extends StatefulWidget {
-  const _ItFormAndMediaView();
+  const _ItFormAndMediaView({this.highlightId});
+
+  final int? highlightId;
 
   @override
   State<_ItFormAndMediaView> createState() => _ItFormAndMediaViewState();
@@ -232,10 +238,14 @@ class _ItFormAndMediaViewState extends State<_ItFormAndMediaView> {
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
           children: [
             for (final item in awaiting) ...[
-              ItRequestFeedbackBanner(
-                item: item,
-                onGiveFeedback: () => _giveFeedback(item),
-                loading: _loadingFeedbackId == item.id,
+              FlashHighlight(
+                key: ValueKey('hl-${item.id}'),
+                active: item.id == widget.highlightId,
+                child: ItRequestFeedbackBanner(
+                  item: item,
+                  onGiveFeedback: () => _giveFeedback(item),
+                  loading: _loadingFeedbackId == item.id,
+                ),
               ),
               const SizedBox(height: 12),
             ],
@@ -277,8 +287,14 @@ class _ItFormAndMediaViewState extends State<_ItFormAndMediaView> {
             else
               for (var i = 0; i < history.length; i++) ...[
                 if (i > 0) const SizedBox(height: 10),
-                ItRequestCard(
-                    item: history[i], onTap: () => _openDetail(history[i])),
+                FlashHighlight(
+                  key: ValueKey('hl-${history[i].id}'),
+                  active: history[i].id == widget.highlightId,
+                  child: ItRequestCard(
+                    item: history[i],
+                    onTap: () => _openDetail(history[i]),
+                  ),
+                ),
               ],
             if (state.loadingMore)
               const Padding(

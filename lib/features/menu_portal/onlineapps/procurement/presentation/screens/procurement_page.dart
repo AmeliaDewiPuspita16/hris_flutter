@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../../../core/theme/app_text_styles.dart';
 import '../../../../../../core/widgets/app_shimmer.dart';
+import '../../../../../../core/widgets/flash_highlight.dart';
 import '../../../../../../core/widgets/app_text_field.dart';
 import '../../../../shared/presentation/widgets/portal_category_page.dart';
 import '../../data/procurement_repository.dart';
@@ -23,7 +24,12 @@ import 'pr_detail_screen.dart';
 /// "Receiving". Filter status, pencarian, dan paginasi semuanya dikerjakan
 /// server; filter Section dan rentang tanggal belum ikut.
 class ProcurementPage extends StatelessWidget {
-  const ProcurementPage({super.key, this.repository, this.initialStatusCode});
+  const ProcurementPage({
+    super.key,
+    this.repository,
+    this.initialStatusCode,
+    this.highlightId,
+  });
 
   /// Diisi test; di aplikasi diambil dari [RepositoryProvider].
   final ProcurementRepository? repository;
@@ -31,6 +37,10 @@ class ProcurementPage extends StatelessWidget {
   /// Kode status yang langsung aktif saat halaman dibuka, mis. `pending_hod`
   /// (lihat `PrStatusCode`). Null = chip "Semua".
   final String? initialStatusCode;
+
+  /// id PR dari notifikasi yang di-tap; kartunya dinaikkan ke paling atas
+  /// dan dikedipkan. Hilang begitu filter atau pencarian diubah.
+  final int? highlightId;
 
   @override
   Widget build(BuildContext context) {
@@ -41,13 +51,18 @@ class ProcurementPage extends StatelessWidget {
         repository: procurement,
         initialStatusCode: initialStatusCode,
       )..add(const ProcurementListStarted()),
-      child: _ProcurementView(repository: procurement),
+      child: _ProcurementView(
+        repository: procurement,
+        highlightId: highlightId,
+      ),
     );
   }
 }
 
 class _ProcurementView extends StatefulWidget {
-  const _ProcurementView({required this.repository});
+  const _ProcurementView({required this.repository, this.highlightId});
+
+  final int? highlightId;
 
   /// Diteruskan ke layar detail saat sebuah kartu dibuka — detail punya
   /// bloc-nya sendiri, bukan berbagi dengan daftar.
@@ -68,6 +83,10 @@ class _ProcurementViewState extends State<_ProcurementView> {
   final _searchController = TextEditingController();
 
   Timer? _debounce;
+
+  /// Salinan [_ProcurementView.highlightId] yang dikosongkan saat user
+  /// mengganti filter/pencarian, supaya kedipnya tidak muncul lagi.
+  late int? _highlightId = widget.highlightId;
 
   @override
   void dispose() {
@@ -94,6 +113,7 @@ class _ProcurementViewState extends State<_ProcurementView> {
   /// Menunda pengiriman kata kunci supaya mengetik satu kalimat tidak jadi
   /// satu request per huruf.
   void _onSearchChanged(String value) {
+    if (_highlightId != null) setState(() => _highlightId = null);
     _debounce?.cancel();
     _debounce = Timer(_searchDebounce, () {
       if (!mounted) return;
@@ -148,9 +168,12 @@ class _ProcurementViewState extends State<_ProcurementView> {
               PrStatusFilterBar(
                 counts: state.summary,
                 selected: state.statusCode,
-                onChanged: (code) => context
-                    .read<ProcurementListBloc>()
-                    .add(ProcurementListStatusSelected(code)),
+                onChanged: (code) {
+                  if (_highlightId != null) setState(() => _highlightId = null);
+                  context
+                      .read<ProcurementListBloc>()
+                      .add(ProcurementListStatusSelected(code));
+                },
               ),
               const SizedBox(height: 12),
               Expanded(child: _buildBody(context, state)),
@@ -204,6 +227,15 @@ class _ProcurementViewState extends State<_ProcurementView> {
       );
     }
 
+    // Dari notifikasi: PR yang dimaksud dinaikkan ke paling atas (daftar
+    // ini panjang dan dibangun malas) lalu dikedipkan.
+    final items = [...state.items];
+    final highlightId = _highlightId;
+    if (highlightId != null) {
+      final at = items.indexWhere((r) => r.id == highlightId);
+      if (at > 0) items.insert(0, items.removeAt(at));
+    }
+
     return RefreshIndicator(
       onRefresh: _refresh,
       child: NotificationListener<ScrollNotification>(
@@ -211,16 +243,20 @@ class _ProcurementViewState extends State<_ProcurementView> {
         child: ListView.separated(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
           // Satu baris tambahan di bawah untuk skeleton halaman berikutnya.
-          itemCount: state.items.length + (state.loadingMore ? 1 : 0),
+          itemCount: items.length + (state.loadingMore ? 1 : 0),
           separatorBuilder: (_, __) => const SizedBox(height: 10),
           itemBuilder: (_, i) {
-            if (i >= state.items.length) {
+            if (i >= items.length) {
               return const _PrCardSkeleton();
             }
 
-            return PrCard(
-              requisition: state.items[i],
-              onTap: () => _openDetail(state.items[i]),
+            return FlashHighlight(
+              key: ValueKey('hl-${items[i].id}'),
+              active: items[i].id == highlightId,
+              child: PrCard(
+                requisition: items[i],
+                onTap: () => _openDetail(items[i]),
+              ),
             );
           },
         ),

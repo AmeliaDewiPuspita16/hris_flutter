@@ -5,6 +5,7 @@ import '../../../../../../../core/theme/app_colors.dart';
 import '../../../../../../../core/theme/app_text_styles.dart';
 import '../../../../../../../core/widgets/app_error_view.dart';
 import '../../../../../../../core/widgets/app_shimmer.dart';
+import '../../../../../../../core/widgets/flash_highlight.dart';
 import '../../../../../../../core/widgets/app_text_field.dart';
 import '../../../../../../auth/presentation/bloc/auth/auth_bloc.dart';
 import '../../../../../shared/presentation/widgets/portal_category_page.dart';
@@ -57,8 +58,8 @@ class EstRequestScreen extends StatefulWidget {
   /// tab Approve HOD. Diabaikan kalau bukan HOD.
   final int initialTabIndex;
 
-  /// id request dari notifikasi approver yang di-tap; kartunya dikedipkan
-  /// di tab Approve HOD. Null = tanpa penanda.
+  /// id request dari notifikasi yang di-tap; kartunya dikedipkan di tab
+  /// [initialTabIndex] (All Request atau Approve HOD). Null = tanpa penanda.
   final int? highlightId;
 
   @override
@@ -374,7 +375,7 @@ class _EstRequestScreenState extends State<EstRequestScreen> {
           items: state.items,
           pending: state.pending,
           busyIds: state.busyIds,
-          highlightId: widget.highlightId,
+          highlightId: widget.initialTabIndex == 1 ? widget.highlightId : null,
           onRefresh: _refreshApprovals,
           onOpenDetail: _openApprovalDetail,
           onApprove: (item) => _decide(item, approved: true),
@@ -399,7 +400,16 @@ class _EstRequestScreenState extends State<EstRequestScreen> {
           );
         }
 
-        final results = _filter(state.items);
+        final results = [..._filter(state.items)];
+
+        // Dari notifikasi: request yang dimaksud dinaikkan ke paling atas
+        // (daftar ini panjang dan dibangun malas) lalu dikedipkan.
+        final highlightId =
+            widget.initialTabIndex == 0 ? widget.highlightId : null;
+        if (highlightId != null) {
+          final at = results.indexWhere((r) => r.id == highlightId);
+          if (at > 0) results.insert(0, results.removeAt(at));
+        }
 
         return RefreshIndicator(
           onRefresh: _refreshRequests,
@@ -433,9 +443,13 @@ class _EstRequestScreenState extends State<EstRequestScreen> {
                       }
 
                       final item = results[index];
-                      return EstRequestRow(
-                        item: item,
-                        onTap: () => _openDetail(item),
+                      return FlashHighlight(
+                        key: ValueKey('hl-${item.id}'),
+                        active: item.id == highlightId,
+                        child: EstRequestRow(
+                          item: item,
+                          onTap: () => _openDetail(item),
+                        ),
                       );
                     },
                   ),
