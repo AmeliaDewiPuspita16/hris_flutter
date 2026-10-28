@@ -142,7 +142,7 @@ class _ItRequestRespondSheetState extends State<ItRequestRespondSheet> {
                     onPressed:
                         _noteController.text.trim().isEmpty || _submitting ? null : _submit,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.present,
+                      backgroundColor: AppColors.primary,
                       disabledBackgroundColor: AppColors.border,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     ),

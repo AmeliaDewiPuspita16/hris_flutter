@@ -257,47 +257,68 @@ class _CounterChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(10),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        decoration: BoxDecoration(
-          color: background,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: active ? color : Colors.transparent,
-            width: 1.4,
-          ),
-        ),
-        child: Column(
-          children: [
-            SizedBox(
-              height: 22,
-              child: count == null
-                  ? Center(
-                      child: SizedBox(
-                        width: 14,
-                        height: 14,
-                        child: CircularProgressIndicator(
-                            strokeWidth: 2, color: color),
-                      ),
-                    )
-                  : Text(
-                      '$count',
-                      style: TextStyle(
-                        fontFamily: AppTextStyles.fontFamily,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800,
-                        color: color,
-                      ),
-                    ),
+    // Aktif: latar berwarna + border tebal. Tidak aktif: kartu putih polos.
+    // Angka selalu berwarna status; label hanya berwarna saat aktif.
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+          decoration: BoxDecoration(
+            color: active ? background : Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: active ? color : AppColors.border,
+              width: active ? 1.4 : 1,
             ),
-            const SizedBox(height: 2),
-            Text(label,
-                style:
-                    AppTextStyles.caption.copyWith(color: AppColors.textMid)),
-          ],
+          ),
+          // Satu baris: angka di kiri, label di kanan — lebih ringkas
+          // daripada ditumpuk vertikal.
+          child: Row(
+            children: [
+              SizedBox(
+                width: 28,
+                child: count == null
+                    ? Align(
+                        alignment: Alignment.centerLeft,
+                        child: SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2, color: color),
+                        ),
+                      )
+                    : FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          '$count',
+                          style: TextStyle(
+                            fontFamily: AppTextStyles.fontFamily,
+                            fontSize: 20,
+                            fontWeight: FontWeight.w700,
+                            color: color,
+                          ),
+                        ),
+                      ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyles.caption.copyWith(
+                    color: active ? color : AppColors.textMid,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

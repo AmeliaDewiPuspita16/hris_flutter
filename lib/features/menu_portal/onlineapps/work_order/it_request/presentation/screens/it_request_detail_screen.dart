@@ -165,7 +165,7 @@ class _ItRequestDetailView extends StatelessWidget {
                 onItTeamActionDone?.call(updated);
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.present,
+                backgroundColor: AppColors.primary,
                 foregroundColor: Colors.white,
                 elevation: 0,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -472,11 +472,28 @@ class _ItRequestDetailView extends StatelessWidget {
             children: [
               for (var i = 0; i < rows.length; i++)
                 DetailFieldTile(label: rows[i].label, value: rows[i].value),
+              // Catatan tim IT diberi label sendiri + kutipan, supaya jelas
+              // ini tanggapan dari tim IT, bukan sekadar teks lepas.
               if (handling.note != null) ...[
-                const SizedBox(height: 4),
-                Text(
-                  handling.note!,
-                  style: AppTextStyles.body.copyWith(fontSize: 13, height: 1.5),
+                const SizedBox(height: 6),
+                Text('IT Response', style: AppTextStyles.bodyMuted),
+                const SizedBox(height: 8),
+                Container(
+                  width: double.infinity,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: AppColors.neutralBg,
+                    borderRadius: BorderRadius.circular(8),
+                    border: const Border(
+                      left: BorderSide(color: AppColors.primary, width: 3),
+                    ),
+                  ),
+                  child: Text(
+                    handling.note!,
+                    style: AppTextStyles.body
+                        .copyWith(fontSize: 13, height: 1.5),
+                  ),
                 ),
               ],
               if (handling.resultImageUrl != null) ...[

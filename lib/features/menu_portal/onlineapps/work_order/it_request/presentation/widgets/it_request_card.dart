@@ -24,10 +24,11 @@ class ItRequestCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isMedia = item.type == ItRequestType.media;
     final (color, background) = _toneFor(item);
+    final requesterLabel = _requesterLabel(item);
 
     return AppCard(
       onTap: onTap,
-      padding: const EdgeInsets.fromLTRB(12, 12, 8, 12),
+      padding: const EdgeInsets.all(12),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -48,13 +49,8 @@ class ItRequestCard extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Icon(
-                      isMedia ? Icons.palette_outlined : Icons.computer_outlined,
-                      size: 13,
-                      color: color,
-                    ),
-                    const SizedBox(width: 4),
-                    // Expanded supaya badge status selalu mepet ke kanan.
+                    // Expanded supaya badge status mepet ke ujung kanan kartu
+                    // (tanpa chevron — seluruh kartu sudah bisa diketuk).
                     Expanded(
                       child: Text(
                         '${item.type.label} · ${item.category.label}',
@@ -62,7 +58,7 @@ class ItRequestCard extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                         style: AppTextStyles.caption.copyWith(
                           color: color,
-                          fontWeight: FontWeight.w700,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
@@ -70,7 +66,22 @@ class ItRequestCard extends StatelessWidget {
                     _StatusBadge(status: item.status),
                   ],
                 ),
-                const SizedBox(height: 6),
+                // Daftar ini berisi permintaan SELURUH perusahaan, jadi nama
+                // requester ditampilkan supaya user tidak perlu membuka
+                // detail dulu untuk tahu siapa pengajunya.
+                if (requesterLabel != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    requesterLabel,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTextStyles.caption.copyWith(
+                      color: AppColors.textMid,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 8),
                 Text(
                   item.description,
                   maxLines: 3,
@@ -87,13 +98,29 @@ class ItRequestCard extends StatelessWidget {
                     const Icon(Icons.calendar_today_outlined,
                         size: 12, color: AppColors.textMuted),
                     const SizedBox(width: 5),
-                    Expanded(
-                      child: Text(
-                        DateFormatter.shortDate(item.createdAt),
-                        style: AppTextStyles.caption
-                            .copyWith(color: AppColors.textMuted),
-                      ),
+                    Text(
+                      DateFormatter.shortDate(item.createdAt),
+                      style: AppTextStyles.caption
+                          .copyWith(color: AppColors.textMuted),
                     ),
+                    // Status persetujuan HOD — info penting yang sebelumnya
+                    // baru kelihatan setelah masuk ke detail.
+                    if (item.approval.label.isNotEmpty) ...[
+                      const SizedBox(width: 12),
+                      const Icon(Icons.verified_outlined,
+                          size: 12, color: AppColors.textMuted),
+                      const SizedBox(width: 5),
+                      Flexible(
+                        child: Text(
+                          item.approval.label,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTextStyles.caption
+                              .copyWith(color: AppColors.textMuted),
+                        ),
+                      ),
+                    ],
+                    const Spacer(),
                     if (item.rating != null)
                       ItRequestRatingStars(rating: item.rating!, size: 13),
                   ],
@@ -101,15 +128,20 @@ class ItRequestCard extends StatelessWidget {
               ],
             ),
           ),
-          if (onTap != null)
-            const Padding(
-              padding: EdgeInsets.only(left: 2, top: 30),
-              child: Icon(Icons.chevron_right_rounded,
-                  size: 22, color: AppColors.textMuted),
-            ),
         ],
       ),
     );
+  }
+
+  /// "Nama · Departemen"; "(You)" untuk request milik user login. Null bila
+  /// server tidak mengirim data requester.
+  static String? _requesterLabel(ItRequestItem item) {
+    final requester = item.requester;
+    if (requester == null || requester.name.isEmpty) return null;
+    final base = requester.department.isEmpty
+        ? requester.name
+        : '${requester.name} · ${requester.department}';
+    return item.isMine ? '$base (You)' : base;
   }
 
   /// Media selalu ungu. IT dibedakan per kategori: perangkat keras biru,
@@ -172,15 +204,6 @@ class _StatusBadge extends StatelessWidget {
 
   final ItRequestStatus status;
 
-  IconData get _icon => switch (status.code) {
-        'waiting' => Icons.schedule_rounded,
-        'progress' => Icons.autorenew_rounded,
-        'done' || 'wait_checked' => Icons.hourglass_bottom_rounded,
-        'finished' => Icons.check_circle_rounded,
-        'rejected' || 'cancelled' => Icons.cancel_rounded,
-        _ => Icons.circle_outlined,
-      };
-
   @override
   Widget build(BuildContext context) {
     // Lebar dibatasi supaya label status yang sangat panjang dari server
@@ -196,8 +219,6 @@ class _StatusBadge extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(_icon, size: 11, color: status.color),
-            const SizedBox(width: 4),
             Flexible(
               child: Text(
                 status.label,
@@ -206,7 +227,7 @@ class _StatusBadge extends StatelessWidget {
                 style: TextStyle(
                   fontFamily: AppTextStyles.fontFamily,
                   fontSize: 10,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w600,
                   color: status.color,
                 ),
               ),

@@ -223,7 +223,7 @@ class _ItRequestCompleteSheetState extends State<ItRequestCompleteSheet> {
                   child: ElevatedButton(
                     onPressed: _photo == null || _submitting ? null : _submit,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.present,
+                      backgroundColor: AppColors.primary,
                       disabledBackgroundColor: AppColors.border,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     ),
