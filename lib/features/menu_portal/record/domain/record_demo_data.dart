@@ -60,21 +60,21 @@ class RecordDemoData {
           background: AppColors.accentBg,
           onTap: onLicensePermitCertificate,
         ),
-        RecordItem(
-          icon: Icons.newspaper_outlined,
-          label: 'News Clipping',
-          owners: const ['Admin CRS'],
-          color: AppColors.violet,
-          background: AppColors.violetBg,
-          onTap: onNewsClipping,
-        ),
-        RecordItem(
-          icon: Icons.perm_media_outlined,
-          label: 'Photo & Video',
-          owners: const ['Noval', 'Ari'],
-          color: AppColors.primary,
-          background: AppColors.primaryLight,
-          onTap: onPhotoVideo,
-        ),
+        // RecordItem(
+        //   icon: Icons.newspaper_outlined,
+        //   label: 'News Clipping',
+        //   owners: const ['Admin CRS'],
+        //   color: AppColors.violet,
+        //   background: AppColors.violetBg,
+        //   onTap: onNewsClipping,
+        // ),
+        // RecordItem(
+        //   icon: Icons.perm_media_outlined,
+        //   label: 'Photo & Video',
+        //   owners: const ['Noval', 'Ari'],
+        //   color: AppColors.primary,
+        //   background: AppColors.primaryLight,
+        //   onTap: onPhotoVideo,
+        // ),
       ];
 }
