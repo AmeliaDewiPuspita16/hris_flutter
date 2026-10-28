@@ -41,7 +41,9 @@ import '../../../hris_menu/domain/hris_menu_config.dart';
 import '../../../hris_menu/domain/hris_menu_item.dart';
 import '../../../hris_menu/presentation/screens/hris_menu_screen.dart';
 import '../../../notifikasi/domain/app_notification.dart';
+import '../../../notifikasi/data/notification_inbox_repository.dart';
 import '../../../notifikasi/domain/notification_demo_data.dart';
+import '../../../notifikasi/presentation/notification_routes.dart';
 import '../../../notifikasi/presentation/screens/notifikasi_screen.dart';
 import '../../../auth/domain/auth_user.dart';
 import '../../../shared/domain/role.dart';
@@ -176,6 +178,87 @@ class _BerandaScreenState extends State<BerandaScreen> {
     _loadTodayAttendance();
     _loadApprovalsWaiting();
     _loadPendingAssignments();
+    _loadServerNotifications();
+  }
+
+  /// Notifikasi IT Request, EST, Indent Vehicle, dan eProcurement dari
+  /// server (`GET /api/portal/apps/notifications`). Yang lokal (assign,
+  /// Leave) dipertahankan; yang dari server diganti seluruhnya.
+  ///
+  /// Lewat [context.read], bukan instance baru, karena endpoint ini butuh
+  /// token login (lihat [_approvalsWaitingRepository]).
+  Future<void> _loadServerNotifications() async {
+    try {
+      final page =
+          await context.read<NotificationInboxRepository>().fetchLatest();
+      if (!mounted) return;
+
+      setState(() {
+        _notifications = [
+          for (final n in _notifications)
+            if (!n.isFromServer) n,
+          ...page.items,
+        ];
+      });
+    } catch (e, stack) {
+      AppLogger.error('Notifikasi server gagal dimuat', e, stack);
+    }
+  }
+
+  Future<void> _refreshNotifications() => Future.wait([
+        _loadServerNotifications(),
+        _loadPendingAssignments(),
+      ]);
+
+  /// Perubahan baca/hapus pada notifikasi server diteruskan ke backend.
+  /// Gagal cukup dicatat — tampilan lokal tidak dibatalkan, dan pemuatan
+  /// berikutnya akan menyamakan lagi dengan server.
+  Future<void> _syncServerNotifications(
+    Map<String, AppNotification> before,
+    List<AppNotification> updated,
+  ) async {
+    final repository = context.read<NotificationInboxRepository>();
+    final remaining = {for (final n in updated) n.id};
+
+    final newlyRead = [
+      for (final n in updated)
+        if (n.serverId != null && n.isRead && before[n.id]?.isRead == false)
+          n.serverId!,
+    ];
+    final removed = [
+      for (final n in before.values)
+        if (n.serverId != null && !remaining.contains(n.id)) n.serverId!,
+    ];
+
+    try {
+      // Lebih dari satu sekaligus = tombol "tandai semua dibaca".
+      if (newlyRead.length > 1) {
+        await repository.markAllRead();
+      } else {
+        for (final id in newlyRead) {
+          await repository.markRead(id);
+        }
+      }
+      for (final id in removed) {
+        await repository.delete(id);
+      }
+    } catch (e, stack) {
+      AppLogger.error('Status notifikasi gagal dikirim ke server', e, stack);
+    }
+  }
+
+  /// Notifikasi server di-tap: buka halaman modulnya, lalu muat ulang
+  /// karena status request bisa berubah di sana.
+  Future<void> _openNotification(AppNotification notification) async {
+    final link = notification.link;
+    if (link == null) return;
+    final screen = NotificationRoutes.screenFor(link);
+    if (screen == null) return;
+
+    await Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));
+    if (!mounted) return;
+    _refreshNotifications();
+    _loadApprovalsWaiting();
   }
 
   Future<void> _loadAnnouncements() async {
@@ -229,7 +312,7 @@ class _BerandaScreenState extends State<BerandaScreen> {
   void _openTab(MainTab tab) {
     setState(() => _activeTab = tab);
     // Data assign bisa berubah sejak Beranda dibuka (request baru lolos HOD).
-    if (tab == MainTab.notifications) _loadPendingAssignments();
+    if (tab == MainTab.notifications) _refreshNotifications();
   }
 
   void _openPayslip() {
@@ -337,6 +420,7 @@ class _BerandaScreenState extends State<BerandaScreen> {
   void _onNotificationsChanged(List<AppNotification> updated) {
     final before = {for (final n in _notifications) n.id: n};
     setState(() => _notifications = updated);
+    _syncServerNotifications(before, updated);
 
     for (final n in updated) {
       final requestId = LeaveApprovalRequest.idFromNotificationId(n.id);
@@ -506,6 +590,7 @@ class _BerandaScreenState extends State<BerandaScreen> {
         _loadLeaveApprovalCount(),
         _loadApprovalsWaiting(),
         _loadPendingAssignments(),
+        _loadServerNotifications(),
       ]);
 
   int get _itApprovalCount => _approvalsWaiting.itRequest;
@@ -684,6 +769,8 @@ class _BerandaScreenState extends State<BerandaScreen> {
             notifications: _notifications,
             onChanged: _onNotificationsChanged,
             onAssign: _assignFromNotification,
+            onOpen: _openNotification,
+            onRefresh: _refreshNotifications,
             initialFilter: _notificationFilter,
             filterRequestToken: _notificationFilterToken,
             showBack: false,
