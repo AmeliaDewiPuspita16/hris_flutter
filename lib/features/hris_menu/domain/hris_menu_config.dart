@@ -108,6 +108,8 @@ class HrisMenuConfig {
           color: AppColors.teal,
           background: AppColors.tealBg,
           onTap: onDepartmentAttendance,
+          // Belum terhubung API (masih data contoh).
+          isReady: false,
           isVisible: _isHodOrAdmin,
         ),
         const HrisMenuItem(
@@ -137,15 +139,19 @@ class HrisMenuConfig {
           color: AppColors.accent,
           background: AppColors.accentBg,
           onTap: onLeaveRequest,
+          // Belum terhubung API.
+          isReady: false,
         ),
         HrisMenuItem(
           id: 'approvals',
-          label: 'Approvals',
+          label: 'Leave Approvals',
           icon: Icons.task_alt,
           group: HrisMenuGroup.leave,
           color: AppColors.primary,
           background: AppColors.primaryLight,
           onTap: onApprovals,
+          // Belum terhubung API (masih data contoh).
+          isReady: false,
           isVisible: _isHod,
           badgeCount: approvalCount,
         ),
@@ -157,6 +163,8 @@ class HrisMenuConfig {
           color: AppColors.violet,
           background: AppColors.violetBg,
           onTap: onOvertimeRequest,
+          // API vendor masih error; aktifkan lagi setelah diperbaiki.
+          isReady: false,
           // SEMENTARA tanpa gerbang role: requirement-nya hanya untuk
           // Non-Executive, tapi role di AuthGate masih dipatok sehingga
           // item ini akan selalu tersembunyi. Pasang aturan role setelah
@@ -194,6 +202,8 @@ class HrisMenuConfig {
           color: AppColors.primaryMid,
           background: AppColors.primaryLight,
           onTap: onManageTeam,
+          // Belum terhubung API (masih data contoh).
+          isReady: false,
           // SEMENTARA: tanpa gerbang role dulu, karena role di AuthGate masih
           // dipatok (Role.hrPublisher) sehingga item ini selalu tersembunyi.
           // Kembalikan ke `isVisible: _isHodOrAdmin` setelah pemetaan role
