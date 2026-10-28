@@ -42,7 +42,6 @@ import '../../../hris_menu/domain/hris_menu_config.dart';
 import '../../../hris_menu/domain/hris_menu_item.dart';
 import '../../../hris_menu/presentation/screens/hris_menu_screen.dart';
 import '../../../notifikasi/domain/app_notification.dart';
-import '../../../notifikasi/data/notification_inbox_repository.dart';
 import '../../../notifikasi/domain/notification_demo_data.dart';
 import '../../../notifikasi/presentation/notification_routes.dart';
 import '../../../notifikasi/presentation/screens/notifikasi_screen.dart';
