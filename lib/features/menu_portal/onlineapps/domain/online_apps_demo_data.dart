@@ -19,6 +19,9 @@ class OnlineAppsDemoData {
     required VoidCallback? onTenantFeedback,
     required VoidCallback? onWorkOrder,
     required VoidCallback? onHseWorkRequest,
+    // false = menu Procurement Monitoring disembunyikan (user tidak punya
+    // role epro-*, lihat AuthUser.canAccessProcurement)
+    bool showProcurement = true,
   }) =>
       [
         OnlineAppItem(
@@ -45,6 +48,7 @@ class OnlineAppsDemoData {
         //   background: AppColors.violetBg,
         //   onTap: onReservation,
         // ),
+        if (showProcurement)
         OnlineAppItem(
           icon: Icons.trending_up_outlined,
           label: 'Procurement Monitoring',
