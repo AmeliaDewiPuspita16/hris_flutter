@@ -12,11 +12,11 @@ import '../bloc/login/login_event.dart';
 import '../bloc/login/login_state.dart';
 import '../controllers/login_form_controller.dart';
 import '../widgets/keep_signed_in_row.dart';
-import '../widgets/login_alt_button.dart';
+// import '../widgets/login_alt_button.dart';
 import '../widgets/login_field.dart';
 import '../widgets/login_footer.dart';
 import '../widgets/login_header.dart';
-import '../widgets/or_divider.dart';
+// import '../widgets/or_divider.dart';
 
 /// Halaman login BIIE Portal.
 ///
@@ -192,7 +192,8 @@ class _LoginForm extends StatelessWidget {
         KeepSignedInRow(
           value: form.keepSignedIn,
           onChanged: form.toggleKeepSignedIn,
-          onForgotPressed: () {},
+          // Disembunyikan sampai alur reset password tersedia.
+          // onForgotPressed: () {},
         ),
         if (state.errorMessage != null) ...[
           const SizedBox(height: 16),
@@ -205,10 +206,11 @@ class _LoginForm extends StatelessWidget {
           onPressed: onSignIn,
           isLoading: state.isLoading,
         ),
-        const SizedBox(height: 20),
-        const OrDivider(),
-        const SizedBox(height: 20),
-        LoginAltButton(label: 'Use Face ID', onPressed: () {}),
+        // Disembunyikan sampai login biometrik benar-benar dibuat.
+        // const SizedBox(height: 20),
+        // const OrDivider(),
+        // const SizedBox(height: 20),
+        // LoginAltButton(label: 'Use Face ID', onPressed: () {}),
       ],
     );
   }
