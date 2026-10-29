@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../../core/config/app_info.dart';
 import '../../../../core/logging/app_logger.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -22,6 +23,7 @@ import '../bloc/photo/profil_photo_state.dart';
 import '../widgets/cover_background.dart';
 import '../widgets/photo_source_sheet.dart';
 import '../widgets/profile_avatar.dart';
+import 'about_screen.dart';
 import 'change_cover_screen.dart';
 import 'profile_photo_viewer_screen.dart';
 import 'update_password_screen.dart';
@@ -144,6 +146,26 @@ class _ProfilView extends StatelessWidget {
                           label: 'Update Password',
                           subtitle: 'Change your sign-in password',
                           onTap: () => _onUpdatePasswordTap(context),
+                        ),
+                        const SizedBox(height: 18),
+                        const SectionLabel('GENERAL'),
+                        const SizedBox(height: 8),
+                        // Subtitle = versi terpasang, supaya tester bisa
+                        // menyebutkannya tanpa membuka halaman About.
+                        FutureBuilder<String>(
+                          future: AppInfo.versionLabel(),
+                          builder: (context, snapshot) => _buildMenuTile(
+                            icon: Icons.info_outline,
+                            label: 'About this app',
+                            subtitle: snapshot.hasData
+                                ? 'Version ${snapshot.data}'
+                                : 'Version, licenses',
+                            onTap: () => Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => const AboutScreen(),
+                              ),
+                            ),
+                          ),
                         ),
                         const SizedBox(height: 18),
                         _buildLogoutButton(context),
@@ -394,7 +416,7 @@ class _ProfilView extends StatelessWidget {
                               size: 15, color: AppColors.primaryMid),
                           const SizedBox(width: 6),
                           Text(
-                            'NIP: ${user?.nik ?? p.nip}',
+                            'Emp. ID: ${user?.nik ?? p.nip}',
                             style: const TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,

@@ -123,8 +123,10 @@ class _LoginViewState extends State<_LoginView> {
                         ),
                       ),
                       const Spacer(),
+                      // Tanpa padding samping/bawah: ilustrasinya menempel
+                      // ke tepi layar.
                       const Padding(
-                        padding: EdgeInsets.fromLTRB(20, 16, 20, 24),
+                        padding: EdgeInsets.only(top: 16),
                         child: LoginFooter(),
                       ),
                     ],
