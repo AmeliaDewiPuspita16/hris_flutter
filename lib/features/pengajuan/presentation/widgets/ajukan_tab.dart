@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/config/feature_flags.dart';
 import '../../../../core/logging/app_logger.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -78,6 +79,9 @@ class _AjukanTabState extends State<AjukanTab> {
       _leaveType == LeaveType.lembur || _durationType != DurationType.full;
 
   Future<void> _handleSubmit() async {
+    // Pengaman: API pengajuan belum ada (FeatureFlags.leaveSubmit).
+    if (!FeatureFlags.leaveSubmit) return;
+
     setState(() {
       _submitting = true;
       _submitError = null;
@@ -180,9 +184,12 @@ class _AjukanTabState extends State<AjukanTab> {
             ),
           ),
           const SizedBox(height: 18),
+          // Nonaktif sampai API pengajuan ada (FeatureFlags.leaveSubmit).
+          // Form di atas tetap bisa diisi; hanya tombol kirim yang mati.
           AppButton(
             label: 'Submit Request',
             variant: AppButtonVariant.green,
+            enabled: FeatureFlags.leaveSubmit,
             isLoading: _submitting,
             onPressed: _handleSubmit,
           ),

@@ -28,9 +28,13 @@ import '../../../menu_portal/onlineapps/procurement/domain/pr_status.dart';
 import '../../../menu_portal/onlineapps/procurement/presentation/screens/procurement_page.dart';
 import '../../../menu_portal/onlineapps/work_order/est_request/presentation/screens/est_request_screen.dart';
 import '../../../menu_portal/onlineapps/work_order/it_request/presentation/screens/it_request_screen.dart';
+import '../../../menu_portal/onlineapps/work_order/it_request/data/it_request_repository.dart';
+import '../../../menu_portal/onlineapps/work_order/est_request/data/est_request_repository.dart';
+import '../../../menu_portal/onlineapps/procurement/data/procurement_repository.dart';
 import '../../../menu_portal/record/presentation/screens/record_screen.dart';
 import '../../../menu_portal/data_app/presentation/screens/data_screen.dart';
 import '../../../notifikasi/data/notification_inbox_repository.dart';
+import '../../../notifikasi/data/pending_approval_checker.dart';
 import '../../../notifikasi/domain/notification_category.dart';
 import '../../../notifikasi/domain/notification_filter.dart';
 import '../widgets/approval_summary_banner.dart';
@@ -366,16 +370,50 @@ class _BerandaScreenState extends State<BerandaScreen> {
           await context.read<NotificationInboxRepository>().fetchLatest();
       if (!mounted) return;
 
+      // Penanda "menunggu approval" dari pemuatan sebelumnya dipertahankan
+      // sementara, supaya isi tab Action tidak berkedip tiap muat ulang.
+      final wasPending = {
+        for (final n in _notifications)
+          if (n.awaitsApproval) n.id,
+      };
+
       setState(() {
         _notifications = [
           for (final n in _notifications)
             if (!n.isFromServer) n,
-          ...page.items,
+          for (final n in page.items)
+            wasPending.contains(n.id) ? n.copyWith(awaitsApproval: true) : n,
         ];
       });
+
+      await _markPendingApprovals(page.items);
     } catch (e, stack) {
       AppLogger.error('Notifikasi server gagal dimuat', e, stack);
     }
+  }
+
+  /// Menandai notifikasi "butuh approval" yang request-nya memang masih di
+  /// antrean approval (tab Action). Dijalankan setelah daftar tampil, supaya
+  /// notifikasi tidak menunggu pengecekan antrean dulu.
+  Future<void> _markPendingApprovals(List<AppNotification> fetched) async {
+    final checker = PendingApprovalChecker(
+      itRequestRepository: context.read<ItRequestRepository>(),
+      estRequestRepository: context.read<EstRequestRepository>(),
+      indentVehicleRepository: context.read<IndentVehicleRepository>(),
+      procurementRepository: context.read<ProcurementRepository>(),
+    );
+    final pending = await checker.stillPending(fetched);
+    if (!mounted) return;
+
+    final checked = {for (final n in fetched) n.id};
+    setState(() {
+      _notifications = [
+        for (final n in _notifications)
+          checked.contains(n.id)
+              ? n.copyWith(awaitsApproval: pending.contains(n.id))
+              : n,
+      ];
+    });
   }
 
   /// Tarik ke bawah di tab Notifications.
@@ -430,12 +468,7 @@ class _BerandaScreenState extends State<BerandaScreen> {
     final link = notification.link;
     if (link == null) return;
 
-    final screen = NotificationRoutes.screenFor(link);
-    if (screen == null) return;
-
-    Navigator.of(context)
-        .push(MaterialPageRoute(builder: (_) => screen))
-        .then((_) {
+    NotificationRoutes.open(context, link).then((_) {
       if (mounted) _loadServerNotifications();
     });
   }

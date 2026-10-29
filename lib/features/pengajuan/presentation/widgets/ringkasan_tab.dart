@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/config/feature_flags.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/app_shimmer.dart';
@@ -180,24 +182,36 @@ class _BalanceSummaryCard extends StatelessWidget {
                     style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.text),
                   ),
                   const Spacer(),
-                  Text(
-                    'As of ${DateFormatter.shortDateID(DateTime.now())}',
-                    style: const TextStyle(fontSize: 10, color: AppColors.textMuted),
-                  ),
+                  // Data saldo masih dummy: redup + "Soon" sampai API saldo ada
+                  // (pola sama dengan Recent Activity di Beranda). Aktifkan
+                  // lewat FeatureFlags.leaveBalance.
+                  if (!FeatureFlags.leaveBalance)
+                    const Text('Soon', style: AppTextStyles.caption)
+                  else
+                    Text(
+                      'As of ${DateFormatter.shortDateID(DateTime.now())}',
+                      style: const TextStyle(fontSize: 10, color: AppColors.textMuted),
+                    ),
                 ],
               ),
               const SizedBox(height: 10),
-              GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: state.balances.length,
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  mainAxisSpacing: 6,
-                  crossAxisSpacing: 6,
-                  mainAxisExtent: cellHeight,
+              IgnorePointer(
+                ignoring: !FeatureFlags.leaveBalance,
+                child: Opacity(
+                  opacity: FeatureFlags.leaveBalance ? 1 : 0.45,
+                  child: GridView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: state.balances.length,
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      mainAxisSpacing: 6,
+                      crossAxisSpacing: 6,
+                      mainAxisExtent: cellHeight,
+                    ),
+                    itemBuilder: (context, index) => _BalanceCell(balance: state.balances[index]),
+                  ),
                 ),
-                itemBuilder: (context, index) => _BalanceCell(balance: state.balances[index]),
               ),
             ],
           ),

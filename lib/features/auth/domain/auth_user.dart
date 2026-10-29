@@ -173,6 +173,27 @@ class AuthUser {
   /// UI, server tetap penentu terakhir.
   bool get isHod => hasRole('hod');
 
+  /// Role e-procurement. Pemilik salah satunya boleh melihat menu
+  /// Procurement Monitoring di Online Apps (tidak harus semuanya).
+  static const eprocurementRoles = [
+    'admin',
+    'epro-finance-gl',
+    'epro-secretary',
+    'epro-approver-finance',
+    'epro-approver-gm',
+    'epro-approver-dgm',
+    'epro-approver-hod',
+    'epro-procurement',
+    'epro-requestor',
+  ];
+
+  /// Boleh melihat menu Procurement Monitoring — cukup punya salah satu
+  /// role di [eprocurementRoles].
+  ///
+  /// Sama seperti getter lain di sini: hanya untuk menampilkan/menyembunyikan
+  /// menu, server tetap penentu terakhir.
+  bool get canAccessProcurement => eprocurementRoles.any(hasRole);
+
   bool hasRole(String role) {
     final target = role.toLowerCase();
     return roles.any((r) => r.toLowerCase() == target);

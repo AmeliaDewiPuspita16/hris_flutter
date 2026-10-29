@@ -156,8 +156,10 @@ class _NotifikasiScreenState extends State<NotifikasiScreen> {
         .where(_filter.matches)
         .where((n) => category == null || n.category == category)
         .toList();
-    final pending = visible.where((n) => n.needsAction).toList();
-    final rest = visible.where((n) => !n.needsAction).toList();
+    // Satu daftar urut terbaru, dikelompokkan per hari. Yang butuh tindakan
+    // tidak dipisah ke atas — itu tugas tab "Action".
+    final sorted = [...visible]
+      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
 
     return Scaffold(
       backgroundColor: AppColors.card,
@@ -191,8 +193,7 @@ class _NotifikasiScreenState extends State<NotifikasiScreen> {
               visible.isEmpty
                   ? const _EmptyState()
                   : _NotificationList(
-                      pending: pending,
-                      rest: rest,
+                      items: sorted,
                       onDecide: _decide,
                       onAssign: widget.onAssign,
                       onOpen: _open,
@@ -228,25 +229,23 @@ class _NotifikasiScreenState extends State<NotifikasiScreen> {
 
 class _NotificationList extends StatelessWidget {
   const _NotificationList({
-    required this.pending,
-    required this.rest,
+    required this.items,
     required this.onDecide,
     required this.onAssign,
     required this.onOpen,
     required this.onDismiss,
   });
 
-  final List<AppNotification> pending;
-  final List<AppNotification> rest;
+  final List<AppNotification> items;
   final void Function(String id, NotificationDecision decision) onDecide;
   final ValueChanged<AppNotification>? onAssign;
   final ValueChanged<AppNotification> onOpen;
   final ValueChanged<String> onDismiss;
 
-  /// Mengelompokkan sisa notifikasi per hari, urutannya dipertahankan.
+  /// Mengelompokkan notifikasi per hari, urutannya dipertahankan.
   Map<String, List<AppNotification>> get _grouped {
     final groups = <String, List<AppNotification>>{};
-    for (final item in rest) {
+    for (final item in items) {
       groups
           .putIfAbsent(DateFormatter.dayGroup(item.createdAt), () => [])
           .add(item);
@@ -260,32 +259,30 @@ class _NotificationList extends StatelessWidget {
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.only(bottom: 28),
       children: [
-        if (pending.isNotEmpty) ...[
-          const _GroupLabel('Action needed'),
-          for (final item in pending)
-            NotificationTile(
-              notification: item,
-              onTap: () => onOpen(item),
-              onDecide: (decision) => onDecide(item.id, decision),
-              onAssign: onAssign == null ? null : () => onAssign!(item),
-            ),
-        ],
         for (final entry in _grouped.entries) ...[
           _GroupLabel(entry.key),
           for (final item in entry.value)
             // Notifikasi informasi boleh digeser untuk dibuang; yang masih
             // menunggu keputusan sengaja tidak, supaya tidak terhapus tanpa
             // sengaja sebelum ditindaklanjuti.
-            Dismissible(
-              key: ValueKey(item.id),
-              direction: DismissDirection.endToStart,
-              onDismissed: (_) => onDismiss(item.id),
-              background: const _DismissBackground(),
-              child: NotificationTile(
+            if (item.isAction)
+              NotificationTile(
                 notification: item,
                 onTap: () => onOpen(item),
+                onDecide: (decision) => onDecide(item.id, decision),
+                onAssign: onAssign == null ? null : () => onAssign!(item),
+              )
+            else
+              Dismissible(
+                key: ValueKey(item.id),
+                direction: DismissDirection.endToStart,
+                onDismissed: (_) => onDismiss(item.id),
+                background: const _DismissBackground(),
+                child: NotificationTile(
+                  notification: item,
+                  onTap: () => onOpen(item),
+                ),
               ),
-            ),
         ],
       ],
     );

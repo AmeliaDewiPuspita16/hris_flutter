@@ -140,7 +140,7 @@ class HrisMenuConfig {
           background: AppColors.accentBg,
           onTap: onLeaveRequest,
           // Belum terhubung API.
-          isReady: false,
+          // isReady: false,
         ),
         HrisMenuItem(
           id: 'approvals',

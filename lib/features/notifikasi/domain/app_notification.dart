@@ -23,6 +23,7 @@ class AppNotification {
     required this.createdAt,
     this.isRead = false,
     this.requiresDecision = false,
+    this.awaitsApproval = false,
     this.decision,
     this.actionType = NotificationActionType.decision,
     this.refId,
@@ -39,6 +40,12 @@ class AppNotification {
 
   /// True kalau notifikasi ini menunggu Approve/Reject dari pengguna.
   final bool requiresDecision;
+
+  /// Notifikasi server "butuh approval" yang request-nya masih menunggu
+  /// keputusan user (dicek ke antrean approval modulnya, lihat
+  /// `PendingApprovalChecker`). Beda dari [requiresDecision]: tidak ada
+  /// tombol Approve/Reject di baris ini — tap membuka antrean modulnya.
+  final bool awaitsApproval;
 
   /// Null selama belum diputuskan.
   final NotificationDecision? decision;
@@ -62,6 +69,10 @@ class AppNotification {
 
   bool get needsAction => requiresDecision && decision == null;
 
+  /// Masuk tab Action dan kelompok "Action needed": menunggu tombol di
+  /// baris ini ([needsAction]) atau approval di modulnya ([awaitsApproval]).
+  bool get isAction => needsAction || awaitsApproval;
+
   /// Ringkasan hasil keputusan, dipakai sebagai pengganti body setelah
   /// tombol ditekan.
   String? get decisionLabel {
@@ -74,7 +85,11 @@ class AppNotification {
     };
   }
 
-  AppNotification copyWith({bool? isRead, NotificationDecision? decision}) {
+  AppNotification copyWith({
+    bool? isRead,
+    NotificationDecision? decision,
+    bool? awaitsApproval,
+  }) {
     return AppNotification(
       id: id,
       category: category,
@@ -83,6 +98,7 @@ class AppNotification {
       createdAt: createdAt,
       isRead: isRead ?? this.isRead,
       requiresDecision: requiresDecision,
+      awaitsApproval: awaitsApproval ?? this.awaitsApproval,
       decision: decision ?? this.decision,
       actionType: actionType,
       refId: refId,

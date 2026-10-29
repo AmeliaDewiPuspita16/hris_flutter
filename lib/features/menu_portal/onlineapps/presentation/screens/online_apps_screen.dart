@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../auth/presentation/bloc/auth/auth_bloc.dart';
 import '../../domain/online_apps_demo_data.dart';
 import '../../procurement/presentation/screens/procurement_page.dart';
 import '../../work_order/domain/request_type.dart';
@@ -40,7 +42,12 @@ class OnlineAppsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Procurement Monitoring hanya untuk user ber-role epro-*. Tanpa sesi
+    // (user null) menu disembunyikan.
+    final user = context.read<AuthBloc>().state.session?.user;
+
     final items = OnlineAppsDemoData.items(
+      showProcurement: user?.canAccessProcurement ?? false,
       // null = belum siap: tile tampil redup & tidak bisa diketuk.
       onInventory: null,
       onMeterReading: null,

@@ -21,7 +21,7 @@ enum NotificationFilter {
 
   bool matches(AppNotification notification) => switch (this) {
         NotificationFilter.all => true,
-        NotificationFilter.action => notification.needsAction,
+        NotificationFilter.action => notification.isAction,
         // NotificationFilter.payroll =>
         //     notification.category == NotificationCategory.payroll,
         // NotificationFilter.announcements =>
