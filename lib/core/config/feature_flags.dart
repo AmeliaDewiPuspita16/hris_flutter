@@ -20,7 +20,7 @@ class FeatureFlags {
   /// Ubah ke `true` setelah repository-nya memakai endpoint sungguhan.
   static const leaveApproval = false;
 
-  /// Kartu "Leave Balance" (saldo cuti/izin/oil) di tab Summary pada
+  /// Kartu "Leave Balance" (saldo cuti/izin/lembur) di tab Summary pada
   /// Leave Request. Biarkan `false` sampai API saldo tersedia: isinya sekarang
   /// masih data dummy ([PengajuanRepository.fetchBalances]). Selama `false`,
   /// kartu tetap tampil tapi redup, tidak bisa disentuh, dan diberi penanda
@@ -28,6 +28,13 @@ class FeatureFlags {
   /// bawahnya tidak terpengaruh (sudah dari API).
   /// Ubah ke `true` setelah `fetchBalances` memakai endpoint sungguhan.
   static const leaveBalance = false;
+
+  /// Tombol "Submit Request" di Leave Request. Biarkan `false` sampai API
+  /// pengajuan tersedia: [PengajuanRepository.submitLeaveRequest] masih dummy
+  /// (hanya menyisipkan baris palsu ke daftar Status). Selama `false`, form
+  /// tetap bisa diisi tapi tombol Submit nonaktif.
+  /// Ubah ke `true` setelah `submitLeaveRequest` memakai endpoint sungguhan.
+  static const leaveSubmit = false;
 
   /// PRATINJAU SAJA: tampilkan tab "My Assignments" (Indent Vehicle) di akun
   /// apa pun dengan data contoh, tanpa memeriksa role `driver` dan tanpa
