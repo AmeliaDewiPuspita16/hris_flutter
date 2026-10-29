@@ -319,7 +319,9 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
     final requestId = int.tryParse(id);
     if (requestId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('This request has not been saved to the server yet.')),
+        const SnackBar(
+            content:
+                Text('This request has not been saved to the server yet.')),
       );
       return;
     }
@@ -382,7 +384,9 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
     final id = int.tryParse(item.id);
     if (id == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('This request has not been saved to the server yet.')),
+        const SnackBar(
+            content:
+                Text('This request has not been saved to the server yet.')),
       );
       return;
     }
@@ -405,7 +409,8 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
       AppLogger.error('Hapus indent gagal karena galat tak terduga', e, stack);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('An unexpected error occurred. Please try again.')),
+        const SnackBar(
+            content: Text('An unexpected error occurred. Please try again.')),
       );
     }
   }
@@ -491,72 +496,72 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
           ),
         ],
         child: SafeArea(
-        top: false,
-        child: Column(
-          children: [
-            // Search paling atas (fixed, di luar area scroll), tab bar di
-            // bawahnya — urutan yang sama dengan EstRequestScreen.
-            Padding(
-              // Header sudah punya jarak bawah sendiri.
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _buildSearchField(),
-                  // Akun biasa hanya punya satu tab: tab bar tidak perlu.
-                  if (_tabs.length > 1) ...[
-                    const SizedBox(height: 12),
-                    BlocBuilder<IndentPendingBloc, IndentPendingState>(
-                      bloc: _pendingBloc,
-                      builder: (context, pendingState) =>
-                          BlocBuilder<IndentApprovalBloc, IndentApprovalState>(
-                        bloc: _approvalBloc,
-                        builder: (context, approvalState) =>
-                            BlocBuilder<IndentDriverCubit, IndentDriverState>(
-                          bloc: _driverCubit,
-                          builder: (context, driverState) => IndentTabBar(
-                            labels: [for (final tab in _tabs) tab.label],
-                            activeIndex: _tabIndex,
-                            badgeCounts: {
-                              for (var i = 0; i < _tabs.length; i++)
-                                if (_tabs[i] == IndentTab.pendingAssignment)
-                                  i: pendingState.items.length
-                                else if (_tabs[i] ==
-                                    IndentTab.supervisorApproval)
-                                  i: approvalState.items.length
-                                else if (_tabs[i] ==
-                                    IndentTab.driverAssignments)
-                                  i: driverState.items.length,
-                            },
-                            onChanged: (i) => setState(() => _tabIndex = i),
+          top: false,
+          child: Column(
+            children: [
+              // Search paling atas (fixed, di luar area scroll), tab bar di
+              // bawahnya — urutan yang sama dengan EstRequestScreen.
+              Padding(
+                // Header sudah punya jarak bawah sendiri.
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _buildSearchField(),
+                    // Akun biasa hanya punya satu tab: tab bar tidak perlu.
+                    if (_tabs.length > 1) ...[
+                      const SizedBox(height: 12),
+                      BlocBuilder<IndentPendingBloc, IndentPendingState>(
+                        bloc: _pendingBloc,
+                        builder: (context, pendingState) => BlocBuilder<
+                            IndentApprovalBloc, IndentApprovalState>(
+                          bloc: _approvalBloc,
+                          builder: (context, approvalState) =>
+                              BlocBuilder<IndentDriverCubit, IndentDriverState>(
+                            bloc: _driverCubit,
+                            builder: (context, driverState) => IndentTabBar(
+                              labels: [for (final tab in _tabs) tab.label],
+                              activeIndex: _tabIndex,
+                              badgeCounts: {
+                                for (var i = 0; i < _tabs.length; i++)
+                                  if (_tabs[i] == IndentTab.pendingAssignment)
+                                    i: pendingState.items.length
+                                  else if (_tabs[i] ==
+                                      IndentTab.supervisorApproval)
+                                    i: approvalState.items.length
+                                  else if (_tabs[i] ==
+                                      IndentTab.driverAssignments)
+                                    i: driverState.items.length,
+                              },
+                              onChanged: (i) => setState(() => _tabIndex = i),
+                            ),
                           ),
                         ),
                       ),
-                    ),
+                    ],
                   ],
-                ],
+                ),
               ),
-            ),
-            // IndexedStack: semua tab tetap "hidup" di belakang layar,
-            // jadi data & state tab tidak hilang saat pindah tab.
-            //
-            // Tab tersembunyi dilepas dari scroll header, lihat
-            // `PortalTabScrollScope`.
-            Expanded(
-              child: IndexedStack(
-                index: _tabIndex,
-                children: [
-                  for (var i = 0; i < _tabs.length; i++)
-                    PortalTabScrollScope(
-                      active: i == _tabIndex,
-                      child: _buildTab(_tabs[i]),
-                    ),
-                ],
+              // IndexedStack: semua tab tetap "hidup" di belakang layar,
+              // jadi data & state tab tidak hilang saat pindah tab.
+              //
+              // Tab tersembunyi dilepas dari scroll header, lihat
+              // `PortalTabScrollScope`.
+              Expanded(
+                child: IndexedStack(
+                  index: _tabIndex,
+                  children: [
+                    for (var i = 0; i < _tabs.length; i++)
+                      PortalTabScrollScope(
+                        active: i == _tabIndex,
+                        child: _buildTab(_tabs[i]),
+                      ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
       ),
     );
   }
@@ -617,7 +622,8 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
 
         if (state.status == IndentPendingStatus.failure) {
           return AppErrorView(
-            message: state.errorMessage ?? 'Failed to load the assignment list.',
+            message:
+                state.errorMessage ?? 'Failed to load the assignment list.',
             onRetry: () => _pendingBloc.add(const IndentPendingRefreshed()),
           );
         }
@@ -721,8 +727,7 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
                   children: [
                     const SizedBox(height: 120),
                     Center(
-                      child: Text('No data',
-                          style: AppTextStyles.bodyMuted),
+                      child: Text('No data', style: AppTextStyles.bodyMuted),
                     ),
                   ],
                 )
@@ -778,8 +783,7 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
   /// memakai `PrimaryScrollController` supaya geraknya menyatu dengan
   /// header `PortalModulePage`.
   bool _onRequestScroll(ScrollNotification notification) {
-    if (notification.depth != 0 ||
-        notification.metrics.axis != Axis.vertical) {
+    if (notification.depth != 0 || notification.metrics.axis != Axis.vertical) {
       return false;
     }
     if (notification.metrics.extentAfter < 300) {
@@ -823,7 +827,7 @@ class _IndentCardList extends StatelessWidget {
 /// Meniru [IndentPendingCard]: judul + badge driver, baris info, tombol
 /// Assign selebar kartu.
 class _PendingCardSkeleton extends StatelessWidget {
-  const _PendingCardSkeleton({super.key});
+  const _PendingCardSkeleton();
 
   @override
   Widget build(BuildContext context) {
@@ -858,7 +862,7 @@ class _PendingCardSkeleton extends StatelessWidget {
 /// Meniru [IndentApprovalCard]: tanggal + jam, judul + badge, lokasi,
 /// keterangan, pemisah, dua tombol keputusan.
 class _ApprovalCardSkeleton extends StatelessWidget {
-  const _ApprovalCardSkeleton({super.key});
+  const _ApprovalCardSkeleton();
 
   @override
   Widget build(BuildContext context) {
@@ -907,7 +911,7 @@ class _ApprovalCardSkeleton extends StatelessWidget {
 /// Meniru [IndentRequestRow]: judul + status, keterangan, lalu dua baris
 /// info (tanggal / driver).
 class _RequestRowSkeleton extends StatelessWidget {
-  const _RequestRowSkeleton({super.key});
+  const _RequestRowSkeleton();
 
   @override
   Widget build(BuildContext context) {
