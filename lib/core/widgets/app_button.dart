@@ -41,11 +41,11 @@ class AppButton extends StatelessWidget {
       case AppButtonVariant.primaryGradient:
         return (bg: AppColors.primary, fg: Colors.white, border: null);
       case AppButtonVariant.secondary:
-        return (bg: AppColors.primaryLight, fg: AppColors.primaryMid, border: AppColors.border);
+        return (bg: AppColors.primaryLight, fg: AppColors.primaryMidText, border: AppColors.border);
       case AppButtonVariant.accent:
         return (bg: AppColors.accent, fg: Colors.white, border: null);
       case AppButtonVariant.ghost:
-        return (bg: Colors.transparent, fg: AppColors.primaryMid, border: AppColors.primaryMid);
+        return (bg: Colors.transparent, fg: AppColors.primaryMidText, border: AppColors.primaryMidText);
       case AppButtonVariant.danger:
         return (bg: AppColors.rejectedBg, fg: AppColors.rejected, border: AppColors.rejected);
       case AppButtonVariant.green:

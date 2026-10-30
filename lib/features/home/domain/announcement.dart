@@ -22,7 +22,7 @@ class AnnouncementTag {
 
   static AnnouncementTag get hr => AnnouncementTag(
     label: 'HR',
-    color: AppColors.primary,
+    color: AppColors.primaryText,
     background: AppColors.primaryLight,
   );
 
@@ -41,7 +41,7 @@ class AnnouncementTag {
   /// Palet warna badge. API departemen tidak mengirim warna, jadi dipilih
   /// di sisi aplikasi.
   static List<({Color color, Color background})> get _palette => [
-    (color: AppColors.primary, background: AppColors.primaryLight),
+    (color: AppColors.primaryText, background: AppColors.primaryLight),
     (color: AppColors.accent, background: AppColors.accentBg),
     (color: AppColors.violet, background: AppColors.violetBg),
     (color: AppColors.teal, background: AppColors.tealBg),

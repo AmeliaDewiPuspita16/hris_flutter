@@ -50,14 +50,14 @@ class SectionHeader extends StatelessWidget {
                     actionLabel!,
                     style: TextStyle(
                       fontFamily: AppTextStyles.fontFamily,
-                      color: AppColors.primaryMid,
+                      color: AppColors.primaryMidText,
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                   if (actionIcon != null) ...[
                     const SizedBox(width: 4),
-                    Icon(actionIcon, size: 13, color: AppColors.primaryMid),
+                    Icon(actionIcon, size: 13, color: AppColors.primaryMidText),
                   ],
                 ],
               ),

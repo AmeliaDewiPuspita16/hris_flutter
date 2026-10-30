@@ -85,7 +85,7 @@ class _RejectDialogState extends State<_RejectDialog> {
           fillColor: AppColors.card,
           border: _border(AppColors.border),
           enabledBorder: _border(AppColors.border),
-          focusedBorder: _border(AppColors.primaryMid),
+          focusedBorder: _border(AppColors.primaryMidText),
         ),
       ),
     );

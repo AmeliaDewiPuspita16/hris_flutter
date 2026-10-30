@@ -154,14 +154,14 @@ class _HierarchyBadge extends StatelessWidget {
   /// belum dikenal jatuh ke [AppColors.neutral]/[AppColors.neutralBg]
   /// supaya badge baru dari data API nanti tetap aman tampil, bukan error.
   static Map<String, (Color, Color)> get _palette => {
-    'IMS': (AppColors.primary, AppColors.primaryLight),
+    'IMS': (AppColors.primaryText, AppColors.primaryLight),
     'HSE': (AppColors.itRequest, AppColors.itRequestBg),
     'EST': (AppColors.estRequest, AppColors.estRequestBg),
     'CDD': (AppColors.teal, AppColors.tealBg),
     'AML': (AppColors.violet, AppColors.violetBg),
     'POD': (AppColors.orange, AppColors.orangeBg),
     'SSD': (AppColors.accent, AppColors.accentBg),
-    'HR & GA': (AppColors.primaryMid, AppColors.primaryLight),
+    'HR & GA': (AppColors.primaryText, AppColors.primaryLight),
     'GMO': (AppColors.present, AppColors.presentBg),
     'ITM': (AppColors.pending, AppColors.pendingBg),
     'CRS': (AppColors.rejected, AppColors.rejectedBg),

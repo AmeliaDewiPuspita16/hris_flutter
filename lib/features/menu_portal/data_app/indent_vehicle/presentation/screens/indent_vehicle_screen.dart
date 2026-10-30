@@ -453,7 +453,7 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
       floatingActionButton: _activeTab == IndentTab.requests
           ? FloatingActionButton(
               onPressed: _addIndent,
-              backgroundColor: AppColors.orange,
+              backgroundColor: AppColors.solid(AppColors.orange),
               foregroundColor: Colors.white,
               tooltip: 'Add Indent',
               child: const Icon(Icons.add),

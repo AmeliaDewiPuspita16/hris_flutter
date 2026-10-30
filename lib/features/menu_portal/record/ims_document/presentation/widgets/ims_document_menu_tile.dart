@@ -54,7 +54,7 @@ class _GoButton extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: AppColors.presentMid,
+          color: AppColors.solid(AppColors.presentMid),
           borderRadius: BorderRadius.circular(8),
         ),
         child: const Text(

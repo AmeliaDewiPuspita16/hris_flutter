@@ -80,9 +80,9 @@ class HseChoiceChipGroup extends StatelessWidget {
                     color: selected.contains(option) ? Colors.white : AppColors.textMid,
                   ),
                   backgroundColor: AppColors.card,
-                  selectedColor: AppColors.primaryMid,
+                  selectedColor: AppColors.primaryMidText,
                   side: BorderSide(
-                    color: selected.contains(option) ? AppColors.primaryMid : AppColors.border,
+                    color: selected.contains(option) ? AppColors.primaryMidText : AppColors.border,
                   ),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                   showCheckmark: false,
@@ -118,7 +118,7 @@ class _ReadOnlyChip extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primaryMid),
+        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primaryMidText),
       ),
     );
   }

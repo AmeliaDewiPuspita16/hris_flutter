@@ -416,7 +416,7 @@ class _ProfilView extends StatelessWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(Icons.badge,
-                              size: 15, color: AppColors.primaryMid),
+                              size: 15, color: AppColors.primaryMidText),
                           const SizedBox(width: 6),
                           Text(
                             'Emp. ID: ${user?.nik ?? p.nip}',

@@ -157,7 +157,7 @@ class ItRequestCard extends StatelessWidget {
     if (_hasAny(category, const ['meeting', 'event', 'zoom'])) {
       return (AppColors.violet, AppColors.violetBg);
     }
-    return (AppColors.primaryMid, AppColors.primaryLight);
+    return (AppColors.primaryMidText, AppColors.primaryLight);
   }
 
   /// Ikon ditebak dari label kategori dari server (bukan kode tetap), jadi

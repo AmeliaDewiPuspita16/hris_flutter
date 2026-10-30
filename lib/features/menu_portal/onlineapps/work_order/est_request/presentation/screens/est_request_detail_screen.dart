@@ -464,7 +464,7 @@ class _ActionBar extends StatelessWidget {
                       AppTextStyles.buttonText.copyWith(color: Colors.white),
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.hseRequest,
+                  backgroundColor: AppColors.solid(AppColors.hseRequest),
                   foregroundColor: Colors.white,
                   elevation: 0,
                   shape: RoundedRectangleBorder(

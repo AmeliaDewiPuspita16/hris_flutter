@@ -31,7 +31,7 @@ enum IndentProgressStatus {
   Color get color => switch (this) {
         IndentProgressStatus.onWaiting => AppColors.pending,
         IndentProgressStatus.onProgress => AppColors.inProgress,
-        IndentProgressStatus.done => AppColors.primaryMid,
+        IndentProgressStatus.done => AppColors.primaryMidText,
         IndentProgressStatus.cancelled => AppColors.rejected,
       };
 

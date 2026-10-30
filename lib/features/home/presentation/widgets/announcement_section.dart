@@ -266,7 +266,7 @@ class _AnnouncementError extends StatelessWidget {
                     fontFamily: AppTextStyles.fontFamily,
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.primaryMid,
+                    color: AppColors.primaryMidText,
                   ),
                 ),
               ),

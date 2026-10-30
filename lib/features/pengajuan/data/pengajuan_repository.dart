@@ -46,7 +46,7 @@ class PengajuanRepository {
         used: 4,
         total: 12,
         unit: 'Days',
-        color: AppColors.primaryMid,
+        color: AppColors.primaryMidText,
         background: AppColors.primaryLight,
       ),
       LeaveBalance(

@@ -306,7 +306,7 @@ class _CreateAnnouncementSheetState extends State<CreateAnnouncementSheet> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide(color: AppColors.primaryMid, width: 1.5),
+                      borderSide: BorderSide(color: AppColors.primaryMidText, width: 1.5),
                     ),
                   ),
                 ),
@@ -518,11 +518,11 @@ class _AddPhotoButton extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.add_a_photo_outlined, size: 18, color: AppColors.primaryMid),
+            Icon(Icons.add_a_photo_outlined, size: 18, color: AppColors.primaryMidText),
             SizedBox(height: 4),
             Text(
               'Add photo',
-              style: TextStyle(fontSize: 10, color: AppColors.primaryMid),
+              style: TextStyle(fontSize: 10, color: AppColors.primaryMidText),
             ),
           ],
         ),

@@ -79,7 +79,7 @@ class _HseWorkRequestListScreenState extends State<HseWorkRequestListScreen> {
       // supaya konsisten di seluruh modul Work Order.
       floatingActionButton: FloatingActionButton(
         onPressed: _openForm,
-        backgroundColor: AppColors.orange,
+        backgroundColor: AppColors.solid(AppColors.orange),
         foregroundColor: Colors.white,
         tooltip: 'Add Request',
         child: const Icon(Icons.add),

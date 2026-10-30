@@ -30,7 +30,7 @@ class NotificationCategory {
   static NotificationCategory get approval => NotificationCategory(
     label: 'Approval',
     icon: Icons.task_alt,
-    color: AppColors.primary,
+    color: AppColors.primaryText,
     background: AppColors.primaryLight,
   );
 

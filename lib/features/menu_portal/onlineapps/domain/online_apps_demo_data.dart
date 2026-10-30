@@ -69,7 +69,7 @@ class OnlineAppsDemoData {
           icon: Icons.build_outlined,
           label: 'Work Order',
           department: 'Engineering Dept',
-          color: AppColors.primary,
+          color: AppColors.primaryText,
           background: AppColors.primaryLight,
           onTap: onWorkOrder,
         ),

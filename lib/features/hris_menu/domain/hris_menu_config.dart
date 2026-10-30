@@ -83,7 +83,7 @@ class HrisMenuConfig {
           label: 'Attendance Log',
           icon: Icons.fingerprint,
           group: HrisMenuGroup.attendance,
-          color: AppColors.primaryMid,
+          color: AppColors.primaryMidText,
           background: AppColors.primaryLight,
           onTap: onAttendance,
         ),
@@ -147,7 +147,7 @@ class HrisMenuConfig {
           label: 'Leave Approvals',
           icon: Icons.task_alt,
           group: HrisMenuGroup.leave,
-          color: AppColors.primary,
+          color: AppColors.primaryText,
           background: AppColors.primaryLight,
           onTap: onApprovals,
           // Belum terhubung API (masih data contoh).
@@ -199,7 +199,7 @@ class HrisMenuConfig {
           label: 'Manage Team',
           icon: Icons.groups_outlined,
           group: HrisMenuGroup.team,
-          color: AppColors.primaryMid,
+          color: AppColors.primaryMidText,
           background: AppColors.primaryLight,
           onTap: onManageTeam,
           // Belum terhubung API (masih data contoh).

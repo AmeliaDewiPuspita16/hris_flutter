@@ -185,7 +185,7 @@ class _LeaveApprovalViewState extends State<_LeaveApprovalView> {
                 SnackBar(
                   content: Text(feedback.message),
                   behavior: SnackBarBehavior.floating,
-                  backgroundColor: feedback.isError ? AppColors.rejected : null,
+                  backgroundColor: feedback.isError ? AppColors.solid(AppColors.rejected) : null,
                 ),
               );
 
@@ -230,7 +230,7 @@ class _LeaveApprovalViewState extends State<_LeaveApprovalView> {
         {int badge = 0}) {
       final active = _tab == tab;
       final foreground =
-          active ? AppColors.primary : Colors.white.withValues(alpha: 0.75);
+          active ? AppColors.primaryText : Colors.white.withValues(alpha: 0.75);
 
       return Expanded(
         child: InkWell(
@@ -265,7 +265,7 @@ class _LeaveApprovalViewState extends State<_LeaveApprovalView> {
                     padding: const EdgeInsets.symmetric(horizontal: 5),
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: AppColors.rejected,
+                      color: AppColors.badge,
                       borderRadius: BorderRadius.circular(9),
                     ),
                     child: Text(
@@ -419,7 +419,7 @@ class _LeaveApprovalViewState extends State<_LeaveApprovalView> {
           duration: const Duration(milliseconds: 150),
           height: 38,
           decoration: BoxDecoration(
-            color: active ? color : AppColors.card,
+            color: active ? AppColors.solid(color) : AppColors.card,
             borderRadius: BorderRadius.circular(20),
           ),
           child: Row(

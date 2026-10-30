@@ -61,7 +61,7 @@ class HomeBottomNav extends StatelessWidget {
       currentIndex: activeTab.index,
       onTap: (index) => onChanged(MainTab.values[index]),
       type: BottomNavigationBarType.fixed,
-      selectedItemColor: AppColors.primary,
+      selectedItemColor: AppColors.primaryText,
       unselectedItemColor: AppColors.textMuted,
       selectedLabelStyle: const TextStyle(
         fontSize: 9.5,

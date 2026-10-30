@@ -203,7 +203,7 @@ class _PrDetailViewState extends State<_PrDetailView> {
             SnackBar(
               content: Text(feedback.message),
               backgroundColor:
-                  feedback.isError ? AppColors.rejected : AppColors.primary,
+                  feedback.isError ? AppColors.solid(AppColors.rejected) : AppColors.primary,
               behavior: SnackBarBehavior.floating,
             ),
           );

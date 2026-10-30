@@ -249,7 +249,7 @@ class _EstRequestScreenState extends State<EstRequestScreen> {
       // (requester wajib memberi rating dulu) begitu rating tersambung.
       floatingActionButton: FloatingActionButton(
         onPressed: _addRequest,
-        backgroundColor: AppColors.orange,
+        backgroundColor: AppColors.solid(AppColors.orange),
         foregroundColor: Colors.white,
         tooltip: 'Add Request',
         child: const Icon(Icons.add),

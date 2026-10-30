@@ -71,7 +71,7 @@ class KeepSignedInRow extends StatelessWidget {
               fontFamily: AppTextStyles.fontFamily,
               fontSize: 13,
               fontWeight: FontWeight.w600,
-              color: AppColors.primaryMid,
+              color: AppColors.primaryMidText,
             ),
           ),
         ),

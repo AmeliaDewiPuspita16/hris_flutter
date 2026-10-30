@@ -88,7 +88,7 @@ class EstDeleteDialog extends StatelessWidget {
                     child: ElevatedButton(
                       onPressed: () => Navigator.of(context).pop(true),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.hseRequest,
+                        backgroundColor: AppColors.solid(AppColors.hseRequest),
                         foregroundColor: Colors.white,
                         elevation: 0,
                         shape: RoundedRectangleBorder(

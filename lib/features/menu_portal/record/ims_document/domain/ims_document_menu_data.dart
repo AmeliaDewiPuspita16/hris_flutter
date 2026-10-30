@@ -25,7 +25,7 @@ class ImsDocumentMenuData {
           icon: Icons.folder_open_outlined,
           label: 'Master Document File',
           description: 'Manual, SOP, WI, Form, ANNEX, Form Template',
-          color: AppColors.primary,
+          color: AppColors.primaryText,
           background: AppColors.primaryLight,
           onTap: onMasterDocumentFile,
         ),

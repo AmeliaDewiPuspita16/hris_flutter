@@ -66,7 +66,7 @@ class _FilterTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = isActive ? AppColors.primary : AppColors.textMuted;
+    final color = isActive ? AppColors.primaryText : AppColors.textMuted;
 
     return InkWell(
       onTap: onTap,

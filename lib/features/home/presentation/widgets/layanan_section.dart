@@ -42,10 +42,10 @@ class LayananSection extends StatelessWidget {
                             fontFamily: AppTextStyles.fontFamily,
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
-                            color: AppColors.primaryMid,
+                            color: AppColors.primaryMidText,
                           ),
                         ),
-                        Icon(Icons.chevron_right, size: 16, color: AppColors.primaryMid),
+                        Icon(Icons.chevron_right, size: 16, color: AppColors.primaryMidText),
                       ],
                     ),
                   ),
@@ -80,10 +80,14 @@ class _ServiceCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final featured = service.featured;
-    final iconColor = featured ? AppColors.primaryMid : service.color;
+    final iconColor = featured
+        ? AppColors.primaryMidText
+        : (AppColors.isDark ? AppColors.onDark(service.color) : service.color);
     final titleColor = featured ? Colors.white : AppColors.text;
     final subtitleColor = featured ? Colors.white.withValues(alpha: 0.75) : AppColors.textMuted;
-    final chevronColor = featured ? AppColors.primary : service.color;
+    final chevronColor = featured
+        ? AppColors.primary
+        : (AppColors.isDark ? AppColors.onDark(service.color) : service.color);
 
     return TapFade(
       onTap: service.onTap,

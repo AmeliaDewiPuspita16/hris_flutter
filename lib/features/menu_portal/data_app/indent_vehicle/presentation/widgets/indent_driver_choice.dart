@@ -57,7 +57,7 @@ class _Option extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = selected ? AppColors.primary : AppColors.textMid;
+    final color = selected ? AppColors.primaryText : AppColors.textMid;
 
     return InkWell(
       onTap: onTap,

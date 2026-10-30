@@ -572,7 +572,7 @@ class _StepIndicator extends StatelessWidget {
   Widget _dot(int n, String label) {
     final done = step > n;
     final active = step == n;
-    final color = done || active ? AppColors.primary : AppColors.textMuted;
+    final color = done || active ? AppColors.primaryText : AppColors.textMuted;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [

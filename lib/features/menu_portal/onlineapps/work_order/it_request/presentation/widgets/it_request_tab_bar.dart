@@ -70,7 +70,7 @@ class ItRequestTabBar extends StatelessWidget {
                     Icon(
                       icon,
                       size: 16,
-                      color: active ? Colors.white : AppColors.primaryMid,
+                      color: active ? Colors.white : AppColors.primaryMidText,
                     ),
                     const SizedBox(width: 6),
                   ],
@@ -88,7 +88,7 @@ class ItRequestTabBar extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
                       decoration: BoxDecoration(
-                        color: AppColors.rejected,
+                        color: AppColors.badge,
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Text(

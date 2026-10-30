@@ -50,7 +50,7 @@ class AppDateField extends StatelessWidget {
               color: AppColors.card,
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
-                color: hasValue ? AppColors.primaryMid : AppColors.border,
+                color: hasValue ? AppColors.primaryMidText : AppColors.border,
                 width: 1.5,
               ),
             ),
@@ -59,7 +59,7 @@ class AppDateField extends StatelessWidget {
                 Icon(
                   Icons.calendar_month_outlined,
                   size: 18,
-                  color: hasValue ? AppColors.primaryMid : AppColors.textMuted,
+                  color: hasValue ? AppColors.primaryMidText : AppColors.textMuted,
                 ),
                 const SizedBox(width: 10),
                 Text(
@@ -142,7 +142,7 @@ class _DateCalendarSheetState extends State<_DateCalendarSheet> {
                 defaultTextStyle: TextStyle(fontSize: 13),
                 weekendTextStyle: TextStyle(fontSize: 13),
                 todayDecoration: BoxDecoration(
-                  border: Border.fromBorderSide(BorderSide(color: AppColors.primaryMid, width: 1.5)),
+                  border: Border.fromBorderSide(BorderSide(color: AppColors.primaryMidText, width: 1.5)),
                   shape: BoxShape.circle,
                 ),
                 todayTextStyle: TextStyle(color: AppColors.primaryText, fontSize: 13),

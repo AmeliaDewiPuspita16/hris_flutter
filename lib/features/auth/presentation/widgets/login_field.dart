@@ -66,7 +66,7 @@ class _LoginFieldState extends State<LoginField> {
     final accent = hasError
         ? AppColors.rejected
         : _focused
-            ? AppColors.primary
+            ? AppColors.primaryText
             : null;
 
     return Column(

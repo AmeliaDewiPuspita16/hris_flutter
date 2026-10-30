@@ -61,7 +61,7 @@ class _StepRow extends StatelessWidget {
                     child: Container(
                       width: 2,
                       margin: const EdgeInsets.symmetric(vertical: 2),
-                      color: _isDone ? AppColors.primaryMid : AppColors.border,
+                      color: _isDone ? AppColors.primaryMidText : AppColors.border,
                     ),
                   ),
               ],

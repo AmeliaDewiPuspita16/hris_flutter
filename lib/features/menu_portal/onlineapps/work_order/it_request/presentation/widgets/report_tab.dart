@@ -365,7 +365,7 @@ class _AvgResponseCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.violet,
+        color: AppColors.solid(AppColors.violet),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(

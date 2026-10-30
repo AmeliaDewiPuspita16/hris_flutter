@@ -46,7 +46,7 @@ class ReasonField extends StatelessWidget {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide(color: AppColors.primaryMid, width: 1.5),
+              borderSide: BorderSide(color: AppColors.primaryMidText, width: 1.5),
             ),
           ),
         ),

@@ -50,7 +50,7 @@ class AppTimeField extends StatelessWidget {
               color: AppColors.card,
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
-                color: value != null ? AppColors.primaryMid : AppColors.border,
+                color: value != null ? AppColors.primaryMidText : AppColors.border,
                 width: 1.5,
               ),
             ),
@@ -60,7 +60,7 @@ class AppTimeField extends StatelessWidget {
                 Icon(
                   Icons.access_time_outlined,
                   size: 16,
-                  color: value != null ? AppColors.primaryMid : AppColors.textMuted,
+                  color: value != null ? AppColors.primaryMidText : AppColors.textMuted,
                 ),
                 const SizedBox(width: 8),
                 Text(

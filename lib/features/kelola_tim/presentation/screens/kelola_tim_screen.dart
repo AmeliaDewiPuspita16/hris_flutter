@@ -102,7 +102,7 @@ class _KelolaTimScreenState extends State<KelolaTimScreen> {
                                 decoration: BoxDecoration(color: AppColors.primaryLight, shape: BoxShape.circle),
                                 child: Text(
                                   m.name.trim().isNotEmpty ? m.name.trim()[0].toUpperCase() : '?',
-                                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.primaryMid),
+                                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.primaryMidText),
                                 ),
                               ),
                               const SizedBox(width: 12),
@@ -120,7 +120,7 @@ class _KelolaTimScreenState extends State<KelolaTimScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.end,
                                 children: [
                                   Text(m.leaveRemaining.toStringAsFixed(m.leaveRemaining.truncateToDouble() == m.leaveRemaining ? 0 : 1),
-                                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.primaryMid)),
+                                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.primaryMidText)),
                                   Text('sisa cuti', style: TextStyle(fontSize: 9, color: AppColors.textMuted)),
                                 ],
                               ),

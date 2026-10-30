@@ -42,7 +42,7 @@ class ChooseRequestTypeSheet extends StatelessWidget {
             const SizedBox(height: 12),
             _OptionTile(
               icon: Icons.desktop_windows_outlined,
-              color: AppColors.primary,
+              color: AppColors.primaryText,
               background: AppColors.primaryLight,
               title: 'IT Request',
               subtitle: 'Design, photo, troubleshooting PC, etc.',

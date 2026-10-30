@@ -211,6 +211,10 @@ class AppColors {
   /// seperti mockup supaya header tidak menyala.
   static Color get primary => _p.primary;
 
+  /// [primaryMid] untuk TEKS/ikon: sama di mode terang, hijau terang di mode
+  /// gelap (primaryMid gelap hanya cocok sebagai ujung gradient latar).
+  static Color get primaryMidText => isDark ? primaryText : primaryMid;
+
   /// Hijau untuk TEKS, ikon, garis, dan tint di atas permukaan. Di mode
   /// terang sama dengan [primary]; di mode gelap diterangkan agar terbaca.
   static Color get primaryText => _p.primaryText;
@@ -280,6 +284,19 @@ class AppColors {
         // Mode gelap memakai hijau hero (lebih pekat) seperti mockup.
         colors: isDark ? [heroGreen, heroGreenMid] : [primary, primaryMid],
       );
+
+  /// Versi "latar solid" dari sebuah warna status. Di mode gelap token status
+  /// (pending, rejected, orange, ...) berupa pastel agar terbaca sebagai teks;
+  /// bila dipakai sebagai LATAR tombol/chip dengan teks putih, warnanya perlu
+  /// digelapkan (hue tetap). Di mode terang dikembalikan apa adanya.
+  static Color solid(Color c) {
+    if (!isDark) return c;
+    final hsl = HSLColor.fromColor(c);
+    return hsl
+        .withLightness(hsl.lightness > 0.32 ? 0.32 : hsl.lightness)
+        .withSaturation(hsl.saturation > 0.7 ? 0.7 : hsl.saturation)
+        .toColor();
+  }
 
   /// Latar badge angka merah (pengganti [rejected] yang terlalu pucat di
   /// mode gelap untuk teks putih).

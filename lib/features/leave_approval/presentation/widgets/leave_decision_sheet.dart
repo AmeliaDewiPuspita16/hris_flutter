@@ -60,7 +60,8 @@ class _LeaveDecisionSheetState extends State<_LeaveDecisionSheet> {
   @override
   Widget build(BuildContext context) {
     final request = widget.request;
-    final accent = _isApprove ? AppColors.primary : AppColors.rejected;
+    final accent =
+        _isApprove ? AppColors.primary : AppColors.solid(AppColors.rejected);
 
     return Padding(
       // Naik mengikuti keyboard supaya kolom catatan tidak ketutupan.

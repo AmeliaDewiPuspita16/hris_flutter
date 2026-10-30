@@ -192,7 +192,7 @@ class _ItFormAndMediaViewState extends State<_ItFormAndMediaView> {
           floatingActionButton: showFab
               ? FloatingActionButton(
                   onPressed: _addRequest,
-                  backgroundColor: AppColors.orange,
+                  backgroundColor: AppColors.solid(AppColors.orange),
                   foregroundColor: Colors.white,
                   tooltip: 'Add Request',
                   child: const Icon(Icons.add),

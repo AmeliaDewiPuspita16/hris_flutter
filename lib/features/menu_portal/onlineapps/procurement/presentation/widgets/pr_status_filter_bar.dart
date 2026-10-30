@@ -88,13 +88,13 @@ class _FilterChip extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 14),
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: active ? color : AppColors.card,
+          color: active ? AppColors.solid(color) : AppColors.card,
           borderRadius: BorderRadius.circular(22),
           border: active ? null : Border.all(color: AppColors.border),
           boxShadow: active
               ? [
                   BoxShadow(
-                    color: color.withValues(alpha: 0.25),
+                    color: AppColors.solid(color).withValues(alpha: 0.25),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),

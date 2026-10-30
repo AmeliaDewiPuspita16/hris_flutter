@@ -168,7 +168,7 @@ class _BalanceCard extends StatelessWidget {
                 minHeight: 6,
                 backgroundColor: AppColors.border,
                 valueColor: AlwaysStoppedAnimation<Color>(
-                  AppColors.primary,
+                  AppColors.primaryText,
                 ),
               ),
             ),

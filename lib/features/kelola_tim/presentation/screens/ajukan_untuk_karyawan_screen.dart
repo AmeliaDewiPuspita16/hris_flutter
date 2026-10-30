@@ -197,7 +197,7 @@ class _AjukanUntukKaryawanScreenState extends State<AjukanUntukKaryawanScreen> {
             height: 42,
             alignment: Alignment.center,
             decoration: BoxDecoration(color: AppColors.card, shape: BoxShape.circle),
-            child: Text(m.name.trim()[0].toUpperCase(), style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.primaryMid)),
+            child: Text(m.name.trim()[0].toUpperCase(), style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.primaryMidText)),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -213,7 +213,7 @@ class _AjukanUntukKaryawanScreenState extends State<AjukanUntukKaryawanScreen> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text('${m.leaveRemaining.toStringAsFixed(m.leaveRemaining.truncateToDouble() == m.leaveRemaining ? 0 : 1)} hari', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.primaryMid)),
+              Text('${m.leaveRemaining.toStringAsFixed(m.leaveRemaining.truncateToDouble() == m.leaveRemaining ? 0 : 1)} hari', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppColors.primaryMidText)),
               Text('sisa dr ${m.leavePlafond.toStringAsFixed(0)} plafond', style: TextStyle(fontSize: 9.5, color: AppColors.textMuted)),
             ],
           ),
@@ -240,7 +240,7 @@ class _AjukanUntukKaryawanScreenState extends State<AjukanUntukKaryawanScreen> {
             contentPadding: const EdgeInsets.all(12),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppColors.border, width: 1.5)),
             enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppColors.border, width: 1.5)),
-            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppColors.primaryMid, width: 1.5)),
+            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppColors.primaryMidText, width: 1.5)),
           ),
         ),
       ],
