@@ -43,7 +43,7 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen> {
   /// TODO(api): hapus begitu Master Edited File punya endpoint PDF.
   static const _sampleAsset = 'assets/documents/sample_document.pdf';
 
-  static const _params = PdfViewerParams(
+  static PdfViewerParams get _params => PdfViewerParams(
     backgroundColor: AppColors.bg,
     margin: 12,
     textSelectionParams: PdfTextSelectionParams(enabled: false),
@@ -127,7 +127,7 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen> {
 
           final bytes = snapshot.data;
           if (bytes == null) {
-            return const Center(child: CircularProgressIndicator(color: AppColors.primary));
+            return Center(child: CircularProgressIndicator(color: AppColors.primaryText));
           }
 
           return PdfViewer.data(

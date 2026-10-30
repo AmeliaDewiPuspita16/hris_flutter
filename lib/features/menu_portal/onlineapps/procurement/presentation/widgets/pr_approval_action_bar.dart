@@ -28,12 +28,12 @@ class PrApprovalActionBar extends StatelessWidget {
   final bool enabled;
   final VoidCallback? onLockedTap;
 
-  static const _red = AppColors.rejected;
-  static const _amber = AppColors.accent;
+  static Color get _red => AppColors.rejected;
+  static Color get _amber => AppColors.accent;
   // Emas lebih gelap khusus teks, karena AppColors.accent di atas putih kurang terbaca.
-  static const _amberText = Color(0xFF8F6F1E);
-  static const _green = AppColors.primary;
-  static const _disabledBorder = Color(0xFFD9D8D2);
+  static Color get _amberText => AppColors.isDark ? AppColors.accentLight : Color(0xFF8F6F1E);
+  static Color get _green => AppColors.primary;
+  static Color get _disabledBorder => AppColors.isDark ? AppColors.border : Color(0xFFD9D8D2);
 
   @override
   Widget build(BuildContext context) {
@@ -68,7 +68,7 @@ class PrApprovalActionBar extends StatelessWidget {
                     : InkWell(
                         onTap: onLockedTap,
                         borderRadius: BorderRadius.circular(8),
-                        child: const Padding(
+                        child: Padding(
                           padding: EdgeInsets.only(bottom: 10),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
@@ -98,8 +98,8 @@ class PrApprovalActionBar extends StatelessWidget {
                       onPressed: active ? onReject : null,
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(horizontal: 8),
-                        backgroundColor: Colors.white,
-                        disabledBackgroundColor: Colors.white,
+                        backgroundColor: AppColors.card,
+                        disabledBackgroundColor: AppColors.card,
                         elevation: 1,
                         shadowColor: Colors.black26,
                         foregroundColor: _red,
@@ -124,8 +124,8 @@ class PrApprovalActionBar extends StatelessWidget {
                       onPressed: active ? onRevision : null,
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(horizontal: 8),
-                        backgroundColor: Colors.white,
-                        disabledBackgroundColor: Colors.white,
+                        backgroundColor: AppColors.card,
+                        disabledBackgroundColor: AppColors.card,
                         elevation: 1,
                         shadowColor: Colors.black26,
                         foregroundColor: _amberText,

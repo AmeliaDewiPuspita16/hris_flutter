@@ -118,7 +118,7 @@ class _OvertimeRequestScreenState extends State<OvertimeRequestScreen> {
             duration: const Duration(milliseconds: 150),
             padding: const EdgeInsets.symmetric(vertical: 9),
             decoration: BoxDecoration(
-              color: active ? Colors.white : Colors.transparent,
+              color: active ? AppColors.card : Colors.transparent,
               borderRadius: BorderRadius.circular(20),
             ),
             child: Row(
@@ -127,7 +127,7 @@ class _OvertimeRequestScreenState extends State<OvertimeRequestScreen> {
                 Icon(
                   icon,
                   size: 14,
-                  color: active ? AppColors.primary : Colors.white.withValues(alpha: 0.75),
+                  color: active ? AppColors.primaryText : Colors.white.withValues(alpha: 0.75),
                 ),
                 const SizedBox(width: 5),
                 Text(
@@ -135,7 +135,7 @@ class _OvertimeRequestScreenState extends State<OvertimeRequestScreen> {
                   style: TextStyle(
                     fontSize: 12.5,
                     fontWeight: FontWeight.w700,
-                    color: active ? AppColors.primary : Colors.white.withValues(alpha: 0.75),
+                    color: active ? AppColors.primaryText : Colors.white.withValues(alpha: 0.75),
                   ),
                 ),
               ],
@@ -147,7 +147,7 @@ class _OvertimeRequestScreenState extends State<OvertimeRequestScreen> {
 
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 18),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: AppColors.primary,
         borderRadius: BorderRadius.vertical(bottom: Radius.circular(28)),
       ),

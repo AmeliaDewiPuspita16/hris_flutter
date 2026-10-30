@@ -53,7 +53,7 @@ class _MasterDocumentFileScreenState extends State<MasterDocumentFileScreen> {
 
           final categories = snapshot.data;
           if (categories == null) {
-            return const Center(child: CircularProgressIndicator(color: AppColors.primary));
+            return Center(child: CircularProgressIndicator(color: AppColors.primaryText));
           }
 
           if (categories.isEmpty) {

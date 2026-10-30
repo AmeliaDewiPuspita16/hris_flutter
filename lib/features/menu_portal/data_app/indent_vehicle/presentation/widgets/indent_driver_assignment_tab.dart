@@ -33,7 +33,7 @@ class IndentDriverAssignmentTab extends StatelessWidget {
           // bisa dipakai saat daftar kosong.
           ? ListView(
               physics: const AlwaysScrollableScrollPhysics(),
-              children: const [
+              children: [
                 SizedBox(height: 120),
                 Center(
                   child: Text(
@@ -104,7 +104,7 @@ class _AssignedCardState extends State<_AssignedCard> {
                 width: 40,
                 height: 40,
                 alignment: Alignment.center,
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   color: AppColors.primaryLight,
                   shape: BoxShape.circle,
                 ),
@@ -112,7 +112,7 @@ class _AssignedCardState extends State<_AssignedCard> {
                   _initials(item.name),
                   style: AppTextStyles.body.copyWith(
                     fontWeight: FontWeight.w700,
-                    color: AppColors.primary,
+                    color: AppColors.primaryText,
                   ),
                 ),
               ),
@@ -136,7 +136,7 @@ class _AssignedCardState extends State<_AssignedCard> {
                     const SizedBox(height: 3),
                     Row(
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.place_outlined,
                           size: 14,
                           color: AppColors.textMuted,
@@ -258,17 +258,17 @@ class _PlateChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(
+          Icon(
             Icons.directions_car_outlined,
             size: 14,
-            color: AppColors.primary,
+            color: AppColors.primaryText,
           ),
           const SizedBox(width: 4),
           Text(
             plate,
             style: AppTextStyles.caption.copyWith(
               fontWeight: FontWeight.w700,
-              color: AppColors.primary,
+              color: AppColors.primaryText,
             ),
           ),
         ],

@@ -30,7 +30,7 @@ class PrDetailHero extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Est. Total',
                   style: TextStyle(fontSize: 11, color: AppColors.bannerAccent),
                 ),

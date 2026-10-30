@@ -94,19 +94,19 @@ class _IndentAssignSheetState extends State<IndentAssignSheet> {
         hintText: hint,
         hintStyle: AppTextStyles.body.copyWith(color: AppColors.textMuted),
         filled: true,
-        fillColor: Colors.white,
+        fillColor: AppColors.card,
         contentPadding: const EdgeInsets.all(12),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: AppColors.border, width: 1.5),
+          borderSide: BorderSide(color: AppColors.border, width: 1.5),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: AppColors.border, width: 1.5),
+          borderSide: BorderSide(color: AppColors.border, width: 1.5),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: AppColors.primaryMid, width: 1.5),
+          borderSide: BorderSide(color: AppColors.primaryMid, width: 1.5),
         ),
       );
 
@@ -138,7 +138,7 @@ class _IndentAssignSheetState extends State<IndentAssignSheet> {
                   ),
                 ),
               ),
-              const Text('Assign Vehicle', style: AppTextStyles.sectionTitle),
+              Text('Assign Vehicle', style: AppTextStyles.sectionTitle),
               const SizedBox(height: 4),
               Text(
                 '${widget.item.name} · ${widget.item.destination}',
@@ -189,11 +189,11 @@ class _IndentAssignSheetState extends State<IndentAssignSheet> {
                   DropdownButtonFormField<IndentDriver>(
                     value: _driver,
                     isExpanded: true,
-                    icon: const Icon(
+                    icon: Icon(
                       Icons.keyboard_arrow_down,
                       color: AppColors.textMuted,
                     ),
-                    dropdownColor: Colors.white,
+                    dropdownColor: AppColors.card,
                     borderRadius: BorderRadius.circular(10),
                     style: AppTextStyles.body,
                     decoration: _decoration('-- Select Driver --'),

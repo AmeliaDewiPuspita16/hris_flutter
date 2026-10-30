@@ -28,14 +28,14 @@ class LoginAltButton extends StatelessWidget {
           // Padding & radius disamakan dengan AppButton supaya tinggi tombol
           // ini sejajar dengan tombol "Sign in" tepat di atasnya.
           padding: const EdgeInsets.symmetric(vertical: 14),
-          side: const BorderSide(color: AppColors.border, width: 1.5),
+          side: BorderSide(color: AppColors.border, width: 1.5),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
           ),
         ),
         child: Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontFamily: AppTextStyles.fontFamily,
             fontSize: 14,
             fontWeight: FontWeight.w700,

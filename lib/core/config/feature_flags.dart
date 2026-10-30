@@ -27,7 +27,7 @@ class FeatureFlags {
   /// "Soon" (pola sama dengan [recentActivity]). Daftar riwayat bulanan di
   /// bawahnya tidak terpengaruh (sudah dari API).
   /// Ubah ke `true` setelah `fetchBalances` memakai endpoint sungguhan.
-  static const leaveBalance = false;
+  static const leaveBalance = true;
 
   /// Tombol "Submit Request" di Leave Request. Biarkan `false` sampai API
   /// pengajuan tersedia: [PengajuanRepository.submitLeaveRequest] masih dummy

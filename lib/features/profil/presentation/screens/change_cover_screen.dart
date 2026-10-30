@@ -220,8 +220,8 @@ class _ChangeCoverScreenState extends State<ChangeCoverScreen> {
 
   Widget _buildBody() {
     if (_loading) {
-      return const Center(
-          child: CircularProgressIndicator(color: AppColors.primary));
+      return Center(
+          child: CircularProgressIndicator(color: AppColors.primaryText));
     }
     if (_loadError != null) {
       return Center(
@@ -232,7 +232,7 @@ class _ChangeCoverScreenState extends State<ChangeCoverScreen> {
             children: [
               Text(_loadError!,
                   textAlign: TextAlign.center,
-                  style: const TextStyle(color: AppColors.textMid)),
+                  style: TextStyle(color: AppColors.textMid)),
               const SizedBox(height: 12),
               OutlinedButton(onPressed: _load, child: const Text('Try again')),
             ],
@@ -310,7 +310,7 @@ class _ChangeCoverScreenState extends State<ChangeCoverScreen> {
         color: AppColors.card,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
-          color: picked != null ? AppColors.primary : AppColors.border,
+          color: picked != null ? AppColors.primaryText : AppColors.border,
           width: picked != null ? 2 : 1.5,
         ),
       ),
@@ -326,12 +326,12 @@ class _ChangeCoverScreenState extends State<ChangeCoverScreen> {
             const SizedBox(height: 8),
             Text(
               '${picked.width} × ${picked.height} px',
-              style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
+              style: TextStyle(fontSize: 12, color: AppColors.textMuted),
             ),
           ] else ...[
-            const Icon(Icons.cloud_upload, size: 36, color: AppColors.primary),
+            Icon(Icons.cloud_upload, size: 36, color: AppColors.primaryText),
             const SizedBox(height: 6),
-            const Text(
+            Text(
               'Pick an image from your phone',
               style: TextStyle(
                   fontSize: 13.5,
@@ -399,7 +399,7 @@ class _ChangeCoverScreenState extends State<ChangeCoverScreen> {
                 '  —  $_choiceLabel',
                 overflow: TextOverflow.ellipsis,
                 style:
-                    const TextStyle(fontSize: 12.5, color: AppColors.textMuted),
+                    TextStyle(fontSize: 12.5, color: AppColors.textMuted),
               ),
             ),
           ],
@@ -416,24 +416,24 @@ class _ChangeCoverScreenState extends State<ChangeCoverScreen> {
           const SizedBox(height: 14),
           Row(
             children: [
-              const Icon(Icons.zoom_out, size: 20, color: AppColors.primary),
+              Icon(Icons.zoom_out, size: 20, color: AppColors.primaryText),
               Expanded(
                 child: Slider(
                   value: _position.size.clamp(100, _maxZoom).toDouble(),
                   min: 100,
                   max: _maxZoom.toDouble(),
-                  activeColor: AppColors.primary,
+                  activeColor: AppColors.primaryText,
                   onChanged: (v) => setState(
                       () => _position = _position.copyWith(size: v.round())),
                 ),
               ),
-              const Icon(Icons.zoom_in, size: 20, color: AppColors.primary),
+              Icon(Icons.zoom_in, size: 20, color: AppColors.primaryText),
               SizedBox(
                 width: 48,
                 child: Text(
                   '${_position.size}%',
                   textAlign: TextAlign.right,
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 12.5,
                       fontWeight: FontWeight.w600,
                       color: AppColors.textMid),
@@ -448,7 +448,7 @@ class _ChangeCoverScreenState extends State<ChangeCoverScreen> {
                   setState(() => _position = CoverPosition.defaultPosition),
               icon: const Icon(Icons.refresh, size: 18),
               label: const Text('Reset position'),
-              style: TextButton.styleFrom(foregroundColor: AppColors.primary),
+              style: TextButton.styleFrom(foregroundColor: AppColors.primaryText),
             ),
           ),
           const InfoNote(
@@ -474,7 +474,7 @@ class _ChangeCoverScreenState extends State<ChangeCoverScreen> {
     return Container(
       padding: EdgeInsets.fromLTRB(
           20, 12, 20, 12 + MediaQuery.paddingOf(context).bottom),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: AppColors.card,
         border: Border(top: BorderSide(color: AppColors.border)),
       ),
@@ -487,7 +487,7 @@ class _ChangeCoverScreenState extends State<ChangeCoverScreen> {
           if (_step == 2 && _saveError != null) ...[
             Text(_saveError!,
                 style:
-                    const TextStyle(fontSize: 12.5, color: AppColors.rejected)),
+                    TextStyle(fontSize: 12.5, color: AppColors.rejected)),
             const SizedBox(height: 10),
           ],
           Row(
@@ -561,7 +561,7 @@ class _StepIndicator extends StatelessWidget {
               value: step / 2,
               minHeight: 3,
               backgroundColor: AppColors.border,
-              color: AppColors.primary,
+              color: AppColors.primaryText,
             ),
           ),
         ],
@@ -615,13 +615,13 @@ class _SectionTitle extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 18, color: AppColors.primary),
+        Icon(icon, size: 18, color: AppColors.primaryText),
         const SizedBox(width: 6),
         Text(text,
-            style: const TextStyle(
+            style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w700,
-                color: AppColors.primary)),
+                color: AppColors.primaryText)),
       ],
     );
   }
@@ -656,7 +656,7 @@ class _CoverTile extends StatelessWidget {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
-                    color: selected ? AppColors.primary : AppColors.border,
+                    color: selected ? AppColors.primaryText : AppColors.border,
                     width: selected ? 2.5 : 1,
                   ),
                 ),
@@ -692,7 +692,7 @@ class _CoverTile extends StatelessWidget {
               label,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
+              style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                   color: AppColors.text),
@@ -719,8 +719,8 @@ class _OutlineAction extends StatelessWidget {
       icon: Icon(icon, size: 18),
       label: Text(label),
       style: OutlinedButton.styleFrom(
-        foregroundColor: AppColors.primary,
-        side: const BorderSide(color: AppColors.primary),
+        foregroundColor: AppColors.primaryText,
+        side: BorderSide(color: AppColors.primaryText),
         padding: const EdgeInsets.symmetric(vertical: 10),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
@@ -820,7 +820,7 @@ class _ProfilePreview extends StatelessWidget {
                         user.name,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w700,
                             color: AppColors.text),
@@ -828,7 +828,7 @@ class _ProfilePreview extends StatelessWidget {
                       if (user.section != null)
                         Text(
                           user.section!,
-                          style: const TextStyle(
+                          style: TextStyle(
                               fontSize: 12, color: AppColors.textMid),
                         ),
                     ],

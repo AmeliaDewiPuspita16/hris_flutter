@@ -116,7 +116,7 @@ class _CheckRow extends StatelessWidget {
             Icon(
               checked ? Icons.check_box : Icons.check_box_outline_blank,
               size: 20,
-              color: checked ? AppColors.primary : AppColors.textMuted,
+              color: checked ? AppColors.primaryText : AppColors.textMuted,
             ),
             const SizedBox(width: 10),
             Expanded(
@@ -147,7 +147,7 @@ class _ReadOnlyRow extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.check_circle, size: 16, color: AppColors.present),
+          Icon(Icons.check_circle, size: 16, color: AppColors.present),
           const SizedBox(width: 8),
           Expanded(child: Text(label, style: AppTextStyles.body)),
         ],

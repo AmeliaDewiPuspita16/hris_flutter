@@ -14,7 +14,7 @@ Future<PhotoSheetAction?> showPhotoSourceSheet(
 }) {
   return showModalBottomSheet<PhotoSheetAction>(
     context: context,
-    backgroundColor: Colors.white,
+    backgroundColor: AppColors.card,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
     ),
@@ -69,7 +69,7 @@ class _SourceTile extends StatelessWidget {
       leading: Icon(icon, color: AppColors.text, size: 22),
       title: Text(
         label,
-        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.text),
+        style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppColors.text),
       ),
       onTap: onTap,
     );

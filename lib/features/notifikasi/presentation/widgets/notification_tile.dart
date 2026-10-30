@@ -85,7 +85,7 @@ class NotificationTile extends StatelessWidget {
                     subtitle,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontFamily: AppTextStyles.fontFamily,
                       fontSize: 11.5,
                       color: AppColors.textMuted,
@@ -130,7 +130,7 @@ class NotificationTile extends StatelessWidget {
               children: [
                 Text(
                   DateFormatter.relative(notification.createdAt),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: AppTextStyles.fontFamily,
                     fontSize: 10.5,
                     color: AppColors.textMuted,
@@ -141,7 +141,7 @@ class NotificationTile extends StatelessWidget {
                   Container(
                     width: 7,
                     height: 7,
-                    decoration: const BoxDecoration(
+                    decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: AppColors.primary,
                     ),
@@ -184,7 +184,7 @@ class _DecisionButton extends StatelessWidget {
           color: filled ? AppColors.primary : Colors.transparent,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: filled ? AppColors.primary : AppColors.border,
+            color: filled ? AppColors.primaryText : AppColors.border,
           ),
         ),
         child: Row(

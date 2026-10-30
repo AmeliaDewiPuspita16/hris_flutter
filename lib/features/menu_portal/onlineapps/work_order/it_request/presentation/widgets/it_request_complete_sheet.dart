@@ -164,7 +164,7 @@ class _ItRequestCompleteSheetState extends State<ItRequestCompleteSheet> {
                     ),
                   ),
                 ),
-                const Text('Finish Request', style: AppTextStyles.sectionTitle),
+                Text('Finish Request', style: AppTextStyles.sectionTitle),
                 const SizedBox(height: 4),
                 if (detail.requester != null)
                   Text(
@@ -267,7 +267,7 @@ class _PhotoField extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.card,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(color: AppColors.border),
         ),
@@ -284,7 +284,7 @@ class _PhotoField extends StatelessWidget {
               child: Icon(
                 hasFile ? Icons.insert_drive_file_outlined : Icons.image_outlined,
                 size: 16,
-                color: AppColors.primary,
+                color: AppColors.primaryText,
               ),
             ),
             const SizedBox(width: 10),

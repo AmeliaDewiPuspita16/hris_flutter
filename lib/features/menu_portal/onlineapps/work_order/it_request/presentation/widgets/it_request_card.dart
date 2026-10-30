@@ -95,7 +95,7 @@ class ItRequestCard extends StatelessWidget {
                 const SizedBox(height: 8),
                 Row(
                   children: [
-                    const Icon(Icons.calendar_today_outlined,
+                    Icon(Icons.calendar_today_outlined,
                         size: 12, color: AppColors.textMuted),
                     const SizedBox(width: 5),
                     Text(
@@ -107,7 +107,7 @@ class ItRequestCard extends StatelessWidget {
                     // baru kelihatan setelah masuk ke detail.
                     if (item.approval.label.isNotEmpty) ...[
                       const SizedBox(width: 12),
-                      const Icon(Icons.verified_outlined,
+                      Icon(Icons.verified_outlined,
                           size: 12, color: AppColors.textMuted),
                       const SizedBox(width: 5),
                       Flexible(

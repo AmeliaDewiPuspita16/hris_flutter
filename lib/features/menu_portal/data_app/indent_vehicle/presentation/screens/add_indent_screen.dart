@@ -171,19 +171,19 @@ class _AddIndentScreenState extends State<AddIndentScreen> {
         hintText: hint,
         hintStyle: AppTextStyles.body.copyWith(color: AppColors.textMuted),
         filled: true,
-        fillColor: Colors.white,
+        fillColor: AppColors.card,
         contentPadding: const EdgeInsets.all(12),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: AppColors.border, width: 1.5),
+          borderSide: BorderSide(color: AppColors.border, width: 1.5),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: AppColors.border, width: 1.5),
+          borderSide: BorderSide(color: AppColors.border, width: 1.5),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: AppColors.primaryMid, width: 1.5),
+          borderSide: BorderSide(color: AppColors.primaryMid, width: 1.5),
         ),
       );
 
@@ -306,8 +306,8 @@ class _AddIndentScreenState extends State<AddIndentScreen> {
 
   Widget _buildSubmitBar() {
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(
+        color: AppColors.card,
         border: Border(top: BorderSide(color: AppColors.border)),
       ),
       child: SafeArea(
@@ -380,7 +380,7 @@ class _FormSection extends StatelessWidget {
                   color: AppColors.primaryLight,
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Icon(icon, size: 16, color: AppColors.primary),
+                child: Icon(icon, size: 16, color: AppColors.primaryText),
               ),
               const SizedBox(width: 10),
               Text(title, style: AppTextStyles.sectionTitle),

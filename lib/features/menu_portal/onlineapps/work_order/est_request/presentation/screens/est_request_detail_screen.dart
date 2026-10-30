@@ -429,11 +429,11 @@ class _ActionBar extends StatelessWidget {
                 label: Text(
                   'Edit',
                   style: AppTextStyles.buttonText
-                      .copyWith(color: AppColors.primary),
+                      .copyWith(color: AppColors.primaryText),
                 ),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.primary,
-                  side: const BorderSide(color: AppColors.primary, width: 1.5),
+                  foregroundColor: AppColors.primaryText,
+                  side: BorderSide(color: AppColors.primaryText, width: 1.5),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
@@ -519,7 +519,7 @@ class _SectionHeader extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(2, 0, 2, 8),
       child: Row(
         children: [
-          Icon(icon, size: 15, color: AppColors.primary),
+          Icon(icon, size: 15, color: AppColors.primaryText),
           const SizedBox(width: 6),
           Expanded(
             child: Text(
@@ -528,7 +528,7 @@ class _SectionHeader extends StatelessWidget {
               style: AppTextStyles.caption.copyWith(
                 fontWeight: FontWeight.w800,
                 letterSpacing: 0.6,
-                color: AppColors.primary,
+                color: AppColors.primaryText,
               ),
             ),
           ),

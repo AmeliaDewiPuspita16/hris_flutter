@@ -223,8 +223,8 @@ class _CreateAnnouncementSheetState extends State<CreateAnnouncementSheet> {
     return Padding(
       padding: EdgeInsets.only(bottom: bottomInset),
       child: Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
+        decoration: BoxDecoration(
+          color: AppColors.card,
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
         child: SafeArea(
@@ -251,13 +251,13 @@ class _CreateAnnouncementSheetState extends State<CreateAnnouncementSheet> {
                 ),
                 Row(
                   children: [
-                    const Expanded(
+                    Expanded(
                       child: Text('New Announcement', style: AppTextStyles.h2),
                     ),
                     InkWell(
                       onTap: () => Navigator.of(context).pop(),
                       borderRadius: BorderRadius.circular(16),
-                      child: const Padding(
+                      child: Padding(
                         padding: EdgeInsets.all(4),
                         child: Icon(Icons.close, size: 20, color: AppColors.textMuted),
                       ),
@@ -280,7 +280,7 @@ class _CreateAnnouncementSheetState extends State<CreateAnnouncementSheet> {
                   const SizedBox(height: 4),
                   Text(
                     _titleError!,
-                    style: const TextStyle(fontSize: 11, color: AppColors.rejected),
+                    style: TextStyle(fontSize: 11, color: AppColors.rejected),
                   ),
                 ],
                 const SizedBox(height: 16),
@@ -294,19 +294,19 @@ class _CreateAnnouncementSheetState extends State<CreateAnnouncementSheet> {
                     hintText: 'Add more context for employees...',
                     hintStyle: AppTextStyles.body.copyWith(color: AppColors.textMuted),
                     filled: true,
-                    fillColor: Colors.white,
+                    fillColor: AppColors.card,
                     contentPadding: const EdgeInsets.all(12),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(color: AppColors.border, width: 1.5),
+                      borderSide: BorderSide(color: AppColors.border, width: 1.5),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(color: AppColors.border, width: 1.5),
+                      borderSide: BorderSide(color: AppColors.border, width: 1.5),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(color: AppColors.primaryMid, width: 1.5),
+                      borderSide: BorderSide(color: AppColors.primaryMid, width: 1.5),
                     ),
                   ),
                 ),
@@ -341,7 +341,7 @@ class _CreateAnnouncementSheetState extends State<CreateAnnouncementSheet> {
             const SizedBox(width: 6),
             Text(
               '${_photos.length}/${AnnouncementPhoto.maxCount}',
-              style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
+              style: TextStyle(fontSize: 11, color: AppColors.textMuted),
             ),
           ],
         ),
@@ -368,7 +368,7 @@ class _CreateAnnouncementSheetState extends State<CreateAnnouncementSheet> {
           const SizedBox(height: 6),
           Text(
             _photoError!,
-            style: const TextStyle(fontSize: 11, color: AppColors.rejected),
+            style: TextStyle(fontSize: 11, color: AppColors.rejected),
           ),
         ],
       ],
@@ -378,7 +378,7 @@ class _CreateAnnouncementSheetState extends State<CreateAnnouncementSheet> {
   Widget _buildDepartmentField() {
     switch (_loadState) {
       case _LoadState.loading:
-        return const Padding(
+        return Padding(
           padding: EdgeInsets.symmetric(vertical: 8),
           child: Row(
             children: [
@@ -399,16 +399,16 @@ class _CreateAnnouncementSheetState extends State<CreateAnnouncementSheet> {
           children: [
             Text(
               _loadError ?? 'Failed to load departments.',
-              style: const TextStyle(fontSize: 12, color: AppColors.rejected),
+              style: TextStyle(fontSize: 12, color: AppColors.rejected),
             ),
             const SizedBox(height: 6),
             InkWell(
               onTap: _loadDepartments,
-              child: const Text(
+              child: Text(
                 'Try again',
                 style: TextStyle(
                   fontSize: 12,
-                  color: AppColors.primary,
+                  color: AppColors.primaryText,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -418,7 +418,7 @@ class _CreateAnnouncementSheetState extends State<CreateAnnouncementSheet> {
 
       case _LoadState.loaded:
         if (_departments.isEmpty || _department == null) {
-          return const Text(
+          return Text(
             'No active departments yet.',
             style: TextStyle(fontSize: 12, color: AppColors.textMuted),
           );
@@ -463,7 +463,7 @@ class _PhotoThumbnail extends StatelessWidget {
                 errorBuilder: (_, __, ___) => Container(
                   color: AppColors.neutralBg,
                   alignment: Alignment.center,
-                  child: const Icon(
+                  child: Icon(
                     Icons.image_not_supported_outlined,
                     size: 20,
                     color: AppColors.textMuted,
@@ -515,7 +515,7 @@ class _AddPhotoButton extends StatelessWidget {
           borderRadius: BorderRadius.circular(10),
           border: Border.all(color: AppColors.border, width: 1.5),
         ),
-        child: const Column(
+        child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(Icons.add_a_photo_outlined, size: 18, color: AppColors.primaryMid),
@@ -549,12 +549,12 @@ class _SheetError extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.error_outline, size: 16, color: AppColors.rejected),
+          Icon(Icons.error_outline, size: 16, color: AppColors.rejected),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               message,
-              style: const TextStyle(fontSize: 12, color: AppColors.rejected),
+              style: TextStyle(fontSize: 12, color: AppColors.rejected),
             ),
           ),
         ],

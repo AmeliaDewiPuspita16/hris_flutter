@@ -150,7 +150,7 @@ class _AbsensiView extends StatelessWidget {
   Widget _buildHeader(BuildContext context, DateTime selectedMonth) {
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 18),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: AppColors.primary,
         borderRadius: BorderRadius.vertical(bottom: Radius.circular(28)),
       ),
@@ -228,7 +228,7 @@ class _AbsensiView extends StatelessWidget {
         child: Center(
           child: Text(
             state.errorMessage ?? 'Failed to load attendance.',
-            style: const TextStyle(color: AppColors.textMuted),
+            style: TextStyle(color: AppColors.textMuted),
           ),
         ),
       );

@@ -111,7 +111,7 @@ class _IndentFeedbackSheetState extends State<IndentFeedbackSheet> {
                     ),
                   ),
                 ),
-                const Text('Give feedback', style: AppTextStyles.sectionTitle),
+                Text('Give feedback', style: AppTextStyles.sectionTitle),
                 const SizedBox(height: 4),
                 Text(
                   '${widget.destination} · ${widget.date}',

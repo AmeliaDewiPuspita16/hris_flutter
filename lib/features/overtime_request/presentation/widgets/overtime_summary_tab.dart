@@ -97,14 +97,14 @@ class _Content extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 for (var i = 0; i < data.days.length; i++) ...[
-                  if (i > 0) const Divider(height: 1, color: AppColors.border),
+                  if (i > 0) Divider(height: 1, color: AppColors.border),
                   _DayRow(day: data.days[i]),
                 ],
               ],
             ),
           ),
         const SizedBox(height: 12),
-        const Text(
+        Text(
           'Overtime is calculated from your attendance log, based on the '
           'time you check out after your shift ends.',
           style: TextStyle(fontSize: 11, color: AppColors.textMuted, height: 1.4),
@@ -135,7 +135,7 @@ class _MonthNav extends StatelessWidget {
           child: Text(
             DateFormat('MMMM yyyy', 'en_US').format(month),
             textAlign: TextAlign.center,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w700,
               color: AppColors.text,
@@ -195,7 +195,7 @@ class _StatCell extends StatelessWidget {
         Text(
           label,
           textAlign: TextAlign.center,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 10,
             fontWeight: FontWeight.w700,
             letterSpacing: 0.3,
@@ -208,7 +208,7 @@ class _StatCell extends StatelessWidget {
             children: [
               TextSpan(
                 text: value,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 26,
                   fontWeight: FontWeight.w800,
                   color: AppColors.overtime,
@@ -216,7 +216,7 @@ class _StatCell extends StatelessWidget {
               ),
               TextSpan(
                 text: ' $unit',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                   color: AppColors.textMuted,
@@ -282,7 +282,7 @@ class _DayRow extends StatelessWidget {
               children: [
                 Text(
                   DateFormat('EEE, d MMM', 'en_US').format(day.date),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
                     color: AppColors.text,
@@ -291,7 +291,7 @@ class _DayRow extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   _detail,
-                  style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
+                  style: TextStyle(fontSize: 11, color: AppColors.textMuted),
                 ),
               ],
             ),
@@ -305,7 +305,7 @@ class _DayRow extends StatelessWidget {
             ),
             child: Text(
               formatOvertimeDuration(day.minutes),
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
                 color: AppColors.overtime,
@@ -323,7 +323,7 @@ class _EmptyMonth extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const AppCard(
+    return AppCard(
       padding: EdgeInsets.symmetric(vertical: 28),
       child: Column(
         children: [
@@ -355,19 +355,19 @@ class _ErrorState extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 32),
       child: Column(
         children: [
-          const Icon(Icons.cloud_off_outlined, size: 32, color: AppColors.textMuted),
+          Icon(Icons.cloud_off_outlined, size: 32, color: AppColors.textMuted),
           const SizedBox(height: 12),
           Text(
             message,
             textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
+            style: TextStyle(fontSize: 12, color: AppColors.textMuted),
           ),
           const SizedBox(height: 12),
           OutlinedButton(
             onPressed: onRetry,
             style: OutlinedButton.styleFrom(
-              foregroundColor: AppColors.primary,
-              side: const BorderSide(color: AppColors.primary),
+              foregroundColor: AppColors.primaryText,
+              side: BorderSide(color: AppColors.primaryText),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
               ),
@@ -407,7 +407,7 @@ class _OvertimeSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Column(
+    return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         ShimmerCard(

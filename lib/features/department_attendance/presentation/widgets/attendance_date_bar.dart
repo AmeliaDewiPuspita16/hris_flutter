@@ -51,10 +51,10 @@ class AttendanceDateBar extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.calendar_today_outlined,
                       size: 15,
-                      color: AppColors.primary,
+                      color: AppColors.primaryText,
                     ),
                     const SizedBox(width: 6),
                     Flexible(

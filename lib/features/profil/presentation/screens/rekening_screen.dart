@@ -35,22 +35,22 @@ class RekeningScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(p.bankName, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.text)),
+                        Text(p.bankName, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.text)),
                         const SizedBox(height: 5),
                         Align(
                           alignment: Alignment.centerLeft,
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                             decoration: BoxDecoration(
-                              color: AppColors.primary.withValues(alpha: 0.10),
+                              color: AppColors.primaryText.withValues(alpha: 0.10),
                               borderRadius: BorderRadius.circular(999),
                             ),
-                            child: const Row(
+                            child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(Icons.check, size: 11, color: AppColors.primary),
+                                Icon(Icons.check, size: 11, color: AppColors.primaryText),
                                 SizedBox(width: 4),
-                                Text('Primary Salary Account', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w600, color: AppColors.primary)),
+                                Text('Primary Salary Account', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w600, color: AppColors.primaryText)),
                               ],
                             ),
                           ),

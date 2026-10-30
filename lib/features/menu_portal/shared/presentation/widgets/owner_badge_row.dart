@@ -12,16 +12,16 @@ class OwnerBadgeRow extends StatelessWidget {
   const OwnerBadgeRow({
     super.key,
     required this.owners,
-    this.color = AppColors.neutral,
-    this.background = AppColors.neutralBg,
+    this.color,
+    this.background,
   });
 
   final List<String> owners;
 
   /// Warna badge — default abu-abu netral; halaman Records memakai warna
   /// kategorinya.
-  final Color color;
-  final Color background;
+  final Color? color;
+  final Color? background;
 
   @override
   Widget build(BuildContext context) {
@@ -32,8 +32,8 @@ class OwnerBadgeRow extends StatelessWidget {
         for (final owner in owners)
           StatusBadge.custom(
             label: owner,
-            color: color,
-            background: background,
+            color: color ?? AppColors.neutral,
+            background: background ?? AppColors.neutralBg,
           )
       ],
     );

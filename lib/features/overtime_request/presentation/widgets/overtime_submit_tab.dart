@@ -89,7 +89,7 @@ class _OvertimeSubmitTabState extends State<OvertimeSubmitTab> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Text(
+                Text(
                   'OVERTIME DETAILS',
                   style: TextStyle(
                     fontSize: 11,
@@ -99,7 +99,7 @@ class _OvertimeSubmitTabState extends State<OvertimeSubmitTab> {
                   ),
                 ),
                 const SizedBox(height: 14),
-                const Divider(height: 1, color: AppColors.border),
+                Divider(height: 1, color: AppColors.border),
                 const SizedBox(height: 16),
                 AppDateField(
                   label: 'Date',
@@ -140,11 +140,11 @@ class _OvertimeSubmitTabState extends State<OvertimeSubmitTab> {
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.timer_outlined, size: 16, color: AppColors.overtime),
+                        Icon(Icons.timer_outlined, size: 16, color: AppColors.overtime),
                         const SizedBox(width: 8),
                         Text(
                           'Duration: ${formatOvertimeDuration(minutes)}',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
                             color: AppColors.overtime,
@@ -167,7 +167,7 @@ class _OvertimeSubmitTabState extends State<OvertimeSubmitTab> {
                   const SizedBox(height: 12),
                   Text(
                     _error!,
-                    style: const TextStyle(fontSize: 12, color: AppColors.rejected),
+                    style: TextStyle(fontSize: 12, color: AppColors.rejected),
                   ),
                 ],
               ],

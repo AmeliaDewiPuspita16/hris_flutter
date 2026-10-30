@@ -74,7 +74,7 @@ class HseWorkRequestDetailScreen extends StatelessWidget {
           ),
           const SizedBox(height: 20),
 
-          const Text('Detail Pekerjaan', style: AppTextStyles.sectionTitle),
+          Text('Detail Pekerjaan', style: AppTextStyles.sectionTitle),
           const SizedBox(height: 8),
           AppCard(
             padding: const EdgeInsets.symmetric(horizontal: 16),

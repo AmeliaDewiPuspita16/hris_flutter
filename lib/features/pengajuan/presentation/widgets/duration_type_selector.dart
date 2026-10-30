@@ -20,7 +20,7 @@ class DurationTypeSelector extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Duration', style: AppTextStyles.label),
+        Text('Duration', style: AppTextStyles.label),
         const SizedBox(height: 8),
         Row(
           children: DurationType.values.map((type) {
@@ -37,10 +37,10 @@ class DurationTypeSelector extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(vertical: 9),
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: active ? AppColors.primary : Colors.white,
+                      color: active ? AppColors.primary : AppColors.card,
                       borderRadius: BorderRadius.circular(9),
                       border: Border.all(
-                        color: active ? AppColors.primary : AppColors.border,
+                        color: active ? AppColors.primaryText : AppColors.border,
                         width: 1.5,
                       ),
                     ),

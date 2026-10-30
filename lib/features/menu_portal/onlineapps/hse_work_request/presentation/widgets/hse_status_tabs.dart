@@ -50,7 +50,7 @@ class HseStatusTabs extends StatelessWidget {
               fontWeight: FontWeight.w700,
               color: isSelected ? selectedFg : AppColors.textMid,
             ),
-            backgroundColor: Colors.white,
+            backgroundColor: AppColors.card,
             selectedColor: selectedBg,
             side: BorderSide(color: isSelected ? selectedBorder : AppColors.border),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),

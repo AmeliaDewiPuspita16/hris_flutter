@@ -121,7 +121,7 @@ class _LeaveDecisionSheetState extends State<_LeaveDecisionSheet> {
                         child: OutlinedButton(
                           onPressed: () => Navigator.of(context).pop(),
                           style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: AppColors.border),
+                            side: BorderSide(color: AppColors.border),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(10),
                             ),

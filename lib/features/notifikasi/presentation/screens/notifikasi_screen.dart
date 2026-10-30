@@ -168,10 +168,10 @@ class _NotifikasiScreenState extends State<NotifikasiScreen> {
         onBack: widget.showBack ? () => Navigator.of(context).pop() : null,
         trailing: InkWell(
           onTap: _markAllRead,
-          child: const Icon(
+          child: Icon(
             Icons.done_all,
             size: 19,
-            color: AppColors.primary,
+            color: AppColors.primaryText,
           ),
         ),
       ),
@@ -212,7 +212,7 @@ class _NotifikasiScreenState extends State<NotifikasiScreen> {
 
     return RefreshIndicator(
       onRefresh: onRefresh,
-      color: AppColors.primary,
+      color: AppColors.primaryText,
       // Keadaan kosong bukan daftar yang bisa di-scroll, jadi dibungkus
       // supaya tetap bisa ditarik.
       child: child is _NotificationList
@@ -302,7 +302,7 @@ class _GroupLabel extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(20, 18, 20, 4),
       child: Text(
         label,
-        style: const TextStyle(
+        style: TextStyle(
           fontFamily: AppTextStyles.fontFamily,
           fontSize: 11.5,
           fontWeight: FontWeight.w700,
@@ -346,13 +346,13 @@ class _EmptyState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
+            Icon(
               Icons.notifications_none,
               size: 34,
               color: AppColors.textMuted,
             ),
             const SizedBox(height: 12),
-            const Text(
+            Text(
               'No notifications yet',
               style: TextStyle(
                 fontFamily: AppTextStyles.fontFamily,
@@ -362,7 +362,7 @@ class _EmptyState extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 4),
-            const Text(
+            Text(
               'New updates will appear here.',
               textAlign: TextAlign.center,
               style: TextStyle(

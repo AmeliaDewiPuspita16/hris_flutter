@@ -48,8 +48,8 @@ class AnnouncementDetailSheet extends StatelessWidget {
       maxChildSize: 0.95,
       expand: false,
       builder: (context, scrollController) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
+        decoration: BoxDecoration(
+          color: AppColors.card,
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
         child: SafeArea(
@@ -70,7 +70,7 @@ class AnnouncementDetailSheet extends StatelessWidget {
                     InkWell(
                       onTap: () => Navigator.of(context).pop(),
                       borderRadius: BorderRadius.circular(16),
-                      child: const Padding(
+                      child: Padding(
                         padding: EdgeInsets.all(8),
                         child: Icon(
                           Icons.close,
@@ -91,7 +91,7 @@ class AnnouncementDetailSheet extends StatelessWidget {
                     const SizedBox(height: 12),
                     Text(
                       announcement.title,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: AppTextStyles.fontFamily,
                         fontSize: 18,
                         fontWeight: FontWeight.w800,
@@ -105,7 +105,7 @@ class AnnouncementDetailSheet extends StatelessWidget {
                         DateFormatter.dateTimeID(announcement.createdAt),
                         if (postedBy != null) 'by $postedBy',
                       ].join(' · '),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: AppTextStyles.fontFamily,
                         fontSize: 11,
                         color: AppColors.textMuted,
@@ -115,7 +115,7 @@ class AnnouncementDetailSheet extends StatelessWidget {
                       const SizedBox(height: 16),
                       Text(
                         body,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontFamily: AppTextStyles.fontFamily,
                           fontSize: 13,
                           color: AppColors.textMid,
@@ -218,7 +218,7 @@ class _DetailPhoto extends StatelessWidget {
           height: 120,
           color: AppColors.neutralBg,
           alignment: Alignment.center,
-          child: const Column(
+          child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(

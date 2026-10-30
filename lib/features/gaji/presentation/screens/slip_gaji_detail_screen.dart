@@ -59,7 +59,7 @@ class _SlipGajiDetailScreenState extends State<SlipGajiDetailScreen> {
           child: Icon(
             _hidden ? Icons.visibility_off_outlined : Icons.visibility_outlined,
             size: 20,
-            color: AppColors.primary,
+            color: AppColors.primaryText,
             semanticLabel: _hidden ? 'Tampilkan nominal' : 'Sembunyikan nominal',
           ),
         ),
@@ -77,7 +77,7 @@ class _SlipGajiDetailScreenState extends State<SlipGajiDetailScreen> {
                 child: Text(
                   'Dibayarkan ${_payslip.paidDate}'
                   '${_payslip.bankInfo != null ? ' · Rekening ${_payslip.bankInfo}' : ''}',
-                  style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
+                  style: TextStyle(fontSize: 11, color: AppColors.textMuted),
                 ),
               ),
             ],
@@ -100,7 +100,7 @@ class _SlipGajiDetailScreenState extends State<SlipGajiDetailScreen> {
             ),
             if (!_payslip.isPaid) ...[
               const SizedBox(height: 12),
-              const Text(
+              Text(
                 'Slip masih dalam proses payroll dan dapat berubah sebelum tanggal pembayaran.',
                 style: TextStyle(fontSize: 10, color: AppColors.textMuted, fontStyle: FontStyle.italic),
               ),

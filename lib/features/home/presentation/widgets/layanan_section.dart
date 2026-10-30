@@ -26,12 +26,12 @@ class LayananSection extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Main Menu', style: AppTextStyles.sectionTitle),
+              Text('Main Menu', style: AppTextStyles.sectionTitle),
               if (onViewAll != null)
                 InkWell(
                   onTap: onViewAll,
                   borderRadius: BorderRadius.circular(6),
-                  child: const Padding(
+                  child: Padding(
                     padding: EdgeInsets.symmetric(vertical: 4, horizontal: 2),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -119,7 +119,7 @@ class _ServiceCard extends StatelessWidget {
                     height: 34,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: AppColors.card,
                       borderRadius: BorderRadius.circular(10),
                       boxShadow: [
                         BoxShadow(
@@ -164,7 +164,7 @@ class _ServiceCard extends StatelessWidget {
                       height: 26,
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: AppColors.card,
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(

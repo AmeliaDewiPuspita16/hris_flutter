@@ -58,7 +58,7 @@ class EstApproveHodCard extends StatelessWidget {
           const SizedBox(height: 6),
           Row(
             children: [
-              const Icon(Icons.place_outlined, size: 13, color: AppColors.textMuted),
+              Icon(Icons.place_outlined, size: 13, color: AppColors.textMuted),
               const SizedBox(width: 3),
               Expanded(
                 child: Text(
@@ -83,25 +83,25 @@ class EstApproveHodCard extends StatelessWidget {
             const SizedBox(height: 8),
             Row(
               children: [
-                const Icon(Icons.image_outlined, size: 13, color: AppColors.textMuted),
+                Icon(Icons.image_outlined, size: 13, color: AppColors.textMuted),
                 const SizedBox(width: 4),
                 Text('Photo attached', style: AppTextStyles.caption),
               ],
             ),
           ],
           const SizedBox(height: 12),
-          const Divider(height: 1, color: AppColors.border),
+          Divider(height: 1, color: AppColors.border),
           const SizedBox(height: 10),
           Row(
             children: [
               Text(
                 'View details',
                 style: AppTextStyles.caption.copyWith(
-                  color: AppColors.primary,
+                  color: AppColors.primaryText,
                   fontWeight: FontWeight.w700,
                 ),
               ),
-              const Icon(Icons.chevron_right, size: 16, color: AppColors.primary),
+              Icon(Icons.chevron_right, size: 16, color: AppColors.primaryText),
               const Spacer(),
               EstDecisionButton(
                 label: 'Reject',

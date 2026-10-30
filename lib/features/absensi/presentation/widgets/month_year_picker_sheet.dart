@@ -59,7 +59,7 @@ class _MonthYearPickerSheetState extends State<MonthYearPickerSheet> {
     return SafeArea(
       top: false,
       child: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           color: AppColors.card,
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
@@ -79,7 +79,7 @@ class _MonthYearPickerSheetState extends State<MonthYearPickerSheet> {
                 ),
               ),
             ),
-            const Text(
+            Text(
               'Select Month',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.text),
@@ -98,7 +98,7 @@ class _MonthYearPickerSheetState extends State<MonthYearPickerSheet> {
                       decoration: BoxDecoration(
                         color: AppColors.primaryLight,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppColors.primary, width: 1),
+                        border: Border.all(color: AppColors.primaryText, width: 1),
                       ),
                     ),
                   ),
@@ -116,7 +116,7 @@ class _MonthYearPickerSheetState extends State<MonthYearPickerSheet> {
                               Center(
                                 child: Text(
                                   month,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w600,
                                     color: AppColors.text,
@@ -138,7 +138,7 @@ class _MonthYearPickerSheetState extends State<MonthYearPickerSheet> {
                               Center(
                                 child: Text(
                                   '$year',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w600,
                                     color: AppColors.text,

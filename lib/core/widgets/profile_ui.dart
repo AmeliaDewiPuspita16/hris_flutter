@@ -16,7 +16,7 @@ class SectionLabel extends StatelessWidget {
       padding: const EdgeInsets.only(left: 4),
       child: Text(
         text,
-        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.textMuted, letterSpacing: 0.6),
+        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.textMuted, letterSpacing: 0.6),
       ),
     );
   }
@@ -44,7 +44,7 @@ class InfoPill extends StatelessWidget {
             Icon(icon, size: 11, color: AppColors.textMuted),
             const SizedBox(width: 4),
           ],
-          Text(text, style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w600, color: AppColors.textMuted)),
+          Text(text, style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w600, color: AppColors.textMuted)),
         ],
       ),
     );
@@ -71,19 +71,19 @@ class InfoNote extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: AppColors.primary.withValues(alpha: 0.07),
+        color: AppColors.primaryText.withValues(alpha: 0.07),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Padding(
+          Padding(
             padding: EdgeInsets.only(top: 1),
-            child: Icon(Icons.info_outline, size: 16, color: AppColors.primary),
+            child: Icon(Icons.info_outline, size: 16, color: AppColors.primaryText),
           ),
           const SizedBox(width: 8),
           Expanded(
-            child: Text(text, style: const TextStyle(fontSize: 11.5, height: 1.4, color: AppColors.textMuted)),
+            child: Text(text, style: TextStyle(fontSize: 11.5, height: 1.4, color: AppColors.textMuted)),
           ),
         ],
       ),
@@ -105,10 +105,10 @@ class TintedIcon extends StatelessWidget {
       height: size,
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: AppColors.primary.withValues(alpha: 0.10),
+        color: AppColors.primaryText.withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(size * 0.3),
       ),
-      child: Icon(icon, size: size * 0.5, color: AppColors.primary),
+      child: Icon(icon, size: size * 0.5, color: AppColors.primaryText),
     );
   }
 }
@@ -130,9 +130,9 @@ class PillButton extends StatelessWidget {
       padding: const WidgetStatePropertyAll(EdgeInsets.symmetric(horizontal: 16)),
       shape: const WidgetStatePropertyAll(StadiumBorder()),
       backgroundColor: WidgetStatePropertyAll(
-        filled ? AppColors.primary : AppColors.primary.withValues(alpha: 0.10),
+        filled ? AppColors.primary : AppColors.primaryText.withValues(alpha: 0.10),
       ),
-      foregroundColor: WidgetStatePropertyAll(filled ? Colors.white : AppColors.primary),
+      foregroundColor: WidgetStatePropertyAll(filled ? Colors.white : AppColors.primaryText),
     );
     final text = Text(label, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700));
     return filled

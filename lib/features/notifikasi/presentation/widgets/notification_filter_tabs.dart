@@ -30,7 +30,7 @@ class NotificationFilterTabs extends StatelessWidget {
     final filters = NotificationFilter.values;
 
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: AppColors.card,
         border: Border(bottom: BorderSide(color: AppColors.border)),
       ),
@@ -75,7 +75,7 @@ class _FilterTab extends StatelessWidget {
         decoration: BoxDecoration(
           border: Border(
             bottom: BorderSide(
-              color: isActive ? AppColors.primary : Colors.transparent,
+              color: isActive ? AppColors.primaryText : Colors.transparent,
               width: 2.5,
             ),
           ),

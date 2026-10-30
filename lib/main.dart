@@ -9,7 +9,8 @@ import 'package:intl/date_symbol_data_local.dart';
 
 import 'core/network/api_client.dart';
 import 'core/notifications/notification_service.dart';
-import 'core/theme/app_colors.dart';
+import 'core/theme/app_theme.dart';
+import 'core/theme/theme_cubit.dart';
 import 'features/absensi/data/absensi_repository.dart';
 import 'features/auth/data/auth_repository.dart';
 import 'features/auth/data/session_storage.dart';
@@ -58,8 +59,12 @@ Future<void> main() async {
   // ke server (login, buka app, token dirotasi) dan mencabutnya saat logout.
   final notificationService = NotificationService();
 
+  // Mode terang/gelap dibaca dulu supaya frame pertama sudah benar.
+  final themeCubit = await ThemeCubit.load();
+
   runApp(
     MyApp(
+      themeCubit: themeCubit,
       authRepository: AuthRepository(
         apiClient: apiClient,
         storage: SecureSessionStorage(),
@@ -97,6 +102,7 @@ class MyApp extends StatelessWidget {
   MyApp({
     super.key,
     required this.authRepository,
+    ThemeCubit? themeCubit,
     DepartmentRepository? departmentRepository,
     AnnouncementRepository? announcementRepository,
     ProcurementRepository? procurementRepository,
@@ -110,7 +116,8 @@ class MyApp extends StatelessWidget {
     ApprovalsWaitingRepository? approvalsWaitingRepository,
     NotificationInboxRepository? notificationInboxRepository,
     MasterDocumentRepository? masterDocumentRepository,
-  })  : departmentRepository = departmentRepository ??
+  })  : themeCubit = themeCubit ?? ThemeCubit(),
+        departmentRepository = departmentRepository ??
             DepartmentRepository(apiClient: ApiClient()),
         announcementRepository = announcementRepository ??
             AnnouncementRepository(apiClient: ApiClient()),
@@ -138,6 +145,7 @@ class MyApp extends StatelessWidget {
             MasterDocumentRepository(apiClient: ApiClient());
 
   final AuthRepository authRepository;
+  final ThemeCubit themeCubit;
   final DepartmentRepository departmentRepository;
   final AnnouncementRepository announcementRepository;
   final ProcurementRepository procurementRepository;
@@ -175,29 +183,36 @@ class MyApp extends StatelessWidget {
         RepositoryProvider.value(value: notificationInboxRepository),
         RepositoryProvider.value(value: masterDocumentRepository),
       ],
-      child: BlocProvider(
-        create: (_) =>
-            AuthBloc(repository: authRepository)..add(const AuthStarted()),
-        child: MaterialApp(
-          title: 'BIIE Portal',
-          debugShowCheckedModeBanner: false,
-          locale: const Locale('en'),
-          supportedLocales: const [Locale('en')],
-          localizationsDelegates: const [
-            GlobalMaterialLocalizations.delegate,
-            GlobalWidgetsLocalizations.delegate,
-            GlobalCupertinoLocalizations.delegate,
-          ],
-          theme: ThemeData(
-            useMaterial3: true,
-            scaffoldBackgroundColor: AppColors.bg,
-            colorScheme: ColorScheme.fromSeed(
-              seedColor: AppColors.primary,
-              primary: AppColors.primary,
+      child: BlocProvider.value(
+        value: themeCubit,
+        child: BlocProvider(
+          create: (_) =>
+              AuthBloc(repository: authRepository)..add(const AuthStarted()),
+          child: BlocConsumer<ThemeCubit, ThemeMode>(
+            // AppColors dibaca lewat getter global, jadi setelah mode berganti
+            // seluruh pohon widget perlu dibangun ulang (state & navigasi
+            // tetap utuh).
+            listener: (context, _) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (context.mounted) rebuildAllChildren(context);
+              });
+            },
+            builder: (context, mode) => MaterialApp(
+              title: 'BIIE Portal',
+              debugShowCheckedModeBanner: false,
+              locale: const Locale('en'),
+              supportedLocales: const [Locale('en')],
+              localizationsDelegates: const [
+                GlobalMaterialLocalizations.delegate,
+                GlobalWidgetsLocalizations.delegate,
+                GlobalCupertinoLocalizations.delegate,
+              ],
+              theme: AppTheme.light,
+              darkTheme: AppTheme.dark,
+              themeMode: mode,
+              home: const AuthGate(),
             ),
-            fontFamily: 'Poppins',
           ),
-          home: const AuthGate(),
         ),
       ),
     );

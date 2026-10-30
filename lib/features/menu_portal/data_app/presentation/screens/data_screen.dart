@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../indent_vehicle/presentation/screens/indent_vehicle_screen.dart';
+import '../../est_project_monitoring/presentation/screens/est_project_monitoring_screen.dart';
 import '../../domain/data_demo_data.dart';
 import '../../../shared/presentation/widgets/portal_category_page.dart';
 import '../widgets/data_tile.dart';
@@ -21,7 +22,9 @@ class DataScreen extends StatelessWidget {
       onCatalogKitchen: null,
       onDailyWorker: null,
       onDormitoryBie: null,
-      onEstProjectMonitoring: null,
+      onEstProjectMonitoring: () => Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => EstProjectMonitoringScreen()),
+      ),
       onExportImport: null,
       onFacility: null,
       onFoodCost: null,

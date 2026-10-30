@@ -36,12 +36,12 @@ class ClockStatusCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.calendar_today_outlined,
+              Icon(Icons.calendar_today_outlined,
                   size: 14, color: AppColors.textMid),
               const SizedBox(width: 8),
               Text(
                 DateFormatter.fullDate(date),
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: AppTextStyles.fontFamily,
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
@@ -290,7 +290,7 @@ class _StatusRow extends StatelessWidget {
         Container(
           width: 12,
           height: 12,
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: AppColors.activeDot,
           ),
@@ -342,7 +342,7 @@ class _StatusRow extends StatelessWidget {
           onPressed: onActionTap,
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.card,
-            foregroundColor: AppColors.primary,
+            foregroundColor: AppColors.primaryText,
             elevation: 0,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
             shape: const StadiumBorder(),
@@ -350,8 +350,8 @@ class _StatusRow extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.history_rounded,
-                  size: 15, color: AppColors.primary),
+              Icon(Icons.history_rounded,
+                  size: 15, color: AppColors.primaryText),
               const SizedBox(width: 6),
               Text(
                 status.actionLabel,
@@ -362,8 +362,8 @@ class _StatusRow extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 2),
-              const Icon(Icons.chevron_right,
-                  size: 16, color: AppColors.primary),
+              Icon(Icons.chevron_right,
+                  size: 16, color: AppColors.primaryText),
             ],
           ),
         ),

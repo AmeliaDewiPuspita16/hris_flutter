@@ -79,7 +79,7 @@ class HseChoiceChipGroup extends StatelessWidget {
                     fontWeight: FontWeight.w600,
                     color: selected.contains(option) ? Colors.white : AppColors.textMid,
                   ),
-                  backgroundColor: Colors.white,
+                  backgroundColor: AppColors.card,
                   selectedColor: AppColors.primaryMid,
                   side: BorderSide(
                     color: selected.contains(option) ? AppColors.primaryMid : AppColors.border,
@@ -118,7 +118,7 @@ class _ReadOnlyChip extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primaryMid),
+        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primaryMid),
       ),
     );
   }

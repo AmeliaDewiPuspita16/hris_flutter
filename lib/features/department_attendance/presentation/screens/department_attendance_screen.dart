@@ -178,7 +178,7 @@ class _DepartmentAttendanceScreenState
 
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 18),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: AppColors.primary,
         borderRadius: BorderRadius.vertical(bottom: Radius.circular(28)),
       ),
@@ -268,16 +268,16 @@ class _DepartmentAttendanceScreenState
       child: TextField(
         controller: _searchController,
         onChanged: (value) => setState(() => _query = value),
-        style: const TextStyle(fontSize: 13, color: AppColors.text),
+        style: TextStyle(fontSize: 13, color: AppColors.text),
         decoration: InputDecoration(
           hintText: 'Search name',
-          hintStyle: const TextStyle(fontSize: 12.5, color: AppColors.textMuted),
+          hintStyle: TextStyle(fontSize: 12.5, color: AppColors.textMuted),
           prefixIcon:
-              const Icon(Icons.search, size: 18, color: AppColors.textMuted),
+              Icon(Icons.search, size: 18, color: AppColors.textMuted),
           suffixIcon: _query.isEmpty
               ? null
               : IconButton(
-                  icon: const Icon(
+                  icon: Icon(
                     Icons.close,
                     size: 16,
                     color: AppColors.textMuted,
@@ -288,7 +288,7 @@ class _DepartmentAttendanceScreenState
                   },
                 ),
           filled: true,
-          fillColor: Colors.white,
+          fillColor: AppColors.card,
           contentPadding: EdgeInsets.zero,
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(20),
@@ -307,7 +307,7 @@ class _DepartmentAttendanceScreenState
         child: Column(
           children: [
             for (var i = 0; i < visible.length; i++) ...[
-              if (i > 0) const Divider(height: 1, color: AppColors.border),
+              if (i > 0) Divider(height: 1, color: AppColors.border),
               DepartmentAttendanceRow(
                 entry: visible[i],
                 isToday: _isToday,

@@ -33,7 +33,7 @@ class PrCard extends StatelessWidget {
                   requisition.prNumber,
                   style: AppTextStyles.body.copyWith(
                     fontWeight: FontWeight.w700,
-                    color: AppColors.primary,
+                    color: AppColors.primaryText,
                   ),
                 ),
               ),
@@ -54,14 +54,14 @@ class PrCard extends StatelessWidget {
             style: AppTextStyles.body.copyWith(fontSize: 13, height: 1.4),
           ),
           const SizedBox(height: 10),
-          const Divider(height: 1, thickness: 1, color: AppColors.border),
+          Divider(height: 1, thickness: 1, color: AppColors.border),
           const SizedBox(height: 10),
           // Requestor diberi barisnya sendiri: nominal PR bisa mencapai
           // belasan karakter ("Rp 2.938.005.000") dan tidak muat berjejer
           // dengan nama panjang serta badge jumlah item di layar 360px.
           Row(
             children: [
-              const Icon(
+              Icon(
                 Icons.person_outline,
                 size: 14,
                 color: AppColors.textMuted,
@@ -91,11 +91,11 @@ class PrCard extends StatelessWidget {
                   alignment: Alignment.centerRight,
                   child: Text(
                     formatRupiah(requisition.totalEstimatedAmount),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontFamily: AppTextStyles.fontFamily,
                       fontSize: 14,
                       fontWeight: FontWeight.w800,
-                      color: AppColors.primary,
+                      color: AppColors.primaryText,
                     ),
                   ),
                 ),

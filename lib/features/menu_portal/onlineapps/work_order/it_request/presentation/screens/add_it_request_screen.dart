@@ -328,7 +328,7 @@ class _AddItRequestScreenState extends State<AddItRequestScreen> {
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.card,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: AppColors.border),
             ),
@@ -339,7 +339,7 @@ class _AddItRequestScreenState extends State<AddItRequestScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppColors.card,
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(color: AppColors.border, width: 1.2),
                   ),
@@ -379,19 +379,19 @@ class _AddItRequestScreenState extends State<AddItRequestScreen> {
                 hintText: 'Describe your request in detail',
                 hintStyle: AppTextStyles.body.copyWith(color: AppColors.textMuted),
                 filled: true,
-                fillColor: Colors.white,
+                fillColor: AppColors.card,
                 contentPadding: const EdgeInsets.all(12),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: AppColors.border, width: 1.5),
+                  borderSide: BorderSide(color: AppColors.border, width: 1.5),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: AppColors.border, width: 1.5),
+                  borderSide: BorderSide(color: AppColors.border, width: 1.5),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: AppColors.primaryMid, width: 1.5),
+                  borderSide: BorderSide(color: AppColors.primaryMid, width: 1.5),
                 ),
               ),
             ),
@@ -405,7 +405,7 @@ class _AddItRequestScreenState extends State<AddItRequestScreen> {
               const SizedBox(height: 6),
               Text(
                 _attachmentError!,
-                style: const TextStyle(fontSize: 11, color: AppColors.rejected),
+                style: TextStyle(fontSize: 11, color: AppColors.rejected),
               ),
             ],
             if (_submitError != null) ...[
@@ -421,7 +421,7 @@ class _AddItRequestScreenState extends State<AddItRequestScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
-                  disabledBackgroundColor: AppColors.primary.withValues(alpha: 0.6),
+                  disabledBackgroundColor: AppColors.primaryText.withValues(alpha: 0.6),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
                 child: _submitting
@@ -480,19 +480,19 @@ class _AddItRequestScreenState extends State<AddItRequestScreen> {
             hintText: option.textHint,
             hintStyle: AppTextStyles.body.copyWith(color: AppColors.textMuted),
             filled: true,
-            fillColor: Colors.white,
+            fillColor: AppColors.card,
             contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: AppColors.border, width: 1.5),
+              borderSide: BorderSide(color: AppColors.border, width: 1.5),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: AppColors.border, width: 1.5),
+              borderSide: BorderSide(color: AppColors.border, width: 1.5),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: AppColors.primaryMid, width: 1.5),
+              borderSide: BorderSide(color: AppColors.primaryMid, width: 1.5),
             ),
           ),
         );
@@ -527,12 +527,12 @@ class _FormError extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.error_outline, size: 16, color: AppColors.rejected),
+          Icon(Icons.error_outline, size: 16, color: AppColors.rejected),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               message,
-              style: const TextStyle(fontSize: 12, color: AppColors.rejected),
+              style: TextStyle(fontSize: 12, color: AppColors.rejected),
             ),
           ),
         ],

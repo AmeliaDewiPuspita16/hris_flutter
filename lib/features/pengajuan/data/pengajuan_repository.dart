@@ -41,7 +41,7 @@ class PengajuanRepository {
     await Future.delayed(_simulatedLatency);
 
     return [
-      const LeaveBalance(
+      LeaveBalance(
         label: 'Annual Leave',
         used: 4,
         total: 12,
@@ -49,14 +49,14 @@ class PengajuanRepository {
         color: AppColors.primaryMid,
         background: AppColors.primaryLight,
       ),
-      const LeaveBalance(
+      LeaveBalance(
         label: 'Sick Leave',
         used: 0,
         unit: 'Days',
         color: AppColors.rejected,
         background: AppColors.rejectedBg,
       ),
-      const LeaveBalance(
+      LeaveBalance(
         label: 'Permission',
         used: 2,
         total: 6,
@@ -81,7 +81,7 @@ class PengajuanRepository {
           color: Color(0xFF2C7A7B),
           background: Color(0xFFE6FFFA),
         ),
-      const LeaveBalance(
+      LeaveBalance(
         label: 'Medical Check',
         used: 0,
         total: 1,

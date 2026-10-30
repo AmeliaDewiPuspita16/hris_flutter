@@ -73,7 +73,7 @@ class IndentRequestRow extends StatelessWidget {
             style: AppTextStyles.caption.copyWith(height: 1.4),
           ),
           const SizedBox(height: 10),
-          const Divider(height: 1, color: AppColors.border),
+          Divider(height: 1, color: AppColors.border),
           const SizedBox(height: 10),
 
           // Baris 5: kendaraan & driver
@@ -141,7 +141,7 @@ class _ActionMenu extends StatelessWidget {
       child: PopupMenuButton<_RowAction>(
         padding: EdgeInsets.zero,
         tooltip: 'Options',
-        icon: const Icon(Icons.more_vert, size: 20, color: AppColors.textMuted),
+        icon: Icon(Icons.more_vert, size: 20, color: AppColors.textMuted),
         // Putih polos + hilangkan tint hijau bawaan Material 3.
         color: AppColors.card,
         surfaceTintColor: Colors.transparent,
@@ -149,7 +149,7 @@ class _ActionMenu extends StatelessWidget {
         shadowColor: Colors.black26,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(10),
-          side: const BorderSide(color: AppColors.border),
+          side: BorderSide(color: AppColors.border),
         ),
         // Default lebar minimum menu 112px; dikecilkan supaya pas.
         constraints: const BoxConstraints(minWidth: 0),

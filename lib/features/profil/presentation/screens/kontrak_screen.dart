@@ -34,9 +34,9 @@ class KontrakScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Contract No.', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: AppColors.textMuted)),
+                        Text('Contract No.', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: AppColors.textMuted)),
                         const SizedBox(height: 2),
-                        Text(p.contractNo, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.text)),
+                        Text(p.contractNo, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppColors.text)),
                       ],
                     ),
                   ),

@@ -18,7 +18,7 @@ class TanggunganScreen extends StatelessWidget {
       backgroundColor: AppColors.bg,
       appBar: BackHeader(title: 'Dependents', onBack: () => Navigator.of(context).pop()),
       body: list.isEmpty
-          ? const Center(
+          ? Center(
               child: Padding(
                 padding: EdgeInsets.symmetric(horizontal: 40),
                 child: Column(
@@ -60,12 +60,12 @@ class TanggunganScreen extends StatelessWidget {
                         height: 44,
                         alignment: Alignment.center,
                         decoration: BoxDecoration(
-                          color: AppColors.primary.withValues(alpha: 0.10),
+                          color: AppColors.primaryText.withValues(alpha: 0.10),
                           shape: BoxShape.circle,
                         ),
                         child: Text(
                           d.name.isNotEmpty ? d.name[0].toUpperCase() : '?',
-                          style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.primary),
+                          style: TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: AppColors.primaryText),
                         ),
                       ),
                       const SizedBox(width: 14),
@@ -73,21 +73,21 @@ class TanggunganScreen extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(d.name, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.text)),
+                            Text(d.name, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.text)),
                             const SizedBox(height: 5),
                             Row(
                               children: [
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                                   decoration: BoxDecoration(
-                                    color: AppColors.primary.withValues(alpha: 0.10),
+                                    color: AppColors.primaryText.withValues(alpha: 0.10),
                                     borderRadius: BorderRadius.circular(999),
                                   ),
-                                  child: Text(d.relation, style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w600, color: AppColors.primary)),
+                                  child: Text(d.relation, style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w600, color: AppColors.primaryText)),
                                 ),
                                 const SizedBox(width: 8),
                                 Flexible(
-                                  child: Text('Born ${d.birthDate}', style: const TextStyle(fontSize: 12.5, color: AppColors.textMuted)),
+                                  child: Text('Born ${d.birthDate}', style: TextStyle(fontSize: 12.5, color: AppColors.textMuted)),
                                 ),
                               ],
                             ),

@@ -35,18 +35,18 @@ class EstDeleteDialog extends StatelessWidget {
             Container(
               width: 48,
               height: 48,
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 color: AppColors.hseRequestBg,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.delete_outline,
                 size: 24,
                 color: AppColors.hseRequest,
               ),
             ),
             const SizedBox(height: 14),
-            const Text(
+            Text(
               'Delete request?',
               textAlign: TextAlign.center,
               style: AppTextStyles.sectionTitle,
@@ -68,7 +68,7 @@ class EstDeleteDialog extends StatelessWidget {
                       onPressed: () => Navigator.of(context).pop(false),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppColors.textMid,
-                        side: const BorderSide(color: AppColors.border, width: 1.5),
+                        side: BorderSide(color: AppColors.border, width: 1.5),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
                         ),

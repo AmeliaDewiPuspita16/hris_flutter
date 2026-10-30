@@ -23,7 +23,7 @@ Future<LeaveApprovalDecision?> showLeaveApprovalDetailSheet(
 }) {
   return showModalBottomSheet<LeaveApprovalDecision>(
     context: context,
-    backgroundColor: Colors.white,
+    backgroundColor: AppColors.card,
     isScrollControlled: true,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -99,17 +99,17 @@ class _LeaveApprovalDetailSheet extends StatelessWidget {
                   width: 44,
                   height: 44,
                   alignment: Alignment.center,
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     color: AppColors.primaryLight,
                     shape: BoxShape.circle,
                   ),
                   child: Text(
                     request.initials,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontFamily: AppTextStyles.fontFamily,
                       fontSize: 15,
                       fontWeight: FontWeight.w800,
-                      color: AppColors.primary,
+                      color: AppColors.primaryText,
                     ),
                   ),
                 ),
@@ -133,7 +133,7 @@ class _LeaveApprovalDetailSheet extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 18),
-            const Divider(height: 1, color: AppColors.border),
+            Divider(height: 1, color: AppColors.border),
             const SizedBox(height: 16),
             _Field(label: 'Date', value: request.dateLabel),
             if (request.timeLabel != null)
@@ -157,7 +157,7 @@ class _LeaveApprovalDetailSheet extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.attach_file,
                       size: 18,
                       color: AppColors.textMuted,
@@ -193,7 +193,7 @@ class _LeaveApprovalDetailSheet extends StatelessWidget {
                             Navigator.of(context).pop(LeaveApprovalDecision.reject),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: AppColors.rejected,
-                          side: const BorderSide(
+                          side: BorderSide(
                             color: AppColors.rejected,
                             width: 1.2,
                           ),
@@ -291,7 +291,7 @@ class _FieldLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       text,
-      style: const TextStyle(
+      style: TextStyle(
         fontFamily: AppTextStyles.fontFamily,
         fontSize: 11,
         fontWeight: FontWeight.w700,

@@ -88,7 +88,7 @@ class _LoginViewState extends State<_LoginView> {
           builder: (context, constraints) => Container(
             height: constraints.maxHeight,
             width: constraints.maxWidth,
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               gradient: AppColors.pageGradient,
               image: DecorationImage(
                 image: AssetImage('assets/images/bg_login.png'),
@@ -179,7 +179,7 @@ class _LoginForm extends StatelessWidget {
             ),
             child: Text(
               form.obscurePassword ? 'Show' : 'Hide',
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: AppTextStyles.fontFamily,
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
@@ -234,7 +234,7 @@ class _ServerErrorMessage extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(
+          Icon(
             Icons.error_outline,
             size: 18,
             color: AppColors.rejected,
@@ -243,7 +243,7 @@ class _ServerErrorMessage extends StatelessWidget {
           Expanded(
             child: Text(
               message,
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: AppTextStyles.fontFamily,
                 fontSize: 13,
                 fontWeight: FontWeight.w500,

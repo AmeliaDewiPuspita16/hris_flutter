@@ -33,7 +33,7 @@ class NotificationActionTypeFilter extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: AppColors.card,
         border: Border(bottom: BorderSide(color: AppColors.border)),
       ),
@@ -73,7 +73,7 @@ class NotificationActionTypeFilter extends StatelessWidget {
                   '$currentLabel · $currentCount',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: AppTextStyles.fontFamily,
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
@@ -81,7 +81,7 @@ class NotificationActionTypeFilter extends StatelessWidget {
                   ),
                 ),
               ),
-              const Icon(
+              Icon(
                 Icons.keyboard_arrow_down,
                 size: 20,
                 color: AppColors.textMuted,
@@ -116,13 +116,13 @@ class NotificationActionTypeFilter extends StatelessWidget {
                 fontFamily: AppTextStyles.fontFamily,
                 fontSize: 13,
                 fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                color: isSelected ? AppColors.primary : AppColors.text,
+                color: isSelected ? AppColors.primaryText : AppColors.text,
               ),
             ),
           ),
           Text(
             '$count',
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: AppTextStyles.fontFamily,
               fontSize: 11.5,
               color: AppColors.textMuted,

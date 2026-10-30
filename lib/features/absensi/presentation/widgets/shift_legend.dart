@@ -45,11 +45,11 @@ class ShiftLegend extends StatelessWidget {
           for (final entry in shifts.entries)
             RichText(
               text: TextSpan(
-                style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
+                style: TextStyle(fontSize: 11, color: AppColors.textMuted),
                 children: [
                   TextSpan(
                     text: entry.key,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.w700,
                       color: AppColors.text,
                     ),

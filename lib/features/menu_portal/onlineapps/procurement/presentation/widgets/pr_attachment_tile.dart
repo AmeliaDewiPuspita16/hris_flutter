@@ -36,7 +36,7 @@ class PrAttachmentTile extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 6),
       decoration: BoxDecoration(
         border: showDivider
-            ? const Border(bottom: BorderSide(color: AppColors.border))
+            ? Border(bottom: BorderSide(color: AppColors.border))
             : null,
       ),
       child: Row(
@@ -46,7 +46,7 @@ class PrAttachmentTile extends StatelessWidget {
                 ? Icons.link_outlined
                 : Icons.insert_drive_file_outlined,
             size: 18,
-            color: AppColors.primary,
+            color: AppColors.primaryText,
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -71,7 +71,7 @@ class PrAttachmentTile extends StatelessWidget {
             icon: Icon(
               Icons.open_in_new,
               size: 18,
-              color: onOpen == null ? AppColors.textMuted : AppColors.primary,
+              color: onOpen == null ? AppColors.textMuted : AppColors.primaryText,
             ),
           ),
         ],

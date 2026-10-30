@@ -69,7 +69,7 @@ class _OvertimeStatusTabState extends State<OvertimeStatusTab> {
                     color: selected ? AppColors.primary : AppColors.card,
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: selected ? AppColors.primary : AppColors.border,
+                      color: selected ? AppColors.primaryText : AppColors.border,
                     ),
                   ),
                   child: Text(
@@ -87,7 +87,7 @@ class _OvertimeStatusTabState extends State<OvertimeStatusTab> {
         ),
         Expanded(
           child: items.isEmpty
-              ? const Center(
+              ? Center(
                   child: Text(
                     'No overtime requests found.',
                     style: TextStyle(fontSize: 12, color: AppColors.textMuted),
@@ -122,7 +122,7 @@ class _RequestCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   DateFormat('EEE, d MMM yyyy', 'en_US').format(entry.date),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
                     color: AppColors.text,
@@ -135,12 +135,12 @@ class _RequestCard extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             '${entry.timeRange} · ${formatOvertimeDuration(entry.minutes)}',
-            style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
+            style: TextStyle(fontSize: 11, color: AppColors.textMuted),
           ),
           const SizedBox(height: 8),
           Text(
             entry.reason,
-            style: const TextStyle(fontSize: 12, color: AppColors.textMid, height: 1.4),
+            style: TextStyle(fontSize: 12, color: AppColors.textMid, height: 1.4),
           ),
         ],
       ),

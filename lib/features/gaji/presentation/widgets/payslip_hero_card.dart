@@ -41,7 +41,7 @@ class PayslipHeroCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Take Home Pay',
                       style: TextStyle(
                           fontSize: 11, color: AppColors.bannerAccent),
@@ -81,7 +81,7 @@ class PayslipHeroCard extends StatelessWidget {
             Text(
               identityText,
               style:
-                  const TextStyle(fontSize: 11, color: AppColors.bannerAccent),
+                  TextStyle(fontSize: 11, color: AppColors.bannerAccent),
             ),
           ],
         ],

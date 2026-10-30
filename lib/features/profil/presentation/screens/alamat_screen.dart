@@ -45,7 +45,7 @@ class _AlamatScreenState extends State<AlamatScreen> {
                     children: [
                       const TintedIcon(Icons.location_on_outlined),
                       const SizedBox(width: 14),
-                      const Expanded(
+                      Expanded(
                         child: Text('Home Address', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.text)),
                       ),
                       PillButton(
@@ -68,12 +68,12 @@ class _AlamatScreenState extends State<AlamatScreen> {
                             style: const TextStyle(fontSize: 14),
                             decoration: InputDecoration(
                               contentPadding: const EdgeInsets.all(10),
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppColors.primary, width: 1.5)),
-                              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppColors.primary, width: 1.5)),
-                              focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppColors.primary, width: 1.5)),
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppColors.primaryText, width: 1.5)),
+                              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppColors.primaryText, width: 1.5)),
+                              focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppColors.primaryText, width: 1.5)),
                             ),
                           )
-                        : Text(_addressCtrl.text, style: const TextStyle(fontSize: 14, color: AppColors.text, height: 1.6)),
+                        : Text(_addressCtrl.text, style: TextStyle(fontSize: 14, color: AppColors.text, height: 1.6)),
                   ),
                 ],
               ),

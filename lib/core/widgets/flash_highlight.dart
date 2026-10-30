@@ -103,10 +103,10 @@ class _FlashHighlightState extends State<FlashHighlight>
                 child: IgnorePointer(
                   child: DecoratedBox(
                     decoration: BoxDecoration(
-                      color: AppColors.primary.withValues(alpha: 0.12 * pulse),
+                      color: AppColors.primaryText.withValues(alpha: 0.12 * pulse),
                       borderRadius: BorderRadius.circular(widget.borderRadius),
                       border: Border.all(
-                        color: AppColors.primary.withValues(alpha: pulse),
+                        color: AppColors.primaryText.withValues(alpha: pulse),
                         width: 1.6,
                       ),
                     ),

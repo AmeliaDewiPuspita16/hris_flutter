@@ -42,7 +42,7 @@ class _ReportTabState extends State<ReportTab> {
       initialDate: _selectedMonth,
       firstDate: _firstSelectableMonth,
       lastDate: _lastSelectableMonth,
-      monthPickerDialogSettings: const MonthPickerDialogSettings(
+      monthPickerDialogSettings: MonthPickerDialogSettings(
         dialogSettings: PickerDialogSettings(
           dialogRoundedCornersRadius: 16,
           dialogBackgroundColor: AppColors.card,
@@ -70,7 +70,7 @@ class _ReportTabState extends State<ReportTab> {
         actionBarSettings: PickerActionBarSettings(
           confirmWidget: Text(
             'Select',
-            style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w700),
+            style: TextStyle(color: AppColors.primaryText, fontWeight: FontWeight.w700),
           ),
           cancelWidget: Text(
             'Cancel',
@@ -129,7 +129,7 @@ class _ReportTabState extends State<ReportTab> {
           InkWell(
             onTap: () => _shiftMonth(-1),
             borderRadius: BorderRadius.circular(20),
-            child: const Padding(
+            child: Padding(
               padding: EdgeInsets.all(8),
               child: Icon(Icons.chevron_left, size: 20, color: AppColors.textMuted),
             ),
@@ -142,8 +142,8 @@ class _ReportTabState extends State<ReportTab> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.calendar_today_outlined,
-                      size: 14, color: AppColors.primary),
+                  Icon(Icons.calendar_today_outlined,
+                      size: 14, color: AppColors.primaryText),
                   const SizedBox(width: 8),
                   Text(
                     DateFormatter.monthYearID(_selectedMonth),
@@ -159,7 +159,7 @@ class _ReportTabState extends State<ReportTab> {
           InkWell(
             onTap: () => _shiftMonth(1),
             borderRadius: BorderRadius.circular(20),
-            child: const Padding(
+            child: Padding(
               padding: EdgeInsets.all(8),
               child: Icon(Icons.chevron_right, size: 20, color: AppColors.textMuted),
             ),
@@ -452,13 +452,13 @@ class _TrendChartState extends State<_TrendChart> {
               Container(
                 width: 8,
                 height: 8,
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   color: AppColors.primary,
                   shape: BoxShape.circle,
                 ),
               ),
               const SizedBox(width: 8),
-              const Text('Request Trend per Month', style: AppTextStyles.sectionTitle),
+              Text('Request Trend per Month', style: AppTextStyles.sectionTitle),
               const SizedBox(width: 6),
               Text('(${widget.year})', style: AppTextStyles.caption),
             ],
@@ -466,13 +466,13 @@ class _TrendChartState extends State<_TrendChart> {
           const SizedBox(height: 10),
           Row(
             children: [
-              const _LegendDot(color: AppColors.itRequest),
+              _LegendDot(color: AppColors.itRequest),
               const SizedBox(width: 6),
-              const Text('IT Request', style: AppTextStyles.caption),
+              Text('IT Request', style: AppTextStyles.caption),
               const SizedBox(width: 16),
-              const _LegendDot(color: AppColors.orange),
+              _LegendDot(color: AppColors.orange),
               const SizedBox(width: 6),
-              const Text('Media Request', style: AppTextStyles.caption),
+              Text('Media Request', style: AppTextStyles.caption),
             ],
           ),
           const SizedBox(height: 16),
@@ -726,7 +726,7 @@ class _StatusMeter extends StatelessWidget {
               value: percent == null ? 0 : percent / 100,
               minHeight: 6,
               backgroundColor: AppColors.presentBg,
-              valueColor: const AlwaysStoppedAnimation(AppColors.present),
+              valueColor: AlwaysStoppedAnimation(AppColors.present),
             ),
           ),
           const SizedBox(height: 4),

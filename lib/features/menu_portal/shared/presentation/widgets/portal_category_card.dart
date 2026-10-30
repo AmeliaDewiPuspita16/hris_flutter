@@ -39,6 +39,14 @@ class PortalCategoryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final radius = BorderRadius.circular(16);
+    // Di mode gelap tint-nya dilunakkan supaya kartu tetap terbaca sebagai
+    // permukaan gelap, bukan blok warna.
+    // Warna kategori yang gelap (mis. hijau tua) tidak terbaca di atas
+    // permukaan gelap — untuk teks/garis/chevron diterangkan.
+    final fg = AppColors.isDark ? AppColors.onDark(color) : color;
+    final tint = AppColors.isDark
+        ? Color.lerp(AppColors.card, background, 0.55)!
+        : background;
 
     return NotReady(
       isReady: _isReady,
@@ -46,15 +54,15 @@ class PortalCategoryCard extends StatelessWidget {
         decoration: BoxDecoration(
           borderRadius: radius,
           gradient: LinearGradient(
-            colors: [Colors.white, Colors.white, background],
+            colors: [AppColors.card, AppColors.card, tint],
             stops: const [0, 0.45, 1],
           ),
           border: Border.all(
-            color: _isReady ? color.withValues(alpha: 0.45) : AppColors.border,
+            color: _isReady ? fg.withValues(alpha: 0.45) : AppColors.border,
           ),
           boxShadow: [
             BoxShadow(
-              color: color.withValues(alpha: 0.08),
+              color: fg.withValues(alpha: 0.08),
               blurRadius: 14,
               offset: const Offset(0, 4),
             ),
@@ -86,8 +94,10 @@ class PortalCategoryCard extends StatelessWidget {
                         const SizedBox(height: 6),
                         OwnerBadgeRow(
                           owners: owners,
-                          color: color,
-                          background: background,
+                          color: fg,
+                          background: AppColors.isDark
+                              ? fg.withValues(alpha: 0.16)
+                              : background,
                         ),
                       ],
                     ),
@@ -98,11 +108,11 @@ class PortalCategoryCard extends StatelessWidget {
                     height: 28,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: color.withValues(alpha: 0.12),
+                      color: fg.withValues(alpha: 0.12),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(Icons.chevron_right_rounded,
-                        size: 20, color: color),
+                        size: 20, color: fg),
                   ),
                 ],
               ),

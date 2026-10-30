@@ -38,7 +38,7 @@ class _KelolaTimScreenState extends State<KelolaTimScreen> {
           children: [
             Container(
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
-              decoration: const BoxDecoration(color: Colors.white, border: Border(bottom: BorderSide(color: AppColors.border))),
+              decoration: BoxDecoration(color: AppColors.card, border: Border(bottom: BorderSide(color: AppColors.border))),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -47,17 +47,17 @@ class _KelolaTimScreenState extends State<KelolaTimScreen> {
                       IconButton(
                         padding: EdgeInsets.zero,
                         constraints: const BoxConstraints(),
-                        icon: const Icon(Icons.arrow_back, color: AppColors.primary),
+                        icon: Icon(Icons.arrow_back, color: AppColors.primaryText),
                         onPressed: () => Navigator.of(context).pop(),
                       ),
                       const SizedBox(width: 8),
-                      const Text('Kelola Tim', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.text)),
+                      Text('Kelola Tim', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: AppColors.text)),
                     ],
                   ),
                   const SizedBox(height: 4),
                   Padding(
                     padding: const EdgeInsets.only(left: 33),
-                    child: Text('${TeamMember.dummyTeam.length} pegawai · Departemen IT & MEDIA ', style: const TextStyle(fontSize: 12, color: AppColors.textMuted)),
+                    child: Text('${TeamMember.dummyTeam.length} pegawai · Departemen IT & MEDIA ', style: TextStyle(fontSize: 12, color: AppColors.textMuted)),
                   ),
                   const SizedBox(height: 12),
                   TextField(
@@ -66,8 +66,8 @@ class _KelolaTimScreenState extends State<KelolaTimScreen> {
                     style: const TextStyle(fontSize: 13),
                     decoration: InputDecoration(
                       hintText: 'Cari nama karyawan...',
-                      hintStyle: const TextStyle(fontSize: 13, color: AppColors.textMuted),
-                      prefixIcon: const Icon(Icons.search, size: 20, color: AppColors.textMuted),
+                      hintStyle: TextStyle(fontSize: 13, color: AppColors.textMuted),
+                      prefixIcon: Icon(Icons.search, size: 20, color: AppColors.textMuted),
                       filled: true,
                       fillColor: AppColors.bg,
                       contentPadding: const EdgeInsets.symmetric(vertical: 0),
@@ -79,7 +79,7 @@ class _KelolaTimScreenState extends State<KelolaTimScreen> {
             ),
             Expanded(
               child: _filtered.isEmpty
-                  ? const Center(
+                  ? Center(
                       child: Text('Karyawan tidak ditemukan', style: TextStyle(fontSize: 13, color: AppColors.textMuted)),
                     )
                   : ListView.separated(
@@ -99,10 +99,10 @@ class _KelolaTimScreenState extends State<KelolaTimScreen> {
                                 width: 42,
                                 height: 42,
                                 alignment: Alignment.center,
-                                decoration: const BoxDecoration(color: AppColors.primaryLight, shape: BoxShape.circle),
+                                decoration: BoxDecoration(color: AppColors.primaryLight, shape: BoxShape.circle),
                                 child: Text(
                                   m.name.trim().isNotEmpty ? m.name.trim()[0].toUpperCase() : '?',
-                                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.primaryMid),
+                                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.primaryMid),
                                 ),
                               ),
                               const SizedBox(width: 12),
@@ -110,9 +110,9 @@ class _KelolaTimScreenState extends State<KelolaTimScreen> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(m.name, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.text)),
+                                    Text(m.name, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.text)),
                                     const SizedBox(height: 2),
-                                    Text('${m.position} · ${m.department}', style: const TextStyle(fontSize: 11, color: AppColors.textMuted)),
+                                    Text('${m.position} · ${m.department}', style: TextStyle(fontSize: 11, color: AppColors.textMuted)),
                                   ],
                                 ),
                               ),
@@ -120,12 +120,12 @@ class _KelolaTimScreenState extends State<KelolaTimScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.end,
                                 children: [
                                   Text(m.leaveRemaining.toStringAsFixed(m.leaveRemaining.truncateToDouble() == m.leaveRemaining ? 0 : 1),
-                                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.primaryMid)),
-                                  const Text('sisa cuti', style: TextStyle(fontSize: 9, color: AppColors.textMuted)),
+                                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.primaryMid)),
+                                  Text('sisa cuti', style: TextStyle(fontSize: 9, color: AppColors.textMuted)),
                                 ],
                               ),
                               const SizedBox(width: 4),
-                              const Icon(Icons.chevron_right, size: 18, color: AppColors.textMuted),
+                              Icon(Icons.chevron_right, size: 18, color: AppColors.textMuted),
                             ],
                           ),
                         );

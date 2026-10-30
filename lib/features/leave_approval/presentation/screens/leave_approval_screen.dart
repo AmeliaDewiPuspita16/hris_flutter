@@ -240,7 +240,7 @@ class _LeaveApprovalViewState extends State<_LeaveApprovalView> {
             duration: const Duration(milliseconds: 150),
             padding: const EdgeInsets.symmetric(vertical: 9),
             decoration: BoxDecoration(
-              color: active ? Colors.white : Colors.transparent,
+              color: active ? AppColors.card : Colors.transparent,
               borderRadius: BorderRadius.circular(20),
             ),
             child: Row(
@@ -290,7 +290,7 @@ class _LeaveApprovalViewState extends State<_LeaveApprovalView> {
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 18),
       // Solid primary, sudut bawah bulat — sama dengan header Leave Request.
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: AppColors.primary,
         borderRadius: BorderRadius.vertical(bottom: Radius.circular(28)),
       ),
@@ -419,7 +419,7 @@ class _LeaveApprovalViewState extends State<_LeaveApprovalView> {
           duration: const Duration(milliseconds: 150),
           height: 38,
           decoration: BoxDecoration(
-            color: active ? color : Colors.white,
+            color: active ? color : AppColors.card,
             borderRadius: BorderRadius.circular(20),
           ),
           child: Row(
@@ -560,7 +560,7 @@ class _ErrorState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
+            Icon(
               Icons.cloud_off_outlined,
               size: 40,
               color: AppColors.textMuted,

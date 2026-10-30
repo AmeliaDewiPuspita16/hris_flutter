@@ -28,7 +28,7 @@ class AppDropdown<T> extends StatelessWidget {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 14),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.card,
             borderRadius: BorderRadius.circular(10),
             border: Border.all(color: AppColors.border, width: 1.5),
           ),
@@ -36,7 +36,7 @@ class AppDropdown<T> extends StatelessWidget {
             child: DropdownButton<T>(
               value: value,
               isExpanded: true,
-              icon: const Icon(Icons.keyboard_arrow_down, color: AppColors.textMuted),
+              icon: Icon(Icons.keyboard_arrow_down, color: AppColors.textMuted),
               style: AppTextStyles.body,
               items: items
                   .map((e) => DropdownMenuItem<T>(value: e.value, child: Text(e.label)))

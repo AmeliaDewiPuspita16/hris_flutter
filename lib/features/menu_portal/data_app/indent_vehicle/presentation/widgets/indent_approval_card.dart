@@ -56,7 +56,7 @@ class IndentApprovalCardAlt extends StatelessWidget {
             ),
             child: Row(
               children: [
-                const Icon(Icons.event_outlined, size: 14, color: AppColors.textMid),
+                Icon(Icons.event_outlined, size: 14, color: AppColors.textMid),
                 const SizedBox(width: 5),
                 Text(
                   item.date,
@@ -66,7 +66,7 @@ class IndentApprovalCardAlt extends StatelessWidget {
                   ),
                 ),
                 const Spacer(),
-                const Icon(Icons.schedule_outlined, size: 14, color: AppColors.textMid),
+                Icon(Icons.schedule_outlined, size: 14, color: AppColors.textMid),
                 const SizedBox(width: 5),
                 Text(
                   _shortTimeRange,
@@ -99,7 +99,7 @@ class IndentApprovalCardAlt extends StatelessWidget {
           // Tujuan
           Row(
             children: [
-              const Icon(Icons.place_outlined, size: 14, color: AppColors.textMuted),
+              Icon(Icons.place_outlined, size: 14, color: AppColors.textMuted),
               const SizedBox(width: 4),
               Expanded(
                 child: Text(
@@ -121,7 +121,7 @@ class IndentApprovalCardAlt extends StatelessWidget {
             style: AppTextStyles.caption.copyWith(height: 1.4),
           ),
           const SizedBox(height: 10),
-          const Divider(height: 1, color: AppColors.border),
+          Divider(height: 1, color: AppColors.border),
           const SizedBox(height: 8),
 
           // Aksi: Reject (teks, sempit) + Approve (penuh, lebar)

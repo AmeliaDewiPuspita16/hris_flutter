@@ -28,7 +28,7 @@ class PrItemTile extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 14),
       decoration: BoxDecoration(
         border: showDivider
-            ? const Border(bottom: BorderSide(color: AppColors.border))
+            ? Border(bottom: BorderSide(color: AppColors.border))
             : null,
       ),
       child: Column(
@@ -108,7 +108,7 @@ class PrItemTile extends StatelessWidget {
                 // kaki daftar supaya angka pamungkasnya tetap menonjol.
                 Text(
                   formatRupiah(item.totalPrice),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: AppTextStyles.fontFamily,
                     fontSize: 14,
                     fontWeight: FontWeight.w800,

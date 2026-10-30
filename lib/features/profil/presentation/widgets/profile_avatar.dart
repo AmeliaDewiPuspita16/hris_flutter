@@ -53,7 +53,7 @@ class ProfileAvatar extends StatelessWidget {
             children: [
               Container(
                 padding: const EdgeInsets.all(_ringWidth),
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: SweepGradient(
                     colors: [
@@ -72,8 +72,8 @@ class ProfileAvatar extends StatelessWidget {
                 ),
                 child: Container(
                   padding: const EdgeInsets.all(_gap),
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
+                  decoration: BoxDecoration(
+                    color: AppColors.card,
                     shape: BoxShape.circle,
                   ),
                   child: photo != null

@@ -152,7 +152,7 @@ class _AjukanTabState extends State<AjukanTab> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Text(
+                Text(
                   'REQUEST DETAILS',
                   style: TextStyle(
                     fontSize: 11,
@@ -162,7 +162,7 @@ class _AjukanTabState extends State<AjukanTab> {
                   ),
                 ),
                 const SizedBox(height: 14),
-                const Divider(height: 1, color: AppColors.border),
+                Divider(height: 1, color: AppColors.border),
                 const SizedBox(height: 16),
                 AppDropdown<LeaveType>(
                   label: 'Request Type',
@@ -177,7 +177,7 @@ class _AjukanTabState extends State<AjukanTab> {
                   const SizedBox(height: 12),
                   Text(
                     _submitError!,
-                    style: const TextStyle(fontSize: 12, color: AppColors.rejected),
+                    style: TextStyle(fontSize: 12, color: AppColors.rejected),
                   ),
                 ],
               ],
@@ -217,7 +217,7 @@ class _AjukanTabState extends State<AjukanTab> {
               child: const Text('✅', style: TextStyle(fontSize: 36)),
             ),
             const SizedBox(height: 16),
-            const Text(
+            Text(
               'Request Submitted!',
               style: TextStyle(
                 fontSize: 20,
@@ -226,7 +226,7 @@ class _AjukanTabState extends State<AjukanTab> {
               ),
             ),
             const SizedBox(height: 8),
-            const Text(
+            Text(
               'Redirecting to status page...',
               style: TextStyle(fontSize: 13, color: AppColors.textMuted),
             ),
@@ -334,14 +334,14 @@ class _AjukanTabState extends State<AjukanTab> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             decoration: BoxDecoration(
-              color: const Color(0xFFFFFBEB),
+              color: AppColors.isDark ? AppColors.accentBg : const Color(0xFFFFFBEB),
               border: Border.all(color: AppColors.accentLight),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: const Text(
+            child: Text(
               '🩺 Schedule your annual health check-up. A doctor note must '
               'be uploaded after the examination.',
-              style: TextStyle(fontSize: 12, color: Color(0xFF744210)),
+              style: TextStyle(fontSize: 12, color: AppColors.isDark ? AppColors.accentLight : const Color(0xFF744210)),
             ),
           ),
           const SizedBox(height: 16),

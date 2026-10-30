@@ -66,7 +66,7 @@ class ApproveRequestCard extends StatelessWidget {
                     const SizedBox(height: 2),
                     Row(
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.business_outlined,
                           size: 12,
                           color: AppColors.textMuted,
@@ -126,7 +126,7 @@ class ApproveRequestCard extends StatelessWidget {
                     ),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppColors.rejected,
-                      side: const BorderSide(color: AppColors.rejected),
+                      side: BorderSide(color: AppColors.rejected),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),
@@ -178,17 +178,17 @@ class _Avatar extends StatelessWidget {
       width: 40,
       height: 40,
       alignment: Alignment.center,
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: AppColors.primaryLight,
         shape: BoxShape.circle,
       ),
       child: Text(
         initials,
-        style: const TextStyle(
+        style: TextStyle(
           fontFamily: AppTextStyles.fontFamily,
           fontSize: 13,
           fontWeight: FontWeight.w700,
-          color: AppColors.primary,
+          color: AppColors.primaryText,
         ),
       ),
     );

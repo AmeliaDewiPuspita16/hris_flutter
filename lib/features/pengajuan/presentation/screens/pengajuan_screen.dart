@@ -144,7 +144,7 @@ class _PengajuanViewState extends State<_PengajuanView> {
             decoration: BoxDecoration(
               // Aktif: pil putih dengan teks primary. Tidak aktif: transparan
               // di atas header hijau dengan teks putih pudar.
-              color: active ? Colors.white : Colors.transparent,
+              color: active ? AppColors.card : Colors.transparent,
               borderRadius: BorderRadius.circular(20),
             ),
             child: Row(
@@ -153,7 +153,7 @@ class _PengajuanViewState extends State<_PengajuanView> {
                 Icon(
                   icon,
                   size: 14,
-                  color: active ? AppColors.primary : Colors.white.withValues(alpha: 0.75),
+                  color: active ? AppColors.primaryText : Colors.white.withValues(alpha: 0.75),
                 ),
                 const SizedBox(width: 5),
                 Text(
@@ -161,7 +161,7 @@ class _PengajuanViewState extends State<_PengajuanView> {
                   style: TextStyle(
                     fontSize: 12.5,
                     fontWeight: FontWeight.w700,
-                    color: active ? AppColors.primary : Colors.white.withValues(alpha: 0.75),
+                    color: active ? AppColors.primaryText : Colors.white.withValues(alpha: 0.75),
                   ),
                 ),
               ],
@@ -174,7 +174,7 @@ class _PengajuanViewState extends State<_PengajuanView> {
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 18),
       // Solid primary, sudut bawah bulat — sama dengan header Log Absensi.
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: AppColors.primary,
         borderRadius: BorderRadius.vertical(bottom: Radius.circular(28)),
       ),

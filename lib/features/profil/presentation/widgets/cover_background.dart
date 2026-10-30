@@ -77,7 +77,7 @@ class CoverBackground extends StatelessWidget {
               alignment: alignment,
               gaplessPlayback: true,
               errorBuilder: (_, __, ___) =>
-                  gradient(const [AppColors.primary, AppColors.primaryMid]),
+                  gradient([AppColors.primary, AppColors.primaryMid]),
             ),
           ),
         );

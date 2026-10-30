@@ -74,7 +74,7 @@ class _RingkasanTabState extends State<RingkasanTab> {
                     child: Text(
                       '${_monthNames[_selectedMonth.month - 1]} ${_selectedMonth.year}',
                       textAlign: TextAlign.center,
-                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.text),
+                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppColors.text),
                     ),
                   ),
                   _MonthArrow(
@@ -86,15 +86,15 @@ class _RingkasanTabState extends State<RingkasanTab> {
               if (widget.onSeeAll != null)
                 InkWell(
                   onTap: widget.onSeeAll,
-                  child: const Row(
+                  child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
                         'See All',
-                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.primary),
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.primaryText),
                       ),
                       SizedBox(width: 2),
-                      Icon(Icons.arrow_forward, size: 14, color: AppColors.primary),
+                      Icon(Icons.arrow_forward, size: 14, color: AppColors.primaryText),
                     ],
                   ),
                 ),
@@ -151,7 +151,7 @@ class _BalanceSummaryCard extends StatelessWidget {
           return Center(
             child: Text(
               state.errorMessage ?? 'Failed to load balance.',
-              style: const TextStyle(color: AppColors.textMuted),
+              style: TextStyle(color: AppColors.textMuted),
             ),
           );
         }
@@ -166,7 +166,7 @@ class _BalanceSummaryCard extends StatelessWidget {
         return Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.card,
             borderRadius: BorderRadius.circular(14),
             border: Border.all(color: AppColors.border),
           ),
@@ -175,9 +175,9 @@ class _BalanceSummaryCard extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  const Icon(Icons.spa_outlined, color: AppColors.primary, size: 16),
+                  Icon(Icons.spa_outlined, color: AppColors.primaryText, size: 16),
                   const SizedBox(width: 6),
-                  const Text(
+                  Text(
                     'Leave Balance',
                     style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: AppColors.text),
                   ),
@@ -186,11 +186,11 @@ class _BalanceSummaryCard extends StatelessWidget {
                   // (pola sama dengan Recent Activity di Beranda). Aktifkan
                   // lewat FeatureFlags.leaveBalance.
                   if (!FeatureFlags.leaveBalance)
-                    const Text('Soon', style: AppTextStyles.caption)
+                    Text('Soon', style: AppTextStyles.caption)
                   else
                     Text(
                       'As of ${DateFormatter.shortDateID(DateTime.now())}',
-                      style: const TextStyle(fontSize: 10, color: AppColors.textMuted),
+                      style: TextStyle(fontSize: 10, color: AppColors.textMuted),
                     ),
                 ],
               ),
@@ -260,7 +260,7 @@ class _BalanceCell extends StatelessWidget {
                   balance.label,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textMuted),
+                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textMuted),
                 ),
                 const SizedBox(height: 2),
                 // Angka besar, satuan kecil di sampingnya — hierarki jelas
@@ -268,11 +268,11 @@ class _BalanceCell extends StatelessWidget {
                 Text.rich(
                   TextSpan(
                     text: '${balance.remaining}',
-                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.text),
+                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: AppColors.text),
                     children: [
                       TextSpan(
                         text: ' ${balance.unit}',
-                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textMuted),
+                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textMuted),
                       ),
                     ],
                   ),
@@ -282,7 +282,7 @@ class _BalanceCell extends StatelessWidget {
                 const SizedBox(height: 1),
                 Text(
                   balance.total != null ? 'of ${balance.total}' : 'Accumulated',
-                  style: const TextStyle(fontSize: 10, color: AppColors.textMuted),
+                  style: TextStyle(fontSize: 10, color: AppColors.textMuted),
                 ),
               ],
             ),
@@ -311,7 +311,7 @@ class _RecentSummaryList extends StatelessWidget {
           return Center(
             child: Text(
               state.errorMessage ?? 'Failed to load history.',
-              style: const TextStyle(color: AppColors.textMuted),
+              style: TextStyle(color: AppColors.textMuted),
             ),
           );
         }
@@ -323,7 +323,7 @@ class _RecentSummaryList extends StatelessWidget {
         if (itemsInMonth.isEmpty) {
           return AppCard(
             padding: const EdgeInsets.symmetric(vertical: 28),
-            child: const Column(
+            child: Column(
               children: [
                 Icon(Icons.event_busy_outlined, size: 28, color: AppColors.textMuted),
                 SizedBox(height: 8),
@@ -342,7 +342,7 @@ class _RecentSummaryList extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               for (var i = 0; i < itemsInMonth.length; i++) ...[
-                if (i > 0) const Divider(height: 1, color: AppColors.border),
+                if (i > 0) Divider(height: 1, color: AppColors.border),
                 _RecentSummaryRow(entry: itemsInMonth[i]),
               ],
             ],
@@ -373,12 +373,12 @@ class _RecentSummaryRow extends StatelessWidget {
                 children: [
                   Text(
                     entry.date,
-                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.text),
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.text),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     entry.type,
-                    style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
+                    style: TextStyle(fontSize: 11, color: AppColors.textMuted),
                   ),
                 ],
               ),
@@ -402,7 +402,7 @@ class _BalanceSkeleton extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.card,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: AppColors.border),
       ),
@@ -452,7 +452,7 @@ class _RecentSummarySkeleton extends StatelessWidget {
       child: Column(
         children: [
           for (var i = 0; i < 3; i++) ...[
-            if (i > 0) const Divider(height: 1, color: AppColors.border),
+            if (i > 0) Divider(height: 1, color: AppColors.border),
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 12),
               child: Row(

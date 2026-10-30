@@ -50,7 +50,7 @@ class EstRequestRow extends StatelessWidget {
               Expanded(
                 child: Row(
                   children: [
-                    const Icon(Icons.place_outlined, size: 13, color: AppColors.textMuted),
+                    Icon(Icons.place_outlined, size: 13, color: AppColors.textMuted),
                     const SizedBox(width: 3),
                     Expanded(
                       child: Text(

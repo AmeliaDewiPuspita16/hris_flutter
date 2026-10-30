@@ -34,7 +34,7 @@ class AttachmentRowField extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.card,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(color: AppColors.border),
         ),
@@ -51,7 +51,7 @@ class AttachmentRowField extends StatelessWidget {
               child: Icon(
                 hasFile ? Icons.insert_drive_file_outlined : Icons.attach_file,
                 size: 16,
-                color: AppColors.primary,
+                color: AppColors.primaryText,
               ),
             ),
             const SizedBox(width: 10),
@@ -66,13 +66,13 @@ class AttachmentRowField extends StatelessWidget {
                     style: AppTextStyles.body.copyWith(fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 1),
-                  const Text('Optional · max 10MB', style: AppTextStyles.caption),
+                  Text('Optional · max 10MB', style: AppTextStyles.caption),
                 ],
               ),
             ),
             const SizedBox(width: 8),
             if (hasFile)
-              const Icon(Icons.close, size: 16, color: AppColors.textMuted)
+              Icon(Icons.close, size: 16, color: AppColors.textMuted)
             else
               Text('$filesLeft left', style: AppTextStyles.caption),
           ],

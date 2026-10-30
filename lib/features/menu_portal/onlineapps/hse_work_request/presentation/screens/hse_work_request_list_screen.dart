@@ -98,17 +98,17 @@ class _HseWorkRequestListScreenState extends State<HseWorkRequestListScreen> {
                     decoration: InputDecoration(
                       hintText: 'Cari ID register, nama, atau lokasi...',
                       hintStyle: AppTextStyles.body.copyWith(color: AppColors.textMuted),
-                      prefixIcon: const Icon(Icons.search, size: 20, color: AppColors.textMuted),
+                      prefixIcon: Icon(Icons.search, size: 20, color: AppColors.textMuted),
                       filled: true,
-                      fillColor: Colors.white,
+                      fillColor: AppColors.card,
                       contentPadding: const EdgeInsets.symmetric(vertical: 10),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
-                        borderSide: const BorderSide(color: AppColors.border, width: 1.5),
+                        borderSide: BorderSide(color: AppColors.border, width: 1.5),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
-                        borderSide: const BorderSide(color: AppColors.border, width: 1.5),
+                        borderSide: BorderSide(color: AppColors.border, width: 1.5),
                       ),
                     ),
                   ),

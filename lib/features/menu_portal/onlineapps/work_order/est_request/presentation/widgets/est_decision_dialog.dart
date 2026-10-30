@@ -82,7 +82,7 @@ class _RejectDialogState extends State<_RejectDialog> {
           hintText: 'Reason (optional)',
           hintStyle: AppTextStyles.body.copyWith(color: AppColors.textMuted),
           filled: true,
-          fillColor: Colors.white,
+          fillColor: AppColors.card,
           border: _border(AppColors.border),
           enabledBorder: _border(AppColors.border),
           focusedBorder: _border(AppColors.primaryMid),
@@ -177,7 +177,7 @@ class _DecisionDialog extends StatelessWidget {
                       onPressed: () => Navigator.of(context).pop(),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppColors.text,
-                        side: const BorderSide(color: AppColors.border),
+                        side: BorderSide(color: AppColors.border),
                         shape: const StadiumBorder(),
                       ),
                       child: Text(

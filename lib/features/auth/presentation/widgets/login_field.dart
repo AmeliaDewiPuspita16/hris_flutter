@@ -105,8 +105,8 @@ class _LoginFieldState extends State<LoginField> {
                       keyboardType: widget.keyboardType,
                       textInputAction: widget.textInputAction,
                       onSubmitted: widget.onSubmitted,
-                      cursorColor: AppColors.primary,
-                      style: const TextStyle(
+                      cursorColor: AppColors.primaryText,
+                      style: TextStyle(
                         fontFamily: AppTextStyles.fontFamily,
                         fontSize: 17,
                         fontWeight: FontWeight.w700,
@@ -130,7 +130,7 @@ class _LoginFieldState extends State<LoginField> {
             padding: const EdgeInsets.fromLTRB(16, 6, 0, 0),
             child: Text(
               widget.errorText!,
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: AppTextStyles.fontFamily,
                 fontSize: 11,
                 fontWeight: FontWeight.w500,

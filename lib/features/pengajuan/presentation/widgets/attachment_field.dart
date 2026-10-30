@@ -39,7 +39,7 @@ class AttachmentField extends StatelessWidget {
             children: [
               TextSpan(text: label),
               if (required)
-                const TextSpan(text: ' *', style: TextStyle(color: AppColors.rejected)),
+                TextSpan(text: ' *', style: TextStyle(color: AppColors.rejected)),
             ],
           ),
         ),
@@ -51,7 +51,7 @@ class AttachmentField extends StatelessWidget {
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.card,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: AppColors.border, width: 1.5),
             ),
@@ -60,7 +60,7 @@ class AttachmentField extends StatelessWidget {
                 Icon(
                   Icons.attach_file,
                   size: 18,
-                  color: hasFile ? AppColors.primary : AppColors.textMuted,
+                  color: hasFile ? AppColors.primaryText : AppColors.textMuted,
                 ),
                 const SizedBox(width: 10),
                 Expanded(
@@ -83,7 +83,7 @@ class AttachmentField extends StatelessWidget {
         const SizedBox(height: 6),
         Text(
           hint,
-          style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
+          style: TextStyle(fontSize: 11, color: AppColors.textMuted),
         ),
       ],
     );

@@ -28,14 +28,14 @@ class PayslipCard extends StatelessWidget {
               children: [
                 Text(payslip.periodLabel, style: AppTextStyles.sectionTitle),
                 const SizedBox(height: 4),
-                const Text('Take home pay', style: AppTextStyles.caption),
+                Text('Take home pay', style: AppTextStyles.caption),
                 const SizedBox(height: 2),
                 Text(
                   formatRupiah(payslip.netPay),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.primary,
+                    color: AppColors.primaryText,
                   ),
                 ),
               ],
@@ -50,7 +50,7 @@ class PayslipCard extends StatelessWidget {
                 label: payslip.isPaid ? 'Sudah Dibayar' : 'Menunggu',
               ),
               const SizedBox(height: 8),
-              const Icon(Icons.chevron_right, size: 18, color: AppColors.textMuted),
+              Icon(Icons.chevron_right, size: 18, color: AppColors.textMuted),
             ],
           ),
         ],

@@ -87,7 +87,7 @@ class HrisMenuConfig {
           background: AppColors.primaryLight,
           onTap: onAttendance,
         ),
-        const HrisMenuItem(
+        HrisMenuItem(
           id: 'work_schedule',
           label: 'Work Schedule',
           icon: Icons.calendar_month_outlined,
@@ -112,7 +112,7 @@ class HrisMenuConfig {
           isReady: false,
           isVisible: _isHodOrAdmin,
         ),
-        const HrisMenuItem(
+        HrisMenuItem(
           id: 'dept_schedule',
           label: 'Department\nWork Schedule',
           icon: Icons.calendar_view_week_outlined,

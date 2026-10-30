@@ -124,7 +124,7 @@ class _EstRequestFeedbackSheetState extends State<EstRequestFeedbackSheet> {
                     ),
                   ),
                 ),
-                const Text('Verify & give feedback',
+                Text('Verify & give feedback',
                     style: AppTextStyles.sectionTitle),
                 const SizedBox(height: 4),
                 Text(

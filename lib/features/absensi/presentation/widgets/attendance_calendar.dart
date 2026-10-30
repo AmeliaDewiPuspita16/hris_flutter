@@ -43,7 +43,7 @@ class AttendanceCalendar extends StatelessWidget {
                 child: Center(
                   child: Text(
                     label,
-                    style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
+                    style: TextStyle(fontSize: 11, color: AppColors.textMuted),
                   ),
                 ),
               ),

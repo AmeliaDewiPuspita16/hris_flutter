@@ -47,7 +47,7 @@ class AppDateField extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.card,
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
                 color: hasValue ? AppColors.primaryMid : AppColors.border,
@@ -104,13 +104,13 @@ class _DateCalendarSheetState extends State<_DateCalendarSheet> {
         margin: const EdgeInsets.all(12),
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.card,
           borderRadius: BorderRadius.circular(16),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Align(
+            Align(
               alignment: Alignment.centerLeft,
               child: Text('Select Date', style: AppTextStyles.sectionTitle),
             ),
@@ -123,21 +123,21 @@ class _DateCalendarSheetState extends State<_DateCalendarSheet> {
               headerStyle: HeaderStyle(
                 formatButtonVisible: false,
                 titleCentered: true,
-                titleTextStyle: const TextStyle(
+                titleTextStyle: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
                   color: AppColors.text,
                 ),
                 titleTextFormatter: (date, _) => DateFormatter.monthYearID(date),
-                leftChevronIcon: const Icon(Icons.chevron_left, color: AppColors.textMuted, size: 20),
-                rightChevronIcon: const Icon(Icons.chevron_right, color: AppColors.textMuted, size: 20),
+                leftChevronIcon: Icon(Icons.chevron_left, color: AppColors.textMuted, size: 20),
+                rightChevronIcon: Icon(Icons.chevron_right, color: AppColors.textMuted, size: 20),
               ),
               daysOfWeekStyle: DaysOfWeekStyle(
                 dowTextFormatter: (date, _) => DateFormatter.shortDayID(date),
-                weekdayStyle: const TextStyle(fontSize: 11, color: AppColors.textMuted),
-                weekendStyle: const TextStyle(fontSize: 11, color: AppColors.textMuted),
+                weekdayStyle: TextStyle(fontSize: 11, color: AppColors.textMuted),
+                weekendStyle: TextStyle(fontSize: 11, color: AppColors.textMuted),
               ),
-              calendarStyle: const CalendarStyle(
+              calendarStyle: CalendarStyle(
                 outsideDaysVisible: false,
                 defaultTextStyle: TextStyle(fontSize: 13),
                 weekendTextStyle: TextStyle(fontSize: 13),
@@ -145,7 +145,7 @@ class _DateCalendarSheetState extends State<_DateCalendarSheet> {
                   border: Border.fromBorderSide(BorderSide(color: AppColors.primaryMid, width: 1.5)),
                   shape: BoxShape.circle,
                 ),
-                todayTextStyle: TextStyle(color: AppColors.primary, fontSize: 13),
+                todayTextStyle: TextStyle(color: AppColors.primaryText, fontSize: 13),
                 selectedDecoration: BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
                 selectedTextStyle: TextStyle(color: Colors.white, fontSize: 13),
               ),

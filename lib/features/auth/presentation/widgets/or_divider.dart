@@ -11,7 +11,7 @@ class OrDivider extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        const Expanded(child: Divider(color: AppColors.border, height: 1)),
+        Expanded(child: Divider(color: AppColors.border, height: 1)),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 14),
           child: Text(
@@ -23,7 +23,7 @@ class OrDivider extends StatelessWidget {
             ),
           ),
         ),
-        const Expanded(child: Divider(color: AppColors.border, height: 1)),
+        Expanded(child: Divider(color: AppColors.border, height: 1)),
       ],
     );
   }

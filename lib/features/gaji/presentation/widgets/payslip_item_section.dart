@@ -61,7 +61,7 @@ class _ItemRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 11),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         border: Border(bottom: BorderSide(color: AppColors.border)),
       ),
       child: Row(
@@ -70,7 +70,7 @@ class _ItemRow extends StatelessWidget {
           Expanded(
             child: Text(
               item.label,
-              style: const TextStyle(fontSize: 13, color: AppColors.textMid),
+              style: TextStyle(fontSize: 13, color: AppColors.textMid),
             ),
           ),
           Text(
@@ -102,7 +102,7 @@ class _TotalRow extends StatelessWidget {
         children: [
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w700,
               color: AppColors.text,
@@ -110,7 +110,7 @@ class _TotalRow extends StatelessWidget {
           ),
           Text(
             payslipAmountText(amount, hidden: hidden),
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w700,
               color: AppColors.text,

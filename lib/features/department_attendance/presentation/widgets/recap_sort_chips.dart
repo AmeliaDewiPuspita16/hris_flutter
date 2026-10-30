@@ -62,7 +62,7 @@ class _Chip extends StatelessWidget {
         color: AppColors.card,
         shape: StadiumBorder(
           side: BorderSide(
-            color: active ? AppColors.primary : AppColors.border,
+            color: active ? AppColors.primaryText : AppColors.border,
             width: active ? 1.5 : 1,
           ),
         ),

@@ -150,7 +150,7 @@ class _NewEmployeeSubformState extends State<NewEmployeeSubform> {
           onChanged: (v) => _emit((d) => d.copyWith(section: v)),
         ),
         const SizedBox(height: 12),
-        const Text('Equipment / Access needed (optional)', style: AppTextStyles.label),
+        Text('Equipment / Access needed (optional)', style: AppTextStyles.label),
         const SizedBox(height: 8),
         NeedChoiceChips(
           labels: NewEmployeeEquipment.all,
@@ -168,16 +168,16 @@ class _NewEmployeeSubformState extends State<NewEmployeeSubform> {
         children: [
           Text(
             widget.departmentsError!,
-            style: const TextStyle(fontSize: 12, color: AppColors.rejected),
+            style: TextStyle(fontSize: 12, color: AppColors.rejected),
           ),
           const SizedBox(height: 6),
           InkWell(
             onTap: widget.onRetryLoadDepartments,
-            child: const Text(
+            child: Text(
               'Try again',
               style: TextStyle(
                 fontSize: 12,
-                color: AppColors.primary,
+                color: AppColors.primaryText,
                 fontWeight: FontWeight.w600,
               ),
             ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_colors.dart';
 
 import '../../shared/domain/role.dart';
 
@@ -52,7 +53,10 @@ extension LeaveTypeX on LeaveType {
   /// Warna khas tiap jenis. Sengaja menghindari hijau/oranye/merah supaya
   /// tidak bentrok dengan warna badge status (Approved/Pending/Rejected)
   /// yang tampil bersebelahan di daftar riwayat.
-  Color get color {
+  Color get color =>
+      AppColors.isDark ? AppColors.onDark(_lightColor) : _lightColor;
+
+  Color get _lightColor {
     switch (this) {
       case LeaveType.cutiTahunan:
         return const Color(0xFF3B6FD4);
@@ -72,7 +76,10 @@ extension LeaveTypeX on LeaveType {
   }
 
   /// Versi terang dari [color], untuk latar ikon/pill.
-  Color get background {
+  Color get background =>
+      AppColors.isDark ? AppColors.tintOnCard(_lightColor) : _lightBackground;
+
+  Color get _lightBackground {
     switch (this) {
       case LeaveType.cutiTahunan:
         return const Color(0xFFE8F0FE);

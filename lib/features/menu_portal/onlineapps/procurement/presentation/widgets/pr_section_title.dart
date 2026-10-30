@@ -19,15 +19,15 @@ class PrSectionTitle extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
         children: [
-          Icon(icon, size: 14, color: AppColors.primary),
+          Icon(icon, size: 14, color: AppColors.primaryText),
           const SizedBox(width: 6),
           Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: AppTextStyles.fontFamily,
               fontSize: 11,
               fontWeight: FontWeight.w800,
-              color: AppColors.primary,
+              color: AppColors.primaryText,
               letterSpacing: 0.6,
             ),
           ),

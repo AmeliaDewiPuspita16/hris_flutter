@@ -164,7 +164,7 @@ class _UpdatePasswordScreenState extends State<UpdatePasswordScreen> {
               Text(
                 _submitError!,
                 style:
-                    const TextStyle(fontSize: 12.5, color: AppColors.rejected),
+                    TextStyle(fontSize: 12.5, color: AppColors.rejected),
               ),
             ],
             const SizedBox(height: 20),
@@ -213,7 +213,7 @@ class _UpdatePasswordScreenState extends State<UpdatePasswordScreen> {
           const SizedBox(height: 4),
           Text(error,
               style:
-                  const TextStyle(fontSize: 11.5, color: AppColors.rejected)),
+                  TextStyle(fontSize: 11.5, color: AppColors.rejected)),
         ],
       ],
     );

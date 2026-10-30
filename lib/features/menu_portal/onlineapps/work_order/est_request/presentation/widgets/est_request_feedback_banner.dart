@@ -36,9 +36,9 @@ class EstRequestFeedbackBanner extends StatelessWidget {
                     children: [
                       Row(
                         children: [
-                          const Icon(Icons.star_rounded, size: 15, color: AppColors.accent),
+                          Icon(Icons.star_rounded, size: 15, color: AppColors.accent),
                           const SizedBox(width: 6),
-                          const Text(
+                          Text(
                             'COMPLETED · GIVE FEEDBACK',
                             style: TextStyle(
                               fontFamily: AppTextStyles.fontFamily,

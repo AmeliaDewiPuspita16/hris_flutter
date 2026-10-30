@@ -80,7 +80,7 @@ class _StatusTabState extends State<StatusTab> {
           return Center(
             child: Text(
               state.errorMessage ?? 'Failed to load history.',
-              style: const TextStyle(color: AppColors.textMuted),
+              style: TextStyle(color: AppColors.textMuted),
             ),
           );
         }
@@ -109,22 +109,22 @@ class _StatusTabState extends State<StatusTab> {
               child: TextField(
                 controller: _searchController,
                 onChanged: (value) => setState(() => _query = value),
-                style: const TextStyle(fontSize: 13, color: AppColors.text),
+                style: TextStyle(fontSize: 13, color: AppColors.text),
                 decoration: InputDecoration(
                   hintText: 'Search leave requests',
-                  hintStyle: const TextStyle(fontSize: 12.5, color: AppColors.textMuted),
-                  prefixIcon: const Icon(Icons.search, size: 18, color: AppColors.textMuted),
+                  hintStyle: TextStyle(fontSize: 12.5, color: AppColors.textMuted),
+                  prefixIcon: Icon(Icons.search, size: 18, color: AppColors.textMuted),
                   suffixIcon: _query.isEmpty
                       ? null
                       : IconButton(
-                          icon: const Icon(Icons.close, size: 16, color: AppColors.textMuted),
+                          icon: Icon(Icons.close, size: 16, color: AppColors.textMuted),
                           onPressed: () {
                             _searchController.clear();
                             setState(() => _query = '');
                           },
                         ),
                   filled: true,
-                  fillColor: Colors.white,
+                  fillColor: AppColors.card,
                   contentPadding: EdgeInsets.zero,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(20),
@@ -142,7 +142,7 @@ class _StatusTabState extends State<StatusTab> {
               width: 38,
               height: 38,
               decoration: BoxDecoration(
-                color: _hasActiveFilter ? AppColors.primary : Colors.white,
+                color: _hasActiveFilter ? AppColors.primary : AppColors.card,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
@@ -165,7 +165,7 @@ class _StatusTabState extends State<StatusTab> {
 
     showModalBottomSheet<void>(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.card,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -197,7 +197,7 @@ class _StatusTabState extends State<StatusTab> {
                   const SizedBox(height: 16),
                   Row(
                     children: [
-                      const Text(
+                      Text(
                         'Filter',
                         style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.text),
                       ),
@@ -311,7 +311,7 @@ class _StatusTabState extends State<StatusTab> {
                         Expanded(
                           child: Text(
                             history.type,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w700,
                               color: AppColors.text,
@@ -324,7 +324,7 @@ class _StatusTabState extends State<StatusTab> {
                     const SizedBox(height: 6),
                     Text(
                       history.date,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12.5,
                         fontWeight: FontWeight.w500,
                         color: AppColors.textMuted,
@@ -354,7 +354,7 @@ class _StatusTabState extends State<StatusTab> {
   }
 
   Widget _buildEmpty() {
-    return const Center(
+    return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -385,7 +385,7 @@ class _SheetLabel extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 8),
       child: Text(
         text,
-        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textMuted),
+        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppColors.textMuted),
       ),
     );
   }
@@ -406,10 +406,10 @@ class _FilterChip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
         decoration: BoxDecoration(
-          color: selected ? AppColors.primary : Colors.white,
+          color: selected ? AppColors.primary : AppColors.card,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: selected ? AppColors.primary : AppColors.border,
+            color: selected ? AppColors.primaryText : AppColors.border,
             width: 1.5,
           ),
         ),

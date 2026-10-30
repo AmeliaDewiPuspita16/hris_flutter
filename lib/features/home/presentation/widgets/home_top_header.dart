@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/theme/app_colors.dart';
 
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/user_avatar.dart';
@@ -36,10 +37,15 @@ class HomeTopHeader extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: EdgeInsets.fromLTRB(20, topInset + 14, 20, 22),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         image: DecorationImage(
-          image: AssetImage('assets/images/header_bg.png'),
+          image: const AssetImage('assets/images/header_bg.png'),
           fit: BoxFit.cover,
+          // Bitmap header dibuat untuk mode terang; di mode gelap diredupkan
+          // supaya hijaunya pekat seperti mockup.
+          colorFilter: AppColors.isDark
+              ? ColorFilter.mode(Colors.black.withValues(alpha: 0.42), BlendMode.srcATop)
+              : null,
         ),
         borderRadius: BorderRadius.only(
           bottomLeft: Radius.circular(24),

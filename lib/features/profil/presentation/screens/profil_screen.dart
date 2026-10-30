@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/logging/app_logger.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/theme_cubit.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/detail_field_tile.dart';
@@ -137,8 +138,10 @@ class _ProfilView extends StatelessWidget {
                         const SizedBox(height: 8),
                         _buildInfoCard(p),
                         const SizedBox(height: 18),
-                        const SectionLabel('SECURITY'),
+                        const SectionLabel('SETTINGS'),
                         const SizedBox(height: 8),
+                        _buildThemeTile(),
+                        const SizedBox(height: 10),
                         _buildMenuTile(
                           icon: Icons.lock_outline,
                           label: 'Update Password',
@@ -265,16 +268,16 @@ class _ProfilView extends StatelessWidget {
                 // Cover bawaan tetap bernuansa hijau seperti desain awal;
                 // cover pilihan user cukup digelapkan sedikit dari kiri.
                 if (user?.cover == null)
-                  const DecoratedBox(
+                  DecoratedBox(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         begin: Alignment.centerLeft,
                         end: Alignment.centerRight,
                         stops: [0, 0.45, 1],
                         colors: [
-                          Color(0xF20E4A34), // AppColors.primary, 95%
-                          Color(0xB30E4A34), // 70%
-                          Color(0x260E4A34), // 15%
+                          AppColors.primary.withValues(alpha: 0.95), // AppColors.primary, 95%
+                          AppColors.primary.withValues(alpha: 0.70), // 70%
+                          AppColors.primary.withValues(alpha: 0.15), // 15%
                         ],
                       ),
                     ),
@@ -355,7 +358,7 @@ class _ProfilView extends StatelessWidget {
                       user?.name ?? p.name,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.w800,
                           color: AppColors.text,
@@ -364,7 +367,7 @@ class _ProfilView extends StatelessWidget {
                     const SizedBox(height: 4),
                     Row(
                       children: [
-                        const Icon(Icons.business_center,
+                        Icon(Icons.business_center,
                             size: 15, color: AppColors.textMid),
                         const SizedBox(width: 6),
                         Flexible(
@@ -372,7 +375,7 @@ class _ProfilView extends StatelessWidget {
                             user?.section ?? p.title,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
+                            style: TextStyle(
                                 fontSize: 13.5,
                                 fontWeight: FontWeight.w500,
                                 color: AppColors.textMid),
@@ -390,15 +393,15 @@ class _ProfilView extends StatelessWidget {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.badge,
+                          Icon(Icons.badge,
                               size: 15, color: AppColors.primaryMid),
                           const SizedBox(width: 6),
                           Text(
                             'NIP: ${user?.nik ?? p.nip}',
-                            style: const TextStyle(
+                            style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
-                                color: AppColors.primary,
+                                color: AppColors.primaryText,
                                 letterSpacing: 0.2),
                           ),
                         ],
@@ -471,6 +474,57 @@ class _ProfilView extends StatelessWidget {
     }
   }
 
+  /// Saklar mode gelap. Pilihan disimpan lokal oleh [ThemeCubit].
+  Widget _buildThemeTile() {
+    return BlocBuilder<ThemeCubit, ThemeMode>(
+      builder: (context, mode) {
+        return AppCard(
+          padding: EdgeInsets.zero,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            child: Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryText.withValues(alpha: 0.10),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(Icons.dark_mode_outlined,
+                      size: 22, color: AppColors.primaryText),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Dark mode',
+                          style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.text)),
+                      const SizedBox(height: 2),
+                      Text('Use a darker color theme',
+                          style: TextStyle(
+                              fontSize: 12.5, color: AppColors.textMuted)),
+                    ],
+                  ),
+                ),
+                Switch(
+                  value: mode == ThemeMode.dark,
+                  activeTrackColor: AppColors.primaryText,
+                  onChanged: (v) => context.read<ThemeCubit>().setDark(v),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildMenuTile({
     required IconData icon,
     required String label,
@@ -491,10 +545,10 @@ class _ProfilView extends StatelessWidget {
                 height: 44,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.10),
+                  color: AppColors.primaryText.withValues(alpha: 0.10),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(icon, size: 22, color: AppColors.primary),
+                child: Icon(icon, size: 22, color: AppColors.primaryText),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -502,18 +556,18 @@ class _ProfilView extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(label,
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.w600,
                             color: AppColors.text)),
                     const SizedBox(height: 2),
                     Text(subtitle,
-                        style: const TextStyle(
+                        style: TextStyle(
                             fontSize: 12.5, color: AppColors.textMuted)),
                   ],
                 ),
               ),
-              const Icon(Icons.chevron_right,
+              Icon(Icons.chevron_right,
                   size: 18, color: AppColors.textMuted),
             ],
           ),
@@ -531,11 +585,11 @@ class _ProfilView extends StatelessWidget {
           ),
       style: OutlinedButton.styleFrom(
         backgroundColor: AppColors.rejectedBg,
-        side: const BorderSide(color: AppColors.rejected, width: 1.5),
+        side: BorderSide(color: AppColors.rejected, width: 1.5),
         padding: const EdgeInsets.symmetric(vertical: 14),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
-      child: const Text('Logout',
+      child: Text('Logout',
           style: TextStyle(
               color: AppColors.rejected,
               fontSize: 14,

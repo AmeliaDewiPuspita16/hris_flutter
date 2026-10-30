@@ -72,7 +72,7 @@ class AnnouncementSection extends StatelessWidget {
           else if (announcements.isEmpty)
             AppCard(
               padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
-              child: const Center(
+              child: Center(
                 child: Text(
                   'No announcements yet',
                   style: TextStyle(
@@ -92,7 +92,7 @@ class AnnouncementSection extends StatelessWidget {
                   children: [
                     for (var i = 0; i < announcements.length; i++) ...[
                       if (i > 0)
-                        const Divider(
+                        Divider(
                           height: 1,
                           thickness: 1,
                           indent: 16,
@@ -148,7 +148,7 @@ class _AnnouncementTile extends StatelessWidget {
                 const SizedBox(width: 8),
                 Text(
                   display.time,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: AppTextStyles.fontFamily,
                     fontSize: 11,
                     color: AppColors.textMuted,
@@ -159,7 +159,7 @@ class _AnnouncementTile extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               display.title,
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: AppTextStyles.fontFamily,
                 fontSize: 13.5,
                 fontWeight: FontWeight.w700,
@@ -173,7 +173,7 @@ class _AnnouncementTile extends StatelessWidget {
                 body,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: AppTextStyles.fontFamily,
                   fontSize: 12,
                   color: AppColors.textMuted,
@@ -236,7 +236,7 @@ class _AnnouncementError extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(
+              Icon(
                 Icons.error_outline,
                 size: 16,
                 color: AppColors.rejected,
@@ -245,7 +245,7 @@ class _AnnouncementError extends StatelessWidget {
               Expanded(
                 child: Text(
                   message,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: AppTextStyles.fontFamily,
                     fontSize: 12,
                     color: AppColors.rejected,
@@ -258,7 +258,7 @@ class _AnnouncementError extends StatelessWidget {
             const SizedBox(height: 8),
             InkWell(
               onTap: onRetry,
-              child: const Padding(
+              child: Padding(
                 padding: EdgeInsets.symmetric(vertical: 4),
                 child: Text(
                   'Try again',
@@ -308,7 +308,7 @@ class _ThumbnailStrip extends StatelessWidget {
                   height: 44,
                   color: AppColors.neutralBg,
                   alignment: Alignment.center,
-                  child: const Icon(
+                  child: Icon(
                     Icons.image_not_supported_outlined,
                     size: 14,
                     color: AppColors.textMuted,
@@ -328,7 +328,7 @@ class _ThumbnailStrip extends StatelessWidget {
             ),
             child: Text(
               '+$hidden',
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: AppTextStyles.fontFamily,
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
@@ -368,7 +368,7 @@ class _AnnouncementSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const ShimmerCard(
+    return ShimmerCard(
       padding: EdgeInsets.symmetric(horizontal: 16),
       child: Column(
         children: [

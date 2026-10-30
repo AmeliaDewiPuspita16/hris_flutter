@@ -25,7 +25,7 @@ class AppErrorView extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
+            Icon(
               Icons.cloud_off_outlined,
               size: 32,
               color: AppColors.textMuted,
@@ -40,8 +40,8 @@ class AppErrorView extends StatelessWidget {
             OutlinedButton(
               onPressed: onRetry,
               style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.primary,
-                side: const BorderSide(color: AppColors.primary),
+                foregroundColor: AppColors.primaryText,
+                side: BorderSide(color: AppColors.primaryText),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),

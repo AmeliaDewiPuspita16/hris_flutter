@@ -71,7 +71,7 @@ class _SplashScreenState extends State<SplashScreen>
       body: Container(
         width: double.infinity,
         height: double.infinity,
-        decoration: const BoxDecoration(gradient: AppColors.heroGradient),
+        decoration: BoxDecoration(gradient: AppColors.heroGradient),
         child: Stack(
           children: [
             Positioned(

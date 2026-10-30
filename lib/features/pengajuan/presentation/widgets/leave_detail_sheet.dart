@@ -11,7 +11,7 @@ import '../../domain/leave_history_entry.dart';
 Future<void> showLeaveDetailSheet(BuildContext context, LeaveHistoryEntry entry) {
   return showModalBottomSheet(
     context: context,
-    backgroundColor: Colors.white,
+    backgroundColor: AppColors.card,
     isScrollControlled: true,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -61,13 +61,13 @@ class _LeaveDetailSheet extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             entry.date,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.text),
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppColors.text),
           ),
           const SizedBox(height: 18),
           _DetailField(label: 'Reason', value: entry.reason ?? '-'),
           if (entry.photoUrl != null) ...[
             const SizedBox(height: 16),
-            const Text(
+            Text(
               'Attachment',
               style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.textMuted),
             ),
@@ -81,13 +81,13 @@ class _LeaveDetailSheet extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.image_outlined, size: 18, color: AppColors.textMuted),
+                  Icon(Icons.image_outlined, size: 18, color: AppColors.textMuted),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       entry.photoUrl!,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontSize: 12, color: AppColors.text),
+                      style: TextStyle(fontSize: 12, color: AppColors.text),
                     ),
                   ),
                 ],
@@ -103,20 +103,20 @@ class _LeaveDetailSheet extends StatelessWidget {
 }
 
 class _DetailField extends StatelessWidget {
-  const _DetailField({required this.label, required this.value, this.valueColor = AppColors.text});
+  const _DetailField({required this.label, required this.value, this.valueColor});
 
   final String label;
   final String value;
-  final Color valueColor;
+  final Color? valueColor;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.textMuted)),
+        Text(label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppColors.textMuted)),
         const SizedBox(height: 4),
-        Text(value, style: TextStyle(fontSize: 13, color: valueColor, height: 1.4)),
+        Text(value, style: TextStyle(fontSize: 13, color: valueColor ?? AppColors.text, height: 1.4)),
       ],
     );
   }

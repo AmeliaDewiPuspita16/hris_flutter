@@ -32,16 +32,18 @@ class BackHeader extends StatelessWidget implements PreferredSizeWidget {
       // Header ini putih, jadi ikon status bar harus gelap. Layar yang
       // memakainya biasanya dibuka dari Beranda yang menyetel ikon terang —
       // tanpa ini, jam dan baterai jadi putih di atas putih.
-      value: const SystemUiOverlayStyle(
+      value: SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.dark,
-        statusBarBrightness: Brightness.light,
+        statusBarIconBrightness:
+            AppColors.isDark ? Brightness.light : Brightness.dark,
+        statusBarBrightness:
+            AppColors.isDark ? Brightness.dark : Brightness.light,
       ),
       child: Container(
         height: preferredSize.height + topInset,
         padding: EdgeInsets.fromLTRB(20, topInset, 20, 0),
-        decoration: const BoxDecoration(
-          color: Colors.white,
+        decoration: BoxDecoration(
+          color: AppColors.card,
           border: Border(bottom: BorderSide(color: AppColors.border)),
         ),
         child: Row(
@@ -52,10 +54,10 @@ class BackHeader extends StatelessWidget implements PreferredSizeWidget {
                   ? null
                   : InkWell(
                       onTap: onBack,
-                      child: const Icon(
+                      child: Icon(
                         Icons.arrow_back,
                         size: 20,
-                        color: AppColors.primary,
+                        color: AppColors.primaryText,
                       ),
                     ),
             ),

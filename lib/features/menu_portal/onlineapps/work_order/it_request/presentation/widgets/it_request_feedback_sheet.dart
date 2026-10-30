@@ -121,7 +121,7 @@ class _ItRequestFeedbackSheetState extends State<ItRequestFeedbackSheet> {
                     ),
                   ),
                 ),
-                const Text('Give feedback', style: AppTextStyles.sectionTitle),
+                Text('Give feedback', style: AppTextStyles.sectionTitle),
                 const SizedBox(height: 4),
                 Text(
                   detail.description,

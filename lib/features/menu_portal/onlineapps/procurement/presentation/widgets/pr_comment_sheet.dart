@@ -91,8 +91,8 @@ class _CommentSheetState extends State<_CommentSheet> {
         widget.color.computeLuminance() > 0.3 ? AppColors.text : Colors.white;
 
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(
+        color: AppColors.card,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       padding: EdgeInsets.fromLTRB(20, 10, 20, bottomInset + 16),
@@ -135,7 +135,7 @@ class _CommentSheetState extends State<_CommentSheet> {
                     children: [
                       Text(
                         widget.title,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontFamily: AppTextStyles.fontFamily,
                           fontSize: 17,
                           fontWeight: FontWeight.w700,
@@ -145,7 +145,7 @@ class _CommentSheetState extends State<_CommentSheet> {
                       const SizedBox(height: 4),
                       Text(
                         widget.description,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontFamily: AppTextStyles.fontFamily,
                           fontSize: 13,
                           height: 1.4,
@@ -165,12 +165,12 @@ class _CommentSheetState extends State<_CommentSheet> {
                 text: 'Comment',
                 children: [
                   if (widget.required)
-                    const TextSpan(
+                    TextSpan(
                       text: ' *',
                       style: TextStyle(color: AppColors.rejected),
                     )
                   else
-                    const TextSpan(
+                    TextSpan(
                       text: '  (optional)',
                       style: TextStyle(
                         fontWeight: FontWeight.w400,
@@ -179,7 +179,7 @@ class _CommentSheetState extends State<_CommentSheet> {
                     ),
                 ],
               ),
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: AppTextStyles.fontFamily,
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
@@ -194,7 +194,7 @@ class _CommentSheetState extends State<_CommentSheet> {
               minLines: 4,
               maxLines: 6,
               textCapitalization: TextCapitalization.sentences,
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: AppTextStyles.fontFamily,
                 fontSize: 14,
                 height: 1.4,
@@ -202,7 +202,7 @@ class _CommentSheetState extends State<_CommentSheet> {
               ),
               decoration: InputDecoration(
                 hintText: 'Write a comment...',
-                hintStyle: const TextStyle(
+                hintStyle: TextStyle(
                   fontFamily: AppTextStyles.fontFamily,
                   fontSize: 14,
                   color: AppColors.textMuted,
@@ -215,7 +215,7 @@ class _CommentSheetState extends State<_CommentSheet> {
                 focusedBorder: _border(widget.color, width: 1.5),
                 errorBorder: _border(AppColors.rejected),
                 focusedErrorBorder: _border(AppColors.rejected, width: 1.5),
-                errorStyle: const TextStyle(
+                errorStyle: TextStyle(
                   fontFamily: AppTextStyles.fontFamily,
                   fontSize: 12,
                   color: AppColors.rejected,
@@ -236,7 +236,7 @@ class _CommentSheetState extends State<_CommentSheet> {
                     onPressed: () => Navigator.pop(context),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppColors.textMid,
-                      side: const BorderSide(color: AppColors.border),
+                      side: BorderSide(color: AppColors.border),
                       minimumSize: const Size.fromHeight(50),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14),

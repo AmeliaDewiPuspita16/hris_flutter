@@ -26,7 +26,7 @@ class RequestCategorySelector extends StatelessWidget {
         value: value,
         isExpanded: true,
         isDense: true,
-        icon: const Icon(
+        icon: Icon(
           Icons.keyboard_arrow_down,
           color: AppColors.textMuted,
           size: 18,
@@ -36,7 +36,7 @@ class RequestCategorySelector extends StatelessWidget {
           fontWeight: FontWeight.w700,
           fontSize: 14,
         ),
-        dropdownColor: Colors.white,
+        dropdownColor: AppColors.card,
         borderRadius: BorderRadius.circular(10),
         hint: Text(
           '-- Select --',

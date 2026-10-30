@@ -258,8 +258,8 @@ class _HseWorkRequestFormScreenState extends State<HseWorkRequestFormScreen> {
             ),
             Container(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-              decoration: const BoxDecoration(
-                color: Colors.white,
+              decoration: BoxDecoration(
+                color: AppColors.card,
                 border: Border(top: BorderSide(color: AppColors.border)),
               ),
               child: Row(
@@ -448,7 +448,7 @@ class _SectionCard extends StatelessWidget {
                   color: AppColors.primaryLight,
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Icon(icon, size: 16, color: AppColors.primary),
+                child: Icon(icon, size: 16, color: AppColors.primaryText),
               ),
               const SizedBox(width: 8),
               Text(title, style: AppTextStyles.sectionTitle),
@@ -644,21 +644,21 @@ class _ReviewRow extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 11),
       decoration: BoxDecoration(
-        border: showDivider ? const Border(bottom: BorderSide(color: AppColors.border)) : null,
+        border: showDivider ? Border(bottom: BorderSide(color: AppColors.border)) : null,
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(
             flex: 2,
-            child: Text(label, style: const TextStyle(fontSize: 12, color: AppColors.textMuted)),
+            child: Text(label, style: TextStyle(fontSize: 12, color: AppColors.textMuted)),
           ),
           Expanded(
             flex: 3,
             child: Text(
               value.isEmpty ? '-' : value,
               textAlign: TextAlign.right,
-              style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: AppColors.text),
+              style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: AppColors.text),
             ),
           ),
         ],

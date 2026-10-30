@@ -43,13 +43,17 @@ class PortalCategoryPage extends StatelessWidget {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       // Header terang, jadi ikon status bar harus gelap — sama dengan
       // `BackHeader`.
-      value: const SystemUiOverlayStyle(
+      value: SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.dark,
-        statusBarBrightness: Brightness.light,
+        statusBarIconBrightness:
+            AppColors.isDark ? Brightness.light : Brightness.dark,
+        statusBarBrightness:
+            AppColors.isDark ? Brightness.dark : Brightness.light,
       ),
-      child: Scaffold(
-        backgroundColor: AppColors.bg,
+      child: DecoratedBox(
+        decoration: AppColors.portalBackdrop,
+        child: Scaffold(
+        backgroundColor: Colors.transparent,
         body: ListView(
           padding: EdgeInsets.zero,
           children: [
@@ -70,7 +74,7 @@ class PortalCategoryPage extends StatelessWidget {
                       padding: const EdgeInsets.only(left: 4, bottom: 10),
                       child: Text(
                         label,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontFamily: AppTextStyles.fontFamily,
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
@@ -88,6 +92,7 @@ class PortalCategoryPage extends StatelessWidget {
             ),
           ],
         ),
+      ),
       ),
     );
   }
@@ -141,13 +146,17 @@ class _PortalModulePageState extends State<PortalModulePage> {
     final topInset = MediaQuery.paddingOf(context).top;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: const SystemUiOverlayStyle(
+      value: SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.dark,
-        statusBarBrightness: Brightness.light,
+        statusBarIconBrightness:
+            AppColors.isDark ? Brightness.light : Brightness.dark,
+        statusBarBrightness:
+            AppColors.isDark ? Brightness.dark : Brightness.light,
       ),
-      child: Scaffold(
-        backgroundColor: AppColors.bg,
+      child: DecoratedBox(
+        decoration: AppColors.portalBackdrop,
+        child: Scaffold(
+        backgroundColor: Colors.transparent,
         floatingActionButton: widget.floatingActionButton,
         body: Stack(
           children: [
@@ -204,6 +213,7 @@ class _PortalModulePageState extends State<PortalModulePage> {
             ),
           ],
         ),
+      ),
       ),
     );
   }
@@ -275,6 +285,9 @@ class PortalHeader extends StatelessWidget {
     return Stack(
       clipBehavior: Clip.none,
       children: [
+        // Latar bergambar hanya untuk mode terang; mode gelap memakai
+        // [AppColors.portalBackdrop] milik halaman.
+        if (!AppColors.isDark) ...[
         Positioned(
           top: -backgroundBleed,
           left: 0,
@@ -285,7 +298,7 @@ class PortalHeader extends StatelessWidget {
         ),
         // Memudarkan ujung bawah latar ke warna halaman supaya sambungannya
         // ke daftar tidak terlihat sebagai garis.
-        const Positioned(
+        Positioned(
           left: 0,
           right: 0,
           bottom: 0,
@@ -295,17 +308,21 @@ class PortalHeader extends StatelessWidget {
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [Color(0x00F1F0EA), AppColors.bg],
+                colors: [AppColors.bg.withValues(alpha: 0), AppColors.bg],
               ),
             ),
           ),
         ),
+        ],
         Positioned(
           right: 4,
           bottom: 12,
           child: SvgPicture.asset(
             illustrationAsset,
             width: 150,
+            // Mode gelap: warna SVG disesuaikan (putih -> permukaan gelap).
+            colorMapper:
+                AppColors.isDark ? const _DarkIllustrationMapper() : null,
             // Latar & judul tetap terbaca untuk pembaca layar; ilustrasi
             // hanya hiasan.
             excludeFromSemantics: true,
@@ -321,11 +338,11 @@ class PortalHeader extends StatelessWidget {
               if (eyebrow case final eyebrow?) ...[
                 Text(
                   eyebrow,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: AppTextStyles.fontFamily,
                     fontSize: 11,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.primaryMid,
+                    color: AppColors.primaryText,
                     letterSpacing: 0.6,
                   ),
                 ),
@@ -333,7 +350,7 @@ class PortalHeader extends StatelessWidget {
               ],
               Text(
                 title,
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: AppTextStyles.fontFamily,
                   fontSize: 28,
                   fontWeight: FontWeight.w800,
@@ -367,19 +384,48 @@ class _BackButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.white,
+      color: AppColors.card,
       shape: const CircleBorder(),
       elevation: 0,
       shadowColor: Colors.black12,
       child: InkWell(
         onTap: onTap,
         customBorder: const CircleBorder(),
-        child: const SizedBox.square(
+        child: SizedBox.square(
           dimension: 38,
           child:
               Icon(Icons.arrow_back_rounded, size: 20, color: AppColors.text),
         ),
       ),
     );
+  }
+}
+
+/// Menyesuaikan warna ilustrasi SVG untuk mode gelap tanpa mengubah gambarnya:
+/// putih/krem/abu muda jadi permukaan gelap kehijauan, warna pastel diperdalam,
+/// dan warna yang terlalu gelap diterangkan sedikit supaya tetap terlihat.
+class _DarkIllustrationMapper extends ColorMapper {
+  const _DarkIllustrationMapper();
+
+  @override
+  Color substitute(
+    String? id,
+    String elementName,
+    String attributeName,
+    Color color,
+  ) {
+    final hsl = HSLColor.fromColor(color);
+    final l = hsl.lightness;
+    final Color out;
+    if (hsl.saturation < 0.3 && l > 0.78) {
+      out = Color.lerp(AppColors.card, AppColors.primaryLight, 0.6)!;
+    } else if (l > 0.72) {
+      out = hsl.withLightness(l - 0.28).toColor();
+    } else if (l < 0.28) {
+      out = hsl.withLightness(0.4).toColor();
+    } else {
+      return color;
+    }
+    return out.withValues(alpha: color.a);
   }
 }

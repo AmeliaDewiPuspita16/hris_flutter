@@ -155,7 +155,7 @@ class LeaveApprovalCard extends StatelessWidget {
               onPressed: onReject,
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppColors.rejected,
-                side: const BorderSide(color: AppColors.rejected, width: 1.2),
+                side: BorderSide(color: AppColors.rejected, width: 1.2),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(9),
                 ),
@@ -204,7 +204,7 @@ class LeaveApprovalCard extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Divider(height: 1, color: AppColors.border),
+        Divider(height: 1, color: AppColors.border),
         const SizedBox(height: 8),
         Text('$verb by $by$when', style: AppTextStyles.caption),
         if (request.decisionNote != null) ...[
@@ -237,17 +237,17 @@ class _Avatar extends StatelessWidget {
       width: 38,
       height: 38,
       alignment: Alignment.center,
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: AppColors.primaryLight,
         shape: BoxShape.circle,
       ),
       child: Text(
         initials,
-        style: const TextStyle(
+        style: TextStyle(
           fontFamily: AppTextStyles.fontFamily,
           fontSize: 13,
           fontWeight: FontWeight.w800,
-          color: AppColors.primary,
+          color: AppColors.primaryText,
         ),
       ),
     );

@@ -73,7 +73,7 @@ class _DataDiriScreenState extends State<DataDiriScreen> {
                     controller: _phoneCtrl,
                   ),
                   // indent 54 = lebar ikon (40) + jarak (14), sejajar dengan teks.
-                  const Divider(height: 1, indent: 54, color: AppColors.border),
+                  Divider(height: 1, indent: 54, color: AppColors.border),
                   _editableRow(
                     fieldKey: 'email',
                     label: 'Email',
@@ -137,7 +137,7 @@ class _DataDiriScreenState extends State<DataDiriScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label, style: const TextStyle(fontSize: 11.5, color: AppColors.textMuted, fontWeight: FontWeight.w600)),
+                Text(label, style: TextStyle(fontSize: 11.5, color: AppColors.textMuted, fontWeight: FontWeight.w600)),
                 const SizedBox(height: 3),
                 isEditing
                     ? TextField(
@@ -148,12 +148,12 @@ class _DataDiriScreenState extends State<DataDiriScreen> {
                         decoration: InputDecoration(
                           isDense: true,
                           contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppColors.primary, width: 1.5)),
-                          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppColors.primary, width: 1.5)),
-                          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: AppColors.primary, width: 1.5)),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppColors.primaryText, width: 1.5)),
+                          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppColors.primaryText, width: 1.5)),
+                          focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: AppColors.primaryText, width: 1.5)),
                         ),
                       )
-                    : Text(controller.text, style: const TextStyle(fontSize: 14, color: AppColors.text, fontWeight: FontWeight.w600)),
+                    : Text(controller.text, style: TextStyle(fontSize: 14, color: AppColors.text, fontWeight: FontWeight.w600)),
               ],
             ),
           ),

@@ -45,7 +45,7 @@ class MasterDocumentTile extends StatelessWidget {
                   style: AppTextStyles.body.copyWith(
                     fontSize: 13.5,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.primary,
+                    color: AppColors.primaryText,
                   ),
                 ),
                 const SizedBox(height: 3),
@@ -82,7 +82,7 @@ class MasterDocumentTile extends StatelessWidget {
             ),
           ),
           if (viewable)
-            const Padding(
+            Padding(
               padding: EdgeInsets.only(left: 4, top: 10),
               child: Icon(Icons.chevron_right_rounded, size: 22, color: AppColors.textMuted),
             ),
@@ -153,7 +153,7 @@ class _HierarchyBadge extends StatelessWidget {
   /// Pasangan (warna teks, warna latar) per kode departemen. Kode yang
   /// belum dikenal jatuh ke [AppColors.neutral]/[AppColors.neutralBg]
   /// supaya badge baru dari data API nanti tetap aman tampil, bukan error.
-  static const _palette = {
+  static Map<String, (Color, Color)> get _palette => {
     'IMS': (AppColors.primary, AppColors.primaryLight),
     'HSE': (AppColors.itRequest, AppColors.itRequestBg),
     'EST': (AppColors.estRequest, AppColors.estRequestBg),

@@ -420,7 +420,7 @@ class _PrDetailViewState extends State<_PrDetailView> {
                   children: [
                     // Labelnya yang mengalah kalau ruang kurang — nominal
                     // total tidak boleh terpotong.
-                    const Expanded(
+                    Expanded(
                       child: Text(
                         'Estimated Total',
                         overflow: TextOverflow.ellipsis,
@@ -435,11 +435,11 @@ class _PrDetailViewState extends State<_PrDetailView> {
                     const SizedBox(width: 12),
                     Text(
                       formatRupiah(pr.totalEstimatedAmount),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: AppTextStyles.fontFamily,
                         fontSize: 16,
                         fontWeight: FontWeight.w800,
-                        color: AppColors.primary,
+                        color: AppColors.primaryText,
                       ),
                     ),
                   ],

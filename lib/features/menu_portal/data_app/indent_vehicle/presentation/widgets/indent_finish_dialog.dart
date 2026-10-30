@@ -41,18 +41,18 @@ class IndentFinishDialog extends StatelessWidget {
             Container(
               width: 48,
               height: 48,
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 color: AppColors.primaryLight,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.check_circle_outline,
                 size: 24,
-                color: AppColors.primary,
+                color: AppColors.primaryText,
               ),
             ),
             const SizedBox(height: 14),
-            const Text(
+            Text(
               'Finish trip?',
               textAlign: TextAlign.center,
               style: AppTextStyles.sectionTitle,
@@ -78,7 +78,7 @@ class IndentFinishDialog extends StatelessWidget {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.info_outline,
                       size: 16,
                       color: AppColors.pending,
@@ -108,7 +108,7 @@ class IndentFinishDialog extends StatelessWidget {
                       onPressed: () => Navigator.of(context).pop(false),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppColors.textMid,
-                        side: const BorderSide(
+                        side: BorderSide(
                           color: AppColors.border,
                           width: 1.5,
                         ),

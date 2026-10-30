@@ -20,7 +20,7 @@ class PrItemCountChip extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: const TextStyle(
+        style: TextStyle(
           fontFamily: AppTextStyles.fontFamily,
           fontSize: 10,
           fontWeight: FontWeight.w700,

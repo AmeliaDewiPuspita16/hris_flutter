@@ -118,7 +118,7 @@ class _DocumentListViewState extends State<_DocumentListView> {
         final documents = state.documents;
 
         return RefreshIndicator(
-          color: AppColors.primary,
+          color: AppColors.primaryText,
           onRefresh: _refresh,
           child: documents.isEmpty
               ? ListView(
@@ -147,12 +147,12 @@ class _DocumentListViewState extends State<_DocumentListView> {
                       if (index == 0) return _ResultCount(total: state.meta.total);
 
                       if (index > documents.length) {
-                        return const Padding(
+                        return Padding(
                           padding: EdgeInsets.symmetric(vertical: 8),
                           child: Center(
                             child: SizedBox.square(
                               dimension: 22,
-                              child: CircularProgressIndicator(strokeWidth: 2.4, color: AppColors.primary),
+                              child: CircularProgressIndicator(strokeWidth: 2.4, color: AppColors.primaryText),
                             ),
                           ),
                         );

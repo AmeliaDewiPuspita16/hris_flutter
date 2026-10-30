@@ -47,7 +47,7 @@ class AppTimeField extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppColors.card,
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
                 color: value != null ? AppColors.primaryMid : AppColors.border,
@@ -138,13 +138,13 @@ class _TimeWheelSheetState extends State<_TimeWheelSheet> {
         margin: const EdgeInsets.all(12),
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.card,
           borderRadius: BorderRadius.circular(16),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Align(
+            Align(
               alignment: Alignment.centerLeft,
               child: Text('Select Time', style: AppTextStyles.sectionTitle),
             ),

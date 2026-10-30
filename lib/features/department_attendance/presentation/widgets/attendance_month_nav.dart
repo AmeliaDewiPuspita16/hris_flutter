@@ -56,7 +56,7 @@ class AttendanceMonthNav extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 4),
-                  const Icon(
+                  Icon(
                     Icons.keyboard_arrow_down,
                     size: 18,
                     color: AppColors.textMid,

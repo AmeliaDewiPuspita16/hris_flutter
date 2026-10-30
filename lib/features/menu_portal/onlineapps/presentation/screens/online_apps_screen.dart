@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../auth/presentation/bloc/auth/auth_bloc.dart';
 import '../../domain/online_apps_demo_data.dart';
 import '../../procurement/presentation/screens/procurement_page.dart';
+import '../../hse_work_request/presentation/screens/hse_work_request_list_screen.dart';
 import '../../work_order/domain/request_type.dart';
 import '../../work_order/est_request/presentation/screens/est_request_screen.dart';
 import '../../work_order/it_request/presentation/screens/it_request_screen.dart';
@@ -57,7 +58,9 @@ class OnlineAppsScreen extends StatelessWidget {
       ),
       onTenantFeedback: null,
       onWorkOrder: () => _openWorkOrder(context),
-      onHseWorkRequest: null,
+      onHseWorkRequest: () => Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => HseWorkRequestListScreen()),
+      ),
     );
 
     return PortalCategoryPage(

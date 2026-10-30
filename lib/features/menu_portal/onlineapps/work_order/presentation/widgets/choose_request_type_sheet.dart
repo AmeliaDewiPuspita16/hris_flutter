@@ -38,7 +38,7 @@ class ChooseRequestTypeSheet extends StatelessWidget {
                 ),
               ),
             ),
-            const Text('Choose request type', style: AppTextStyles.sectionTitle),
+            Text('Choose request type', style: AppTextStyles.sectionTitle),
             const SizedBox(height: 12),
             _OptionTile(
               icon: Icons.desktop_windows_outlined,
@@ -122,7 +122,7 @@ class _OptionTile extends StatelessWidget {
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right, size: 18, color: AppColors.textMuted),
+            Icon(Icons.chevron_right, size: 18, color: AppColors.textMuted),
           ],
         ),
       ),

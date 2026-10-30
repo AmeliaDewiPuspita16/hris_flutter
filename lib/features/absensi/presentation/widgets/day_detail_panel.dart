@@ -30,7 +30,7 @@ class DayDetailPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final day = this.day;
     if (day == null) {
-      return const Text(
+      return Text(
         'Select a date to see its details.',
         style: TextStyle(fontSize: 13, color: AppColors.textMuted),
       );
@@ -43,7 +43,7 @@ class DayDetailPanel extends StatelessWidget {
       children: [
         Text(
           dateLabel,
-          style: const TextStyle(
+          style: TextStyle(
               fontSize: 15, fontWeight: FontWeight.w700, color: AppColors.text),
         ),
         const SizedBox(height: 6),
@@ -59,7 +59,7 @@ class DayDetailPanel extends StatelessWidget {
   }
 
   Widget _buildDayOff() {
-    return const Text(
+    return Text(
       'Day Off',
       style: TextStyle(
           fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.text),
@@ -68,7 +68,7 @@ class DayDetailPanel extends StatelessWidget {
 
   Widget _buildScheduledOnly(AttendanceDay day) {
     if (day.shiftCode == null) {
-      return const Text(
+      return Text(
         // 'Hari libur bersama',
         'No attendance or schedule data for this date yet.',
         style: TextStyle(fontSize: 13, color: AppColors.textMuted),
@@ -84,13 +84,13 @@ class DayDetailPanel extends StatelessWidget {
       children: [
         Text(
           'Scheduled shift ${day.shiftCode} · ${day.shiftTimeRange}',
-          style: const TextStyle(
+          style: TextStyle(
               fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.text),
         ),
         const SizedBox(height: 2),
         Text(
           isPast ? 'No attendance recorded' : 'Not started yet',
-          style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
+          style: TextStyle(fontSize: 12, color: AppColors.textMuted),
         ),
       ],
     );
@@ -102,7 +102,7 @@ class DayDetailPanel extends StatelessWidget {
       children: [
         Text(
           day.timeText ?? day.noteText ?? '-',
-          style: const TextStyle(
+          style: TextStyle(
               fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.text),
         ),
         if (day.shiftCode != null) ...[
@@ -111,7 +111,7 @@ class DayDetailPanel extends StatelessWidget {
             day.shiftTimeRange == null
                 ? 'Shift ${day.shiftCode}'
                 : 'Shift ${day.shiftCode} · ${day.shiftTimeRange}',
-            style: const TextStyle(fontSize: 12, color: AppColors.textMuted),
+            style: TextStyle(fontSize: 12, color: AppColors.textMuted),
           ),
         ],
         if (day.badgeLabel != null || day.hasOvertime) ...[

@@ -35,13 +35,13 @@ class DepartmentAttendanceRow extends StatelessWidget {
               alignment: Alignment.center,
               // Avatar sengaja netral; status cukup terbaca dari badge di
               // sisi kanan.
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 color: AppColors.bg,
                 shape: BoxShape.circle,
               ),
               child: Text(
                 entry.initials,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
                   color: AppColors.textMid,

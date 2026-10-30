@@ -35,7 +35,7 @@ class DepartmentAttendanceRecapTable extends StatelessWidget {
             children: [
               const _HeaderRow(),
               for (final row in rows) ...[
-                const Divider(height: 1, color: AppColors.border),
+                Divider(height: 1, color: AppColors.border),
                 _DataRow(row: row, onTap: () => onTapRow(row.entry)),
               ],
             ],
@@ -49,7 +49,7 @@ class DepartmentAttendanceRecapTable extends StatelessWidget {
 class _HeaderRow extends StatelessWidget {
   const _HeaderRow();
 
-  static const _style = TextStyle(
+  static TextStyle get _style => TextStyle(
     fontSize: 11,
     fontWeight: FontWeight.w600,
     color: AppColors.textMuted,
@@ -67,7 +67,7 @@ class _HeaderRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       child: Row(
         children: [
-          const Expanded(child: Text('Employee', style: _style)),
+          Expanded(child: Text('Employee', style: _style)),
           _cell('Late', DepartmentAttendanceRecapTable._lateWidth),
           _cell('Absent', DepartmentAttendanceRecapTable._absentWidth),
           _cell('Leave', DepartmentAttendanceRecapTable._leaveWidth),

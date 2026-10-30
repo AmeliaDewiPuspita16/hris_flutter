@@ -279,7 +279,7 @@ class _CounterChip extends StatelessWidget {
           duration: const Duration(milliseconds: 180),
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
           decoration: BoxDecoration(
-            color: active ? background : Colors.white,
+            color: active ? background : AppColors.card,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: active ? color : AppColors.border,

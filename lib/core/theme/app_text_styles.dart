@@ -15,7 +15,7 @@ class AppTextStyles {
     height: 1.2,
   );
 
-  static const h2 = TextStyle(
+  static TextStyle get h2 => TextStyle(
     fontFamily: fontFamily,
     fontSize: 22,
     fontWeight: FontWeight.w800,
@@ -29,34 +29,34 @@ class AppTextStyles {
     color: Colors.white,
   );
 
-  static const sectionTitle = TextStyle(
+  static TextStyle get sectionTitle => TextStyle(
     fontFamily: fontFamily,
     fontSize: 13,
     fontWeight: FontWeight.w700,
     color: AppColors.text,
   );
 
-  static const label = TextStyle(
+  static TextStyle get label => TextStyle(
     fontFamily: fontFamily,
     fontSize: 12,
     fontWeight: FontWeight.w600,
     color: AppColors.textSub,
   );
 
-  static const body = TextStyle(
+  static TextStyle get body => TextStyle(
     fontFamily: fontFamily,
     fontSize: 14,
     color: AppColors.text,
   );
 
-  static const bodyMuted = TextStyle(
+  static TextStyle get bodyMuted => TextStyle(
     fontFamily: fontFamily,
     fontSize: 13,
     color: AppColors.textMuted,
     height: 1.6,
   );
 
-  static const caption = TextStyle(
+  static TextStyle get caption => TextStyle(
     fontFamily: fontFamily,
     fontSize: 11,
     color: AppColors.textMuted,

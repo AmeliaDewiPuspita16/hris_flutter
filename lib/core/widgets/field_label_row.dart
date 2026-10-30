@@ -31,7 +31,7 @@ class FieldLabelRow extends StatelessWidget {
           text: label,
           children: [
             if (required)
-              const TextSpan(
+              TextSpan(
                 text: ' *',
                 style: TextStyle(color: AppColors.rejected),
               ),

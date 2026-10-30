@@ -111,7 +111,7 @@ class _BalanceCard extends StatelessWidget {
         children: [
           Text(
             balance.label.toUpperCase(),
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: AppTextStyles.fontFamily,
               fontSize: 10,
               fontWeight: FontWeight.w700,
@@ -126,7 +126,7 @@ class _BalanceCard extends StatelessWidget {
             children: [
               Text(
                 balance.formattedValue,
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: AppTextStyles.fontFamily,
                   fontSize: 28,
                   fontWeight: FontWeight.w800,
@@ -141,7 +141,7 @@ class _BalanceCard extends StatelessWidget {
                   balance.caption,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: AppTextStyles.fontFamily,
                     fontSize: 12,
                     color: AppColors.textMuted,
@@ -151,7 +151,7 @@ class _BalanceCard extends StatelessWidget {
               if (balance.note != null)
                 Text(
                   balance.note!,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: AppTextStyles.fontFamily,
                     fontSize: 11,
                     color: AppColors.textMuted,
@@ -167,7 +167,7 @@ class _BalanceCard extends StatelessWidget {
                 value: progress,
                 minHeight: 6,
                 backgroundColor: AppColors.border,
-                valueColor: const AlwaysStoppedAnimation<Color>(
+                valueColor: AlwaysStoppedAnimation<Color>(
                   AppColors.primary,
                 ),
               ),

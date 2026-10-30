@@ -35,7 +35,7 @@ class UploadField extends StatelessWidget {
             children: [
               TextSpan(text: label),
               if (required)
-                const TextSpan(text: ' *', style: TextStyle(color: AppColors.rejected)),
+                TextSpan(text: ' *', style: TextStyle(color: AppColors.rejected)),
             ],
           ),
         ),
@@ -47,7 +47,7 @@ class UploadField extends StatelessWidget {
             width: double.infinity,
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: hasFile ? AppColors.presentBg : const Color(0xFFFAFAFA),
+              color: hasFile ? AppColors.presentBg : AppColors.isDark ? AppColors.neutralBg : const Color(0xFFFAFAFA),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: hasFile ? AppColors.presentMid : AppColors.border,
@@ -58,13 +58,13 @@ class UploadField extends StatelessWidget {
                 ? Text(
                     '📄 $fileName',
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
                       color: AppColors.presentMid,
                     ),
                   )
-                : const Column(
+                : Column(
                     children: [
                       Icon(Icons.upload_outlined, color: AppColors.textMuted),
                       SizedBox(height: 8),

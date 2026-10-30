@@ -20,19 +20,19 @@ class AnnouncementTag {
   final Color color;
   final Color background;
 
-  static const hr = AnnouncementTag(
+  static AnnouncementTag get hr => AnnouncementTag(
     label: 'HR',
     color: AppColors.primary,
     background: AppColors.primaryLight,
   );
 
-  static const ga = AnnouncementTag(
+  static AnnouncementTag get ga => AnnouncementTag(
     label: 'GA',
     color: AppColors.accent,
     background: AppColors.accentBg,
   );
 
-  static const it = AnnouncementTag(
+  static AnnouncementTag get it => AnnouncementTag(
     label: 'IT',
     color: AppColors.violet,
     background: AppColors.violetBg,
@@ -40,7 +40,7 @@ class AnnouncementTag {
 
   /// Palet warna badge. API departemen tidak mengirim warna, jadi dipilih
   /// di sisi aplikasi.
-  static const _palette = [
+  static List<({Color color, Color background})> get _palette => [
     (color: AppColors.primary, background: AppColors.primaryLight),
     (color: AppColors.accent, background: AppColors.accentBg),
     (color: AppColors.violet, background: AppColors.violetBg),

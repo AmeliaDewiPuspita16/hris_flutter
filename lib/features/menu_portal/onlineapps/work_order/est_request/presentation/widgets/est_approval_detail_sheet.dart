@@ -46,14 +46,14 @@ class EstApprovalDetailSheet extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 18),
               child: Row(
                 children: [
-                  const Icon(Icons.description_outlined, size: 18, color: AppColors.primary),
+                  Icon(Icons.description_outlined, size: 18, color: AppColors.primaryText),
                   const SizedBox(width: 8),
-                  const Expanded(
+                  Expanded(
                     child: Text('Request Detail', style: AppTextStyles.sectionTitle),
                   ),
                   InkWell(
                     onTap: () => Navigator.of(context).pop(),
-                    child: const Icon(Icons.close, size: 20, color: AppColors.textMuted),
+                    child: Icon(Icons.close, size: 20, color: AppColors.textMuted),
                   ),
                 ],
               ),
@@ -174,7 +174,7 @@ class _InfoRow extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 10),
       decoration: BoxDecoration(
-        border: showDivider ? const Border(bottom: BorderSide(color: AppColors.border)) : null,
+        border: showDivider ? Border(bottom: BorderSide(color: AppColors.border)) : null,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

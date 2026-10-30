@@ -57,7 +57,7 @@ class _YearChip extends StatelessWidget {
           alignment: Alignment.center,
           decoration: BoxDecoration(
             color: isSelected ? AppColors.primary : Colors.transparent,
-            border: Border.all(color: AppColors.primary, width: 1.5),
+            border: Border.all(color: AppColors.primaryText, width: 1.5),
             borderRadius: BorderRadius.circular(999),
           ),
           child: Text(
@@ -65,7 +65,7 @@ class _YearChip extends StatelessWidget {
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
-              color: isSelected ? Colors.white : AppColors.primary,
+              color: isSelected ? Colors.white : AppColors.primaryText,
             ),
           ),
         ),

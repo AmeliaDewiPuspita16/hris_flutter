@@ -32,7 +32,7 @@ class KeepSignedInRow extends StatelessWidget {
               color: value ? AppColors.primary : AppColors.card,
               borderRadius: BorderRadius.circular(6),
               border: Border.all(
-                color: value ? AppColors.primary : AppColors.border,
+                color: value ? AppColors.primaryText : AppColors.border,
                 width: 1.5,
               ),
             ),
@@ -46,7 +46,7 @@ class KeepSignedInRow extends StatelessWidget {
           child: GestureDetector(
             onTap: onChanged,
             behavior: HitTestBehavior.opaque,
-            child: const Text(
+            child: Text(
               'Keep me signed in on this phone',
               style: TextStyle(
                 fontFamily: AppTextStyles.fontFamily,
@@ -63,7 +63,7 @@ class KeepSignedInRow extends StatelessWidget {
             minimumSize: Size.zero,
             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           ),
-          child: const Text(
+          child: Text(
             'Forgot?',
             style: TextStyle(
               fontFamily: AppTextStyles.fontFamily,

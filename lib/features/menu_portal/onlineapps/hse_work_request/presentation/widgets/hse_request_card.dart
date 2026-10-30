@@ -44,7 +44,7 @@ class HseRequestCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   request.idRegister ?? 'Draft belum tersimpan',
-                  style: AppTextStyles.sectionTitle.copyWith(color: AppColors.primary),
+                  style: AppTextStyles.sectionTitle.copyWith(color: AppColors.primaryText),
                 ),
               ),
               StatusBadge(status: request.status.appStatus, label: request.status.label),
@@ -83,7 +83,7 @@ class HseRequestCard extends StatelessWidget {
           const SizedBox(height: 10),
           Row(
             children: [
-              const Icon(Icons.place_outlined, size: 14, color: AppColors.textMuted),
+              Icon(Icons.place_outlined, size: 14, color: AppColors.textMuted),
               const SizedBox(width: 4),
               Expanded(
                 child: Text(
@@ -94,7 +94,7 @@ class HseRequestCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              const Icon(Icons.calendar_today_outlined, size: 13, color: AppColors.textMuted),
+              Icon(Icons.calendar_today_outlined, size: 13, color: AppColors.textMuted),
               const SizedBox(width: 4),
               Text(dateLabel, style: AppTextStyles.caption),
             ],

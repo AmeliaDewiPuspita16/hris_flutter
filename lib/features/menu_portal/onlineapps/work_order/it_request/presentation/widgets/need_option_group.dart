@@ -55,9 +55,9 @@ class NeedOptionGroup extends StatelessWidget {
         ],
         Container(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.card,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppColors.primary, width: 1.5),
+            border: Border.all(color: AppColors.primaryText, width: 1.5),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -112,7 +112,7 @@ class _OptionGroupCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.card,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: AppColors.border),
       ),
@@ -245,7 +245,7 @@ class _OptionRow extends StatelessWidget {
               child: Icon(
                 meta.icon,
                 size: 17,
-                color: selected ? AppColors.primary : AppColors.textMuted
+                color: selected ? AppColors.primaryText : AppColors.textMuted
               ),
             ),
             const SizedBox(width: 12),
@@ -279,7 +279,7 @@ class _OptionRow extends StatelessWidget {
                 shape: BoxShape.circle,
                 color: selected ? AppColors.primary : Colors.transparent,
                 border: Border.all(
-                  color: selected ? AppColors.primary : AppColors.border,
+                  color: selected ? AppColors.primaryText : AppColors.border,
                   width: 1.5,
                 ),
               ),

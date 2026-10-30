@@ -66,10 +66,10 @@ class _Option extends StatelessWidget {
         height: 48,
         padding: const EdgeInsets.symmetric(horizontal: 10),
         decoration: BoxDecoration(
-          color: selected ? AppColors.primaryLight : Colors.white,
+          color: selected ? AppColors.primaryLight : AppColors.card,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: selected ? AppColors.primary : AppColors.border,
+            color: selected ? AppColors.primaryText : AppColors.border,
             width: 1.5,
           ),
         ),

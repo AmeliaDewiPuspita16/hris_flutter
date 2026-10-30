@@ -836,7 +836,7 @@ class _BerandaScreenState extends State<BerandaScreen> {
         top: false,
         child: RefreshIndicator(
           onRefresh: _refreshHome,
-          color: AppColors.primary,
+          color: AppColors.primaryText,
           child: SingleChildScrollView(
             // Tanpa ini, tarikan ke bawah tidak terdeteksi saat kontennya
             // lebih pendek dari tinggi layar (mis. layar besar atau role

@@ -15,21 +15,21 @@ class DetailFieldTile extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 11),
       decoration: BoxDecoration(
-        border: showDivider ? const Border(bottom: BorderSide(color: AppColors.border)) : null,
+        border: showDivider ? Border(bottom: BorderSide(color: AppColors.border)) : null,
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(
             flex: 2,
-            child: Text(label, style: const TextStyle(fontSize: 12, color: AppColors.textMuted)),
+            child: Text(label, style: TextStyle(fontSize: 12, color: AppColors.textMuted)),
           ),
           Expanded(
             flex: 3,
             child: Text(
               value,
               textAlign: TextAlign.right,
-              style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: AppColors.text),
+              style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: AppColors.text),
             ),
           ),
         ],

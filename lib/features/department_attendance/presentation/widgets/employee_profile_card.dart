@@ -27,13 +27,13 @@ class EmployeeProfileCard extends StatelessWidget {
             width: 44,
             height: 44,
             alignment: Alignment.center,
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               color: AppColors.bg,
               shape: BoxShape.circle,
             ),
             child: Text(
               entry.initials,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w700,
                 color: AppColors.textMid,

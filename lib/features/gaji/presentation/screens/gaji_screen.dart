@@ -77,7 +77,7 @@ class _PayslipView extends StatelessWidget {
   Widget _buildBody(BuildContext context, PayslipListState state) {
     switch (state.status) {
       case PayslipListStatus.loading:
-        return const Center(child: CircularProgressIndicator(color: AppColors.primary));
+        return Center(child: CircularProgressIndicator(color: AppColors.primaryText));
       case PayslipListStatus.failure:
         return AppErrorView(
           message: state.errorMessage ?? 'Gagal memuat slip gaji.',

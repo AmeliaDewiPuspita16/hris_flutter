@@ -263,7 +263,7 @@ class _ItFormAndMediaViewState extends State<_ItFormAndMediaView> {
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.lock_outline,
+                    Icon(Icons.lock_outline,
                         size: 16, color: AppColors.accent),
                     const SizedBox(width: 8),
                     Expanded(

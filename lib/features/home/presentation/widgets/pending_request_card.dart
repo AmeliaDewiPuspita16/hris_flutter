@@ -40,9 +40,9 @@ class PendingRequestCard extends StatelessWidget {
               ),
               child: Text(
                 '$count',
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: AppTextStyles.fontFamily,
-                  color: AppColors.primary,
+                  color: AppColors.primaryText,
                   fontWeight: FontWeight.w800,
                   fontSize: 16,
                 ),
@@ -53,7 +53,7 @@ class PendingRequestCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Pending Requests',
                     style: TextStyle(
                       fontFamily: AppTextStyles.fontFamily,
@@ -67,7 +67,7 @@ class PendingRequestCard extends StatelessWidget {
                     description,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontFamily: AppTextStyles.fontFamily,
                       fontSize: 11,
                       color: AppColors.textMuted,
@@ -77,7 +77,7 @@ class PendingRequestCard extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
-            const Row(
+            Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(

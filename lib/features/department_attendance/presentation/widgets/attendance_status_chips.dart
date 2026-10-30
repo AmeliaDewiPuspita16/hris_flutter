@@ -99,7 +99,7 @@ class _Segment extends StatelessWidget {
           decoration: BoxDecoration(
             border: Border(
               left: showDivider
-                  ? const BorderSide(color: AppColors.border)
+                  ? BorderSide(color: AppColors.border)
                   : BorderSide.none,
               bottom: BorderSide(
                 color: active ? status.color : Colors.transparent,

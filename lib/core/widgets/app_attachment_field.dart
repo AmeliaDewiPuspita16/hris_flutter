@@ -48,7 +48,7 @@ class AppAttachmentField extends StatelessWidget {
             width: double.infinity,
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
-              color: hasFile ? AppColors.presentBg : const Color(0xFFFAFAFA),
+              color: hasFile ? AppColors.presentBg : AppColors.isDark ? AppColors.neutralBg : const Color(0xFFFAFAFA),
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: hasFile ? AppColors.presentMid : AppColors.border,
@@ -58,7 +58,7 @@ class AppAttachmentField extends StatelessWidget {
             child: hasFile
                 ? Row(
                     children: [
-                      const Icon(Icons.insert_drive_file_outlined, color: AppColors.presentMid),
+                      Icon(Icons.insert_drive_file_outlined, color: AppColors.presentMid),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
@@ -70,12 +70,12 @@ class AppAttachmentField extends StatelessWidget {
                           ),
                         ),
                       ),
-                      const Icon(Icons.close, size: 18, color: AppColors.presentMid),
+                      Icon(Icons.close, size: 18, color: AppColors.presentMid),
                     ],
                   )
                 : Column(
                     children: [
-                      const Icon(Icons.image_outlined, color: AppColors.textMuted, size: 26),
+                      Icon(Icons.image_outlined, color: AppColors.textMuted, size: 26),
                       const SizedBox(height: 8),
                       Text(
                         'Tap to upload',

@@ -19,7 +19,7 @@ class LoginHeader extends StatelessWidget {
       child: Container(
         width: double.infinity,
         padding: EdgeInsets.fromLTRB(24, topInset + 20, 24, 56),
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: AppColors.primaryGradient,
           // Dilukis lewat decoration (bukan widget Image di Stack) supaya
           // otomatis menutupi seluruh kotak header termasuk padding —

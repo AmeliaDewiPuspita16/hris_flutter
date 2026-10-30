@@ -20,63 +20,63 @@ class NotificationCategory {
   final Color color;
   final Color background;
 
-  static const approval = NotificationCategory(
+  static NotificationCategory get approval => NotificationCategory(
     label: 'Approval',
     icon: Icons.task_alt,
     color: AppColors.primary,
     background: AppColors.primaryLight,
   );
 
-  static const payroll = NotificationCategory(
+  static NotificationCategory get payroll => NotificationCategory(
     label: 'Payroll',
     icon: Icons.receipt_long_outlined,
     color: AppColors.accent,
     background: AppColors.accentBg,
   );
 
-  static const attendance = NotificationCategory(
+  static NotificationCategory get attendance => NotificationCategory(
     label: 'Attendance',
     icon: Icons.fingerprint,
     color: AppColors.present,
     background: AppColors.presentBg,
   );
 
-  static const leave = NotificationCategory(
+  static NotificationCategory get leave => NotificationCategory(
     label: 'Leave',
     icon: Icons.event_available_outlined,
     color: AppColors.teal,
     background: AppColors.tealBg,
   );
 
-  static const itRequest = NotificationCategory(
+  static NotificationCategory get itRequest => NotificationCategory(
     label: 'IT request',
     icon: Icons.computer_outlined,
     color: AppColors.itRequest,
     background: AppColors.itRequestBg,
   );
 
-  static const estRequest = NotificationCategory(
+  static NotificationCategory get estRequest => NotificationCategory(
     label: 'EST request',
     icon: Icons.home_repair_service_outlined,
     color: AppColors.estRequest,
     background: AppColors.estRequestBg,
   );
 
-  static const procurement = NotificationCategory(
+  static NotificationCategory get procurement => NotificationCategory(
     label: 'Procurement',
     icon: Icons.trending_up_outlined,
     color: AppColors.accent,
     background: AppColors.accentBg,
   );
 
-  static const indentVehicle = NotificationCategory(
+  static NotificationCategory get indentVehicle => NotificationCategory(
     label: 'Indent vehicle',
     icon: Icons.directions_car_outlined,
     color: AppColors.orange,
     background: AppColors.orangeBg,
   );
 
-  static const announcement = NotificationCategory(
+  static NotificationCategory get announcement => NotificationCategory(
     label: 'Announcement',
     icon: Icons.campaign_outlined,
     color: AppColors.violet,

@@ -64,13 +64,13 @@ class IndentPendingCard extends StatelessWidget {
               label: Text(
                 'Assign',
                 style: AppTextStyles.buttonText.copyWith(
-                  color: AppColors.primary,
+                  color: AppColors.primaryText,
                   fontSize: 12,
                 ),
               ),
               style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.primary,
-                side: const BorderSide(color: AppColors.primary, width: 1.5),
+                foregroundColor: AppColors.primaryText,
+                side: BorderSide(color: AppColors.primaryText, width: 1.5),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),

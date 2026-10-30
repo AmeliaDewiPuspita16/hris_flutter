@@ -159,7 +159,7 @@ class _Header extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
       // Solid primary, sudut bawah bulat — sama dengan header Leave Request
       // dan Log Absensi.
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: AppColors.primary,
         borderRadius: BorderRadius.vertical(bottom: Radius.circular(28)),
       ),
@@ -193,19 +193,19 @@ class _SearchField extends StatelessWidget {
     return TextField(
       controller: controller,
       onChanged: onChanged,
-      style: const TextStyle(
+      style: TextStyle(
         fontFamily: AppTextStyles.fontFamily,
         fontSize: 14,
         color: AppColors.text,
       ),
       decoration: InputDecoration(
         hintText: 'Search Menu',
-        hintStyle: const TextStyle(
+        hintStyle: TextStyle(
           fontFamily: AppTextStyles.fontFamily,
           fontSize: 14,
           color: AppColors.textMuted,
         ),
-        prefixIcon: const Icon(Icons.search, color: AppColors.textMuted, size: 20),
+        prefixIcon: Icon(Icons.search, color: AppColors.textMuted, size: 20),
         suffixIcon: controller.text.isEmpty
             ? null
             : InkWell(
@@ -213,22 +213,22 @@ class _SearchField extends StatelessWidget {
                   controller.clear();
                   onChanged('');
                 },
-                child: const Icon(Icons.close, color: AppColors.textMuted, size: 18),
+                child: Icon(Icons.close, color: AppColors.textMuted, size: 18),
               ),
         filled: true,
         fillColor: AppColors.card,
         contentPadding: const EdgeInsets.symmetric(vertical: 12),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: AppColors.border),
+          borderSide: BorderSide(color: AppColors.border),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: AppColors.border),
+          borderSide: BorderSide(color: AppColors.border),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: AppColors.primary),
+          borderSide: BorderSide(color: AppColors.primaryText),
         ),
       ),
     );
@@ -248,7 +248,7 @@ class _MenuFeaturesBar extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const Text('Menu Features', style: AppTextStyles.h2),
+          Text('Menu Features', style: AppTextStyles.h2),
           Container(
             padding: const EdgeInsets.all(3),
             decoration: BoxDecoration(
@@ -298,12 +298,12 @@ class _ModeButton extends StatelessWidget {
         decoration: BoxDecoration(
           color: selected ? AppColors.card : Colors.transparent,
           borderRadius: BorderRadius.circular(8),
-          border: selected ? Border.all(color: AppColors.primary) : null,
+          border: selected ? Border.all(color: AppColors.primaryText) : null,
         ),
         child: Icon(
           icon,
           size: 18,
-          color: selected ? AppColors.primary : AppColors.textMuted,
+          color: selected ? AppColors.primaryText : AppColors.textMuted,
         ),
       ),
     );
@@ -323,7 +323,7 @@ class _ModeButton extends StatelessWidget {
     case HrisMenuGroup.employee:
       return (AppColors.violetBg, AppColors.violet);
     case HrisMenuGroup.team:
-      return (AppColors.primaryLight, AppColors.primary);
+      return (AppColors.primaryLight, AppColors.primaryText);
   }
 }
 
@@ -349,7 +349,7 @@ class _SectionBar extends StatelessWidget {
     // supaya keduanya terasa satu warna abu, bukan dua abu yang beda tipis.
     final (background, foreground, border) = switch (style) {
       HrisSectionBarStyle.emerald =>
-        (AppColors.primaryLight, AppColors.primary, null),
+        (AppColors.primaryLight, AppColors.primaryText, null),
       HrisSectionBarStyle.neutral =>
         (AppColors.bg, AppColors.textMid, AppColors.border),
       HrisSectionBarStyle.categorized => (
@@ -435,7 +435,7 @@ class _GridTile extends StatelessWidget {
                   width: 56,
                   height: 56,
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: AppColors.card,
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(color: AppColors.border),
                     boxShadow: const [
@@ -462,7 +462,7 @@ class _GridTile extends StatelessWidget {
               textAlign: TextAlign.center,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: AppTextStyles.fontFamily,
                 fontSize: 11,
                 fontWeight: FontWeight.w500,
@@ -471,7 +471,7 @@ class _GridTile extends StatelessWidget {
               ),
             ),
             if (!enabled)
-              const Padding(
+              Padding(
                 padding: EdgeInsets.only(top: 2),
                 child: Text('Soon', style: AppTextStyles.caption),
               ),
@@ -497,7 +497,7 @@ class _ListSection extends StatelessWidget {
         for (var i = 0; i < items.length; i++) ...[
           _ListTile(item: items[i]),
           if (i != items.length - 1)
-            const Divider(height: 1, color: AppColors.border),
+            Divider(height: 1, color: AppColors.border),
         ],
       ],
     );
@@ -534,7 +534,7 @@ class _ListTile extends StatelessWidget {
               Expanded(
                 child: Text(
                   item.label.replaceAll('\n', ' '),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: AppTextStyles.fontFamily,
                     fontSize: 13.5,
                     fontWeight: FontWeight.w600,
@@ -547,11 +547,11 @@ class _ListTile extends StatelessWidget {
                 const SizedBox(width: 8),
               ],
               if (!enabled)
-                const Padding(
+                Padding(
                   padding: EdgeInsets.only(right: 8),
                   child: Text('Soon', style: AppTextStyles.caption),
                 ),
-              const Icon(Icons.chevron_right, size: 18, color: AppColors.textMuted),
+              Icon(Icons.chevron_right, size: 18, color: AppColors.textMuted),
             ],
           ),
         ),
@@ -593,7 +593,7 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
+    return Center(
       child: Padding(
         padding: EdgeInsets.fromLTRB(40, 0, 40, 60),
         child: Text(

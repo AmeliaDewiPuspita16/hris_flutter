@@ -125,14 +125,14 @@ class _Dot extends StatelessWidget {
           height: 18,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.card,
             shape: BoxShape.circle,
             border: Border.all(color: AppColors.accent, width: 2.5),
           ),
           child: Container(
             width: 6,
             height: 6,
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               color: AppColors.accent,
               shape: BoxShape.circle,
             ),
@@ -143,7 +143,7 @@ class _Dot extends StatelessWidget {
           width: 18,
           height: 18,
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.card,
             shape: BoxShape.circle,
             border: Border.all(color: AppColors.border, width: 2),
           ),

@@ -103,7 +103,7 @@ class _ItRequestRespondSheetState extends State<ItRequestRespondSheet> {
                     ),
                   ),
                 ),
-                const Text('Respond Request', style: AppTextStyles.sectionTitle),
+                Text('Respond Request', style: AppTextStyles.sectionTitle),
                 const SizedBox(height: 4),
                 if (detail.requester != null)
                   Text(

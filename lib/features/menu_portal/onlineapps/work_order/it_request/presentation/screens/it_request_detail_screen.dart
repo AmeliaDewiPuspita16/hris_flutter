@@ -145,8 +145,8 @@ class _ItRequestDetailView extends StatelessWidget {
     final detailBloc = context.read<ItRequestDetailBloc>();
 
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(
+        color: AppColors.card,
         border: Border(top: BorderSide(color: AppColors.border)),
       ),
       child: SafeArea(
@@ -485,8 +485,8 @@ class _ItRequestDetailView extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: AppColors.neutralBg,
                     borderRadius: BorderRadius.circular(8),
-                    border: const Border(
-                      left: BorderSide(color: AppColors.primary, width: 3),
+                    border: Border(
+                      left: BorderSide(color: AppColors.primaryText, width: 3),
                     ),
                   ),
                   child: Text(

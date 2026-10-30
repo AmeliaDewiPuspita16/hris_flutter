@@ -33,13 +33,13 @@ class ActivitySection extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Recent Activity', style: AppTextStyles.sectionTitle),
-              if (!enabled) const Text('Soon', style: AppTextStyles.caption),
+              Text('Recent Activity', style: AppTextStyles.sectionTitle),
+              if (!enabled) Text('Soon', style: AppTextStyles.caption),
             ],
           ),
           const SizedBox(height: 12),
           if (visible.isEmpty)
-            const Text(
+            Text(
               'No recent activity',
               style: TextStyle(
                 fontFamily: AppTextStyles.fontFamily,
@@ -94,7 +94,7 @@ class _ActivityTile extends StatelessWidget {
                   activity.title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: AppTextStyles.fontFamily,
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
@@ -106,7 +106,7 @@ class _ActivityTile extends StatelessWidget {
                   activity.description,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: AppTextStyles.fontFamily,
                     fontSize: 11,
                     color: AppColors.textMuted,
@@ -118,7 +118,7 @@ class _ActivityTile extends StatelessWidget {
           const SizedBox(width: 8),
           Text(
             activity.timeLabel(),
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: AppTextStyles.fontFamily,
               fontSize: 10,
               color: AppColors.textMuted,

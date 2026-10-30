@@ -27,7 +27,7 @@ class EstPhotoUploadField extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.card,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(color: AppColors.border),
         ),
@@ -44,7 +44,7 @@ class EstPhotoUploadField extends StatelessWidget {
               child: Icon(
                 hasFile ? Icons.insert_drive_file_outlined : Icons.camera_alt_outlined,
                 size: 16,
-                color: AppColors.primary,
+                color: AppColors.primaryText,
               ),
             ),
             const SizedBox(width: 10),
@@ -65,7 +65,7 @@ class EstPhotoUploadField extends StatelessWidget {
             ),
             const SizedBox(width: 8),
             if (hasFile)
-              const Icon(Icons.close, size: 16, color: AppColors.textMuted)
+              Icon(Icons.close, size: 16, color: AppColors.textMuted)
             else
               Icon(Icons.chevron_right, size: 18, color: AppColors.textMuted),
           ],

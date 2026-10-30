@@ -136,14 +136,14 @@ class ApprovalSummaryBanner extends StatelessWidget {
                     Container(
                       width: 40,
                       height: 40,
-                      decoration: const BoxDecoration(
+                      decoration: BoxDecoration(
                         color: AppColors.primaryLight,
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.notifications_none_rounded,
                         size: 20,
-                        color: AppColors.primary,
+                        color: AppColors.primaryText,
                       ),
                     ),
                     Positioned(
@@ -169,7 +169,7 @@ class ApprovalSummaryBanner extends StatelessWidget {
                     ],
                   ),
                 ),
-                const Icon(Icons.chevron_right, size: 18, color: AppColors.textMuted),
+                Icon(Icons.chevron_right, size: 18, color: AppColors.textMuted),
               ],
             ),
           ),
@@ -256,9 +256,9 @@ class _CountBadge extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 4),
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: AppColors.rejected,
+        color: AppColors.badge,
         borderRadius: BorderRadius.circular(9),
-        border: Border.all(color: Colors.white, width: 1.5),
+        border: Border.all(color: AppColors.card, width: 1.5),
       ),
       child: Text(
         '$count',
