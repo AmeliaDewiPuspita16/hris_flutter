@@ -333,6 +333,121 @@ class ApiClient {
   }
 
   // ---------------------------------------------------------------------------
+  // Raw JSON — endpoint /api/est/* yang tidak memakai amplop {code,status,data}
+  // ---------------------------------------------------------------------------
+
+  /// GET dan kembalikan seluruh badan JSON apa adanya. `status` dan `data`
+  /// tidak diperiksa; hanya status HTTP yang menentukan gagal atau tidak.
+  Future<Map<String, dynamic>> getJson(
+    String path, {
+    Map<String, String>? query,
+  }) async {
+    var uri = _uriFor(path);
+    if (query != null && query.isNotEmpty) {
+      uri = uri.replace(queryParameters: {...uri.queryParameters, ...query});
+    }
+    AppLogger.info('GET $uri');
+
+    final response = await _sendRaw(
+      'GET',
+      uri,
+      () => _httpClient.get(uri, headers: _headers(authenticated: true)),
+    );
+    return _rawJson(response);
+  }
+
+  /// POST JSON, balasan dikembalikan utuh (lihat [getJson]).
+  Future<Map<String, dynamic>> postJson(
+    String path, {
+    Map<String, dynamic>? body,
+  }) async {
+    final uri = _uriFor(path);
+    AppLogger.info('POST $uri ${_redactedBody(body)}');
+
+    final response = await _sendRaw(
+      'POST',
+      uri,
+      () => _httpClient.post(
+        uri,
+        headers: _headers(authenticated: true),
+        body: jsonEncode(body ?? const <String, dynamic>{}),
+      ),
+    );
+    return _rawJson(response);
+  }
+
+  /// PUT JSON, balasan dikembalikan utuh (lihat [getJson]).
+  Future<Map<String, dynamic>> putJson(
+    String path, {
+    Map<String, dynamic>? body,
+  }) async {
+    final uri = _uriFor(path);
+    AppLogger.info('PUT $uri ${_redactedBody(body)}');
+
+    final response = await _sendRaw(
+      'PUT',
+      uri,
+      () => _httpClient.put(
+        uri,
+        headers: _headers(authenticated: true),
+        body: jsonEncode(body ?? const <String, dynamic>{}),
+      ),
+    );
+    return _rawJson(response);
+  }
+
+  /// DELETE, balasan dikembalikan utuh; badan kosong (mis. 204) menjadi `{}`.
+  Future<Map<String, dynamic>> deleteJson(String path) async {
+    final uri = _uriFor(path);
+    AppLogger.info('DELETE $uri');
+
+    final response = await _sendRaw(
+      'DELETE',
+      uri,
+      () => _httpClient.delete(uri, headers: _headers(authenticated: true)),
+    );
+    return _rawJson(response);
+  }
+
+  /// POST `multipart/form-data` dengan balasan utuh. Request disusun sama
+  /// seperti [postMultipart].
+  Future<Map<String, dynamic>> postMultipartJson(
+    String path, {
+    Map<String, String>? fields,
+    Map<String, List<String>>? files,
+  }) async {
+    final uri = _uriFor(path);
+    final fileCount =
+        files?.values.fold<int>(0, (sum, paths) => sum + paths.length) ?? 0;
+    AppLogger.info(
+      'POST $uri (multipart) ${_redactedBody(fields)} · $fileCount berkas',
+    );
+
+    final response = await _sendRaw(
+      'POST',
+      uri,
+      () async {
+        final request = http.MultipartRequest('POST', uri)
+          ..headers.addAll(_headers(authenticated: true, json: false));
+
+        if (fields != null) request.fields.addAll(fields);
+
+        for (final entry
+            in files?.entries ?? const <MapEntry<String, List<String>>>[]) {
+          for (final filePath in entry.value) {
+            request.files.add(
+              await http.MultipartFile.fromPath(entry.key, filePath),
+            );
+          }
+        }
+
+        return http.Response.fromStream(await _httpClient.send(request));
+      },
+    );
+    return _rawJson(response);
+  }
+
+  // ---------------------------------------------------------------------------
   // Pembantu internal (private)
   // ---------------------------------------------------------------------------
 
@@ -416,6 +531,19 @@ class ApiClient {
 
   String _truncate(String body, [int max = 500]) =>
       body.length <= max ? body : '${body.substring(0, max)}…';
+
+  /// Hasil untuk metode `*Json`: galat non-2xx lewat [_unwrap] (jenis & pesan
+  /// konsisten), sedangkan 2xx mengembalikan badan objek JSON, atau `{}` bila
+  /// kosong / bukan objek.
+  Map<String, dynamic> _rawJson(http.Response response) {
+    final status = response.statusCode;
+    if (status < 200 || status >= 300) {
+      // Baris ini selalu melempar; `throw` di bawahnya hanya untuk compiler.
+      _unwrap(response);
+      throw const ApiException.server();
+    }
+    return _decode(response.body) ?? <String, dynamic>{};
+  }
 
   /// Memeriksa amplop respons, atau melempar [ApiException] yang sesuai.
   ///
