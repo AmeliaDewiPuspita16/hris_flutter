@@ -5,13 +5,20 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../../../core/theme/app_colors.dart';
 import '../../data/est_project_repository.dart';
 import '../../domain/executive_dashboard.dart';
+import '../bloc/add_workers/add_workers_bloc.dart';
+import '../bloc/add_workers/add_workers_state.dart';
 import '../bloc/detail/close_project_bloc.dart';
 import '../bloc/detail/close_project_state.dart';
 import '../bloc/detail/exec_project_detail_bloc.dart';
 import '../bloc/detail/exec_project_detail_event.dart';
 import '../bloc/detail/project_workers_bloc.dart';
 import '../bloc/detail/project_workers_event.dart';
+import '../bloc/substitute/substitute_bloc.dart';
+import '../bloc/substitute/substitute_state.dart';
+import '../bloc/worker_transfer/worker_transfer_bloc.dart';
+import '../bloc/worker_transfer/worker_transfer_state.dart';
 import '../widgets/est_close_project_button.dart';
+import '../widgets/est_detail_actions.dart';
 import '../widgets/est_detail_closed_at_card.dart';
 import '../widgets/est_detail_header.dart';
 import '../widgets/est_detail_mandor_section.dart';
@@ -42,6 +49,11 @@ class ExecProjectDetailScreen extends StatelessWidget {
             ..add(LoadProjectWorkers(project.id)),
         ),
         BlocProvider(create: (_) => CloseProjectBloc(repository: repository)),
+        BlocProvider(
+          create: (_) => WorkerTransferBloc(repository: repository),
+        ),
+        BlocProvider(create: (_) => AddWorkersBloc(repository: repository)),
+        BlocProvider(create: (_) => SubstituteBloc(repository: repository)),
       ],
       child: _ExecProjectDetailView(project: project),
     );
@@ -64,10 +76,50 @@ class _ExecProjectDetailView extends StatelessWidget {
     );
   }
 
+  void _refreshDetail(BuildContext context) {
+    context
+        .read<ExecProjectDetailBloc>()
+        .add(LoadExecProjectDetail(project.id));
+    context.read<ProjectWorkersBloc>().add(LoadProjectWorkers(project.id));
+  }
+
   @override
   Widget build(BuildContext context) {
     return MultiBlocListener(
       listeners: [
+        BlocListener<WorkerTransferBloc, WorkerTransferState>(
+          listener: (context, state) {
+            if (state is WorkerTransferSuccess) {
+              _showSnack(context, state.message, AppColors.primary);
+              context
+                  .read<ProjectWorkersBloc>()
+                  .add(LoadProjectWorkers(project.id));
+            } else if (state is WorkerTransferFailure) {
+              _showSnack(context, state.message, AppColors.rejected);
+            }
+          },
+        ),
+        BlocListener<AddWorkersBloc, AddWorkersState>(
+          listener: (context, state) {
+            if (state is AddWorkersSuccess) {
+              _showSnack(context, state.message, AppColors.primary);
+              _refreshDetail(context);
+            } else if (state is AddWorkersFailure) {
+              _showSnack(context, state.message, AppColors.rejected);
+            }
+          },
+        ),
+        BlocListener<SubstituteBloc, SubstituteState>(
+          listener: (context, state) {
+            if (state is SubstituteSuccess) {
+              _showSnack(context, state.message, AppColors.primary);
+              // Muat ulang mandor dan daftar worker
+              _refreshDetail(context);
+            } else if (state is SubstituteFailure) {
+              _showSnack(context, state.message, AppColors.rejected);
+            }
+          },
+        ),
         BlocListener<CloseProjectBloc, CloseProjectState>(
           listener: (context, state) {
             if (state is CloseProjectSuccess) {
@@ -109,11 +161,42 @@ class _ExecProjectDetailView extends StatelessWidget {
                       const SizedBox(height: 16),
                       EstDetailStatsRow(project: project),
                       const SizedBox(height: 16),
-                      const EstDetailMandorSection(),
+                      EstDetailMandorSection(
+                        onSubstitute: (m) => EstDetailActions.showSubstitute(
+                          context,
+                          project: project,
+                          role: 'mandor',
+                          substituteForId: m.id,
+                          substituteForName: m.name,
+                        ),
+                        onEndSubstitute: (m) =>
+                            EstDetailActions.endMandorSubstitute(
+                          context,
+                          project,
+                          m,
+                        ),
+                      ),
                       const SizedBox(height: 24),
                       EstDetailTeamSection(
                         projectId: project.id,
                         isCompleted: project.status == 'completed',
+                        onAddWorker: () =>
+                            EstDetailActions.showAddWorker(context, project),
+                        onTransfer: (w) =>
+                            EstDetailActions.showTransfer(context, project, w),
+                        onSubstitute: (w) => EstDetailActions.showSubstitute(
+                          context,
+                          project: project,
+                          role: 'worker',
+                          substituteForId: w.workerId,
+                          substituteForName: w.name,
+                        ),
+                        onEndSubstitute: (w) =>
+                            EstDetailActions.endWorkerSubstitute(
+                          context,
+                          project,
+                          w,
+                        ),
                       ),
                       if (project.status != 'completed') ...[
                         const SizedBox(height: 32),

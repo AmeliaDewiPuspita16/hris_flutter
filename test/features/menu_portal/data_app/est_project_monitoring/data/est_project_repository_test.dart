@@ -220,4 +220,24 @@ void main() {
     expect(seen.single.url.path, '/api/est/projects/8');
     expect(jsonDecode(seen.single.body), {'name': 'B'});
   });
+
+  test('fetchSubstituteCandidates membaca id longgar dan nama default',
+      () async {
+    reply = {
+      'data': [
+        {'user_id': 7, 'name': 'Budi'},
+        {'worker_id': 8},
+        {'id': 9, 'user_id': 1, 'name': 'Cici'},
+      ],
+    };
+    final mandors = await build().fetchSubstituteCandidates(mandor: true);
+
+    expect(seen.single.url.path, '/api/est/resources/mandors');
+    expect(mandors.map((c) => c.id), [7, 8, 9]);
+    expect(mandors.map((c) => c.name), ['Budi', '-', 'Cici']);
+
+    final workers = await build().fetchSubstituteCandidates(mandor: false);
+    expect(seen.single.url.path, '/api/est/resources/workers/all');
+    expect(workers, hasLength(3));
+  });
 }

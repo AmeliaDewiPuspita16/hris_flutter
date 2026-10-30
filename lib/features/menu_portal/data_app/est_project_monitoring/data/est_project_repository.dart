@@ -2,6 +2,7 @@ import '../../../../../core/network/api_client.dart';
 import '../../../../../core/network/api_config.dart';
 import '../domain/est_available_worker.dart';
 import '../domain/est_mandor.dart';
+import '../domain/est_substitute_candidate.dart';
 import '../domain/exec_project_full.dart';
 import '../domain/executive_dashboard.dart';
 import '../domain/project_worker.dart';
@@ -150,6 +151,20 @@ class EstProjectRepository {
     final raw = (json['data'] as List?) ?? (json['projects'] as List?) ?? [];
     return raw
         .map((e) => ExecutiveProjectModel.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  /// Kandidat sheet substitusi: mandor bila [mandor], selain itu semua worker.
+  /// Parsing longgar seperti DW, beda dari [fetchMandors]/[fetchAllWorkers].
+  Future<List<EstSubstituteCandidate>> fetchSubstituteCandidates({
+    required bool mandor,
+  }) async {
+    final json = await _apiClient.getJson(
+      mandor ? ApiConfig.estMandors : ApiConfig.estAllWorkers,
+    );
+    final raw = (json['data'] as List?) ?? [];
+    return raw
+        .map((e) => EstSubstituteCandidate.fromJson(e as Map<String, dynamic>))
         .toList();
   }
 
