@@ -16,6 +16,7 @@ import '../widgets/keep_signed_in_row.dart';
 import '../widgets/login_field.dart';
 import '../widgets/login_footer.dart';
 import '../widgets/login_header.dart';
+import '../widgets/star_field.dart';
 // import '../widgets/or_divider.dart';
 
 /// Halaman login BIIE Portal.
@@ -89,50 +90,69 @@ class _LoginViewState extends State<_LoginView> {
             height: constraints.maxHeight,
             width: constraints.maxWidth,
             decoration: BoxDecoration(
-              gradient: AppColors.pageGradient,
-              image: DecorationImage(
-                image: AssetImage('assets/images/bg_login.png'),
-                fit: BoxFit.cover,
-                // Teksturnya cuma penghias. Pada kepekatan penuh, garis-
-                // garisnya menutupi teks di atasnya sampai sulit dibaca.
-                opacity: 0.1,
-              ),
+              // Mode gelap: latar polos. Gradien tipis di atas warna gelap
+              // gampang terlihat berundak (banding) dan meninggalkan garis
+              // pembatas di ujungnya; header hijau sudah cukup jadi aksen.
+              color: AppColors.isDark ? AppColors.bg : null,
+              gradient: AppColors.isDark ? null : AppColors.pageGradient,
+              // Mode terang: tekstur garis. Mode gelap: tanpa tekstur —
+              // garis-garis jadi terlalu ramai di atas latar gelap, diganti
+              // langit berbintang (StarField) di bawah.
+              image: AppColors.isDark
+                  ? null
+                  : const DecorationImage(
+                      image: AssetImage('assets/images/bg_login.png'),
+                      fit: BoxFit.cover,
+                      // Teksturnya cuma penghias. Pada kepekatan penuh,
+                      // garis-garisnya menutupi teks di atasnya sampai
+                      // sulit dibaca.
+                      opacity: 0.1,
+                    ),
             ),
-            child: SingleChildScrollView(
-              child: ConstrainedBox(
-                // Kolom minimal setinggi layar supaya Spacer di bawah punya
-                // ruang untuk mendorong footer ke dasar halaman.
-                constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                child: IntrinsicHeight(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const LoginHeader(),
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
-                        child: AnimatedBuilder(
-                          animation: _form,
-                          builder: (context, _) =>
-                              BlocBuilder<LoginBloc, LoginState>(
-                            builder: (context, state) => _LoginForm(
-                              form: _form,
-                              state: state,
-                              onSignIn: _handleSignIn,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                if (AppColors.isDark)
+                  const Positioned.fill(
+                    child: IgnorePointer(child: StarField()),
+                  ),
+                SingleChildScrollView(
+                  child: ConstrainedBox(
+                    // Kolom minimal setinggi layar supaya Spacer di bawah punya
+                    // ruang untuk mendorong footer ke dasar halaman.
+                    constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                    child: IntrinsicHeight(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          const LoginHeader(),
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
+                            child: AnimatedBuilder(
+                              animation: _form,
+                              builder: (context, _) =>
+                                  BlocBuilder<LoginBloc, LoginState>(
+                                builder: (context, state) => _LoginForm(
+                                  form: _form,
+                                  state: state,
+                                  onSignIn: _handleSignIn,
+                                ),
+                              ),
                             ),
                           ),
-                        ),
+                          const Spacer(),
+                          // Tanpa padding samping/bawah: ilustrasinya menempel
+                          // ke tepi layar.
+                          const Padding(
+                            padding: EdgeInsets.only(top: 16),
+                            child: LoginFooter(),
+                          ),
+                        ],
                       ),
-                      const Spacer(),
-                      // Tanpa padding samping/bawah: ilustrasinya menempel
-                      // ke tepi layar.
-                      const Padding(
-                        padding: EdgeInsets.only(top: 16),
-                        child: LoginFooter(),
-                      ),
-                    ],
+                    ),
                   ),
                 ),
-              ),
+              ],
             ),
           ),
         ),

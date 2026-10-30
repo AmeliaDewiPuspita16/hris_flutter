@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import '../../../../core/theme/app_colors.dart';
 
 /// Ilustrasi kawasan industri selebar layar di dasar halaman login.
 ///
@@ -13,6 +14,7 @@ class LoginFooter extends StatelessWidget {
   const LoginFooter({super.key});
 
   static const _illustration = 'assets/images/tps_industrial_campus.webp';
+  static const _illustrationDark = 'assets/images/tps_industrial_campus_dark.webp';
 
   /// Batas tinggi ilustrasi supaya di layar pendek/tablet ia tidak
   /// mendorong form login ke luar layar. Lebih dari ini, gambarnya dipotong
@@ -44,7 +46,7 @@ class LoginFooter extends StatelessWidget {
           stops: [0, 0.45],
         ).createShader(bounds),
         child: Image.asset(
-          _illustration,
+          AppColors.isDark ? _illustrationDark : _illustration,
           fit: BoxFit.cover,
           alignment: Alignment.bottomCenter,
         ),

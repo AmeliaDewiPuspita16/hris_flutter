@@ -10,50 +10,87 @@ import '../../../../core/theme/app_text_styles.dart';
 class LoginHeader extends StatelessWidget {
   const LoginHeader({super.key});
 
+  /// Hijau header khusus mode gelap: lebih tua dan lebih "murni hijau"
+  /// (bukan teal) daripada heroGreen, supaya header tidak menyala di atas
+  /// latar gelap. Sengaja lokal di sini agar kartu/hero di layar lain yang
+  /// memakai AppColors.primaryGradient tidak ikut berubah.
+  static const _darkGradient = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [Color(0xFF0A3223), Color(0xFF06241A)],
+  );
+
+  /// Bagian foto yang ditampilkan, dihitung dari ATAS. Foto header_login.png
+  /// memuat tagline "At The Forefront, From The Seafront" di ~32% terbawah,
+  /// jadi hanya bagian atasnya yang dipakai supaya tulisan itu tidak
+  /// menimpa teks pengantar. Naikkan kalau ingin lebih banyak laut, tapi
+  /// di atas ±0.66 ujung tulisan mulai terlihat.
+  static const double _visiblePhotoFraction = 0.62;
+
   @override
   Widget build(BuildContext context) {
     final topInset = MediaQuery.paddingOf(context).top;
+    final isDark = AppColors.isDark;
 
     return ClipPath(
       clipper: _WaveBottomClipper(),
-      child: Container(
-        width: double.infinity,
-        padding: EdgeInsets.fromLTRB(24, topInset + 20, 24, 56),
-        decoration: BoxDecoration(
-          gradient: AppColors.primaryGradient,
-          // Dilukis lewat decoration (bukan widget Image di Stack) supaya
-          // otomatis menutupi seluruh kotak header termasuk padding —
-          // Stack sempat ikut menyusut sebesar kontennya saja kalau
-          // gambarnya ditaruh sebagai children biasa.
-          image: DecorationImage(
-            image: AssetImage('assets/images/header_login.png'),
-            fit: BoxFit.cover,
-            alignment: Alignment.centerRight,
-            opacity: 0.16,
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Image.asset(
-              'assets/images/logo_white.png',
-              height: 48,
-              fit: BoxFit.contain,
-              alignment: Alignment.centerLeft,
-            ),
-            const SizedBox(height: 20),
-            Text(
-              'Sign in with your corporate email. '
-              'Your view is tied by your position.',
-              style: TextStyle(
-                fontFamily: AppTextStyles.fontFamily,
-                color: Colors.white.withValues(alpha: 0.72),
-                fontSize: 13,
-                height: 1.5,
+      child: Stack(
+        children: [
+          // Latar: gradien + foto. Positioned.fill supaya otomatis menutupi
+          // seluruh kotak header (termasuk padding) tanpa ikut menentukan
+          // tingginya — tinggi tetap ditentukan oleh isi di atasnya.
+          Positioned.fill(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: isDark ? _darkGradient : AppColors.primaryGradient,
+              ),
+              child: ClipRect(
+                // Foto digambar setinggi 1 / _visiblePhotoFraction kali kotak
+                // header, menempel di ATAS; kelebihannya (bagian bawah foto,
+                // tempat tulisan) terpotong oleh ClipRect.
+                child: FractionallySizedBox(
+                  alignment: Alignment.topCenter,
+                  heightFactor: 1 / _visiblePhotoFraction,
+                  child: Image.asset(
+                    'assets/images/header_login.png',
+                    fit: BoxFit.cover,
+                    alignment: Alignment.topRight,
+                    // Foto udara dibuat lebih samar di mode gelap.
+                    opacity: AlwaysStoppedAnimation<double>(
+                      isDark ? 0.12 : 0.16,
+                    ),
+                  ),
+                ),
               ),
             ),
-          ],
-        ),
+          ),
+          Container(
+            width: double.infinity,
+            padding: EdgeInsets.fromLTRB(24, topInset + 20, 24, 56),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Image.asset(
+                  'assets/images/logo_white.png',
+                  height: 48,
+                  fit: BoxFit.contain,
+                  alignment: Alignment.centerLeft,
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  'Sign in with your corporate email. '
+                  'Your view is tied by your position.',
+                  style: TextStyle(
+                    fontFamily: AppTextStyles.fontFamily,
+                    color: Colors.white.withValues(alpha: 0.72),
+                    fontSize: 13,
+                    height: 1.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

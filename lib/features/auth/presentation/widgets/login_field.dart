@@ -78,7 +78,13 @@ class _LoginFieldState extends State<LoginField> {
             color: AppColors.card,
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
-              color: accent ?? Colors.transparent,
+              // Mode gelap: kartu nyaris sewarna dengan latar, jadi border
+              // hijau tipis dipakai agar kotak field tetap terbaca. Lebarnya
+              // sama di semua kondisi supaya field tidak "melompat" saat fokus.
+              color: accent ??
+                  (AppColors.isDark
+                      ? AppColors.primaryText.withValues(alpha: 0.35)
+                      : Colors.transparent),
               width: 1.5,
             ),
           ),
