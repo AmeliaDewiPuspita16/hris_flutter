@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../../../core/theme/app_colors.dart';
+import '../../../../../../core/widgets/back_header.dart';
 import '../../data/est_project_repository.dart';
 import '../../domain/executive_dashboard.dart';
 import '../bloc/add_workers/add_workers_bloc.dart';
@@ -20,10 +20,10 @@ import '../bloc/worker_transfer/worker_transfer_state.dart';
 import '../widgets/est_close_project_button.dart';
 import '../widgets/est_detail_actions.dart';
 import '../widgets/est_detail_closed_at_card.dart';
-import '../widgets/est_detail_header.dart';
 import '../widgets/est_detail_mandor_section.dart';
 import '../widgets/est_detail_progress_card.dart';
 import '../widgets/est_detail_stats_row.dart';
+import '../widgets/est_detail_summary_card.dart';
 import '../widgets/est_detail_team_section.dart';
 import '../widgets/est_detail_timeline_card.dart';
 import 'project_form_screen.dart';
@@ -162,83 +162,73 @@ class _ExecProjectDetailView extends StatelessWidget {
       ],
       child: Scaffold(
         backgroundColor: AppColors.bg,
-        body: AnnotatedRegion<SystemUiOverlayStyle>(
-          value: const SystemUiOverlayStyle(
-            statusBarColor: Colors.transparent,
-            statusBarIconBrightness: Brightness.light,
-          ),
+        appBar: BackHeader(
+          title: project.name,
+          onBack: () => Navigator.pop(context),
+        ),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              EstDetailHeader(project: project),
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      EstDetailProgressCard(project: project),
-                      const SizedBox(height: 16),
-                      EstDetailTimelineCard(project: project),
-                      if (project.status == 'completed') ...[
-                        const SizedBox(height: 16),
-                        const EstDetailClosedAtCard(),
-                      ],
-                      const SizedBox(height: 16),
-                      EstDetailStatsRow(project: project),
-                      const SizedBox(height: 16),
-                      EstDetailMandorSection(
-                        onSubstitute: (m) => EstDetailActions.showSubstitute(
-                          context,
-                          project: project,
-                          role: 'mandor',
-                          substituteForId: m.id,
-                          substituteForName: m.name,
-                        ),
-                        onEndSubstitute: (m) =>
-                            EstDetailActions.endMandorSubstitute(
-                          context,
-                          project,
-                          m,
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      EstDetailTeamSection(
-                        projectId: project.id,
-                        isCompleted: project.status == 'completed',
-                        onAddWorker: () =>
-                            EstDetailActions.showAddWorker(context, project),
-                        onTransfer: (w) =>
-                            EstDetailActions.showTransfer(context, project, w),
-                        onSubstitute: (w) => EstDetailActions.showSubstitute(
-                          context,
-                          project: project,
-                          role: 'worker',
-                          substituteForId: w.workerId,
-                          substituteForName: w.name,
-                        ),
-                        onEndSubstitute: (w) =>
-                            EstDetailActions.endWorkerSubstitute(
-                          context,
-                          project,
-                          w,
-                        ),
-                      ),
-                      if (project.status != 'completed') ...[
-                        const SizedBox(height: 32),
-                        if (project.status != 'pending_close') ...[
-                          _EditProjectButton(
-                              onPressed: () => _openEditForm(context)),
-                          const SizedBox(height: 12),
-                        ],
-                        EstCloseProjectButton(
-                          projectId: project.id,
-                          status: project.status,
-                        ),
-                      ],
-                    ],
-                  ),
+              EstDetailSummaryCard(project: project),
+              const SizedBox(height: 16),
+              EstDetailProgressCard(project: project),
+              const SizedBox(height: 16),
+              EstDetailTimelineCard(project: project),
+              if (project.status == 'completed') ...[
+                const SizedBox(height: 16),
+                const EstDetailClosedAtCard(),
+              ],
+              const SizedBox(height: 16),
+              EstDetailStatsRow(project: project),
+              const SizedBox(height: 16),
+              EstDetailMandorSection(
+                onSubstitute: (m) => EstDetailActions.showSubstitute(
+                  context,
+                  project: project,
+                  role: 'mandor',
+                  substituteForId: m.id,
+                  substituteForName: m.name,
+                ),
+                onEndSubstitute: (m) => EstDetailActions.endMandorSubstitute(
+                  context,
+                  project,
+                  m,
                 ),
               ),
+              const SizedBox(height: 24),
+              EstDetailTeamSection(
+                projectId: project.id,
+                isCompleted: project.status == 'completed',
+                onAddWorker: () =>
+                    EstDetailActions.showAddWorker(context, project),
+                onTransfer: (w) =>
+                    EstDetailActions.showTransfer(context, project, w),
+                onSubstitute: (w) => EstDetailActions.showSubstitute(
+                  context,
+                  project: project,
+                  role: 'worker',
+                  substituteForId: w.workerId,
+                  substituteForName: w.name,
+                ),
+                onEndSubstitute: (w) => EstDetailActions.endWorkerSubstitute(
+                  context,
+                  project,
+                  w,
+                ),
+              ),
+              if (project.status != 'completed') ...[
+                const SizedBox(height: 32),
+                if (project.status != 'pending_close') ...[
+                  _EditProjectButton(onPressed: () => _openEditForm(context)),
+                  const SizedBox(height: 12),
+                ],
+                EstCloseProjectButton(
+                  projectId: project.id,
+                  status: project.status,
+                ),
+              ],
             ],
           ),
         ),

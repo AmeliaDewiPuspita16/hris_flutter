@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../../../core/theme/app_colors.dart';
-import '../../../../../auth/presentation/bloc/auth/auth_bloc.dart';
+import '../../../../shared/presentation/widgets/portal_category_page.dart';
 import '../../data/est_project_repository.dart';
 import '../../domain/executive_dashboard.dart';
 import '../bloc/dashboard/executive_dashboard_bloc.dart';
@@ -12,7 +11,6 @@ import '../bloc/dashboard/executive_dashboard_state.dart';
 import '../widgets/est_close_session_sheet.dart';
 import '../widgets/est_create_project_fab.dart';
 import '../widgets/est_dashboard_error.dart';
-import '../widgets/est_dashboard_header.dart';
 import '../widgets/est_dashboard_shimmer.dart';
 import '../widgets/est_no_access_view.dart';
 import '../widgets/est_not_clocked_out_sheet.dart';
@@ -234,29 +232,16 @@ class _EstProjectMonitoringScreenState
 
   @override
   Widget build(BuildContext context) {
-    final name = context.read<AuthBloc>().state.session?.user.name ?? '';
-
-    return Scaffold(
-      backgroundColor: AppColors.bg,
+    return PortalModulePage(
+      eyebrow: 'EST PROJECT MONITORING',
+      title: 'EST Project Monitoring',
+      subtitle: 'Pantau progres jam kerja dan sesi harian setiap proyek.',
+      illustrationAsset: PortalCategoryPage.monitorIllustration,
       floatingActionButton: EstCreateProjectFab(onPressed: _openCreateForm),
-      body: AnnotatedRegion<SystemUiOverlayStyle>(
-        value: const SystemUiOverlayStyle(
-          statusBarColor: Colors.transparent,
-          statusBarIconBrightness: Brightness.light,
-        ),
-        child: Column(
-          children: [
-            EstDashboardHeader(userName: name),
-            Expanded(
-              child:
-                  BlocConsumer<ExecutiveDashboardBloc, ExecutiveDashboardState>(
-                bloc: _bloc,
-                listener: _onState,
-                builder: _buildBody,
-              ),
-            ),
-          ],
-        ),
+      body: BlocConsumer<ExecutiveDashboardBloc, ExecutiveDashboardState>(
+        bloc: _bloc,
+        listener: _onState,
+        builder: _buildBody,
       ),
     );
   }
