@@ -26,6 +26,7 @@ import '../widgets/est_detail_progress_card.dart';
 import '../widgets/est_detail_stats_row.dart';
 import '../widgets/est_detail_team_section.dart';
 import '../widgets/est_detail_timeline_card.dart';
+import 'project_form_screen.dart';
 
 /// Detail proyek executive: progres, timeline, supervisor, tim, dan request
 /// tutup proyek. Pop dengan `true` bila proyek berubah (beranda perlu muat
@@ -81,6 +82,30 @@ class _ExecProjectDetailView extends StatelessWidget {
         .read<ExecProjectDetailBloc>()
         .add(LoadExecProjectDetail(project.id));
     context.read<ProjectWorkersBloc>().add(LoadProjectWorkers(project.id));
+  }
+
+  // Form edit memakai map yang sama dengan DW; muat ulang detail bila tersimpan.
+  Future<void> _openEditForm(BuildContext context) async {
+    final result = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ProjectFormScreen(
+          project: {
+            'id': project.id,
+            'name': project.name,
+            'location': project.location,
+            'budget_hours': project.budgetHours,
+            'start_date': project.startDate,
+            'target_end_date': project.targetEndDate,
+          },
+        ),
+      ),
+    );
+    if (result == true && context.mounted) {
+      context
+          .read<ExecProjectDetailBloc>()
+          .add(LoadExecProjectDetail(project.id));
+    }
   }
 
   @override
@@ -201,7 +226,8 @@ class _ExecProjectDetailView extends StatelessWidget {
                       if (project.status != 'completed') ...[
                         const SizedBox(height: 32),
                         if (project.status != 'pending_close') ...[
-                          const _EditProjectButton(),
+                          _EditProjectButton(
+                              onPressed: () => _openEditForm(context)),
                           const SizedBox(height: 12),
                         ],
                         EstCloseProjectButton(
@@ -221,17 +247,18 @@ class _ExecProjectDetailView extends StatelessWidget {
   }
 }
 
-/// Tombol "Edit Proyek"; belum tersambung (onPressed null) sampai form edit
-/// tersedia.
+/// Tombol "Edit Proyek": membuka form edit lewat [onPressed].
 class _EditProjectButton extends StatelessWidget {
-  const _EditProjectButton();
+  const _EditProjectButton({required this.onPressed});
+
+  final VoidCallback onPressed;
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton.icon(
-        onPressed: null,
+        onPressed: onPressed,
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.presentBg,
           foregroundColor: AppColors.primaryText,

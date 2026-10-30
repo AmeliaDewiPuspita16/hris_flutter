@@ -196,6 +196,36 @@ void main() {
     expect(all.single.name, 'Dewi');
   });
 
+  test('fetchFormWorkers memakai endpoint available dan parse lengkap',
+      () async {
+    reply = {
+      'data': [
+        {
+          'id': 7,
+          'name': 'Dewi',
+          'nik': '123',
+          'phone': '0812',
+          'skills': 'Las',
+          'photo': null,
+          'is_worker': true,
+          'worker_type': 'dw',
+          'placement': 'Site A',
+        }
+      ]
+    };
+    final workers = await build()
+        .fetchFormWorkers(query: {'search': 'de', 'project_id': '1'});
+
+    expect(seen.single.method, 'GET');
+    expect(seen.single.url.path, '/api/est/resources/workers/available');
+    expect(
+        seen.single.url.queryParameters, {'search': 'de', 'project_id': '1'});
+    expect(workers.single.phone, '0812');
+    expect(workers.single.isWorker, isTrue);
+    expect(workers.single.workerType, 'dw');
+    expect(workers.single.isSelected, isFalse);
+  });
+
   test('fetchActiveProjects membaca data, fallback projects', () async {
     reply = {
       'data': [estExecutiveProjectJson]

@@ -20,6 +20,7 @@ import '../widgets/est_open_session_dialog.dart';
 import '../widgets/est_project_card.dart';
 import '../widgets/est_stat_cards.dart';
 import 'exec_project_detail_screen.dart';
+import 'project_form_screen.dart';
 
 /// Beranda executive EST Project Monitoring (menu Data): ringkasan, daftar
 /// "Performa Proyek", serta buka/tutup sesi harian per proyek.
@@ -54,6 +55,17 @@ class _EstProjectMonitoringScreenState
     final result = await Navigator.push<bool>(
       context,
       MaterialPageRoute(builder: (_) => ExecProjectDetailScreen(project: p)),
+    );
+    if (result == true && mounted) {
+      _bloc.add(const LoadExecutiveDashboard());
+    }
+  }
+
+  // ── Buat proyek ───────────────────────────────────────
+  Future<void> _openCreateForm() async {
+    final result = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(builder: (_) => const ProjectFormScreen()),
     );
     if (result == true && mounted) {
       _bloc.add(const LoadExecutiveDashboard());
@@ -226,7 +238,7 @@ class _EstProjectMonitoringScreenState
 
     return Scaffold(
       backgroundColor: AppColors.bg,
-      floatingActionButton: const EstCreateProjectFab(),
+      floatingActionButton: EstCreateProjectFab(onPressed: _openCreateForm),
       body: AnnotatedRegion<SystemUiOverlayStyle>(
         value: const SystemUiOverlayStyle(
           statusBarColor: Colors.transparent,

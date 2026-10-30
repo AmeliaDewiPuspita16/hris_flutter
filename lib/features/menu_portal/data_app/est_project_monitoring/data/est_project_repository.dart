@@ -1,6 +1,7 @@
 import '../../../../../core/network/api_client.dart';
 import '../../../../../core/network/api_config.dart';
 import '../domain/est_available_worker.dart';
+import '../domain/est_form_worker.dart';
 import '../domain/est_mandor.dart';
 import '../domain/est_substitute_candidate.dart';
 import '../domain/exec_project_full.dart';
@@ -134,6 +135,21 @@ class EstProjectRepository {
       query: query,
     );
     return _workers(json);
+  }
+
+  /// Daftar pilih worker di form project: endpoint dan query sama dengan
+  /// [fetchAvailableWorkers], tetapi parsing ketat ke bentuk lengkap DW.
+  Future<List<EstFormWorker>> fetchFormWorkers({
+    Map<String, String>? query,
+  }) async {
+    final json = await _apiClient.getJson(
+      ApiConfig.estAvailableWorkers,
+      query: query,
+    );
+    final raw = json['data'] as List;
+    return raw
+        .map((e) => EstFormWorker.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 
   Future<List<EstAvailableWorker>> fetchAllWorkers({
