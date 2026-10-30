@@ -192,7 +192,7 @@ class _WorkerRow extends StatelessWidget {
                 ),
                 child: Center(
                   child: Text(
-                    worker.name[0],
+                    worker.name.isEmpty ? '?' : worker.name[0],
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w700,

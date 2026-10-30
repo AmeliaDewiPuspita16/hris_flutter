@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:latlong2/latlong.dart';
 
@@ -269,7 +268,7 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
             Expanded(child: Text(msg)),
           ],
         ),
-        backgroundColor: AppColors.rejected,
+        backgroundColor: AppColors.solid(AppColors.rejected),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
@@ -300,7 +299,10 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
     final initial = isStart
         ? (_startDate ?? now)
         : (_endDate ?? (_startDate ?? now).add(const Duration(days: 30)));
-    final first = isStart ? now : (_startDate ?? now);
+    final minDate = isStart ? now : (_startDate ?? now);
+    // Edit proyek berjalan: tanggal lama bisa sebelum minDate; firstDate
+    // harus <= initialDate supaya assert showDatePicker tidak terpicu.
+    final first = initial.isBefore(minDate) ? initial : minDate;
     final last = DateTime(2030);
 
     final picked = await showDatePicker(
@@ -347,87 +349,79 @@ class _ProjectFormScreenState extends State<ProjectFormScreen> {
         title: _isEdit ? 'Edit Proyek' : 'Tambah Proyek',
         onBack: () => Navigator.pop(context),
       ),
-      body: AnnotatedRegion<SystemUiOverlayStyle>(
-        value: const SystemUiOverlayStyle(
-          statusBarColor: Colors.transparent,
-          statusBarIconBrightness: Brightness.light,
-        ),
-        child: Column(
-          children: [
-            Expanded(
-              child: Form(
-                key: _formKey,
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      EstFormInfoSection(
-                        nameController: _nameCtrl,
-                        locationController: _locationCtrl,
-                        budgetHoursController: _budgetHoursCtrl,
-                        latitude: _latitude,
-                        longitude: _longitude,
-                        onOpenMap: _openLocationPicker,
-                      ),
-                      const SizedBox(height: 20),
-                      EstFormScheduleSection(
-                        startDate: _startDate,
-                        endDate: _endDate,
-                        onPickStart: () => _pickDate(isStart: true),
-                        onPickEnd: () => _pickDate(isStart: false),
-                      ),
-                      const SizedBox(height: 20),
-                      EstFormSection(
-                        title: 'Supervisor',
-                        icon: Icons.person_outline,
-                        children: [
-                          EstFormMandorPicker(
-                            mandors: _mandors,
-                            loading: _mandorsLoading,
-                            error: _mandorsError,
-                            selected: _selectedMandor,
-                            onRetry: _fetchMandors,
-                            onChanged: (v) =>
-                                setState(() => _selectedMandor = v),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 20),
-                      EstFormSection(
-                        title: 'Assign Pekerja',
-                        icon: Icons.groups_outlined,
-                        badge: _selectedDwCount > 0
-                            ? '$_selectedDwCount dipilih'
-                            : null,
-                        children: [
-                          EstFormWorkerPicker(
-                            workers: _workers,
-                            loading: _workersLoading,
-                            error: _workersError,
-                            searchQuery: _dwSearchQuery,
-                            selectedCount: _selectedDwCount,
-                            onSearchChanged: _onSearchChanged,
-                            onRetry: () =>
-                                _fetchWorkers(search: _dwSearchQuery),
-                            onToggle: _toggleWorker,
-                            onToggleAll: _toggleAllWorkers,
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 32),
-                      EstFormSubmitButton(
-                        isEdit: _isEdit,
-                        isLoading: _isLoading,
-                        onPressed: _handleSubmit,
-                      ),
-                    ],
-                  ),
+      body: Column(
+        children: [
+          Expanded(
+            child: Form(
+              key: _formKey,
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    EstFormInfoSection(
+                      nameController: _nameCtrl,
+                      locationController: _locationCtrl,
+                      budgetHoursController: _budgetHoursCtrl,
+                      latitude: _latitude,
+                      longitude: _longitude,
+                      onOpenMap: _openLocationPicker,
+                    ),
+                    const SizedBox(height: 20),
+                    EstFormScheduleSection(
+                      startDate: _startDate,
+                      endDate: _endDate,
+                      onPickStart: () => _pickDate(isStart: true),
+                      onPickEnd: () => _pickDate(isStart: false),
+                    ),
+                    const SizedBox(height: 20),
+                    EstFormSection(
+                      title: 'Supervisor',
+                      icon: Icons.person_outline,
+                      children: [
+                        EstFormMandorPicker(
+                          mandors: _mandors,
+                          loading: _mandorsLoading,
+                          error: _mandorsError,
+                          selected: _selectedMandor,
+                          onRetry: _fetchMandors,
+                          onChanged: (v) => setState(() => _selectedMandor = v),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    EstFormSection(
+                      title: 'Assign Pekerja',
+                      icon: Icons.groups_outlined,
+                      badge: _selectedDwCount > 0
+                          ? '$_selectedDwCount dipilih'
+                          : null,
+                      children: [
+                        EstFormWorkerPicker(
+                          workers: _workers,
+                          loading: _workersLoading,
+                          error: _workersError,
+                          searchQuery: _dwSearchQuery,
+                          selectedCount: _selectedDwCount,
+                          onSearchChanged: _onSearchChanged,
+                          onRetry: () => _fetchWorkers(search: _dwSearchQuery),
+                          onToggle: _toggleWorker,
+                          onToggleAll: _toggleAllWorkers,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 32),
+                    EstFormSubmitButton(
+                      isEdit: _isEdit,
+                      isLoading: _isLoading,
+                      onPressed: _handleSubmit,
+                    ),
+                  ],
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

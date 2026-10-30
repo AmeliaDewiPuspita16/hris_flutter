@@ -48,50 +48,45 @@ class EstSessionRow extends StatelessWidget {
           child: Row(
             children: [
               // Badge status
-              Flexible(
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: badgeBg,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        width: 6,
-                        height: 6,
-                        decoration: BoxDecoration(
-                          color: dotColor,
-                          shape: BoxShape.circle,
+              // Lebar natural: chip "belum pulang" yang menyusut lebih dulu.
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                decoration: BoxDecoration(
+                  color: badgeBg,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 6,
+                      height: 6,
+                      decoration: BoxDecoration(
+                        color: dotColor,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      badgeText,
+                      maxLines: 1,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: badgeTextColor,
+                      ),
+                    ),
+                    if (isOpen && project.sessionOpenedAt != null) ...[
+                      const SizedBox(width: 4),
+                      Text(
+                        '· ${project.sessionOpenedAt}',
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: AppColors.presentMid,
                         ),
                       ),
-                      const SizedBox(width: 6),
-                      Flexible(
-                        child: Text(
-                          badgeText,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            color: badgeTextColor,
-                          ),
-                        ),
-                      ),
-                      if (isOpen && project.sessionOpenedAt != null) ...[
-                        const SizedBox(width: 4),
-                        Text(
-                          '· ${project.sessionOpenedAt}',
-                          style: TextStyle(
-                            fontSize: 10,
-                            color: AppColors.presentMid,
-                          ),
-                        ),
-                      ],
                     ],
-                  ),
+                  ],
                 ),
               ),
               if (isOpen && project.notClockedOut > 0) ...[

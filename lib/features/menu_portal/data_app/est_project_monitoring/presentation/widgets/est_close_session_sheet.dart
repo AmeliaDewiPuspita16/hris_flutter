@@ -102,7 +102,7 @@ class _EstCloseSessionSheetState extends State<EstCloseSessionSheet> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: AppColors.rejected,
+        backgroundColor: AppColors.solid(AppColors.rejected),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
@@ -327,7 +327,7 @@ class _EstCloseSessionSheetState extends State<EstCloseSessionSheet> {
                             width: 22,
                             height: 22,
                             decoration: BoxDecoration(
-                              color: AppColors.rejected,
+                              color: AppColors.solid(AppColors.rejected),
                               shape: BoxShape.circle,
                             ),
                             child: const Icon(

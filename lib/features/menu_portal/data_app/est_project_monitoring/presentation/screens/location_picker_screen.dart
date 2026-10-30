@@ -21,6 +21,12 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
   LatLng? _picked;
   bool _locating = false;
 
+  @override
+  void dispose() {
+    _mapController.dispose();
+    super.dispose();
+  }
+
   // Fallback: Jakarta
   static const _defaultCenter = LatLng(-6.2088, 106.8456);
 
@@ -106,7 +112,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(msg),
-        backgroundColor: AppColors.rejected,
+        backgroundColor: AppColors.solid(AppColors.rejected),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),

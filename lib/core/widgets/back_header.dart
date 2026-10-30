@@ -13,6 +13,7 @@ class BackHeader extends StatelessWidget implements PreferredSizeWidget {
   });
 
   final String title;
+
   /// Null = tanpa tombol kembali (mis. saat dipakai sebagai tab).
   final VoidCallback? onBack;
   final Widget? trailing;
@@ -64,6 +65,8 @@ class BackHeader extends StatelessWidget implements PreferredSizeWidget {
             Expanded(
               child: Text(
                 title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 textAlign: TextAlign.center,
                 style: AppTextStyles.sectionTitle
                     .copyWith(fontSize: 15, fontWeight: FontWeight.w700),

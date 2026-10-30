@@ -120,7 +120,7 @@ class _EstProjectMonitoringScreenState
       _bloc.add(const LoadExecutiveDashboard());
     }
     if (state is ExecutiveSessionError) {
-      _showSnack(state.message, AppColors.rejected);
+      _showSnack(state.message, AppColors.solid(AppColors.rejected));
     }
   }
 
@@ -233,11 +233,17 @@ class _EstProjectMonitoringScreenState
   @override
   Widget build(BuildContext context) {
     return PortalModulePage(
-      eyebrow: 'EST PROJECT MONITORING',
-      title: 'EST Project Monitoring',
+      // eyebrow: 'EST PROJECT MONITORING',
+      title: 'EST Project',
       subtitle: 'Pantau progres jam kerja dan sesi harian setiap proyek.',
       illustrationAsset: PortalCategoryPage.monitorIllustration,
-      floatingActionButton: EstCreateProjectFab(onPressed: _openCreateForm),
+      floatingActionButton:
+          BlocBuilder<ExecutiveDashboardBloc, ExecutiveDashboardState>(
+        bloc: _bloc,
+        builder: (context, state) => state is ExecutiveDashboardNoAccess
+            ? const SizedBox.shrink()
+            : EstCreateProjectFab(onPressed: _openCreateForm),
+      ),
       body: BlocConsumer<ExecutiveDashboardBloc, ExecutiveDashboardState>(
         bloc: _bloc,
         listener: _onState,

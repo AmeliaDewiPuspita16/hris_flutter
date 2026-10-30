@@ -84,7 +84,9 @@ class _ExecProjectDetailView extends StatelessWidget {
     context.read<ProjectWorkersBloc>().add(LoadProjectWorkers(project.id));
   }
 
-  // Form edit memakai map yang sama dengan DW; muat ulang detail bila tersimpan.
+  // Form edit memakai map yang sama dengan DW; bila tersimpan, tutup detail
+  // supaya home memuat ulang (header/kartu detail dirender dari model home
+  // yang kini basi). Snackbar sukses sudah ditampilkan oleh form.
   Future<void> _openEditForm(BuildContext context) async {
     final result = await Navigator.push<bool>(
       context,
@@ -102,9 +104,7 @@ class _ExecProjectDetailView extends StatelessWidget {
       ),
     );
     if (result == true && context.mounted) {
-      context
-          .read<ExecProjectDetailBloc>()
-          .add(LoadExecProjectDetail(project.id));
+      Navigator.pop(context, true);
     }
   }
 
@@ -120,7 +120,8 @@ class _ExecProjectDetailView extends StatelessWidget {
                   .read<ProjectWorkersBloc>()
                   .add(LoadProjectWorkers(project.id));
             } else if (state is WorkerTransferFailure) {
-              _showSnack(context, state.message, AppColors.rejected);
+              _showSnack(
+                  context, state.message, AppColors.solid(AppColors.rejected));
             }
           },
         ),
@@ -130,7 +131,8 @@ class _ExecProjectDetailView extends StatelessWidget {
               _showSnack(context, state.message, AppColors.primary);
               _refreshDetail(context);
             } else if (state is AddWorkersFailure) {
-              _showSnack(context, state.message, AppColors.rejected);
+              _showSnack(
+                  context, state.message, AppColors.solid(AppColors.rejected));
             }
           },
         ),
@@ -141,7 +143,8 @@ class _ExecProjectDetailView extends StatelessWidget {
               // Muat ulang mandor dan daftar worker
               _refreshDetail(context);
             } else if (state is SubstituteFailure) {
-              _showSnack(context, state.message, AppColors.rejected);
+              _showSnack(
+                  context, state.message, AppColors.solid(AppColors.rejected));
             }
           },
         ),
@@ -155,7 +158,8 @@ class _ExecProjectDetailView extends StatelessWidget {
               );
               Navigator.pop(context, true);
             } else if (state is CloseProjectFailure) {
-              _showSnack(context, state.message, AppColors.rejected);
+              _showSnack(
+                  context, state.message, AppColors.solid(AppColors.rejected));
             }
           },
         ),

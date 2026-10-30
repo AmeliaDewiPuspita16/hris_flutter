@@ -174,7 +174,7 @@ class EstFormMandorPicker extends StatelessWidget {
                         ),
                         child: Center(
                           child: Text(
-                            m.name[0],
+                            m.name.isEmpty ? '?' : m.name[0],
                             style: TextStyle(
                               fontWeight: FontWeight.w700,
                               color: AppColors.primaryText,

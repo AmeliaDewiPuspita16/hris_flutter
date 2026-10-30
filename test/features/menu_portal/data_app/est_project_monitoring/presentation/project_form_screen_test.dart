@@ -34,7 +34,8 @@ class _FakeRepository implements EstProjectRepository {
 void main() {
   late _FakeRepository repo;
 
-  Future<void> pump(WidgetTester tester, {Map<String, dynamic>? project}) async {
+  Future<void> pump(WidgetTester tester,
+      {Map<String, dynamic>? project}) async {
     tester.view.physicalSize = const Size(800, 2400);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);

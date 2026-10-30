@@ -107,6 +107,20 @@ void main() {
       expect(w.initials, 'AP');
     });
 
+    test('initials aman untuk nama kosong dan spasi ganda', () {
+      ProjectWorkerModel w(String name) => ProjectWorkerModel(
+            workerId: 1,
+            name: name,
+            isClockedIn: false,
+            hoursToday: 0,
+            attendanceCondition: 1,
+          );
+      expect(w('').initials, '?');
+      expect(w('   ').initials, '?');
+      expect(w('Budi  Santoso').initials, 'BS');
+      expect(w('budi').initials, 'B');
+    });
+
     test('field opsional hilang memakai default DW', () {
       final w = ProjectWorkerModel.fromJson({'worker_id': 1});
       expect(w.name, '-');

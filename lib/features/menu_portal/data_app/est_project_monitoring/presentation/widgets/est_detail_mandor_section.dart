@@ -116,7 +116,9 @@ class _MandorRow extends StatelessWidget {
           width: 36,
           height: 36,
           decoration: BoxDecoration(
-            color: mandor.isSubstitute ? AppColors.orange : AppColors.orangeBg,
+            color: mandor.isSubstitute
+                ? AppColors.solid(AppColors.orange)
+                : AppColors.orangeBg,
             borderRadius: BorderRadius.circular(10),
           ),
           child: Center(

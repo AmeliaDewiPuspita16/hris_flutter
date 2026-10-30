@@ -222,7 +222,7 @@ class _EstSubstituteSheetState extends State<EstSubstituteSheet> {
                               );
                         },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.orange,
+                    backgroundColor: AppColors.solid(AppColors.orange),
                     disabledBackgroundColor: AppColors.border,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(

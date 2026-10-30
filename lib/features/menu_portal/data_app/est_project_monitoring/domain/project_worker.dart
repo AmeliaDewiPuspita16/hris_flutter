@@ -46,8 +46,9 @@ class ProjectWorkerModel {
   }
 
   String get initials {
-    final parts = name.trim().split(' ');
+    final parts =
+        name.trim().split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
     if (parts.length >= 2) return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
-    return name.isNotEmpty ? name[0].toUpperCase() : '?';
+    return parts.isNotEmpty ? parts[0][0].toUpperCase() : '?';
   }
 }

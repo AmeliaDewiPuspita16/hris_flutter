@@ -155,7 +155,7 @@ class EstDetailActions {
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.rejected,
+              backgroundColor: AppColors.solid(AppColors.rejected),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),
               ),

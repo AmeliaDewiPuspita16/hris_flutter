@@ -21,8 +21,8 @@ class EstProjectCard extends StatelessWidget {
   final VoidCallback onToggleSession;
 
   Color get _progressColor => switch (project.status) {
-        'over_budget' => AppColors.rejected,
-        'at_risk' => AppColors.orange,
+        'over_budget' => AppColors.solid(AppColors.rejected),
+        'at_risk' => AppColors.solid(AppColors.orange),
         _ => AppColors.primary,
       };
 
@@ -90,7 +90,7 @@ class EstProjectCard extends StatelessWidget {
                   ),
                   child: Center(
                     child: Text(
-                      project.name[0],
+                      project.name.isEmpty ? '?' : project.name[0],
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 18,
