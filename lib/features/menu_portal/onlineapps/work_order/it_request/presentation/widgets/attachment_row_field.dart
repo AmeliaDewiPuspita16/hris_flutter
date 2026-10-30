@@ -15,10 +15,14 @@ class AttachmentRowField extends StatelessWidget {
     required this.fileName,
     required this.onTap,
     this.maxFiles = 1,
+    this.hint = 'Optional · max 10MB',
   });
 
   final String? fileName;
   final VoidCallback onTap;
+
+  /// Keterangan kecil di bawah judul, mis. batas ukuran dan jenis berkas.
+  final String hint;
 
   /// Jumlah lampiran maksimum — dipakai untuk keterangan "N left" di kanan.
   final int maxFiles;
@@ -66,7 +70,7 @@ class AttachmentRowField extends StatelessWidget {
                     style: AppTextStyles.body.copyWith(fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 1),
-                  Text('Optional · max 10MB', style: AppTextStyles.caption),
+                  Text(hint, style: AppTextStyles.caption),
                 ],
               ),
             ),

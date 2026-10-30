@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../../../../core/theme/app_colors.dart';
 import '../../../../../../../core/theme/app_text_styles.dart';
@@ -11,6 +12,7 @@ import '../../../../../../../core/widgets/back_header.dart';
 import '../../../../../../../core/widgets/detail_field_tile.dart';
 import '../../data/it_request_repository.dart';
 import '../../domain/it_request_detail.dart';
+import '../../domain/it_request_file.dart';
 import '../../domain/it_request_item.dart';
 import '../../domain/it_request_new_employee.dart';
 import '../bloc/detail/it_request_detail_bloc.dart';
@@ -268,6 +270,16 @@ class _ItRequestDetailView extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        if (detail.approvedAt != null) ...[
+          _buildBanner(
+            title: 'APPROVED BY HOD',
+            body: DateFormatter.dateTimeID(detail.approvedAt!.toLocal()),
+            color: AppColors.present,
+            background: AppColors.presentBg,
+            icon: Icons.verified_outlined,
+          ),
+          const SizedBox(height: 16),
+        ],
         if (detail.cancelReason != null) ...[
           _buildBanner(
             title: 'Cancellation reason',
@@ -291,7 +303,18 @@ class _ItRequestDetailView extends StatelessWidget {
           const SizedBox(height: 18),
         ],
         if (hasNewEmployee) ...[
-          _buildNewEmployee(newEmployee),
+          for (var i = 0; i < 1 + newEmployee.additional.length; i++) ...[
+            _buildNewEmployee(
+              i == 0 ? newEmployee : newEmployee.additional[i - 1],
+              title: newEmployee.additional.isEmpty
+                  ? 'NEW EMPLOYEE'
+                  : 'NEW EMPLOYEE ${i + 1}',
+            ),
+            const SizedBox(height: 18),
+          ],
+        ],
+        if (detail.attachment != null) ...[
+          _buildAttachment(detail.attachment!),
           const SizedBox(height: 18),
         ],
         if (detail.handling != null) ...[
@@ -415,7 +438,10 @@ class _ItRequestDetailView extends StatelessWidget {
     );
   }
 
-  Widget _buildNewEmployee(ItRequestNewEmployee newEmployee) {
+  Widget _buildNewEmployee(
+    ItRequestNewEmployee newEmployee, {
+    String title = 'NEW EMPLOYEE',
+  }) {
     final rows = <({String label, String value})>[
       if (newEmployee.fullName != null)
         (label: 'Full Name', value: newEmployee.fullName!),
@@ -431,7 +457,7 @@ class _ItRequestDetailView extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const ItRequestSectionTitle(title: 'NEW EMPLOYEE', icon: Icons.badge_outlined),
+        ItRequestSectionTitle(title: title, icon: Icons.badge_outlined),
         AppCard(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Column(
@@ -443,6 +469,54 @@ class _ItRequestDetailView extends StatelessWidget {
                   showDivider: i != rows.length - 1,
                 ),
             ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Foto atau dokumen yang dilampirkan pemohon. Dibuka di aplikasi lain
+  /// (peramban, pembaca PDF, dst.) lewat tautannya.
+  Widget _buildAttachment(ItRequestFile file) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const ItRequestSectionTitle(title: 'ATTACHMENT', icon: Icons.attach_file),
+        AppCard(
+          padding: EdgeInsets.zero,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(12),
+            onTap: () => launchUrl(
+              Uri.parse(file.url),
+              mode: LaunchMode.externalApplication,
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              child: Row(
+                children: [
+                  Icon(
+                    file.isImage
+                        ? Icons.image_outlined
+                        : Icons.insert_drive_file_outlined,
+                    size: 20,
+                    color: AppColors.primaryText,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      file.name,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTextStyles.body.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Icon(Icons.open_in_new, size: 18, color: AppColors.textMuted),
+                ],
+              ),
+            ),
           ),
         ),
       ],

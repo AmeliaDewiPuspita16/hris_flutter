@@ -1,5 +1,6 @@
 import '../../../../../../core/utils/json_value.dart';
 import 'code_label.dart';
+import 'it_request_file.dart';
 import 'it_request_handling.dart';
 import 'it_request_item.dart';
 import 'it_request_new_employee.dart';
@@ -33,6 +34,7 @@ class ItRequestDetail extends ItRequestItem {
     this.specifiedUsername,
     this.specifiedOther,
     this.handling,
+    this.attachment,
     this.approvedAt,
     this.cancelReason,
     this.ratingComment,
@@ -51,6 +53,11 @@ class ItRequestDetail extends ItRequestItem {
   final String? specifiedOther;
 
   final ItRequestHandling? handling;
+
+  /// Lampiran dari form Add Request — foto atau dokumen. Null bila tidak ada.
+  final ItRequestFile? attachment;
+
+  /// Kapan HOD menyetujui. Null selama belum disetujui.
   final DateTime? approvedAt;
   final String? cancelReason;
   final String? ratingComment;
@@ -87,6 +94,7 @@ class ItRequestDetail extends ItRequestItem {
           specified is Map ? textOrNull(specified['username']) : null,
       specifiedOther: specified is Map ? textOrNull(specified['other']) : null,
       handling: ItRequestHandling.fromJsonOrNull(json['handling']),
+      attachment: ItRequestFile.fromJsonOrNull(json['attachment']),
       approvedAt: dateOrNull(json['approved_at']),
       cancelReason: textOrNull(json['cancel_reason']),
       ratingComment: textOrNull(json['rating_comment']),

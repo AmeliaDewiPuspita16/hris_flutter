@@ -17,6 +17,7 @@ class ItRequestNewEmployee {
     this.department,
     this.section,
     this.equipmentNeeded = const [],
+    this.additional = const [],
   });
 
   final String? fullName;
@@ -26,6 +27,10 @@ class ItRequestNewEmployee {
   final String? department;
   final String? section;
   final List<String> equipmentNeeded;
+
+  /// Karyawan ke-2 dst. dari request yang sama (`additional_employees`),
+  /// bentuknya sama dengan karyawan pertama.
+  final List<ItRequestNewEmployee> additional;
 
   /// Null bila `new_employee` sendiri null di respons.
   static ItRequestNewEmployee? fromJsonOrNull(dynamic json) {
@@ -40,6 +45,10 @@ class ItRequestNewEmployee {
       section: textOrNull(json['section']),
       equipmentNeeded: (json['equipment_needed'] as List<dynamic>? ?? const [])
           .whereType<String>()
+          .toList(growable: false),
+      additional: (json['additional_employees'] as List<dynamic>? ?? const [])
+          .map(fromJsonOrNull)
+          .whereType<ItRequestNewEmployee>()
           .toList(growable: false),
     );
   }

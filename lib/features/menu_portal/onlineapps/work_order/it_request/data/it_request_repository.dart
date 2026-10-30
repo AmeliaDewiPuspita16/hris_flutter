@@ -3,6 +3,7 @@ import '../../../../../../core/network/api_config.dart';
 import '../../../../../../core/network/api_exception.dart';
 import '../domain/approve_request_page.dart';
 import '../domain/it_request_detail.dart';
+import '../domain/it_request_form_options.dart';
 import '../domain/it_request_page.dart';
 import '../domain/it_request_type.dart';
 import '../domain/support_type.dart';
@@ -36,6 +37,24 @@ class ItRequestRepository {
     );
 
     return ItRequestPage.fromEnvelope(envelope);
+  }
+
+  /// Opsi form Add Request (`GET .../options`): kategori beserta checkbox-nya,
+  /// aturan karyawan baru, daftar department, dan aturan lampiran — dibaca
+  /// dari definisi yang sama dengan yang dipakai server untuk validasi.
+  ///
+  /// Melempar [ApiException] bila gagal, termasuk saat responsnya sampai
+  /// tapi bentuknya tidak dikenali.
+  Future<ItRequestFormOptions> fetchOptions() async {
+    final data = await _apiClient.get('${ApiConfig.itRequest}/options');
+
+    try {
+      return ItRequestFormOptions.fromJson(data);
+    } on FormatException {
+      throw const ApiException.server(
+        'The form options were received, but their content was not recognized.',
+      );
+    }
   }
 
   /// Rincian satu request.

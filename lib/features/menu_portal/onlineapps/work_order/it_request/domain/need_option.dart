@@ -59,10 +59,13 @@ class NeedOption {
   final String? textFieldCode;
 }
 
-/// Daftar opsi "What do you need?" untuk tiap [RequestCategory] — mengikuti
-/// opsi pada form "Add Request" di versi web apa adanya. `requestCategoryCode`
-/// dan field-field kirimnya mengikuti dokumentasi
-/// `POST /api/portal/apps/it_request`.
+/// Daftar BAWAAN opsi "What do you need?" untuk tiap [RequestCategory].
+///
+/// Sumber utamanya sekarang `GET /api/portal/apps/it_request/options` (lihat
+/// `ItRequestFormOptions`); daftar ini hanya dipakai kalau permintaan itu
+/// belum selesai atau gagal, jadi isinya dijaga sama dengan yang terakhir
+/// dikirim server (30 Okt 2026: Backup dan Internet dihapus; hardware dan
+/// event equipment ditambah).
 class NeedOptionCatalog {
   NeedOptionCatalog._();
 
@@ -104,16 +107,6 @@ class NeedOptionCatalog {
       ],
     ),
     NeedOption(
-      id: 'internet_access',
-      label: 'Internet / network access',
-      requestCategoryCode: 'internet_req',
-    ),
-    NeedOption(
-      id: 'backup_data',
-      label: 'Backup data (weekly)',
-      requestCategoryCode: 'backup_req',
-    ),
-    NeedOption(
       id: 'download_install',
       label: 'Download/install application',
       requestCategoryCode: 'download_req',
@@ -126,12 +119,25 @@ class NeedOptionCatalog {
       label: 'Computer/IT hardware',
       requestCategoryCode: 'perangkat_komputer_req',
       fieldKind: NeedFieldKind.checkboxGroup,
-      checkboxLabels: ['Laptop', 'PC', 'Printer', 'Mouse'],
+      checkboxLabels: [
+        'Laptop',
+        'PC',
+        'Printer',
+        'Mouse',
+        'Keyboard',
+        'Mousepad',
+        'Monitor',
+        'TV',
+      ],
       checkboxFieldCodes: [
         'hardware_need_laptop',
         'hardware_need_pc',
         'hardware_need_printer',
         'hardware_need_mouse',
+        'hardware_need_keyboard',
+        'hardware_need_mousepad',
+        'hardware_need_monitor',
+        'hardware_need_tv',
       ],
     ),
     NeedOption(
@@ -139,12 +145,23 @@ class NeedOptionCatalog {
       label: 'Setup Event/Meeting Equipment',
       requestCategoryCode: 'event_equipment_req',
       fieldKind: NeedFieldKind.checkboxGroup,
-      checkboxLabels: ['Projector', 'Pointer', 'Videotron', 'Webcam'],
+      checkboxLabels: [
+        'Projector',
+        'Pointer',
+        'Videotron',
+        'Webcam',
+        'USB Hub',
+        'Monitor',
+        'TV',
+      ],
       checkboxFieldCodes: [
         'event_equipment_need_projector',
         'event_equipment_need_pointer',
         'event_equipment_need_videotron',
         'event_equipment_need_webcam',
+        'event_equipment_need_usb_hub',
+        'event_equipment_need_monitor',
+        'event_equipment_need_tv',
       ],
     ),
     NeedOption(

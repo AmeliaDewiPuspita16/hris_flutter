@@ -53,4 +53,26 @@ class ItRequestAttachment {
     }
     return null;
   }
+
+  /// Sama dengan [validationError], tapi dengan aturan dari server
+  /// (`attachment` di `GET .../options`) — form Add Request menerima foto DAN
+  /// dokumen (PDF, Word, Excel, PowerPoint), beda dari foto bukti pengerjaan
+  /// yang tetap memakai [validationError].
+  String? validationErrorFor({
+    required Set<String> extensions,
+    required int maxBytes,
+  }) {
+    if (!extensions.contains(extension)) {
+      final list = (extensions.toList()..sort()).map((e) => e.toUpperCase());
+      return '$fileName must be one of: ${list.join(', ')}.';
+    }
+    if (sizeBytes <= 0) {
+      return '$fileName is empty or cannot be read.';
+    }
+    if (sizeBytes > maxBytes) {
+      final mb = (maxBytes / (1024 * 1024)).round();
+      return '$fileName is larger than $mb MB.';
+    }
+    return null;
+  }
 }

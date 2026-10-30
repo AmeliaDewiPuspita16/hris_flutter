@@ -163,15 +163,6 @@ class _OptionGroupCard extends StatelessWidget {
       description: 'Update login, username, role, or deactivate',
     );
   }
-  if (label.contains('network') || label.contains('internet')) {
-    return (icon: Icons.wifi, description: 'Connectivity issue or new access');
-  }
-  if (label.contains('backup')) {
-    return (
-      icon: Icons.backup_outlined,
-      description: 'Weekly scheduled data backup'
-    );
-  }
   if (label.contains('download') || label.contains('install')) {
     return (
       icon: Icons.file_download_outlined,
@@ -181,13 +172,13 @@ class _OptionGroupCard extends StatelessWidget {
   if (label.contains('hardware') || label.contains('computer')) {
     return (
       icon: Icons.desktop_windows_outlined,
-      description: 'Laptop, PC, printer, mouse'
+      description: 'Laptop, PC, monitor, keyboard, printer'
     );
   }
   if (label.contains('event') || label.contains('meeting')) {
     return (
       icon: Icons.cast_outlined,
-      description: 'Projector, pointer, videotron, webcam'
+      description: 'Projector, videotron, webcam, monitor, TV'
     );
   }
   if (label.contains('design')) {

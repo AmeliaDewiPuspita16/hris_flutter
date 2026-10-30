@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:image_picker/image_picker.dart' as picker;
+import 'package:file_picker/file_picker.dart';
 
 import '../../../../../../../core/logging/app_logger.dart';
 import '../../../../../../../core/network/api_exception.dart';
 import '../../../../../../../core/theme/app_colors.dart';
 import '../../../../../../../core/theme/app_text_styles.dart';
+import '../../../../../../../core/widgets/app_shimmer.dart';
 import '../../../../../../../core/widgets/app_text_field.dart';
 import '../../../../../../../core/widgets/back_header.dart';
 import '../../../../../../../core/widgets/field_label_row.dart';
@@ -13,6 +14,7 @@ import '../../../../../../shared/data/department_repository.dart';
 import '../../../../../../shared/domain/department.dart';
 import '../../data/it_request_repository.dart';
 import '../../domain/it_request_attachment.dart';
+import '../../domain/it_request_form_options.dart';
 import '../../domain/it_request_item.dart';
 import '../../domain/it_request_type.dart';
 import '../../domain/need_option.dart';
@@ -55,7 +57,7 @@ class AddItRequestScreen extends StatefulWidget {
   final ItRequestRepository? repository;
   final DepartmentRepository? departmentRepository;
 
-  /// Null berarti memakai galeri sungguhan lewat image_picker.
+  /// Null berarti memakai pemilih berkas sungguhan lewat file_picker.
   final AttachmentPicker? pickAttachment;
 
   @override
@@ -83,6 +85,16 @@ class _AddItRequestScreenState extends State<AddItRequestScreen> {
   List<Department> _departments = const [];
   String? _departmentsError;
 
+  /// Opsi form dari `GET .../options`. Null selama belum selesai dimuat atau
+  /// kalau gagal — sementara itu dipakai [NeedOptionCatalog] dan aturan
+  /// lampiran bawaan.
+  ItRequestFormOptions? _formOptions;
+  bool _optionsLoading = true;
+
+  /// Karyawan baru ke-2 dst. (karyawan pertama ada di [_newEmployeeData]).
+  final List<_EmployeeEntry> _additionalEmployees = [];
+  int _nextEmployeeUid = 1;
+
   String? _submitError;
   bool _submitting = false;
 
@@ -93,6 +105,7 @@ class _AddItRequestScreenState extends State<AddItRequestScreen> {
     _departmentRepository =
         widget.departmentRepository ?? context.read<DepartmentRepository>();
     _loadDepartments();
+    _loadOptions();
   }
 
   @override
@@ -105,8 +118,28 @@ class _AddItRequestScreenState extends State<AddItRequestScreen> {
     super.dispose();
   }
 
-  List<NeedOption> get _needOptions =>
-      _category == null ? const [] : NeedOptionCatalog.optionsFor(_category!);
+  List<NeedOption> get _needOptions {
+    final category = _category;
+    if (category == null) return const [];
+
+    return _formOptions?.optionsFor(category) ??
+        NeedOptionCatalog.optionsFor(category);
+  }
+
+  ItRequestAttachmentRules get _attachmentRules =>
+      _formOptions?.attachment ?? ItRequestAttachmentRules.fallback;
+
+  /// Daftar department dari server (options) bila ada; kalau tidak, dari
+  /// `DepartmentRepository`.
+  List<Department> get _effectiveDepartments {
+    final fromOptions = _formOptions?.departments ?? const <Department>[];
+    return fromOptions.isNotEmpty ? fromOptions : _departments;
+  }
+
+  String? get _effectiveDepartmentsError =>
+      (_formOptions?.departments.isNotEmpty ?? false) ? null : _departmentsError;
+
+  int get _maxAdditionalEmployees => _formOptions?.maxAdditionalEmployees ?? 0;
 
   NeedOption? get _selectedOption {
     for (final option in _needOptions) {
@@ -130,6 +163,23 @@ class _AddItRequestScreenState extends State<AddItRequestScreen> {
     }
   }
 
+  /// Gagal memuat tidak menghalangi form: dipakai daftar bawaan, dan server
+  /// tetap memvalidasi pilihannya saat submit.
+  Future<void> _loadOptions() async {
+    try {
+      final options = await _repository.fetchOptions();
+      if (!mounted) return;
+      setState(() {
+        _formOptions = options;
+        _optionsLoading = false;
+      });
+    } catch (e, stack) {
+      AppLogger.error('Opsi form IT request gagal dimuat', e, stack);
+      if (!mounted) return;
+      setState(() => _optionsLoading = false);
+    }
+  }
+
   void _onCategoryChanged(RequestCategory category) {
     setState(() {
       _category = category;
@@ -139,6 +189,7 @@ class _AddItRequestScreenState extends State<AddItRequestScreen> {
       _checkboxSelections.clear();
       _usernameDescController.clear();
       _newEmployeeData = const NewEmployeeData();
+      _additionalEmployees.clear();
       for (final controller in _specifyControllers.values) {
         controller.dispose();
       }
@@ -149,9 +200,18 @@ class _AddItRequestScreenState extends State<AddItRequestScreen> {
   /// True kalau checkbox "New username" pada grup Account management
   /// sedang tercentang — satu-satunya opsi yang butuh field tambahan di
   /// atas checkbox group-nya sendiri (`username_desc` wajib diisi).
-  bool _needsUsernameDesc(NeedOption option) =>
-      option.id == 'account_mgmt' &&
-      (_checkboxSelections[option.id]?.contains('New username') ?? false);
+  bool _needsUsernameDesc(NeedOption option) {
+    if (option.requestCategoryCode != 'account_mgmt_req') return false;
+
+    for (final label in _checkboxSelections[option.id] ?? const <String>{}) {
+      final at = option.checkboxLabels.indexOf(label);
+      if (at >= 0 &&
+          option.checkboxFieldCodes[at] == 'account_mgmt_need_new_username') {
+        return true;
+      }
+    }
+    return false;
+  }
 
   String? _validate() {
     if (_category == null) return 'Please select a request type.';
@@ -176,9 +236,16 @@ class _AddItRequestScreenState extends State<AddItRequestScreen> {
           return 'Please specify the desired username.';
         }
       case NeedFieldKind.newEmployeeForm:
-        if (!_newEmployeeData.isComplete) {
-          return 'Please complete the new employee details (name, employee '
-              'number, type, and department).';
+        final incomplete = [
+          _newEmployeeData,
+          for (final entry in _additionalEmployees) entry.data,
+        ].indexWhere((employee) => !employee.isComplete);
+        if (incomplete != -1) {
+          final who = _additionalEmployees.isEmpty
+              ? 'the new employee details'
+              : 'the details of employee ${incomplete + 1}';
+          return 'Please complete $who (name, employee number, type, and '
+              'department).';
         }
       case NeedFieldKind.none:
         break;
@@ -208,31 +275,55 @@ class _AddItRequestScreenState extends State<AddItRequestScreen> {
     };
   }
 
+  /// Karyawan pertama memakai nama field `new_employee_*`; karyawan ke-2 dst.
+  /// memakai nama yang sama di dalam `new_employee_additional[n][...]`.
   Map<String, String> _newEmployeeFields() {
-    final data = _newEmployeeData;
     return {
-      'new_employee_name': data.fullName.trim(),
-      if (data.preferredName.trim().isNotEmpty)
-        'new_employee_preferred_name': data.preferredName.trim(),
-      'new_employee_number': data.employeeNumber.trim(),
-      'new_employee_level': data.executiveType!.label,
-      'new_employee_department': '${data.department!.id}',
-      if (data.section.trim().isNotEmpty) 'new_employee_section': data.section.trim(),
-      for (final label in data.equipmentNeeded)
-        NewEmployeeEquipment.fieldCodes[label]!: '1',
+      ..._employeeFields(_newEmployeeData, (key) => key),
+      for (var i = 0; i < _additionalEmployees.length; i++)
+        ..._employeeFields(
+          _additionalEmployees[i].data,
+          (key) => 'new_employee_additional[$i][$key]',
+          alwaysSendSection: true,
+        ),
     };
   }
 
-  Future<ItRequestAttachment?> _pickFromGallery() async {
-    final file = await picker.ImagePicker().pickImage(source: picker.ImageSource.gallery);
-    if (file == null) return null;
-
-    return ItRequestAttachment(
-      path: file.path,
-      fileName: file.name,
-      sizeBytes: await file.length(),
-    );
+  Map<String, String> _employeeFields(
+    NewEmployeeData data,
+    String Function(String key) name, {
+    bool alwaysSendSection = false,
+  }) {
+    return {
+      name('new_employee_name'): data.fullName.trim(),
+      if (data.preferredName.trim().isNotEmpty)
+        name('new_employee_preferred_name'): data.preferredName.trim(),
+      name('new_employee_number'): data.employeeNumber.trim(),
+      name('new_employee_level'): data.executiveType!.label,
+      name('new_employee_department'): '${data.department!.id}',
+      if (alwaysSendSection || data.section.trim().isNotEmpty)
+        name('new_employee_section'): data.section.trim(),
+      for (final label in data.equipmentNeeded)
+        name(NewEmployeeEquipment.fieldCodes[label]!): '1',
+    };
   }
+
+  /// Foto maupun dokumen (PDF, Word, Excel, PowerPoint) — ekstensi yang
+  /// boleh mengikuti aturan dari server.
+  Future<ItRequestAttachment?> _pickFromDevice() async {
+  final file = await FilePicker.pickFile(
+    type: FileType.custom,
+    allowedExtensions: _attachmentRules.extensions.toList(),
+  );
+  final path = file?.path;
+  if (file == null || path == null) return null;
+
+  return ItRequestAttachment(
+    path: path,
+    fileName: file.name,
+    sizeBytes: await file.length() ?? 0,
+  );
+}
 
   Future<void> _pickAttachment() async {
     if (_submitting) return;
@@ -245,19 +336,23 @@ class _AddItRequestScreenState extends State<AddItRequestScreen> {
       return;
     }
 
-    final pick = widget.pickAttachment ?? _pickFromGallery;
+    final pick = widget.pickAttachment ?? _pickFromDevice;
 
     final ItRequestAttachment? picked;
     try {
       picked = await pick();
     } catch (e) {
-      if (mounted) setState(() => _attachmentError = 'Unable to open the gallery.');
+      if (mounted) setState(() => _attachmentError = 'Unable to open the file picker.');
       return;
     }
 
     if (!mounted || picked == null) return;
 
-    final error = picked.validationError;
+    final rules = _attachmentRules;
+    final error = picked.validationErrorFor(
+      extensions: rules.extensions,
+      maxBytes: rules.maxBytes,
+    );
     setState(() {
       if (error != null) {
         _attachmentError = error;
@@ -335,7 +430,7 @@ class _AddItRequestScreenState extends State<AddItRequestScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const FieldLabelRow(label: 'Request type'),
+                const FieldLabelRow(label: 'Request type', required: true),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
                   decoration: BoxDecoration(
@@ -349,7 +444,7 @@ class _AddItRequestScreenState extends State<AddItRequestScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                const FieldLabelRow(label: 'Support type'),
+                const FieldLabelRow(label: 'Support type', required: true),
                 SupportTypeSelector(
                   value: _supportType,
                   onChanged: (v) => setState(() => _supportType = v),
@@ -360,12 +455,15 @@ class _AddItRequestScreenState extends State<AddItRequestScreen> {
           if (_category != null) ...[
             const SizedBox(height: 18),
             const FieldLabelRow(label: 'What do you need', required: true),
-            NeedOptionGroup(
-              options: _needOptions,
-              selectedId: _selectedNeedId,
-              onSelect: (id) => setState(() => _selectedNeedId = id),
-              expandedChildBuilder: _buildExpandedField,
-            ),
+            if (_optionsLoading)
+              const _OptionsSkeleton()
+            else
+              NeedOptionGroup(
+                options: _needOptions,
+                selectedId: _selectedNeedId,
+                onSelect: (id) => setState(() => _selectedNeedId = id),
+                expandedChildBuilder: _buildExpandedField,
+              ),
           ],
           if (_selectedOption != null) ...[
             const SizedBox(height: 18),
@@ -391,7 +489,7 @@ class _AddItRequestScreenState extends State<AddItRequestScreen> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide(color: AppColors.primaryMidText, width: 1.5),
+                  borderSide: BorderSide(color: AppColors.primaryMid, width: 1.5),
                 ),
               ),
             ),
@@ -400,6 +498,8 @@ class _AddItRequestScreenState extends State<AddItRequestScreen> {
             AttachmentRowField(
               fileName: _attachment?.fileName,
               onTap: _pickAttachment,
+              hint: 'Optional · max ${_attachmentRules.maxMb} MB · '
+                  'photo, PDF, Word, Excel, PowerPoint',
             ),
             if (_attachmentError != null) ...[
               const SizedBox(height: 6),
@@ -492,20 +592,153 @@ class _AddItRequestScreenState extends State<AddItRequestScreen> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide(color: AppColors.primaryMidText, width: 1.5),
+              borderSide: BorderSide(color: AppColors.primaryMid, width: 1.5),
             ),
           ),
         );
 
       case NeedFieldKind.newEmployeeForm:
-        return NewEmployeeSubform(
+        return _buildEmployees();
+    }
+  }
+
+  /// Karyawan pertama, lalu karyawan tambahan (maks. `max_additional` dari
+  /// server). Tombol tambah hanya muncul bila server mengizinkan tambahan.
+  Widget _buildEmployees() {
+    final max = _maxAdditionalEmployees;
+    final canAdd = _additionalEmployees.length < max;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (max > 0) const _EmployeeHeader(title: 'Employee 1'),
+        NewEmployeeSubform(
+          key: const ValueKey('employee-0'),
           data: _newEmployeeData,
           onChanged: (v) => setState(() => _newEmployeeData = v),
-          departments: _departments,
-          departmentsError: _departmentsError,
+          departments: _effectiveDepartments,
+          departmentsError: _effectiveDepartmentsError,
           onRetryLoadDepartments: _loadDepartments,
-        );
-    }
+        ),
+        for (var i = 0; i < _additionalEmployees.length; i++) ...[
+          const SizedBox(height: 14),
+          Divider(height: 1, color: AppColors.border),
+          const SizedBox(height: 14),
+          _EmployeeHeader(
+            title: 'Employee ${i + 2}',
+            onRemove: _submitting
+                ? null
+                : () => setState(() => _additionalEmployees.removeAt(i)),
+          ),
+          NewEmployeeSubform(
+            key: ValueKey('employee-${_additionalEmployees[i].uid}'),
+            data: _additionalEmployees[i].data,
+            onChanged: (v) => setState(() => _additionalEmployees[i].data = v),
+            departments: _effectiveDepartments,
+            departmentsError: _effectiveDepartmentsError,
+            onRetryLoadDepartments: _loadDepartments,
+          ),
+        ],
+        if (max > 0) ...[
+          const SizedBox(height: 14),
+          OutlinedButton.icon(
+            onPressed: canAdd && !_submitting
+                ? () => setState(() {
+                      _additionalEmployees
+                          .add(_EmployeeEntry(_nextEmployeeUid++));
+                    })
+                : null,
+            icon: const Icon(Icons.person_add_alt_outlined, size: 18),
+            label: Text(
+              canAdd
+                  ? 'Add another employee'
+                  : 'Maximum ${max + 1} employees per request',
+            ),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.primaryText,
+              side: BorderSide(color: AppColors.border),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+/// Satu karyawan baru tambahan (ke-2 dst.). [uid] jadi key sub-form-nya
+/// supaya isian tidak tertukar saat ada yang dihapus dari tengah.
+class _EmployeeEntry {
+  _EmployeeEntry(this.uid);
+
+  final int uid;
+  NewEmployeeData data = const NewEmployeeData();
+}
+
+class _EmployeeHeader extends StatelessWidget {
+  const _EmployeeHeader({required this.title, this.onRemove});
+
+  final String title;
+  final VoidCallback? onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              title,
+              style: AppTextStyles.label.copyWith(fontWeight: FontWeight.w700),
+            ),
+          ),
+          if (onRemove != null)
+            InkWell(
+              onTap: onRemove,
+              borderRadius: BorderRadius.circular(8),
+              child: Padding(
+                padding: const EdgeInsets.all(4),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.close, size: 15, color: AppColors.rejected),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Remove',
+                      style: TextStyle(fontSize: 12, color: AppColors.rejected),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Kerangka daftar "What do you need" selama opsi dari server dimuat.
+class _OptionsSkeleton extends StatelessWidget {
+  const _OptionsSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return const AppShimmer(
+      child: Column(
+        children: [
+          ShimmerBox(height: 60, borderRadius: 12),
+          SizedBox(height: 8),
+          ShimmerBox(height: 60, borderRadius: 12),
+          SizedBox(height: 8),
+          ShimmerBox(height: 60, borderRadius: 12),
+          SizedBox(height: 8),
+          ShimmerBox(height: 60, borderRadius: 12),
+        ],
+      ),
+    );
   }
 }
 
