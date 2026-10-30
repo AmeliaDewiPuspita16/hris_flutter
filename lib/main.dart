@@ -19,6 +19,7 @@ import 'features/auth/presentation/bloc/auth/auth_event.dart';
 import 'features/auth/presentation/widgets/auth_gate.dart';
 import 'features/home/data/announcement_repository.dart';
 import 'features/home/data/approvals_waiting_repository.dart';
+import 'features/menu_portal/data_app/est_project_monitoring/data/est_project_repository.dart';
 import 'features/menu_portal/data_app/indent_vehicle/data/indent_vehicle_repository.dart';
 import 'features/menu_portal/onlineapps/procurement/data/procurement_repository.dart';
 import 'features/menu_portal/onlineapps/work_order/est_request/data/est_request_repository.dart';
@@ -78,6 +79,7 @@ Future<void> main() async {
       itRequestRepository: ItRequestRepository(apiClient: apiClient),
       estRequestRepository: EstRequestRepository(apiClient: apiClient),
       indentVehicleRepository: IndentVehicleRepository(apiClient: apiClient),
+      estProjectRepository: EstProjectRepository(apiClient: apiClient),
       profilRepository: ProfilRepository(apiClient: apiClient),
       absensiRepository: AbsensiRepository(apiClient: apiClient),
       pengajuanRepository: PengajuanRepository(apiClient: apiClient),
@@ -109,6 +111,7 @@ class MyApp extends StatelessWidget {
     ItRequestRepository? itRequestRepository,
     EstRequestRepository? estRequestRepository,
     IndentVehicleRepository? indentVehicleRepository,
+    EstProjectRepository? estProjectRepository,
     ProfilRepository? profilRepository,
     AbsensiRepository? absensiRepository,
     PengajuanRepository? pengajuanRepository,
@@ -129,6 +132,8 @@ class MyApp extends StatelessWidget {
             EstRequestRepository(apiClient: ApiClient()),
         indentVehicleRepository = indentVehicleRepository ??
             IndentVehicleRepository(apiClient: ApiClient()),
+        estProjectRepository = estProjectRepository ??
+            EstProjectRepository(apiClient: ApiClient()),
         profilRepository =
             profilRepository ?? ProfilRepository(apiClient: ApiClient()),
         absensiRepository =
@@ -152,6 +157,7 @@ class MyApp extends StatelessWidget {
   final ItRequestRepository itRequestRepository;
   final EstRequestRepository estRequestRepository;
   final IndentVehicleRepository indentVehicleRepository;
+  final EstProjectRepository estProjectRepository;
   final ProfilRepository profilRepository;
   final AbsensiRepository absensiRepository;
   final PengajuanRepository pengajuanRepository;
@@ -175,6 +181,7 @@ class MyApp extends StatelessWidget {
         RepositoryProvider.value(value: itRequestRepository),
         RepositoryProvider.value(value: estRequestRepository),
         RepositoryProvider.value(value: indentVehicleRepository),
+        RepositoryProvider.value(value: estProjectRepository),
         RepositoryProvider.value(value: profilRepository),
         RepositoryProvider.value(value: absensiRepository),
         RepositoryProvider.value(value: pengajuanRepository),
