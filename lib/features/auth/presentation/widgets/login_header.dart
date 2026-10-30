@@ -10,27 +10,34 @@ import '../../../../core/theme/app_text_styles.dart';
 class LoginHeader extends StatelessWidget {
   const LoginHeader({super.key});
 
-  /// Hijau header khusus mode gelap: lebih tua dan lebih "murni hijau"
+  /// Hijau header khusus MODE GELAP: lebih tua dan lebih "murni hijau"
   /// (bukan teal) daripada heroGreen, supaya header tidak menyala di atas
-  /// latar gelap. Sengaja lokal di sini agar kartu/hero di layar lain yang
-  /// memakai AppColors.primaryGradient tidak ikut berubah.
+  /// latar gelap. Mode terang tetap memakai AppColors.primaryGradient.
+  /// Sengaja lokal di sini agar kartu/hero di layar lain tidak ikut berubah.
   static const _darkGradient = LinearGradient(
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
     colors: [Color(0xFF0A3223), Color(0xFF06241A)],
   );
 
-  /// Bagian foto yang ditampilkan, dihitung dari ATAS. Foto header_login.png
-  /// memuat tagline "At The Forefront, From The Seafront" di ~32% terbawah,
-  /// jadi hanya bagian atasnya yang dipakai supaya tulisan itu tidak
-  /// menimpa teks pengantar. Naikkan kalau ingin lebih banyak laut, tapi
-  /// di atas ±0.66 ujung tulisan mulai terlihat.
-  static const double _visiblePhotoFraction = 0.62;
+  /// Foto header_login.png memuat tagline "At The Forefront, From The
+  /// Seafront" di ~32% terbawahnya. Foto ditaruh di ATAS dengan skala
+  /// normal (selebar header), lalu dipudarkan ke hijau di antara dua batas
+  /// ini (pecahan dari tinggi foto) supaya tulisan itu tidak terlihat.
+  ///
+  /// Mau foto terlihat lebih ke bawah: naikkan [_photoFadeStart].
+  /// Ujung tulisan mulai di sekitar 0.66, jadi [_photoFadeEnd] jangan
+  /// melewati angka itu.
+  static const double _photoFadeStart = 0.48;
+  static const double _photoFadeEnd = 0.64;
 
   @override
   Widget build(BuildContext context) {
     final topInset = MediaQuery.paddingOf(context).top;
     final isDark = AppColors.isDark;
+
+    // Kepekatan foto: samar di mode gelap, sedikit lebih jelas di terang.
+    final photoAlpha = isDark ? 0.12 : 0.16;
 
     return ClipPath(
       clipper: _WaveBottomClipper(),
@@ -44,21 +51,31 @@ class LoginHeader extends StatelessWidget {
               decoration: BoxDecoration(
                 gradient: isDark ? _darkGradient : AppColors.primaryGradient,
               ),
-              child: ClipRect(
-                // Foto digambar setinggi 1 / _visiblePhotoFraction kali kotak
-                // header, menempel di ATAS; kelebihannya (bagian bawah foto,
-                // tempat tulisan) terpotong oleh ClipRect.
-                child: FractionallySizedBox(
-                  alignment: Alignment.topCenter,
-                  heightFactor: 1 / _visiblePhotoFraction,
+              // Align: foto menempel di atas dengan tinggi mengikuti rasio
+              // aslinya (tidak diperbesar). ShaderMask ada di dalam Align
+              // supaya batas pudarnya dihitung dari tinggi FOTO, bukan
+              // tinggi header.
+              child: Align(
+                alignment: Alignment.topCenter,
+                child: ShaderMask(
+                  blendMode: BlendMode.dstIn,
+                  shaderCallback: (bounds) => LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    // Kepekatan foto digabung ke sini: tetap di photoAlpha
+                    // sampai _photoFadeStart, lalu memudar sampai 0 di
+                    // bagian tagline.
+                    colors: [
+                      Colors.black.withValues(alpha: photoAlpha),
+                      Colors.black.withValues(alpha: photoAlpha),
+                      Colors.transparent,
+                    ],
+                    stops: const [0, _photoFadeStart, _photoFadeEnd],
+                  ).createShader(bounds),
                   child: Image.asset(
                     'assets/images/header_login.png',
-                    fit: BoxFit.cover,
-                    alignment: Alignment.topRight,
-                    // Foto udara dibuat lebih samar di mode gelap.
-                    opacity: AlwaysStoppedAnimation<double>(
-                      isDark ? 0.12 : 0.16,
-                    ),
+                    width: double.infinity,
+                    fit: BoxFit.fitWidth,
                   ),
                 ),
               ),
