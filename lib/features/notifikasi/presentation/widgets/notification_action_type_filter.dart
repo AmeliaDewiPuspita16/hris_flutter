@@ -50,7 +50,7 @@ class NotificationActionTypeFilter extends StatelessWidget {
               entry.key,
               entry.key.label,
               entry.value,
-              identical(entry.key, selected),
+              entry.key == selected,
             ),
         ],
         child: Container(

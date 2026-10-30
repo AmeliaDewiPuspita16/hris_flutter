@@ -20,6 +20,13 @@ class NotificationCategory {
   final Color color;
   final Color background;
 
+  @override
+  bool operator ==(Object other) =>
+      other is NotificationCategory && other.label == label;
+
+  @override
+  int get hashCode => label.hashCode;
+
   static NotificationCategory get approval => NotificationCategory(
     label: 'Approval',
     icon: Icons.task_alt,
