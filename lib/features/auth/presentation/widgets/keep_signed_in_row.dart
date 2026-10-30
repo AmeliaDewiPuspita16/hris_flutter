@@ -9,12 +9,14 @@ class KeepSignedInRow extends StatelessWidget {
     super.key,
     required this.value,
     required this.onChanged,
-    required this.onForgotPressed,
+    this.onForgotPressed,
   });
 
   final bool value;
   final VoidCallback onChanged;
-  final VoidCallback onForgotPressed;
+
+  /// Null = tautan "Forgot?" disembunyikan (belum ada alur reset password).
+  final VoidCallback? onForgotPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -63,7 +65,7 @@ class KeepSignedInRow extends StatelessWidget {
             minimumSize: Size.zero,
             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           ),
-          child: Text(
+          child: const Text(
             'Forgot?',
             style: TextStyle(
               fontFamily: AppTextStyles.fontFamily,

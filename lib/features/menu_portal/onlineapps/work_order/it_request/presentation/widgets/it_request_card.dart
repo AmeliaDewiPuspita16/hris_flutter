@@ -22,7 +22,6 @@ class ItRequestCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isMedia = item.type == ItRequestType.media;
     final (color, background) = _toneFor(item);
     final requesterLabel = _requesterLabel(item);
 
@@ -151,7 +150,8 @@ class ItRequestCard extends StatelessWidget {
       return (AppColors.violet, AppColors.violetBg);
     }
     final category = item.category.label.toLowerCase();
-    if (_hasAny(category, const ['hardware', 'computer', 'laptop', 'printer'])) {
+    if (_hasAny(
+        category, const ['hardware', 'computer', 'laptop', 'printer'])) {
       return (AppColors.itRequest, AppColors.itRequestBg);
     }
     if (_hasAny(category, const ['meeting', 'event', 'zoom'])) {
