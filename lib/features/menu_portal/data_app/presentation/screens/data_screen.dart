@@ -23,7 +23,7 @@ class DataScreen extends StatelessWidget {
       onDailyWorker: null,
       onDormitoryBie: null,
       onEstProjectMonitoring: () => Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => EstProjectMonitoringScreen()),
+        MaterialPageRoute(builder: (_) => const EstProjectMonitoringScreen()),
       ),
       onExportImport: null,
       onFacility: null,
