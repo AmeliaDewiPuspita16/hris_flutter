@@ -52,7 +52,7 @@ class EstDetailProgressCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(4),
                   child: LinearProgressIndicator(
                     value: project.progress,
-                    backgroundColor: AppColors.bg,
+                    backgroundColor: AppColors.border,
                     valueColor: AlwaysStoppedAnimation<Color>(color),
                     minHeight: 8,
                   ),
@@ -90,7 +90,7 @@ class _CircularProgress extends StatelessWidget {
             painter: _CirclePainter(
               percent: percent.clamp(0.0, 1.0),
               color: color,
-              bgColor: AppColors.bg,
+              bgColor: AppColors.border,
               strokeWidth: 10,
             ),
           ),

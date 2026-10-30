@@ -169,7 +169,7 @@ class EstProjectCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(4),
               child: LinearProgressIndicator(
                 value: project.progress,
-                backgroundColor: AppColors.bg,
+                backgroundColor: AppColors.border,
                 valueColor: AlwaysStoppedAnimation<Color>(_barColor),
                 minHeight: 6,
               ),

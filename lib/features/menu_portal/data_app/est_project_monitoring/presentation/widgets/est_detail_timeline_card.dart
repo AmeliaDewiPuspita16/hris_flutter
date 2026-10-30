@@ -111,7 +111,7 @@ class EstDetailTimelineCard extends StatelessWidget {
                   Container(
                     height: 8,
                     decoration: BoxDecoration(
-                      color: AppColors.bg,
+                      color: AppColors.border,
                       borderRadius: BorderRadius.circular(4),
                     ),
                   ),

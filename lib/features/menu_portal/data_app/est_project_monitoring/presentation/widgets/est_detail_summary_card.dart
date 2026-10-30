@@ -86,7 +86,7 @@ class EstDetailSummaryCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(4),
             child: LinearProgressIndicator(
               value: project.progress,
-              backgroundColor: AppColors.presentBg,
+              backgroundColor: AppColors.border,
               valueColor: AlwaysStoppedAnimation<Color>(
                 estIsAlertStatus(project.status)
                     ? estProgressColor(project.status)
