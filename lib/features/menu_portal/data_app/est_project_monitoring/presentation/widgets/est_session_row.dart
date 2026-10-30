@@ -36,7 +36,7 @@ class EstSessionRow extends StatelessWidget {
       badgeTextColor = AppColors.textMuted;
       badgeText = 'Sesi Selesai';
     } else {
-      dotColor = AppColors.primary;
+      dotColor = AppColors.primaryText;
       badgeBg = AppColors.presentBg;
       badgeTextColor = AppColors.primaryText;
       badgeText = 'Belum Ada Sesi';
@@ -146,7 +146,7 @@ class EstSessionRow extends StatelessWidget {
                 border: Border.all(
                   color: isOpen
                       ? AppColors.rejected.withValues(alpha: 0.3)
-                      : AppColors.primary.withValues(alpha: 0.3),
+                      : AppColors.primaryText.withValues(alpha: 0.3),
                 ),
               ),
               child: Row(

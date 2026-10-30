@@ -39,7 +39,7 @@ class EstStatCards extends StatelessWidget {
             value: '${summary.hoursUsedPct}%',
             label: 'Jam Terpakai',
             icon: Icons.schedule_outlined,
-            iconColor: AppColors.primaryLight,
+            iconColor: AppColors.primaryMidText,
             iconBgColor: AppColors.presentBg,
           ),
         ),

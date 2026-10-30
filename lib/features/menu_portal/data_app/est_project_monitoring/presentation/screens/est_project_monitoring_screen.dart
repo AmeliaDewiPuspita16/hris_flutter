@@ -52,7 +52,7 @@ class _EstProjectMonitoringScreenState
   Future<void> _toggleSession(ExecutiveProjectModel p) async {
     if (!p.isOpen) {
       final confirmed = await EstOpenSessionDialog.show(context, p);
-      if (confirmed) _bloc.add(OpenExecutiveSession(p.id));
+      if (confirmed && mounted) _bloc.add(OpenExecutiveSession(p.id));
     } else if (p.notClockedOut > 0) {
       final autoClockOut = await EstNotClockedOutSheet.show(context, p);
       if (autoClockOut && mounted) await _closeSession(p, autoClockOut: true);
@@ -70,7 +70,7 @@ class _EstProjectMonitoringScreenState
       p,
       autoClockOut: autoClockOut,
     );
-    if (input == null) return;
+    if (input == null || !mounted) return;
     _bloc.add(
       CloseExecutiveSession(
         p.id,
@@ -145,7 +145,7 @@ class _EstProjectMonitoringScreenState
 
   Widget _buildContent(ExecutiveDashboardModel data) {
     return RefreshIndicator(
-      color: AppColors.primary,
+      color: AppColors.primaryText,
       onRefresh: () async {
         _bloc.add(const LoadExecutiveDashboard());
         await Future.delayed(const Duration(milliseconds: 500));

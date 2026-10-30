@@ -52,11 +52,7 @@ class EstDashboardHeader extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            AppColors.primary,
-            AppColors.primary,
-            AppColors.primaryLight
-          ],
+          colors: [AppColors.primary, AppColors.primary, AppColors.primaryMid],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),

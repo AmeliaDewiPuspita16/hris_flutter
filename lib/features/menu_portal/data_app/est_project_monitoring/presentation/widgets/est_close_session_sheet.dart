@@ -262,7 +262,8 @@ class _EstCloseSessionSheetState extends State<EstCloseSessionSheet> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: AppColors.primary, width: 1.5),
+                  borderSide:
+                      BorderSide(color: AppColors.primaryText, width: 1.5),
                 ),
                 counterStyle: TextStyle(
                   fontSize: 11,
@@ -349,7 +350,7 @@ class _EstCloseSessionSheetState extends State<EstCloseSessionSheet> {
                         color: AppColors.presentBg,
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(
-                          color: AppColors.primary.withValues(alpha: 0.4),
+                          color: AppColors.primaryText.withValues(alpha: 0.4),
                         ),
                       ),
                       child: Column(

@@ -26,6 +26,12 @@ class EstProjectCard extends StatelessWidget {
         _ => AppColors.primary,
       };
 
+  Color get _barColor => switch (project.status) {
+        'over_budget' => AppColors.rejected,
+        'at_risk' => AppColors.orange,
+        _ => AppColors.primaryText,
+      };
+
   Color get _progressTextColor => switch (project.status) {
         'over_budget' => AppColors.rejected,
         'at_risk' => AppColors.orange,
@@ -164,7 +170,7 @@ class EstProjectCard extends StatelessWidget {
               child: LinearProgressIndicator(
                 value: project.progress,
                 backgroundColor: AppColors.bg,
-                valueColor: AlwaysStoppedAnimation<Color>(_progressColor),
+                valueColor: AlwaysStoppedAnimation<Color>(_barColor),
                 minHeight: 6,
               ),
             ),
