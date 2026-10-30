@@ -30,6 +30,8 @@ dependencies:
   pdfrx: ^2.10.1
   # Ilustrasi & latar header SVG (mis. halaman Records) di assets/icons/.
   flutter_svg: ^2.3.0
+  shared_preferences: ^2.5.6
+  package_info_plus: ^10.2.2
 
 dev_dependencies:
   flutter_test:
