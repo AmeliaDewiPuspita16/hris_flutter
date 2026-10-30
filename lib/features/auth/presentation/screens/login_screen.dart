@@ -16,6 +16,7 @@ import '../widgets/keep_signed_in_row.dart';
 import '../widgets/login_field.dart';
 import '../widgets/login_footer.dart';
 import '../widgets/login_header.dart';
+import '../widgets/login_light_backdrop.dart';
 import '../widgets/star_field.dart';
 // import '../widgets/or_divider.dart';
 
@@ -89,33 +90,22 @@ class _LoginViewState extends State<_LoginView> {
           builder: (context, constraints) => Container(
             height: constraints.maxHeight,
             width: constraints.maxWidth,
-            decoration: BoxDecoration(
-              // Mode gelap: latar polos. Gradien tipis di atas warna gelap
-              // gampang terlihat berundak (banding) dan meninggalkan garis
-              // pembatas di ujungnya; header hijau sudah cukup jadi aksen.
-              color: AppColors.isDark ? AppColors.bg : null,
-              gradient: AppColors.isDark ? null : AppColors.pageGradient,
-              // Mode terang: tekstur garis. Mode gelap: tanpa tekstur —
-              // garis-garis jadi terlalu ramai di atas latar gelap, diganti
-              // langit berbintang (StarField) di bawah.
-              image: AppColors.isDark
-                  ? null
-                  : const DecorationImage(
-                      image: AssetImage('assets/images/bg_login.png'),
-                      fit: BoxFit.cover,
-                      // Teksturnya cuma penghias. Pada kepekatan penuh,
-                      // garis-garisnya menutupi teks di atasnya sampai
-                      // sulit dibaca.
-                      opacity: 0.1,
-                    ),
-            ),
+            // Latar polos di kedua mode. Hiasannya (bintang / garis tipis)
+            // dilukis di lapisan terpisah di dalam Stack di bawah — gradien
+            // tipis di atas warna gelap gampang terlihat berundak (banding).
+            decoration: BoxDecoration(color: AppColors.bg),
             child: Stack(
               fit: StackFit.expand,
               children: [
-                if (AppColors.isDark)
-                  const Positioned.fill(
-                    child: IgnorePointer(child: StarField()),
+                // Gelap: langit berbintang. Terang: semburat mint + garis
+                // tipis di dasar halaman (lihat LoginLightBackdrop).
+                Positioned.fill(
+                  child: IgnorePointer(
+                    child: AppColors.isDark
+                        ? const StarField()
+                        : const LoginLightBackdrop(),
                   ),
+                ),
                 SingleChildScrollView(
                   child: ConstrainedBox(
                     // Kolom minimal setinggi layar supaya Spacer di bawah punya
@@ -127,7 +117,9 @@ class _LoginViewState extends State<_LoginView> {
                         children: [
                           const LoginHeader(),
                           Padding(
-                            padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
+                            // 24 = sama dengan padding kiri-kanan teks di LoginHeader, jadi
+                            // tepi kotak form sejajar dengan logo dan kalimat pengantar.
+                            padding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
                             child: AnimatedBuilder(
                               animation: _form,
                               builder: (context, _) =>
@@ -184,7 +176,7 @@ class _LoginForm extends StatelessWidget {
           textInputAction: TextInputAction.next,
           errorText: form.emailError,
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 10),
         LoginField(
           label: 'Password',
           controller: form.passwordController,

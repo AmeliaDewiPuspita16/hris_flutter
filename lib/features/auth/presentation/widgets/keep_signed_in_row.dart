@@ -49,7 +49,7 @@ class KeepSignedInRow extends StatelessWidget {
             onTap: onChanged,
             behavior: HitTestBehavior.opaque,
             child: Text(
-              'Keep me signed in on this phone',
+              'Keep me signed in',
               style: TextStyle(
                 fontFamily: AppTextStyles.fontFamily,
                 fontSize: 13,
