@@ -41,7 +41,7 @@ class AboutScreen extends StatelessWidget {
                 padding: EdgeInsets.zero,
                 child: ListTile(
                   leading: const TintedIcon(Icons.description_outlined),
-                  title: const Text(
+                  title: Text(
                     'Open-source licenses',
                     style: TextStyle(
                       fontSize: 15,
@@ -49,7 +49,7 @@ class AboutScreen extends StatelessWidget {
                       color: AppColors.text,
                     ),
                   ),
-                  trailing: const Icon(
+                  trailing: Icon(
                     Icons.chevron_right,
                     size: 18,
                     color: AppColors.textMuted,
@@ -108,7 +108,7 @@ class _AppIdentity extends StatelessWidget {
         const SizedBox(height: 14),
         Text(
           name,
-          style: const TextStyle(
+          style: TextStyle(
             fontFamily: AppTextStyles.fontFamily,
             fontSize: 20,
             fontWeight: FontWeight.w700,
@@ -118,7 +118,7 @@ class _AppIdentity extends StatelessWidget {
         const SizedBox(height: 4),
         Text(
           version == null ? ' ' : 'Version $version',
-          style: const TextStyle(
+          style: TextStyle(
             fontFamily: AppTextStyles.fontFamily,
             fontSize: 13,
             color: AppColors.textMuted,

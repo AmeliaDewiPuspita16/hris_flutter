@@ -420,7 +420,7 @@ class _ProfilView extends StatelessWidget {
                           const SizedBox(width: 6),
                           Text(
                             'Emp. ID: ${user?.nik ?? p.nip}',
-                            style: const TextStyle(
+                            style: TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
                                 color: AppColors.primaryText,

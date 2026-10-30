@@ -65,7 +65,7 @@ class KeepSignedInRow extends StatelessWidget {
             minimumSize: Size.zero,
             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           ),
-          child: const Text(
+          child: Text(
             'Forgot?',
             style: TextStyle(
               fontFamily: AppTextStyles.fontFamily,
