@@ -19,6 +19,7 @@ import '../widgets/est_not_clocked_out_sheet.dart';
 import '../widgets/est_open_session_dialog.dart';
 import '../widgets/est_project_card.dart';
 import '../widgets/est_stat_cards.dart';
+import 'exec_project_detail_screen.dart';
 
 /// Beranda executive EST Project Monitoring (menu Data): ringkasan, daftar
 /// "Performa Proyek", serta buka/tutup sesi harian per proyek.
@@ -46,6 +47,17 @@ class _EstProjectMonitoringScreenState
   void dispose() {
     _bloc.close();
     super.dispose();
+  }
+
+  // ── Detail proyek ─────────────────────────────────────
+  Future<void> _openDetail(ExecutiveProjectModel p) async {
+    final result = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(builder: (_) => ExecProjectDetailScreen(project: p)),
+    );
+    if (result == true && mounted) {
+      _bloc.add(const LoadExecutiveDashboard());
+    }
   }
 
   // ── Alur buka/tutup sesi ──────────────────────────────
@@ -199,6 +211,7 @@ class _EstProjectMonitoringScreenState
             padding: const EdgeInsets.only(bottom: 12),
             child: EstProjectCard(
               project: p,
+              onTap: () => _openDetail(p),
               onToggleSession: () => _toggleSession(p),
             ),
           ),
