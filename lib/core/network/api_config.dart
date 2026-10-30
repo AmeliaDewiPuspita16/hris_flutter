@@ -189,4 +189,26 @@ class ApiConfig {
   /// inline`), bukan JSON. Galatnya JSON `{message}`: 401, 403 (Daily
   /// Worker), 404, 422 (Form Template, bukan PDF).
   static String imsDocumentPdf(int id) => '$imsDocuments/$id/pdf';
+
+  // EST Project Monitoring
+  static const String estExecutiveDashboard = '/api/est/dashboard/executive';
+  static const String estProjects = '/api/est/projects';
+  static String estProject(int id) => '$estProjects/$id';
+  static String estProjectWorkers(int id) => '$estProjects/$id/workers';
+  static String estAssignTeam(int id) => '$estProjects/$id/assign';
+  static String estTransferWorkers(int id) =>
+      '$estProjects/$id/workers/transfer';
+  static String estCloseProject(int id) => '$estProjects/$id/close';
+  static String estSubstitute(int projectId) =>
+      '$estProjects/$projectId/substitute';
+  static String estEndSubstitute(int projectId, int assignmentId) =>
+      '$estProjects/$projectId/substitute/$assignmentId';
+  static String estOpenSession(int projectId) =>
+      '$estProjects/$projectId/sessions/open';
+  static String estCloseSession(int projectId) =>
+      '$estProjects/$projectId/sessions/close';
+  static const String estMandors = '/api/est/resources/mandors';
+  static const String estAvailableWorkers =
+      '/api/est/resources/workers/available';
+  static const String estAllWorkers = '/api/est/resources/workers/all';
 }
