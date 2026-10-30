@@ -6,7 +6,6 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/app_shimmer.dart';
 import '../../../../core/widgets/header_title_row.dart';
-import '../../../pengajuan/domain/leave_type.dart';
 import '../../data/leave_approval_repository.dart';
 import '../../domain/leave_approval_request.dart';
 import '../../domain/leave_approval_status.dart';
@@ -185,7 +184,9 @@ class _LeaveApprovalViewState extends State<_LeaveApprovalView> {
                 SnackBar(
                   content: Text(feedback.message),
                   behavior: SnackBarBehavior.floating,
-                  backgroundColor: feedback.isError ? AppColors.solid(AppColors.rejected) : null,
+                  backgroundColor: feedback.isError
+                      ? AppColors.solid(AppColors.rejected)
+                      : null,
                 ),
               );
 
@@ -326,15 +327,18 @@ class _LeaveApprovalViewState extends State<_LeaveApprovalView> {
   }
 
   Widget _buildBody(LeaveApprovalState state) {
-    if (state.status == LeaveApprovalLoadStatus.loading && state.items.isEmpty) {
+    if (state.status == LeaveApprovalLoadStatus.loading &&
+        state.items.isEmpty) {
       return const _ApprovalListSkeleton();
     }
 
-    if (state.status == LeaveApprovalLoadStatus.failure && state.items.isEmpty) {
+    if (state.status == LeaveApprovalLoadStatus.failure &&
+        state.items.isEmpty) {
       return _ErrorState(
         message: state.errorMessage ?? 'Failed to load approvals.',
-        onRetry: () =>
-            context.read<LeaveApprovalBloc>().add(const LeaveApprovalRefreshed()),
+        onRetry: () => context
+            .read<LeaveApprovalBloc>()
+            .add(const LeaveApprovalRefreshed()),
       );
     }
 
