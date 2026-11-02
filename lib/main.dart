@@ -21,6 +21,7 @@ import 'features/home/data/announcement_repository.dart';
 import 'features/home/data/approvals_waiting_repository.dart';
 import 'features/menu_portal/data_app/est_project_monitoring/data/est_project_repository.dart';
 import 'features/menu_portal/data_app/indent_vehicle/data/indent_vehicle_repository.dart';
+import 'features/menu_portal/onlineapps/hse_work_request/data/hse_work_request_repository.dart';
 import 'features/menu_portal/onlineapps/procurement/data/procurement_repository.dart';
 import 'features/menu_portal/onlineapps/work_order/est_request/data/est_request_repository.dart';
 import 'features/menu_portal/onlineapps/work_order/it_request/data/it_request_repository.dart';
@@ -89,6 +90,7 @@ Future<void> main() async {
       notificationInboxRepository:
           NotificationInboxRepository(apiClient: apiClient),
       masterDocumentRepository: MasterDocumentRepository(apiClient: apiClient),
+      hseWorkRequestRepository: HseWorkRequestRepository(apiClient: apiClient),
     ),
   );
 
@@ -119,6 +121,7 @@ class MyApp extends StatelessWidget {
     ApprovalsWaitingRepository? approvalsWaitingRepository,
     NotificationInboxRepository? notificationInboxRepository,
     MasterDocumentRepository? masterDocumentRepository,
+    HseWorkRequestRepository? hseWorkRequestRepository,
   })  : themeCubit = themeCubit ?? ThemeCubit(),
         departmentRepository = departmentRepository ??
             DepartmentRepository(apiClient: ApiClient()),
@@ -147,7 +150,9 @@ class MyApp extends StatelessWidget {
         notificationInboxRepository = notificationInboxRepository ??
             NotificationInboxRepository(apiClient: ApiClient()),
         masterDocumentRepository = masterDocumentRepository ??
-            MasterDocumentRepository(apiClient: ApiClient());
+            MasterDocumentRepository(apiClient: ApiClient()),
+        hseWorkRequestRepository = hseWorkRequestRepository ??
+            HseWorkRequestRepository(apiClient: ApiClient());
 
   final AuthRepository authRepository;
   final ThemeCubit themeCubit;
@@ -165,6 +170,7 @@ class MyApp extends StatelessWidget {
   final ApprovalsWaitingRepository approvalsWaitingRepository;
   final NotificationInboxRepository notificationInboxRepository;
   final MasterDocumentRepository masterDocumentRepository;
+  final HseWorkRequestRepository hseWorkRequestRepository;
 
   @override
   Widget build(BuildContext context) {
@@ -189,6 +195,7 @@ class MyApp extends StatelessWidget {
         RepositoryProvider.value(value: approvalsWaitingRepository),
         RepositoryProvider.value(value: notificationInboxRepository),
         RepositoryProvider.value(value: masterDocumentRepository),
+        RepositoryProvider.value(value: hseWorkRequestRepository),
       ],
       child: BlocProvider.value(
         value: themeCubit,

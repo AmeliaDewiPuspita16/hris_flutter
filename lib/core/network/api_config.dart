@@ -96,6 +96,16 @@ class ApiConfig {
   /// karakter). Setelah ini status WO menjadi `finished`.
   static String estRequestRating(int id) => '$estRequest/$id/rating';
 
+  /// HSE Work Permit — daftar (`?status=`, `?mine=1`, paginasi) dan submit
+  /// di path ini, detail/hapus di `$hsePermit/{id}`.
+  static const String hsePermit = '/api/portal/apps/hse_permit';
+  static const String hsePermitOptions = '$hsePermit/options';
+  static const String hsePermitApprovals = '$hsePermit/approvals';
+  static String hsePermitDetail(int id) => '$hsePermit/$id';
+  static String hsePermitApprove(int id) => '$hsePermit/$id/approve';
+  static String hsePermitReject(int id) => '$hsePermit/$id/reject';
+  static String hsePermitClose(int id) => '$hsePermit/$id/close';
+
   /// Daftar driver untuk dropdown Asign Vehicle (role admin driver).
   /// Responnya array polos, bukan amplop {data: ...}
   static const String indentDrivers = '/api/indent/admin/list_driver';
