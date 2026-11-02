@@ -83,6 +83,13 @@ class NotificationCategory {
     background: AppColors.orangeBg,
   );
 
+  static NotificationCategory get hsePermit => NotificationCategory(
+    label: 'HSE permit',
+    icon: Icons.health_and_safety_outlined,
+    color: AppColors.hseRequest,
+    background: AppColors.hseRequestBg,
+  );
+
   static NotificationCategory get announcement => NotificationCategory(
     label: 'Announcement',
     icon: Icons.campaign_outlined,

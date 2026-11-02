@@ -1,5 +1,6 @@
 import '../../../core/logging/app_logger.dart';
 import '../../menu_portal/data_app/indent_vehicle/data/indent_vehicle_repository.dart';
+import '../../menu_portal/onlineapps/hse_work_request/data/hse_work_request_repository.dart';
 import '../../menu_portal/onlineapps/procurement/data/procurement_repository.dart';
 import '../../menu_portal/onlineapps/work_order/est_request/data/est_request_repository.dart';
 import '../../menu_portal/onlineapps/work_order/it_request/data/it_request_repository.dart';
@@ -11,7 +12,8 @@ import '../domain/notification_link.dart';
 ///
 /// Server tidak menandai notifikasi lama yang sudah diputuskan, dan angka di
 /// banner "Approvals waiting" hanya jumlah tanpa id. Jadi yang dicek adalah
-/// antrean approval tiap modul (IT, EST, Indent, eProcurement): notifikasi
+/// antrean approval tiap modul (IT, EST, Indent, eProcurement, HSE Work
+/// Permit): notifikasi
 /// dianggap masih menunggu bila request-nya masih ada di antrean itu.
 ///
 /// Antrean hanya diminta untuk modul yang memang punya notifikasi approval,
@@ -23,15 +25,18 @@ class PendingApprovalChecker {
     required EstRequestRepository estRequestRepository,
     required IndentVehicleRepository indentVehicleRepository,
     required ProcurementRepository procurementRepository,
+    required HseWorkRequestRepository hsePermitRepository,
   })  : _it = itRequestRepository,
         _est = estRequestRepository,
         _indent = indentVehicleRepository,
-        _procurement = procurementRepository;
+        _procurement = procurementRepository,
+        _hse = hsePermitRepository;
 
   final ItRequestRepository _it;
   final EstRequestRepository _est;
   final IndentVehicleRepository _indent;
   final ProcurementRepository _procurement;
+  final HseWorkRequestRepository _hse;
 
   static const _approvalType = 'approval_needed';
 
@@ -82,6 +87,13 @@ class PendingApprovalChecker {
           })
         : Future.value(<int>{});
 
+    final hse = has(NotificationLink.moduleHsePermit)
+        ? _safe('HSE', () async {
+            final page = await _hse.fetchApprovals();
+            return {for (final item in page.items) item.id};
+          })
+        : Future.value(<int>{});
+
     final procurement = <String, Future<Set<int>>>{
       for (final code in prCodes)
         code: _safe('eProcurement', () async {
@@ -94,6 +106,7 @@ class PendingApprovalChecker {
     final itIds = await it;
     final estIds = await est;
     final indentIds = await indent;
+    final hseIds = await hse;
     final prIds = {
       for (final entry in procurement.entries) entry.key: await entry.value,
     };
@@ -107,6 +120,7 @@ class PendingApprovalChecker {
         NotificationLink.moduleIndentVehicle => indentIds.contains(id),
         NotificationLink.moduleEprocurement =>
           prIds[link.filter]?.contains(id) ?? false,
+        NotificationLink.moduleHsePermit => hseIds.contains(id),
         _ => false,
       };
     }

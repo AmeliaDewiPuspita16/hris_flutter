@@ -5,6 +5,7 @@ import '../../../../../../core/theme/app_colors.dart';
 import '../../../../../../core/theme/app_text_styles.dart';
 import '../../../../../../core/widgets/app_error_view.dart';
 import '../../../../../../core/widgets/app_shimmer.dart';
+import '../../../../../../core/widgets/flash_highlight.dart';
 import '../../../../../../core/widgets/app_button.dart';
 import '../../../work_order/est_request/presentation/widgets/est_request_tab_bar.dart';
 import '../../data/hse_work_request_repository.dart';
@@ -23,7 +24,20 @@ import 'hse_work_request_form_screen.dart';
 /// Tab approval tidak ditentukan dari role di aplikasi: antrean langsung
 /// diminta ke server, dan tab disembunyikan bila server membalas 403.
 class HseWorkRequestListScreen extends StatefulWidget {
-  const HseWorkRequestListScreen({super.key});
+  const HseWorkRequestListScreen({
+    super.key,
+    this.initialTabIndex = 0,
+    this.highlightId,
+  });
+
+  /// Tab saat layar dibuka: 0 Semua Permit, 1 Approval. Dipakai banner
+  /// "Approvals waiting" dan notifikasi approver. Bila akun ternyata bukan
+  /// approver, tab Approval tidak muncul dan layar tetap di daftar.
+  final int initialTabIndex;
+
+  /// id permit dari notifikasi yang di-tap; kartunya dinaikkan ke atas dan
+  /// dikedipkan di tab [initialTabIndex]. Null = tanpa penanda.
+  final int? highlightId;
 
   @override
   State<HseWorkRequestListScreen> createState() =>
@@ -34,7 +48,7 @@ class _HseWorkRequestListScreenState extends State<HseWorkRequestListScreen> {
   late final HsePermitListCubit _listCubit;
   late final HseApprovalCubit _approvalCubit;
 
-  int _tabIndex = 0;
+  late int _tabIndex = widget.initialTabIndex;
   String _query = '';
 
   @override
@@ -125,6 +139,35 @@ class _HseWorkRequestListScreenState extends State<HseWorkRequestListScreen> {
           r.location.toLowerCase().contains(q) ||
           r.department.toLowerCase().contains(q);
     }).toList();
+  }
+
+  /// id yang dikedipkan di [tab] — hanya tab tujuan notifikasi.
+  int? _highlightFor(int tab) =>
+      widget.initialTabIndex == tab ? widget.highlightId : null;
+
+  /// Permit dari notifikasi dinaikkan ke paling atas supaya langsung
+  /// terlihat, sama seperti EST Request.
+  List<HseWorkRequest> _withHighlightFirst(
+    List<HseWorkRequest> items, {
+    required int tab,
+  }) {
+    final id = _highlightFor(tab);
+    final at = id == null ? -1 : items.indexWhere((r) => r.id == id);
+    if (at <= 0) return items;
+    return [items[at], ...items.take(at), ...items.skip(at + 1)];
+  }
+
+  Widget _highlighted(
+    HseWorkRequest request, {
+    required int tab,
+    required Widget child,
+  }) {
+    return FlashHighlight(
+      key: ValueKey('hl-$tab-${request.id}'),
+      active: request.id == _highlightFor(tab),
+      borderRadius: 18,
+      child: child,
+    );
   }
 
   bool _onScroll(ScrollNotification n) {
@@ -263,7 +306,7 @@ class _HseWorkRequestListScreenState extends State<HseWorkRequestListScreen> {
           );
         }
 
-        final items = _search(state.items);
+        final items = _withHighlightFirst(_search(state.items), tab: 0);
         return RefreshIndicator(
           onRefresh: _listCubit.refresh,
           child: NotificationListener<ScrollNotification>(
@@ -283,9 +326,13 @@ class _HseWorkRequestListScreenState extends State<HseWorkRequestListScreen> {
                         return const AppShimmer(child: _CardSkeleton());
                       }
                       final request = items[index];
-                      return HseRequestCard(
-                        request: request,
-                        onTap: () => _openDetail(request),
+                      return _highlighted(
+                        request,
+                        tab: 0,
+                        child: HseRequestCard(
+                          request: request,
+                          onTap: () => _openDetail(request),
+                        ),
                       );
                     },
                   ),
@@ -307,7 +354,7 @@ class _HseWorkRequestListScreenState extends State<HseWorkRequestListScreen> {
           );
         }
 
-        final items = _search(state.items);
+        final items = _withHighlightFirst(_search(state.items), tab: 1);
         return RefreshIndicator(
           onRefresh: _approvalCubit.refresh,
           child: items.isEmpty
@@ -321,13 +368,17 @@ class _HseWorkRequestListScreenState extends State<HseWorkRequestListScreen> {
                   itemBuilder: (context, index) {
                     final item = items[index];
                     final busy = state.busyIds.contains(item.id);
-                    return HseRequestCard(
-                      request: item,
-                      onTap: () => _openDetail(item, canDecide: true),
-                      footer: _DecisionButtons(
-                        busy: busy,
-                        onReject: () => _decide(item, approved: false),
-                        onApprove: () => _decide(item, approved: true),
+                    return _highlighted(
+                      item,
+                      tab: 1,
+                      child: HseRequestCard(
+                        request: item,
+                        onTap: () => _openDetail(item, canDecide: true),
+                        footer: _DecisionButtons(
+                          busy: busy,
+                          onReject: () => _decide(item, approved: false),
+                          onApprove: () => _decide(item, approved: true),
+                        ),
                       ),
                     );
                   },

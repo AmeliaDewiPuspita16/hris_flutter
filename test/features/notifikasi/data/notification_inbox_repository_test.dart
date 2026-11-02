@@ -7,6 +7,7 @@ import 'package:hris_mobile/core/network/api_client.dart';
 import 'package:hris_mobile/core/network/api_exception.dart';
 import 'package:hris_mobile/features/notifikasi/data/notification_inbox_repository.dart';
 import 'package:hris_mobile/features/notifikasi/domain/notification_category.dart';
+import 'package:hris_mobile/features/notifikasi/domain/notification_link.dart';
 
 /// Bentuk `GET /api/portal/apps/notifications` dari backend.
 Map<String, dynamic> inboxEnvelope({int unread = 3}) => {
@@ -156,5 +157,27 @@ void main() {
 
     expect(built.sent.single.method, 'DELETE');
     expect(built.sent.single.url.path, '/api/portal/apps/notifications/32');
+  });
+
+  test('notifikasi hse_permit masuk kategori HSE permit', () {
+    final notification = NotificationInboxRepository.fromJson({
+      'id': 77,
+      'module': 'hse_permit',
+      'title': 'HSE permit menunggu approval',
+      'body': 'HSE/REG/2026/11/001',
+      'is_read': false,
+      'data': {
+        'notification_id': '77',
+        'module': 'hse_permit',
+        'type': 'approval_needed',
+        'id': '162',
+        'audience': 'approver',
+      },
+    });
+
+    expect(notification.category, NotificationCategory.hsePermit);
+    expect(notification.link?.module, NotificationLink.moduleHsePermit);
+    expect(notification.link?.refId, 162);
+    expect(notification.link?.isApprover, isTrue);
   });
 }

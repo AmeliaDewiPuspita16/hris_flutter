@@ -5,8 +5,9 @@ import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/app_shimmer.dart';
 
-/// Banner ringkasan approval yang masih menunggu, digabung dari 5 modul:
-/// Leave (HRIS), IT Request, EST Work Order, Indent Vehicle, eProcurement —
+/// Banner ringkasan approval yang masih menunggu, digabung dari 6 modul:
+/// Leave (HRIS), IT Request, EST Work Order, Indent Vehicle, eProcurement,
+/// HSE Work Permit —
 /// ditempatkan di bawah header dan di atas "Main Menu", mengikuti pola awal
 /// HRIS.
 ///
@@ -32,12 +33,14 @@ class ApprovalSummaryBanner extends StatelessWidget {
     required this.estCount,
     required this.indentVehicleCount,
     required this.eprocurementCount,
+    this.hseCount = 0,
     required this.onTapAll,
     required this.onTapLeave,
     required this.onTapIt,
     required this.onTapEst,
     required this.onTapIndentVehicle,
     required this.onTapEprocurement,
+    this.onTapHse,
   });
 
   /// True selagi ringkasan IT/EST/Indent Vehicle/eProcurement masih diambil
@@ -50,6 +53,7 @@ class ApprovalSummaryBanner extends StatelessWidget {
   final int estCount;
   final int indentVehicleCount;
   final int eprocurementCount;
+  final int hseCount;
 
   final VoidCallback onTapAll;
   final VoidCallback onTapLeave;
@@ -58,8 +62,16 @@ class ApprovalSummaryBanner extends StatelessWidget {
   final VoidCallback onTapIndentVehicle;
   final VoidCallback onTapEprocurement;
 
+  /// Null = tag HSE membuka Notifications seperti badan banner.
+  final VoidCallback? onTapHse;
+
   int get _total =>
-      leaveCount + itCount + estCount + indentVehicleCount + eprocurementCount;
+      leaveCount +
+      itCount +
+      estCount +
+      indentVehicleCount +
+      eprocurementCount +
+      hseCount;
 
   @override
   Widget build(BuildContext context) {
@@ -115,6 +127,14 @@ class ApprovalSummaryBanner extends StatelessWidget {
           background: AppColors.accentBg,
           onTap: onTapEprocurement,
         ),
+        _ModuleTag(
+          label: 'HSE Permit',
+          count: hseCount,
+          icon: Icons.health_and_safety_outlined,
+          color: AppColors.hseRequest,
+          background: AppColors.hseRequestBg,
+          onTap: onTapHse ?? onTapAll,
+        ),
       ];
 
   Widget _buildContent() {
@@ -160,7 +180,8 @@ class ApprovalSummaryBanner extends StatelessWidget {
                     children: [
                       Text(
                         'Approvals waiting',
-                        style: AppTextStyles.body.copyWith(fontWeight: FontWeight.w700),
+                        style: AppTextStyles.body
+                            .copyWith(fontWeight: FontWeight.w700),
                       ),
                       Text(
                         'Tap for all in Notifications',
@@ -183,7 +204,8 @@ class ApprovalSummaryBanner extends StatelessWidget {
             scrollDirection: Axis.horizontal,
             itemCount: tags.length,
             separatorBuilder: (context, index) => const SizedBox(width: 8),
-            itemBuilder: (context, index) => SizedBox(width: 140, child: tags[index]),
+            itemBuilder: (context, index) =>
+                SizedBox(width: 140, child: tags[index]),
           ),
         ),
       ],
@@ -229,8 +251,8 @@ class _BannerShimmer extends StatelessWidget {
               physics: const NeverScrollableScrollPhysics(),
               itemCount: 5,
               separatorBuilder: (context, index) => const SizedBox(width: 8),
-              itemBuilder: (context, index) =>
-                  const SizedBox(width: 140, child: ShimmerBox(height: 54, borderRadius: 12)),
+              itemBuilder: (context, index) => const SizedBox(
+                  width: 140, child: ShimmerBox(height: 54, borderRadius: 12)),
             ),
           ),
         ],
@@ -331,7 +353,8 @@ class _ModuleTag extends StatelessWidget {
                 ],
               ],
             ),
-            Icon(Icons.chevron_right, size: 14, color: color.withValues(alpha: 0.6)),
+            Icon(Icons.chevron_right,
+                size: 14, color: color.withValues(alpha: 0.6)),
           ],
         ),
       ),

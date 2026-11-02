@@ -45,6 +45,8 @@ import '../../../gaji/presentation/screens/gaji_screen.dart';
 import '../../../hris_menu/domain/hris_menu_config.dart';
 import '../../../hris_menu/domain/hris_menu_item.dart';
 import '../../../hris_menu/presentation/screens/hris_menu_screen.dart';
+import '../../../menu_portal/onlineapps/hse_work_request/data/hse_work_request_repository.dart';
+import '../../../menu_portal/onlineapps/hse_work_request/presentation/screens/hse_work_request_list_screen.dart';
 import '../../../notifikasi/domain/app_notification.dart';
 import '../../../notifikasi/domain/notification_demo_data.dart';
 import '../../../notifikasi/presentation/notification_routes.dart';
@@ -401,6 +403,7 @@ class _BerandaScreenState extends State<BerandaScreen> {
       estRequestRepository: context.read<EstRequestRepository>(),
       indentVehicleRepository: context.read<IndentVehicleRepository>(),
       procurementRepository: context.read<ProcurementRepository>(),
+      hsePermitRepository: context.read<HseWorkRequestRepository>(),
     );
     final pending = await checker.stillPending(fetched);
     if (!mounted) return;
@@ -638,6 +641,7 @@ class _BerandaScreenState extends State<BerandaScreen> {
   int get _estApprovalCount => _approvalsWaiting.estWorkOrder;
   int get _indentVehicleApprovalCount => _approvalsWaiting.indentVehicle;
   int get _eprocurementApprovalCount => _approvalsWaiting.eprocurement;
+  int get _hseApprovalCount => _approvalsWaiting.hsePermit;
 
   /// Pindah ke tab Notifications dengan filter "Action" (yang menunggu
   /// keputusan — semua modul). Dipakai badan banner "Approvals waiting" di
@@ -690,6 +694,17 @@ class _BerandaScreenState extends State<BerandaScreen> {
         builder: (_) => ProcurementPage(
           initialStatusCode: PrStatusCode.pendingHod.code,
         ),
+      ),
+    );
+  }
+
+  /// HSE Work Permit: buka daftarnya langsung di tab Approval (antrean
+  /// HOD/HSE). Tab itu sendiri hanya muncul bila server mengakui akun ini
+  /// sebagai approver.
+  void _openHseApproval() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => const HseWorkRequestListScreen(initialTabIndex: 1),
       ),
     );
   }
@@ -857,9 +872,12 @@ class _BerandaScreenState extends State<BerandaScreen> {
                   onActionTap: _openAttendance,
                   onRetry: _loadTodayAttendance,
                 ),
-                // Shortcut approval hanya untuk HOD (role `hod`). Selama belum
-                // ada sesi (mis. saat pratinjau), jatuh ke role demo.
-                if (widget.user?.isHod ?? (_role == Role.hod))
+                // Shortcut approval untuk HOD (role `hod`). Selama belum ada
+                // sesi (mis. saat pratinjau), jatuh ke role demo. Approver
+                // HSE belum tentu HOD, jadi banner juga tampil begitu server
+                // melaporkan antrean HSE Work Permit untuk akun ini.
+                if ((widget.user?.isHod ?? (_role == Role.hod)) ||
+                    _hseApprovalCount > 0)
                   ApprovalSummaryBanner(
                     isLoading: _loadingApprovalsWaiting,
                     leaveCount: _leaveApprovalCount,
@@ -867,12 +885,14 @@ class _BerandaScreenState extends State<BerandaScreen> {
                     estCount: _estApprovalCount,
                     indentVehicleCount: _indentVehicleApprovalCount,
                     eprocurementCount: _eprocurementApprovalCount,
+                    hseCount: _hseApprovalCount,
                     onTapAll: _openApprovalNotifications,
                     onTapLeave: _openLeaveApproval,
                     onTapIt: _openItApproval,
                     onTapEst: _openEstApproval,
                     onTapIndentVehicle: _openIndentVehicleApproval,
                     onTapEprocurement: _openEprocurementApproval,
+                    onTapHse: _openHseApproval,
                   ),
                 //PendingRequestCard(
                 //  count: 2,
