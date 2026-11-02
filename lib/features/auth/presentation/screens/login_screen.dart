@@ -108,39 +108,49 @@ class _LoginViewState extends State<_LoginView> {
                 ),
                 SingleChildScrollView(
                   child: ConstrainedBox(
-                    // Kolom minimal setinggi layar supaya Spacer di bawah punya
-                    // ruang untuk mendorong footer ke dasar halaman.
+                    // Kolom minimal setinggi layar: kalau kontennya pendek,
+                    // footer terdorong ke dasar halaman oleh spaceBetween;
+                    // kalau panjang (layar pendek / keyboard terbuka), halaman
+                    // bisa di-scroll. Sengaja TIDAK memakai IntrinsicHeight +
+                    // Spacer: IntrinsicHeight mengukur anak-anaknya dua kali
+                    // dan gampang meleset (teks yang membungkus, TextField,
+                    // font besar) sehingga Column meluap ("RenderFlex
+                    // overflowed by ... pixels").
                     constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                    child: IntrinsicHeight(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          const LoginHeader(),
-                          Padding(
-                            // 24 = sama dengan padding kiri-kanan teks di LoginHeader, jadi
-                            // tepi kotak form sejajar dengan logo dan kalimat pengantar.
-                            padding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
-                            child: AnimatedBuilder(
-                              animation: _form,
-                              builder: (context, _) =>
-                                  BlocBuilder<LoginBloc, LoginState>(
-                                builder: (context, state) => _LoginForm(
-                                  form: _form,
-                                  state: state,
-                                  onSignIn: _handleSignIn,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            const LoginHeader(),
+                            Padding(
+                              // 24 = sama dengan padding kiri-kanan teks di
+                              // LoginHeader, jadi tepi kotak form sejajar
+                              // dengan logo dan kalimat pengantar.
+                              padding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
+                              child: AnimatedBuilder(
+                                animation: _form,
+                                builder: (context, _) =>
+                                    BlocBuilder<LoginBloc, LoginState>(
+                                  builder: (context, state) => _LoginForm(
+                                    form: _form,
+                                    state: state,
+                                    onSignIn: _handleSignIn,
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
-                          const Spacer(),
-                          // Tanpa padding samping/bawah: ilustrasinya menempel
-                          // ke tepi layar.
-                          const Padding(
-                            padding: EdgeInsets.only(top: 16),
-                            child: LoginFooter(),
-                          ),
-                        ],
-                      ),
+                          ],
+                        ),
+                        // Tanpa padding samping/bawah: ilustrasinya menempel
+                        // ke tepi layar.
+                        const Padding(
+                          padding: EdgeInsets.only(top: 16),
+                          child: LoginFooter(),
+                        ),
+                      ],
                     ),
                   ),
                 ),
