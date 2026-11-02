@@ -5,19 +5,20 @@ import '../../domain/project_worker.dart';
 import 'est_detail_format.dart';
 
 /// Kartu worker di "Tim Proyek". Geser ke kiri = [onTransfer]; null berarti
-/// geser dimatikan. [onSubstitute]/[onEndSubstitute] null = tombol tanpa efek.
+/// geser dimatikan. [onRemove]/[onEndSubstitute] null = tombol tanpa efek.
+/// Tombol hapus tampil redup saat worker sedang bekerja (tidak bisa dihapus).
 class EstWorkerCard extends StatelessWidget {
   const EstWorkerCard({
     super.key,
     required this.worker,
     this.onTransfer,
-    this.onSubstitute,
+    this.onRemove,
     this.onEndSubstitute,
   });
 
   final ProjectWorkerModel worker;
   final Future<void> Function()? onTransfer;
-  final VoidCallback? onSubstitute;
+  final VoidCallback? onRemove;
   final VoidCallback? onEndSubstitute;
 
   @override
@@ -158,24 +159,52 @@ class EstWorkerCard extends StatelessWidget {
                 ),
               )
             else
-              GestureDetector(
-                onTap: onSubstitute,
-                child: Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: AppColors.presentBg,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(
-                    Icons.person_add_alt_1_outlined,
-                    size: 16,
-                    color: AppColors.primaryText,
-                  ),
-                ),
+              _RemoveButton(
+                isWorking: worker.isWorking,
+                onTap: onRemove,
               ),
             const SizedBox(width: 4),
             Icon(Icons.chevron_left, size: 16, color: AppColors.textMuted),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Tombol hapus worker. Saat [isWorking] tampil redup; ketukan tetap
+/// diteruskan agar pemanggil bisa menjelaskan kenapa tidak bisa dihapus.
+class _RemoveButton extends StatelessWidget {
+  const _RemoveButton({required this.isWorking, this.onTap});
+
+  final bool isWorking;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: 'Hapus worker dari proyek',
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(10),
+        child: SizedBox(
+          width: 40,
+          height: 40,
+          child: Center(
+            child: Container(
+              padding: const EdgeInsets.all(7),
+              decoration: BoxDecoration(
+                color: isWorking ? AppColors.bg : AppColors.rejectedBg,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                Icons.person_remove_outlined,
+                size: 16,
+                color: isWorking ? AppColors.textMuted : AppColors.rejected,
+              ),
+            ),
+          ),
         ),
       ),
     );

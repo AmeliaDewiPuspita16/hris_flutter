@@ -15,6 +15,8 @@ import '../bloc/detail/project_workers_bloc.dart';
 import '../bloc/detail/project_workers_event.dart';
 import '../bloc/substitute/substitute_bloc.dart';
 import '../bloc/substitute/substitute_state.dart';
+import '../bloc/unassign_worker/unassign_worker_bloc.dart';
+import '../bloc/unassign_worker/unassign_worker_state.dart';
 import '../bloc/worker_transfer/worker_transfer_bloc.dart';
 import '../bloc/worker_transfer/worker_transfer_state.dart';
 import '../widgets/est_close_project_button.dart';
@@ -55,6 +57,9 @@ class ExecProjectDetailScreen extends StatelessWidget {
         ),
         BlocProvider(create: (_) => AddWorkersBloc(repository: repository)),
         BlocProvider(create: (_) => SubstituteBloc(repository: repository)),
+        BlocProvider(
+          create: (_) => UnassignWorkerBloc(repository: repository),
+        ),
       ],
       child: _ExecProjectDetailView(project: project),
     );
@@ -148,6 +153,17 @@ class _ExecProjectDetailView extends StatelessWidget {
             }
           },
         ),
+        BlocListener<UnassignWorkerBloc, UnassignWorkerState>(
+          listener: (context, state) {
+            if (state is UnassignWorkerSuccess) {
+              _showSnack(context, state.message, AppColors.primary);
+              _refreshDetail(context);
+            } else if (state is UnassignWorkerFailure) {
+              _showSnack(
+                  context, state.message, AppColors.solid(AppColors.rejected));
+            }
+          },
+        ),
         BlocListener<CloseProjectBloc, CloseProjectState>(
           listener: (context, state) {
             if (state is CloseProjectSuccess) {
@@ -209,13 +225,8 @@ class _ExecProjectDetailView extends StatelessWidget {
                     EstDetailActions.showAddWorker(context, project),
                 onTransfer: (w) =>
                     EstDetailActions.showTransfer(context, project, w),
-                onSubstitute: (w) => EstDetailActions.showSubstitute(
-                  context,
-                  project: project,
-                  role: 'worker',
-                  substituteForId: w.workerId,
-                  substituteForName: w.name,
-                ),
+                onRemove: (w) =>
+                    EstDetailActions.removeWorker(context, project, w),
                 onEndSubstitute: (w) => EstDetailActions.endWorkerSubstitute(
                   context,
                   project,

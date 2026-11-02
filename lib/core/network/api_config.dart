@@ -198,6 +198,8 @@ class ApiConfig {
   static String estAssignTeam(int id) => '$estProjects/$id/assign';
   static String estTransferWorkers(int id) =>
       '$estProjects/$id/workers/transfer';
+  static String estUnassignWorkers(int id) =>
+      '$estProjects/$id/workers/unassign';
   static String estCloseProject(int id) => '$estProjects/$id/close';
   static String estSubstitute(int projectId) =>
       '$estProjects/$projectId/substitute';

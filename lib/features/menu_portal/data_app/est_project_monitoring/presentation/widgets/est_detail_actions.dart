@@ -9,12 +9,14 @@ import '../../domain/project_worker.dart';
 import '../bloc/add_workers/add_workers_bloc.dart';
 import '../bloc/substitute/substitute_bloc.dart';
 import '../bloc/substitute/substitute_event.dart';
+import '../bloc/unassign_worker/unassign_worker_bloc.dart';
+import '../bloc/unassign_worker/unassign_worker_event.dart';
 import '../bloc/worker_transfer/worker_transfer_bloc.dart';
 import 'est_add_worker_sheet.dart';
 import 'est_substitute_sheet.dart';
 import 'est_transfer_sheet.dart';
 
-/// Aksi tim di detail proyek: tambah worker, pindah, dan substitusi. [context]
+/// Aksi tim di detail proyek: tambah, pindah, hapus worker, dan substitusi. [context]
 /// harus berada di bawah provider bloc detail (lihat ExecProjectDetailScreen).
 class EstDetailActions {
   const EstDetailActions._();
@@ -91,6 +93,76 @@ class EstDetailActions {
         ),
       ),
     );
+  }
+
+  /// Hapus worker dari proyek. Worker yang sedang bekerja tidak bisa
+  /// dihapus — cukup beri tahu lewat snackbar.
+  static Future<void> removeWorker(
+    BuildContext context,
+    ExecutiveProjectModel project,
+    ProjectWorkerModel worker,
+  ) async {
+    if (worker.isWorking) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '${worker.name} sedang bekerja. Worker hanya bisa dihapus '
+            'setelah clock out.',
+          ),
+          backgroundColor: AppColors.solid(AppColors.orange),
+          behavior: SnackBarBehavior.floating,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      );
+      return;
+    }
+    final bloc = context.read<UnassignWorkerBloc>();
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.card,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(
+          'Hapus Worker?',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            color: AppColors.text,
+          ),
+        ),
+        content: Text(
+          '${worker.name} akan dihapus dari tim proyek ${project.name}.',
+          style: TextStyle(fontSize: 14, color: AppColors.textSub, height: 1.5),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text('Batal', style: TextStyle(color: AppColors.textSub)),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.solid(AppColors.rejected),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              elevation: 0,
+            ),
+            child: const Text(
+              'Ya, Hapus',
+              style: TextStyle(color: Colors.white),
+            ),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true && context.mounted) {
+      bloc.add(SubmitUnassignWorker(
+        projectId: project.id,
+        workerId: worker.workerId,
+      ));
+    }
   }
 
   static Future<void> endWorkerSubstitute(

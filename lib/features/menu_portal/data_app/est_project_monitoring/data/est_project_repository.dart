@@ -96,6 +96,15 @@ class EstProjectRepository {
     );
   }
 
+  /// Lepas worker dari proyek. Mengembalikan seluruh balasan; pemanggil
+  /// membaca `message`.
+  Future<Map<String, dynamic>> unassignWorker(int projectId, int workerId) {
+    return _apiClient.deleteJson(
+      ApiConfig.estUnassignWorkers(projectId),
+      body: {'worker_id': workerId},
+    );
+  }
+
   Future<void> requestCloseProject(int projectId) async {
     await _apiClient.postJson(
       ApiConfig.estCloseProject(projectId),

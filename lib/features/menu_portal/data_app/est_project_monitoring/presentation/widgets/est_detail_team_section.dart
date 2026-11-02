@@ -18,7 +18,7 @@ class EstDetailTeamSection extends StatelessWidget {
     required this.isCompleted,
     this.onAddWorker,
     this.onTransfer,
-    this.onSubstitute,
+    this.onRemove,
     this.onEndSubstitute,
   });
 
@@ -26,7 +26,7 @@ class EstDetailTeamSection extends StatelessWidget {
   final bool isCompleted;
   final VoidCallback? onAddWorker;
   final Future<void> Function(ProjectWorkerModel worker)? onTransfer;
-  final void Function(ProjectWorkerModel worker)? onSubstitute;
+  final void Function(ProjectWorkerModel worker)? onRemove;
   final void Function(ProjectWorkerModel worker)? onEndSubstitute;
 
   @override
@@ -126,9 +126,8 @@ class EstDetailTeamSection extends StatelessWidget {
                           worker: w,
                           onTransfer:
                               onTransfer == null ? null : () => onTransfer!(w),
-                          onSubstitute: onSubstitute == null
-                              ? null
-                              : () => onSubstitute!(w),
+                          onRemove:
+                              onRemove == null ? null : () => onRemove!(w),
                           onEndSubstitute: onEndSubstitute == null
                               ? null
                               : () => onEndSubstitute!(w),

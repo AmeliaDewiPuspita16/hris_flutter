@@ -213,7 +213,7 @@ class ApiClient {
     throw const ApiException.server();
   }
 
-    /// POST untuk endpoint yang TIDAK memakai amplop respons — badannya
+  /// POST untuk endpoint yang TIDAK memakai amplop respons — badannya
   /// langsung baris model, mis. `approve_hod` dan `reject_hod`. Respons
   /// itu memuat `"status": 0` (status indent), yang bila dibuka seperti
   /// amplop dianggap gagal. Di sini hanya status HTTP yang diperiksa;
@@ -245,7 +245,7 @@ class ApiClient {
     }
   }
 
-    /// POST untuk aksi yang isi responsnya tidak dipakai, mis. approve /
+  /// POST untuk aksi yang isi responsnya tidak dipakai, mis. approve /
   /// revision / reject PR. Yang dicek hanya keberhasilannya; `data` boleh
   /// apa saja atau tidak ada. Badan respons dicatat utuh karena bentuknya
   /// belum pernah teramati.
@@ -281,7 +281,8 @@ class ApiClient {
     final envelope = _decode(response.body);
     final s = envelope?['status'];
     final explicitFailure = (s is num && s >= 400) ||
-        (s is String && const {'error', 'fail', 'failed'}.contains(s.toLowerCase()));
+        (s is String &&
+            const {'error', 'fail', 'failed'}.contains(s.toLowerCase()));
     if (explicitFailure) {
       throw ApiException(
         ApiErrorKind.server,
@@ -397,14 +398,24 @@ class ApiClient {
   }
 
   /// DELETE, balasan dikembalikan utuh; badan kosong (mis. 204) menjadi `{}`.
-  Future<Map<String, dynamic>> deleteJson(String path) async {
+  /// [body] opsional, dikirim sebagai JSON (mis. unassign worker).
+  Future<Map<String, dynamic>> deleteJson(
+    String path, {
+    Map<String, dynamic>? body,
+  }) async {
     final uri = _uriFor(path);
-    AppLogger.info('DELETE $uri');
+    AppLogger.info(
+      body == null ? 'DELETE $uri' : 'DELETE $uri ${_redactedBody(body)}',
+    );
 
     final response = await _sendRaw(
       'DELETE',
       uri,
-      () => _httpClient.delete(uri, headers: _headers(authenticated: true)),
+      () => _httpClient.delete(
+        uri,
+        headers: _headers(authenticated: true),
+        body: body == null ? null : jsonEncode(body),
+      ),
     );
     return _rawJson(response);
   }

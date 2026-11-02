@@ -45,6 +45,10 @@ class ProjectWorkerModel {
     );
   }
 
+  /// Sedang bekerja (sudah clock in, belum clock out) — tidak boleh dihapus
+  /// dari proyek.
+  bool get isWorking => attendanceCondition == 2 || isClockedIn;
+
   String get initials {
     final parts =
         name.trim().split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
