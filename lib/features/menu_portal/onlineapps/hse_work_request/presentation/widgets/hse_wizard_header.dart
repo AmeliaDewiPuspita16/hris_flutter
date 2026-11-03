@@ -25,7 +25,7 @@ class HseWizardHeader extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Langkah ${stepIndex + 1} dari $stepCount',
+          'Step ${stepIndex + 1} of $stepCount',
           style: AppTextStyles.caption.copyWith(fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 4),

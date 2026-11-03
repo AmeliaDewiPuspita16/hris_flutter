@@ -108,7 +108,7 @@ class _HseWorkRequestListScreenState extends State<HseWorkRequestListScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: Text('Batal', style: TextStyle(color: AppColors.textSub)),
+            child: Text('Cancel', style: TextStyle(color: AppColors.textSub)),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
@@ -241,7 +241,7 @@ class _HseWorkRequestListScreenState extends State<HseWorkRequestListScreen> {
                     Padding(
                       padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
                       child: EstRequestTabBar(
-                        labels: const ['Semua Permit', 'Approval'],
+                        labels: const ['All Permits', 'Approval'],
                         icons: const [
                           Icons.format_list_bulleted_rounded,
                           Icons.check_circle_outline_rounded,
@@ -301,7 +301,7 @@ class _HseWorkRequestListScreenState extends State<HseWorkRequestListScreen> {
         if (state.isFirstLoad) return const _HseListSkeleton();
         if (state.status == HseListStatus.failure) {
           return AppErrorView(
-            message: state.errorMessage ?? 'Gagal memuat daftar permit HSE.',
+            message: state.errorMessage ?? 'Failed to load HSE permits.',
             onRetry: _listCubit.refresh,
           );
         }
@@ -313,7 +313,7 @@ class _HseWorkRequestListScreenState extends State<HseWorkRequestListScreen> {
             onNotification: _onScroll,
             child: items.isEmpty
                 ? const _EmptyView(
-                    message: 'Belum ada permit HSE untuk filter ini.')
+                    message: 'No HSE permits match this filter.')
                 : ListView.separated(
                     physics: const AlwaysScrollableScrollPhysics(),
                     // Padding bawah ekstra supaya kartu terakhir tidak
@@ -349,7 +349,7 @@ class _HseWorkRequestListScreenState extends State<HseWorkRequestListScreen> {
         if (state.isFirstLoad) return const _HseListSkeleton();
         if (state.status == HseApprovalStatus.failure) {
           return AppErrorView(
-            message: state.errorMessage ?? 'Gagal memuat antrean approval.',
+            message: state.errorMessage ?? 'Failed to load the approval queue.',
             onRetry: _approvalCubit.refresh,
           );
         }
@@ -359,7 +359,7 @@ class _HseWorkRequestListScreenState extends State<HseWorkRequestListScreen> {
           onRefresh: _approvalCubit.refresh,
           child: items.isEmpty
               ? const _EmptyView(
-                  message: 'Tidak ada permit yang menunggu approval.')
+                  message: 'No permits are waiting for approval.')
               : ListView.separated(
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
@@ -414,7 +414,7 @@ class _SearchField extends StatelessWidget {
       child: TextField(
         onChanged: onChanged,
         decoration: InputDecoration(
-          hintText: 'Cari ID register, nama, atau lokasi...',
+          hintText: 'Search register ID, name, or location...',
           hintStyle: AppTextStyles.body.copyWith(color: AppColors.textMuted),
           prefixIcon: Padding(
             padding: const EdgeInsets.only(left: 6),
@@ -456,7 +456,7 @@ class _TopBar extends StatelessWidget {
         children: [
           HseCircleButton(
             icon: Icons.arrow_back_rounded,
-            tooltip: 'Kembali',
+            tooltip: 'Back',
             onTap: onBack,
           ),
           Expanded(
@@ -536,18 +536,18 @@ class _FilterSheetState extends State<_FilterSheet> {
                 activeTrackColor: AppColors.primary,
                 onChanged: (v) => setState(() => _mine = v),
                 title: Text(
-                  'Hanya permit saya',
+                  'My permits only',
                   style:
                       AppTextStyles.body.copyWith(fontWeight: FontWeight.w600),
                 ),
                 subtitle: Text(
-                  'Tampilkan permit yang saya ajukan saja.',
+                  'Show only permits I submitted.',
                   style: AppTextStyles.caption,
                 ),
               ),
               const SizedBox(height: 12),
               AppButton(
-                label: 'Terapkan',
+                label: 'Apply',
                 onPressed: () => Navigator.of(context).pop(_mine),
               ),
             ],
@@ -585,7 +585,7 @@ class _StageChips extends StatelessWidget {
               final stage = stages[i];
               final selected = stage == state.stage;
               final label = stage == null
-                  ? 'Semua (${state.pending})'
+                  ? 'All (${state.pending})'
                   : '${stage.toUpperCase()} (${state.summary[stage]})';
               return ChoiceChip(
                 label: Text(label),

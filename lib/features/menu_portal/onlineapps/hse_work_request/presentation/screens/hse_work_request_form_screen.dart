@@ -38,9 +38,9 @@ class HseWorkRequestFormScreen extends StatefulWidget {
 
 class _HseWorkRequestFormScreenState extends State<HseWorkRequestFormScreen> {
   static const _stepTitles = [
-    'Detail Pekerjaan',
+    'Job Details',
     'General Checklist',
-    'Jenis Pekerjaan & APD',
+    'Work Type & PPE',
     'Review & Submit',
   ];
 
@@ -114,7 +114,7 @@ class _HseWorkRequestFormScreenState extends State<HseWorkRequestFormScreen> {
     } on ApiException catch (e) {
       if (mounted) setState(() => _optionsError = e.message);
     } catch (_) {
-      if (mounted) setState(() => _optionsError = 'Gagal memuat isian form.');
+      if (mounted) setState(() => _optionsError = 'Failed to load form options.');
     }
   }
 
@@ -164,20 +164,20 @@ class _HseWorkRequestFormScreenState extends State<HseWorkRequestFormScreen> {
 
   void _next() {
     if (_step == 0 && !_step1Valid) {
-      _snack('Lengkapi dulu detail pekerjaan yang wajib diisi.');
+      _snack('Please complete the required job details.');
       return;
     }
     if (_step == 0 && !_documentsValid) {
-      _snack('Permit non-rutin wajib melampirkan semua dokumen PDF.');
+      _snack('Non-routine permits require all PDF documents.');
       return;
     }
     if (_step == 1 && !_step2Valid) {
-      _snack('Pilih minimal satu general checklist, atau isi Lainnya.');
+      _snack('Select at least one general checklist item, or fill in Other.');
       return;
     }
     if (_step == 2 && !_step3Valid) {
       _snack(
-          'Pilih minimal satu Type of Works dan satu PPE, atau isi Lainnya.');
+          'Select at least one Type of Work and one PPE, or fill in Other.');
       return;
     }
     if (_step < _stepTitles.length - 1) _goTo(_step + 1);
@@ -212,7 +212,7 @@ class _HseWorkRequestFormScreenState extends State<HseWorkRequestFormScreen> {
       }
       setState(() => _documents[field] = picked);
     } catch (_) {
-      if (mounted) _snack('Tidak bisa membuka pemilih berkas.', error: true);
+      if (mounted) _snack('Unable to open the file picker.', error: true);
     }
   }
 
@@ -226,7 +226,7 @@ class _HseWorkRequestFormScreenState extends State<HseWorkRequestFormScreen> {
 
   Future<void> _submit() async {
     if (!_step1Valid || !_documentsValid || !_step2Valid || !_step3Valid) {
-      _snack('Masih ada isian wajib yang kosong.');
+      _snack('Some required fields are still empty.');
       return;
     }
 
@@ -264,7 +264,7 @@ class _HseWorkRequestFormScreenState extends State<HseWorkRequestFormScreen> {
     } on ApiException catch (e) {
       if (mounted) _snack(e.message, error: true);
     } catch (_) {
-      if (mounted) _snack('Gagal mengirim permit. Coba lagi.', error: true);
+      if (mounted) _snack('Failed to submit the permit. Please try again.', error: true);
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
@@ -389,7 +389,7 @@ class _HseWorkRequestFormScreenState extends State<HseWorkRequestFormScreen> {
             children: [
               Expanded(
                 child: AppButton(
-                  label: _step == 0 ? 'Batal' : 'Kembali',
+                  label: _step == 0 ? 'Cancel' : 'Back',
                   variant: AppButtonVariant.ghost,
                   onPressed: _isSubmitting ? null : _back,
                 ),
@@ -398,7 +398,7 @@ class _HseWorkRequestFormScreenState extends State<HseWorkRequestFormScreen> {
               Expanded(
                 flex: 2,
                 child: AppButton(
-                  label: _step == _stepTitles.length - 1 ? 'Submit' : 'Lanjut',
+                  label: _step == _stepTitles.length - 1 ? 'Submit' : 'Next',
                   isLoading: _isSubmitting,
                   onPressed: _step == _stepTitles.length - 1 ? _submit : _next,
                 ),
@@ -463,19 +463,19 @@ class _StepDetailPekerjaan extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
       children: [
         Text(
-          'Isi detail pekerjaan yang akan dilakukan sebelum melanjutkan ke checklist keselamatan.',
+          'Fill in the job details before continuing to the safety checklist.',
           style: AppTextStyles.bodyMuted,
         ),
         const SizedBox(height: 14),
         _SectionCard(
           icon: Icons.badge_outlined,
-          title: 'Informasi PIC',
+          title: 'PIC Information',
           children: [
             AppTextField(
               label: 'PIC',
               controller: picController,
               required: true,
-              hint: 'Nama PIC',
+              hint: 'PIC name',
             ),
             const SizedBox(height: 14),
             AppDropdown<int>(
@@ -484,7 +484,7 @@ class _StepDetailPekerjaan extends StatelessWidget {
               value: departmentId ?? 0,
               required: true,
               items: [
-                const (value: 0, label: 'Pilih'),
+                const (value: 0, label: 'Select'),
                 for (final d in options.departments)
                   (value: d.id, label: d.name),
               ],
@@ -498,7 +498,7 @@ class _StepDetailPekerjaan extends StatelessWidget {
                 label: 'Section',
                 value: section ?? '',
                 items: [
-                  const (value: '', label: 'Pilih (opsional)'),
+                  const (value: '', label: 'Select (optional)'),
                   for (final s in options.sections) (value: s, label: s),
                 ],
                 onChanged: (value) =>
@@ -507,11 +507,11 @@ class _StepDetailPekerjaan extends StatelessWidget {
             ],
             const SizedBox(height: 14),
             AppDropdown<String>(
-              label: 'Kategori',
+              label: 'Category',
               value: categoryCode ?? '',
               required: true,
               items: [
-                if (categoryCode == null) const (value: '', label: 'Pilih'),
+                if (categoryCode == null) const (value: '', label: 'Select'),
                 for (final c in options.categories)
                   (value: c.code, label: c.label),
               ],
@@ -524,20 +524,20 @@ class _StepDetailPekerjaan extends StatelessWidget {
         const SizedBox(height: 16),
         _SectionCard(
           icon: Icons.location_on_outlined,
-          title: 'Lokasi & Ruang Lingkup Kerja',
+          title: 'Location & Scope of Work',
           children: [
             AppTextField(
               label: 'Location',
               controller: locationController,
               required: true,
-              hint: 'Lokasi pekerjaan',
+              hint: 'Work location',
             ),
             const SizedBox(height: 14),
             AppTextField(
               label: 'Materials',
               controller: materialsController,
               required: true,
-              hint: 'Material / alat kerja yang dipakai',
+              hint: 'Materials / tools used',
               maxLines: 3,
               minLines: 2,
             ),
@@ -545,20 +545,20 @@ class _StepDetailPekerjaan extends StatelessWidget {
             AppTextField(
               label: 'Vendor',
               controller: vendorController,
-              hint: 'Nama vendor (opsional)',
+              hint: 'Vendor name (optional)',
             ),
           ],
         ),
         const SizedBox(height: 16),
         _SectionCard(
           icon: Icons.event_outlined,
-          title: 'Jadwal & Jumlah Pekerja',
+          title: 'Schedule & Workforce',
           children: [
             AppTextField(
               label: 'Total Workers',
               controller: totalWorkersController,
               required: true,
-              hint: 'Jumlah pekerja',
+              hint: 'Number of workers',
               keyboardType: TextInputType.number,
             ),
             const SizedBox(height: 14),
@@ -575,10 +575,10 @@ class _StepDetailPekerjaan extends StatelessWidget {
           const SizedBox(height: 16),
           _SectionCard(
             icon: Icons.picture_as_pdf_outlined,
-            title: 'Dokumen Pendukung',
+            title: 'Supporting Documents',
             children: [
               Text(
-                'Wajib untuk permit non-rutin.',
+                'Required for non-routine permits.',
                 style: AppTextStyles.caption,
               ),
               for (final field in options.documentFields) ...[
@@ -588,7 +588,7 @@ class _StepDetailPekerjaan extends StatelessWidget {
                   required: true,
                   fileName: documents[field]?.name,
                   onTap: () => onToggleDocument(field),
-                  hint: '$extensions — maks $maxMb MB',
+                  hint: '$extensions — max $maxMb MB',
                 ),
               ],
             ],
@@ -659,7 +659,7 @@ class _StepGeneralChecklist extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
       children: [
         Text(
-          'Pastikan kondisi lapangan sudah memenuhi checklist berikut sebelum pekerjaan dimulai.',
+          'Make sure site conditions meet the following checklist before work begins.',
           style: AppTextStyles.bodyMuted,
         ),
         const SizedBox(height: 12),
@@ -770,7 +770,7 @@ class _StepReview extends StatelessWidget {
       ('PIC', pic),
       ('Department', department),
       if (section != null) ('Section', section!),
-      ('Kategori', category),
+      ('Category', category),
       ('Location', location),
       ('Materials', materials),
       ('Vendor', vendor.isEmpty ? '-' : vendor),
@@ -789,7 +789,7 @@ class _StepReview extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
       children: [
         Text(
-          'Periksa lagi sebelum dikirim — permit yang sudah masuk menunggu approval HOD dan tidak bisa diubah.',
+          'Double-check before submitting — submitted permits wait for HOD approval and cannot be edited.',
           style: AppTextStyles.bodyMuted,
         ),
         const SizedBox(height: 12),

@@ -52,7 +52,7 @@ class HseStatusTabs extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 18),
                 child: Center(
                   child: Text(
-                    status?.label ?? 'Semua',
+                    status?.label ?? 'All',
                     style: AppTextStyles.caption.copyWith(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,

@@ -5,14 +5,14 @@ enum HseRequestCategory { rutin, nonRutin }
 
 extension HseRequestCategoryX on HseRequestCategory {
   String get label => switch (this) {
-        HseRequestCategory.rutin => 'Rutin (Pemeliharaan, Maintenance, Repair)',
-        HseRequestCategory.nonRutin => 'Non-Rutin (Project & Pekerjaan Baru)',
+        HseRequestCategory.rutin => 'Routine (Maintenance, Repair)',
+        HseRequestCategory.nonRutin => 'Non-Routine (Project & New Work)',
       };
 
   /// Label pendek untuk tempat yang sempit, mis. kartu daftar.
   String get shortLabel => switch (this) {
-        HseRequestCategory.rutin => 'Rutin',
-        HseRequestCategory.nonRutin => 'Non-Rutin',
+        HseRequestCategory.rutin => 'Routine',
+        HseRequestCategory.nonRutin => 'Non-Routine',
       };
 
   static HseRequestCategory fromApi(String? value) => switch (value) {

@@ -57,7 +57,7 @@ class _HseClosePermitSheetState extends State<HseClosePermitSheet> {
       });
     } catch (_) {
       if (mounted) {
-        setState(() => _error = 'Tidak bisa membuka pemilih berkas.');
+        setState(() => _error = 'Unable to open the file picker.');
       }
     }
   }
@@ -65,7 +65,7 @@ class _HseClosePermitSheetState extends State<HseClosePermitSheet> {
   Future<void> _submit() async {
     final description = _descriptionController.text.trim();
     if (description.isEmpty || _evidence == null) {
-      setState(() => _error = 'Isi deskripsi dan lampirkan evidence.');
+      setState(() => _error = 'Enter a description and attach evidence.');
       return;
     }
 
@@ -83,7 +83,7 @@ class _HseClosePermitSheetState extends State<HseClosePermitSheet> {
     } on ApiException catch (e) {
       if (mounted) setState(() => _error = e.message);
     } catch (_) {
-      if (mounted) setState(() => _error = 'Gagal menutup permit. Coba lagi.');
+      if (mounted) setState(() => _error = 'Failed to close the permit. Please try again.');
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -118,19 +118,19 @@ class _HseClosePermitSheetState extends State<HseClosePermitSheet> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                Text('Tutup Permit',
+                Text('Close Permit',
                     style: AppTextStyles.h2.copyWith(fontSize: 17)),
                 const SizedBox(height: 4),
                 Text(
-                  'Lampirkan bukti pekerjaan selesai. Status permit akan menjadi Done.',
+                  'Attach proof that the work is finished. The permit status will change to Done.',
                   style: AppTextStyles.bodyMuted,
                 ),
                 const SizedBox(height: 16),
                 AppTextField(
-                  label: 'Deskripsi',
+                  label: 'Description',
                   controller: _descriptionController,
                   required: true,
-                  hint: 'mis. Pekerjaan selesai, area sudah dibersihkan',
+                  hint: 'e.g. Work completed, area cleaned up',
                   maxLines: 4,
                   minLines: 3,
                 ),
@@ -140,7 +140,7 @@ class _HseClosePermitSheetState extends State<HseClosePermitSheet> {
                   required: true,
                   fileName: _evidence?.name,
                   onTap: _toggleEvidence,
-                  hint: 'JPG, PNG, GIF, atau PDF — maks 10 MB',
+                  hint: 'JPG, PNG, GIF, or PDF — max 10 MB',
                 ),
                 if (_error != null) ...[
                   const SizedBox(height: 12),
@@ -152,7 +152,7 @@ class _HseClosePermitSheetState extends State<HseClosePermitSheet> {
                 ],
                 const SizedBox(height: 20),
                 AppButton(
-                  label: 'Tutup Permit',
+                  label: 'Close Permit',
                   isLoading: _submitting,
                   onPressed: _submit,
                 ),

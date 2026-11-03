@@ -92,9 +92,9 @@ class HseChoiceChipGroup extends StatelessWidget {
           if (otherController != null) ...[
             const SizedBox(height: 10),
             AppTextField(
-              label: 'Lainnya (opsional)',
+              label: 'Other (optional)',
               controller: otherController!,
-              hint: 'Isi manual bila tidak ada di daftar di atas',
+              hint: 'Fill in manually if not listed above',
             ),
           ],
         ],

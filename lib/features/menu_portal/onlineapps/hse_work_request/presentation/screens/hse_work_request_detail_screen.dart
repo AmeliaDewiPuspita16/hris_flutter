@@ -74,7 +74,7 @@ class _HseWorkRequestDetailScreenState
     } on ApiException catch (e) {
       if (mounted) setState(() => _error = e.message);
     } catch (_) {
-      if (mounted) setState(() => _error = 'Gagal memuat detail permit.');
+      if (mounted) setState(() => _error = 'Failed to load permit details.');
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -101,21 +101,21 @@ class _HseWorkRequestDetailScreenState
           (
             id: 'refresh',
             icon: Icons.refresh_rounded,
-            label: 'Muat ulang',
+            label: 'Refresh',
             danger: false,
           ),
           if (_request.canClose)
             (
               id: 'close',
               icon: Icons.task_alt_rounded,
-              label: 'Tutup Permit',
+              label: 'Close Permit',
               danger: false,
             ),
           if (_request.canDelete)
             (
               id: 'delete',
               icon: Icons.delete_outline_rounded,
-              label: 'Hapus Permit',
+              label: 'Delete Permit',
               danger: true,
             ),
         ],
@@ -152,9 +152,9 @@ class _HseWorkRequestDetailScreenState
 
   Future<void> _deletePermit() async {
     final ok = await _confirm(
-      title: 'Hapus Permit?',
-      message: 'Permit ${_request.idRegister ?? ''} akan dihapus permanen.',
-      confirmLabel: 'Hapus',
+      title: 'Delete Permit?',
+      message: 'Permit ${_request.idRegister ?? ''} will be permanently deleted.',
+      confirmLabel: 'Delete',
       danger: true,
     );
     if (!ok || !mounted) return;
@@ -171,8 +171,8 @@ class _HseWorkRequestDetailScreenState
     final ok = await _confirm(
       title: approved ? 'Approve Permit?' : 'Reject Permit?',
       message: approved
-          ? 'Permit ${_request.idRegister ?? ''} akan disetujui.'
-          : 'Permit ${_request.idRegister ?? ''} akan ditolak.',
+          ? 'Permit ${_request.idRegister ?? ''} will be approved.'
+          : 'Permit ${_request.idRegister ?? ''} will be rejected.',
       confirmLabel: approved ? 'Approve' : 'Reject',
       danger: !approved,
     );
@@ -196,7 +196,7 @@ class _HseWorkRequestDetailScreenState
     } on ApiException catch (e) {
       if (mounted) _snack(e.message, error: true);
     } catch (_) {
-      if (mounted) _snack('Terjadi kesalahan. Coba lagi.', error: true);
+      if (mounted) _snack('Something went wrong. Please try again.', error: true);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -220,7 +220,7 @@ class _HseWorkRequestDetailScreenState
               TextButton(
                 onPressed: () => Navigator.pop(ctx, false),
                 child:
-                    Text('Batal', style: TextStyle(color: AppColors.textSub)),
+                    Text('Cancel', style: TextStyle(color: AppColors.textSub)),
               ),
               ElevatedButton(
                 onPressed: () => Navigator.pop(ctx, true),
@@ -302,7 +302,7 @@ class _HseWorkRequestDetailScreenState
                       if (request.documents.isNotEmpty) ...[
                         const SizedBox(height: 14),
                         HseSectionCard(
-                          title: 'Dokumen',
+                          title: 'Documents',
                           child: Column(
                             children: [
                               for (final entry in request.documents.entries)
@@ -394,7 +394,7 @@ class _HseWorkRequestDetailScreenState
       buttons = [
         Expanded(
           child: AppButton(
-            label: 'Tutup Permit',
+            label: 'Close Permit',
             onPressed: _busy ? null : _closePermit,
           ),
         ),
@@ -428,14 +428,14 @@ class _DetailTopBar extends StatelessWidget {
         children: [
           HseCircleButton(
             icon: Icons.arrow_back_rounded,
-            tooltip: 'Kembali',
+            tooltip: 'Back',
             onTap: onBack,
           ),
           const Spacer(),
           if (onMore != null)
             HseCircleButton(
               icon: Icons.more_horiz_rounded,
-              tooltip: 'Lainnya',
+              tooltip: 'More',
               onTap: onMore,
             ),
         ],
@@ -605,7 +605,7 @@ class _JobDetailCard extends StatelessWidget {
     final rows = <Widget>[
       _InfoRow(
         icon: Icons.sell_outlined,
-        label: 'Kategori',
+        label: 'Category',
         value: request.categoryLabel ?? request.category.label,
       ),
       _InfoRow(
@@ -636,7 +636,7 @@ class _JobDetailCard extends StatelessWidget {
     ];
 
     return HseSectionCard(
-      title: 'Detail Pekerjaan',
+      title: 'Job Details',
       child: Column(
         children: [
           for (var i = 0; i < rows.length; i++) ...[
@@ -780,7 +780,7 @@ class _ApprovalSection extends StatelessWidget {
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                name ?? (rejected ? '-' : 'Menunggu'),
+                name ?? (rejected ? '-' : 'Pending'),
                 style: AppTextStyles.body.copyWith(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
@@ -794,7 +794,7 @@ class _ApprovalSection extends StatelessWidget {
     }
 
     return HseSectionCard(
-      title: 'Persetujuan',
+      title: 'Approvals',
       child: Column(
         children: [
           row('Acknowledge', request.acknowledgeBy),
@@ -875,18 +875,18 @@ class _ClosingCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return HseSectionCard(
-      title: 'Penutupan',
+      title: 'Closing',
       child: Column(
         children: [
           _InfoRow(
             icon: Icons.notes_rounded,
-            label: 'Deskripsi',
+            label: 'Description',
             value: closing.description,
           ),
           Divider(height: 1, color: AppColors.border),
           _InfoRow(
             icon: Icons.event_available_outlined,
-            label: 'Ditutup',
+            label: 'Closed at',
             value: closing.closedAt == null
                 ? '-'
                 : DateFormatter.dateTimeID(closing.closedAt!),

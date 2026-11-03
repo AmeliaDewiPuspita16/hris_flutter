@@ -19,5 +19,5 @@ Future<HsePickedFile?> pickHseFile(List<String> extensions) async {
 String? hseFileSizeError(HsePickedFile file, int maxKb) {
   if (file.sizeBytes <= maxKb * 1024) return null;
   final maxMb = (maxKb / 1024).toStringAsFixed(maxKb % 1024 == 0 ? 0 : 1);
-  return '${file.name} melebihi batas $maxMb MB.';
+  return '${file.name} exceeds the $maxMb MB limit.';
 }
