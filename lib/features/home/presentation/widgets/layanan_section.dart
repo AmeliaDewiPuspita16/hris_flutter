@@ -80,13 +80,18 @@ class _ServiceCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final featured = service.featured;
+    // Dark mode: gradient featured sudah lebih terang (AppColors.featuredGreen);
+    // di sini hanya detail pendukung (border, lingkaran, tombol) yang disesuaikan.
+    final darkFeatured = featured && AppColors.isDark;
     final iconColor = featured
         ? AppColors.primaryMidText
         : (AppColors.isDark ? AppColors.onDark(service.color) : service.color);
     final titleColor = featured ? Colors.white : AppColors.text;
-    final subtitleColor = featured ? Colors.white.withValues(alpha: 0.75) : AppColors.textMuted;
+    final subtitleColor = featured
+        ? Colors.white.withValues(alpha: darkFeatured ? 0.82 : 0.75)
+        : AppColors.textMuted;
     final chevronColor = featured
-        ? AppColors.primary
+        ? (darkFeatured ? AppColors.primaryText : AppColors.primary)
         : (AppColors.isDark ? AppColors.onDark(service.color) : service.color);
 
     return TapFade(
@@ -96,8 +101,14 @@ class _ServiceCard extends StatelessWidget {
         clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(
           color: featured ? null : service.background,
-          gradient: featured ? AppColors.primaryGradient : null,
+          gradient: featured
+              ? AppColors.featuredGradient
+              : null,
           borderRadius: BorderRadius.circular(18),
+          // Border tipis supaya tepi kartu terlihat di background gelap.
+          border: darkFeatured
+              ? Border.all(color: Colors.white.withValues(alpha: 0.10))
+              : null,
         ),
         child: Stack(
           children: [
@@ -109,7 +120,8 @@ class _ServiceCard extends StatelessWidget {
                 height: 150,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: (featured ? Colors.white : service.color).withValues(alpha: 0.14),
+                  color: (featured ? Colors.white : service.color)
+                      .withValues(alpha: darkFeatured ? 0.07 : 0.14),
                 ),
               ),
             ),

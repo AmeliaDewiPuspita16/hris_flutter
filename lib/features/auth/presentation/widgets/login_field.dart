@@ -73,12 +73,18 @@ class _LoginFieldState extends State<LoginField> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+          padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
           decoration: BoxDecoration(
             color: AppColors.card,
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: accent ?? Colors.transparent,
+              // Mode gelap: kartu nyaris sewarna dengan latar, jadi border
+              // hijau tipis dipakai agar kotak field tetap terbaca. Lebarnya
+              // sama di semua kondisi supaya field tidak "melompat" saat fokus.
+              color: accent ??
+                  (AppColors.isDark
+                      ? AppColors.primaryText.withValues(alpha: 0.35)
+                      : Colors.transparent),
               width: 1.5,
             ),
           ),
@@ -95,6 +101,9 @@ class _LoginFieldState extends State<LoginField> {
                   color: accent ?? AppColors.textMuted,
                 ),
               ),
+              // Jarak label -> isian. Tanpa ini, teks yang diketik terlihat
+              // menempel di bawah label.
+              const SizedBox(height: 4),
               Row(
                 children: [
                   Expanded(
@@ -108,14 +117,14 @@ class _LoginFieldState extends State<LoginField> {
                       cursorColor: AppColors.primaryText,
                       style: TextStyle(
                         fontFamily: AppTextStyles.fontFamily,
-                        fontSize: 17,
-                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
                         color: AppColors.text,
                       ),
                       decoration: const InputDecoration(
                         isDense: true,
                         border: InputBorder.none,
-                        contentPadding: EdgeInsets.symmetric(vertical: 6),
+                        contentPadding: EdgeInsets.symmetric(vertical: 3),
                       ),
                     ),
                   ),

@@ -231,23 +231,34 @@ class _BalanceCell extends StatelessWidget {
     // Warna & ikon disamakan dengan tab Status (palet per jenis di
     // LeaveTypeX). Jenis di luar enum (mis. Sick Leave) pakai abu-abu biru.
     final type = LeaveTypeX.fromLabel(balance.label);
-    final color = type?.color ?? const Color(0xFF607D8B);
-    final tint = type?.background ?? const Color(0xFFECEFF1);
+    final color = type?.color ??
+        (AppColors.isDark ? const Color(0xFF90A4AE) : const Color(0xFF607D8B));
+    final tint = type?.background ??
+        (AppColors.isDark ? const Color(0xFF222B30) : const Color(0xFFECEFF1));
     final icon = type?.icon ?? Icons.medical_services_outlined;
 
     return Container(
       padding: const EdgeInsets.fromLTRB(14, 6, 12, 6),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
-        // Kiri sedikit lebih pekat, memudar ke tint asli di kanan.
-        gradient: LinearGradient(
-          begin: Alignment.centerLeft,
-          end: Alignment.centerRight,
-          colors: [
-            Color.alphaBlend(color.withValues(alpha: 0.10), tint),
-            tint,
-          ],
-        ),
+        // Mode terang: kiri sedikit lebih pekat, memudar ke tint asli di kanan.
+        // Mode gelap: warna solid + garis tipis. Gradien antara dua warna gelap
+        // yang nyaris sama hanya menghasilkan pita vertikal (banding) yang
+        // tampak seperti kabut.
+        gradient: AppColors.isDark
+            ? null
+            : LinearGradient(
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+                colors: [
+                  Color.alphaBlend(color.withValues(alpha: 0.10), tint),
+                  tint,
+                ],
+              ),
+        color: AppColors.isDark ? Color.alphaBlend(tint, AppColors.card) : null,
+        border: AppColors.isDark
+            ? Border.all(color: color.withValues(alpha: 0.22))
+            : null,
       ),
       child: Row(
         children: [

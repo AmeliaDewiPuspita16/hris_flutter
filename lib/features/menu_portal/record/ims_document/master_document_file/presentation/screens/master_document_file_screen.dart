@@ -36,7 +36,7 @@ class _MasterDocumentFileScreenState extends State<MasterDocumentFileScreen> {
       eyebrow: 'IMS DOCUMENT',
       title: 'Document File',
       subtitle: 'Read controlled IMS documents by category.',
-      illustrationAsset: PortalCategoryPage.folderIllustration,
+      illustrationAsset: PortalCategoryPage.documentIllustration,
       body: FutureBuilder<List<DocumentCategory>>(
         future: _categories,
         builder: (context, snapshot) {

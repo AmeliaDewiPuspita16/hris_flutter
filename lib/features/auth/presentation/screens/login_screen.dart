@@ -16,6 +16,8 @@ import '../widgets/keep_signed_in_row.dart';
 import '../widgets/login_field.dart';
 import '../widgets/login_footer.dart';
 import '../widgets/login_header.dart';
+import '../widgets/login_light_backdrop.dart';
+import '../widgets/star_field.dart';
 // import '../widgets/or_divider.dart';
 
 /// Halaman login BIIE Portal.
@@ -88,51 +90,71 @@ class _LoginViewState extends State<_LoginView> {
           builder: (context, constraints) => Container(
             height: constraints.maxHeight,
             width: constraints.maxWidth,
-            decoration: BoxDecoration(
-              gradient: AppColors.pageGradient,
-              image: DecorationImage(
-                image: AssetImage('assets/images/bg_login.png'),
-                fit: BoxFit.cover,
-                // Teksturnya cuma penghias. Pada kepekatan penuh, garis-
-                // garisnya menutupi teks di atasnya sampai sulit dibaca.
-                opacity: 0.1,
-              ),
-            ),
-            child: SingleChildScrollView(
-              child: ConstrainedBox(
-                // Kolom minimal setinggi layar supaya Spacer di bawah punya
-                // ruang untuk mendorong footer ke dasar halaman.
-                constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                child: IntrinsicHeight(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const LoginHeader(),
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
-                        child: AnimatedBuilder(
-                          animation: _form,
-                          builder: (context, _) =>
-                              BlocBuilder<LoginBloc, LoginState>(
-                            builder: (context, state) => _LoginForm(
-                              form: _form,
-                              state: state,
-                              onSignIn: _handleSignIn,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const Spacer(),
-                      // Tanpa padding samping/bawah: ilustrasinya menempel
-                      // ke tepi layar.
-                      const Padding(
-                        padding: EdgeInsets.only(top: 16),
-                        child: LoginFooter(),
-                      ),
-                    ],
+            // Latar polos di kedua mode. Hiasannya (bintang / garis tipis)
+            // dilukis di lapisan terpisah di dalam Stack di bawah — gradien
+            // tipis di atas warna gelap gampang terlihat berundak (banding).
+            decoration: BoxDecoration(color: AppColors.bg),
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                // Gelap: langit berbintang. Terang: semburat mint + garis
+                // tipis di dasar halaman (lihat LoginLightBackdrop).
+                Positioned.fill(
+                  child: IgnorePointer(
+                    child: AppColors.isDark
+                        ? const StarField()
+                        : const LoginLightBackdrop(),
                   ),
                 ),
-              ),
+                SingleChildScrollView(
+                  child: ConstrainedBox(
+                    // Kolom minimal setinggi layar: kalau kontennya pendek,
+                    // footer terdorong ke dasar halaman oleh spaceBetween;
+                    // kalau panjang (layar pendek / keyboard terbuka), halaman
+                    // bisa di-scroll. Sengaja TIDAK memakai IntrinsicHeight +
+                    // Spacer: IntrinsicHeight mengukur anak-anaknya dua kali
+                    // dan gampang meleset (teks yang membungkus, TextField,
+                    // font besar) sehingga Column meluap ("RenderFlex
+                    // overflowed by ... pixels").
+                    constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            const LoginHeader(),
+                            Padding(
+                              // 24 = sama dengan padding kiri-kanan teks di
+                              // LoginHeader, jadi tepi kotak form sejajar
+                              // dengan logo dan kalimat pengantar.
+                              padding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
+                              child: AnimatedBuilder(
+                                animation: _form,
+                                builder: (context, _) =>
+                                    BlocBuilder<LoginBloc, LoginState>(
+                                  builder: (context, state) => _LoginForm(
+                                    form: _form,
+                                    state: state,
+                                    onSignIn: _handleSignIn,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        // Tanpa padding samping/bawah: ilustrasinya menempel
+                        // ke tepi layar.
+                        const Padding(
+                          padding: EdgeInsets.only(top: 16),
+                          child: LoginFooter(),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ),
@@ -164,7 +186,7 @@ class _LoginForm extends StatelessWidget {
           textInputAction: TextInputAction.next,
           errorText: form.emailError,
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 10),
         LoginField(
           label: 'Password',
           controller: form.passwordController,

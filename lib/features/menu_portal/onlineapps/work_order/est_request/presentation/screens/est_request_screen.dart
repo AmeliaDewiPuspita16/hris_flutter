@@ -242,7 +242,7 @@ class _EstRequestScreenState extends State<EstRequestScreen> {
     return PortalModulePage(
       title: 'EST Request',
       subtitle: 'Submit repair and project requests and track their status.',
-      illustrationAsset: PortalCategoryPage.monitorIllustration,
+      illustrationAsset: PortalCategoryPage.estateIllustration,
       // FAB oranye di kanan-bawah, sama pola dengan IT Request & HSE Work
       // Request.
       // TODO(est): sembunyikan saat summary.awaiting_verification > 0
