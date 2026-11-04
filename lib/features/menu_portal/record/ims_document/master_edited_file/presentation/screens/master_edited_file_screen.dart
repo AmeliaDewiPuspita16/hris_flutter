@@ -25,7 +25,7 @@ class MasterEditedFileScreen extends StatelessWidget {
       eyebrow: 'IMS DOCUMENT',
       title: 'Edited File',
       subtitle: 'Browse IMS documents that are being revised.',
-      illustrationAsset: PortalCategoryPage.folderIllustration,
+      illustrationAsset: PortalCategoryPage.editDocumentIllustration,
       body: DocumentTabbedView(
         tabs: [
           DocumentTabSpec(

@@ -1,0 +1,175 @@
+import 'package:flutter/material.dart';
+
+import '../../../../../../core/theme/app_colors.dart';
+import '../../../../../../core/theme/app_text_styles.dart';
+import '../../../../../../core/widgets/app_text_field.dart';
+import '../../domain/stationery_item_option.dart';
+import 'stationery_item_icon.dart';
+
+/// Bottom sheet "Select Item": kolom cari + daftar barang, padanan dropdown
+/// ber-search (select2) di web. Pencarian lokal atas [items] yang sudah
+/// dimuat, mencocokkan kode maupun nama barang.
+///
+/// Mengembalikan [StationeryItemOption] yang dipilih lewat Navigator.pop,
+/// atau null kalau ditutup tanpa memilih.
+class StationeryItemPickerSheet extends StatefulWidget {
+  const StationeryItemPickerSheet({
+    super.key,
+    required this.items,
+    this.selectedId,
+  });
+
+  final List<StationeryItemOption> items;
+  final int? selectedId;
+
+  static Future<StationeryItemOption?> show(
+    BuildContext context, {
+    required List<StationeryItemOption> items,
+    int? selectedId,
+  }) {
+    return showModalBottomSheet<StationeryItemOption>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) =>
+          StationeryItemPickerSheet(items: items, selectedId: selectedId),
+    );
+  }
+
+  @override
+  State<StationeryItemPickerSheet> createState() =>
+      _StationeryItemPickerSheetState();
+}
+
+class _StationeryItemPickerSheetState extends State<StationeryItemPickerSheet> {
+  final _searchController = TextEditingController();
+  String _query = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  List<StationeryItemOption> get _filtered {
+    final q = _query.trim().toLowerCase();
+    if (q.isEmpty) return widget.items;
+    return widget.items
+        .where((i) =>
+            i.code.toLowerCase().contains(q) || i.name.toLowerCase().contains(q))
+        .toList();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final results = _filtered;
+    final height = MediaQuery.sizeOf(context).height * 0.8;
+    final keyboard = MediaQuery.viewInsetsOf(context).bottom;
+
+    return Padding(
+      padding: EdgeInsets.only(bottom: keyboard),
+      child: SafeArea(
+        child: Container(
+          height: height,
+          margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+          decoration: BoxDecoration(
+            color: AppColors.card,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: 36,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 14),
+                  decoration: BoxDecoration(
+                    color: AppColors.border,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              Text('Select Item', style: AppTextStyles.sectionTitle),
+              const SizedBox(height: 10),
+              AppTextField(
+                controller: _searchController,
+                hint: 'Search code or name...',
+                icon: Icons.search,
+                onChanged: (v) => setState(() => _query = v),
+              ),
+              const SizedBox(height: 8),
+              Expanded(
+                child: results.isEmpty
+                    ? Center(
+                        child: Text('No items found',
+                            style: AppTextStyles.bodyMuted),
+                      )
+                    : ListView.separated(
+                        keyboardDismissBehavior:
+                            ScrollViewKeyboardDismissBehavior.onDrag,
+                        itemCount: results.length,
+                        separatorBuilder: (_, __) =>
+                            Divider(height: 1, color: AppColors.border),
+                        itemBuilder: (context, index) {
+                          final option = results[index];
+                          final selected = option.id == widget.selectedId;
+
+                          return InkWell(
+                            onTap: () => Navigator.of(context).pop(option),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 4,
+                                vertical: 12,
+                              ),
+                              child: Row(
+                                children: [
+                                  StationeryItemIcon(
+                                    itemName: option.name,
+                                    size: 36,
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          option.displayLabel,
+                                          style: AppTextStyles.body.copyWith(
+                                            fontWeight: selected
+                                                ? FontWeight.w700
+                                                : FontWeight.w600,
+                                          ),
+                                        ),
+                                        if (option.stock != null) ...[
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            'Stock: ${option.stock}',
+                                            style: AppTextStyles.caption
+                                                .copyWith(
+                                                    color:
+                                                        AppColors.textMuted),
+                                          ),
+                                        ],
+                                      ],
+                                    ),
+                                  ),
+                                  if (selected)
+                                    Icon(Icons.check,
+                                        size: 18, color: AppColors.primaryText),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

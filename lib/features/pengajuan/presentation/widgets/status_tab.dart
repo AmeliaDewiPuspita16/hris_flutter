@@ -207,6 +207,10 @@ class _StatusTabState extends State<StatusTab> {
                           status = _StatusFilter.all;
                           type = 'all';
                         }),
+                        style: TextButton.styleFrom(
+                          foregroundColor: AppColors.primaryText,
+                          textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+                        ),
                         child: const Text('Reset'),
                       ),
                     ],

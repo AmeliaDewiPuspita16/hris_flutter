@@ -26,6 +26,16 @@ class PortalCategoryPage extends StatelessWidget {
   static const laptopIllustration =
       'assets/icons/header-laptop-illustration.svg';
   static const carIllustration = 'assets/icons/header-car-illustration.svg';
+  static const stationeryIllustration =
+      'assets/icons/header-stationery-illustration.svg';
+  static const estateIllustration =
+      'assets/icons/header-estate-illustration.svg';
+  static const documentIllustration =
+      'assets/icons/header-document-illustration.svg';
+  static const editDocumentIllustration =
+      'assets/icons/header-edit-document-illustration.svg';
+  static const databaseIllustration =
+      'assets/icons/header-database-illustration.svg';
 
   final String title;
   final String subtitle;

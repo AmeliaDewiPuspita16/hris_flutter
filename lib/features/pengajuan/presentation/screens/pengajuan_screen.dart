@@ -133,6 +133,8 @@ class _PengajuanViewState extends State<_PengajuanView> {
   Widget _buildHeader() {
     Widget tabButton(_SubmitTab tab, String label, IconData icon) {
       final active = _tab == tab;
+      final pillColor = AppColors.isDark ? AppColors.primaryText : AppColors.card;
+      final activeContent = AppColors.isDark ? AppColors.primary : AppColors.primaryText;
 
       return Expanded(
         child: InkWell(
