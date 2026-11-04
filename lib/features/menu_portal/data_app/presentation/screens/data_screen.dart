@@ -5,6 +5,7 @@ import '../../../../auth/presentation/bloc/auth/auth_bloc.dart';
 
 import '../../indent_vehicle/presentation/screens/indent_vehicle_screen.dart';
 import '../../est_project_monitoring/presentation/screens/est_project_monitoring_screen.dart';
+import '../../observation_department/presentation/screens/observation_dept_screen.dart';
 import '../../domain/data_demo_data.dart';
 import '../../../shared/presentation/widgets/portal_category_page.dart';
 import '../widgets/data_tile.dart';
@@ -43,6 +44,9 @@ class DataScreen extends StatelessWidget {
       onGymMember: null,
       onIndentVehicle: () => Navigator.of(context).push(
         MaterialPageRoute(builder: (_) => IndentVehicleScreen()),
+      ),
+      onObservationDepartment: () => Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const ObservationDeptScreen()),
       ),
       onInfrastucture: null,
     );

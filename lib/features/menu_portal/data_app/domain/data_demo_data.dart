@@ -22,6 +22,7 @@ class DataDemoData {
     required VoidCallback? onFoodCost,
     required VoidCallback? onGymMember,
     required VoidCallback? onIndentVehicle,
+    required VoidCallback? onObservationDepartment,
     required VoidCallback? onInfrastucture,
   }) =>
       [
@@ -112,6 +113,14 @@ class DataDemoData {
           color: AppColors.teal,
           background: AppColors.tealBg,
           onTap: onIndentVehicle,
+        ),
+        DataItem(
+          icon: Icons.remove_red_eye_outlined,
+          label: 'Observation Department',
+          owners: const ['Azlinda'],
+          color: AppColors.accent,
+          background: AppColors.accentBg,
+          onTap: onObservationDepartment,
         ),
         DataItem(
           icon: Icons.foundation_outlined,
