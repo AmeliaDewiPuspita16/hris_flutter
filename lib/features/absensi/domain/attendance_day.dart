@@ -32,7 +32,14 @@ class AttendanceDay {
     this.noteText,
     this.badgeLabel,
     this.overtimeMinutes = 0,
+    this.workedMinutes = 0,
   });
+
+  /// Kode shift normal (Senin–Jumat, 08:00–17:00). Masuk di Sabtu/Minggu
+  /// dengan shift ini bukan terlambat, melainkan lembur — lih.
+  /// [isNormalShiftWeekend]. Aturan ini HANYA untuk shift N; shift lain
+  /// (A, B, C, S1, ...) memang bisa terjadwal di akhir pekan.
+  static const normalShiftCode = 'N';
 
   /// Toleransi keterlambatan. Jam masuk dianggap terlambat bila lewat jam
   /// mulai shift ditambah toleransi ini (dibandingkan sampai menit).
@@ -74,6 +81,9 @@ class AttendanceDay {
       shiftCode: shift?.code,
       shiftTimeRange: shift?.range,
       timeText: _timeText(checkIn, checkOut, ongoing: ongoing),
+      workedMinutes: checkIn != null && checkOut != null && checkOut.isAfter(checkIn)
+          ? checkOut.difference(checkIn).inMinutes
+          : 0,
       badgeLabel: switch (status) {
         AttendanceDayStatus.tepatWaktu => 'On time',
         AttendanceDayStatus.terlambat =>
@@ -228,7 +238,20 @@ class AttendanceDay {
 
   bool get hasOvertime => overtimeMinutes > 0;
 
-  /// Salinan hari ini dengan [overtimeMinutes] terisi.
+  /// Lama kerja dari jam masuk sampai jam pulang, dalam menit. 0 bila belum
+  /// ada jam pulang. Dipakai sebagai lama lembur akhir pekan shift N saat
+  /// endpoint overtime tidak mencatat hari itu.
+  final int workedMinutes;
+
+  /// Shift N yang jatuh di Sabtu/Minggu. Shift N hanya Senin–Jumat, jadi
+  /// kehadiran di hari itu dihitung lembur, bukan terlambat.
+  bool get isNormalShiftWeekend =>
+      shiftCode?.toUpperCase() == normalShiftCode &&
+      (date.weekday == DateTime.saturday || date.weekday == DateTime.sunday);
+
+  /// Salinan hari ini dengan [overtimeMinutes] terisi. Hari berstatus lembur
+  /// tidak perlu badge "Overtime" polos lagi — badge lembur berdurasi sudah
+  /// tampil dari [overtimeMinutes].
   AttendanceDay withOvertime(int minutes) => AttendanceDay(
         date: date,
         status: status,
@@ -236,9 +259,30 @@ class AttendanceDay {
         shiftTimeRange: shiftTimeRange,
         timeText: timeText,
         noteText: noteText,
-        badgeLabel: badgeLabel,
+        badgeLabel: status == AttendanceDayStatus.lembur && minutes > 0
+            ? null
+            : badgeLabel,
         overtimeMinutes: minutes,
+        workedMinutes: workedMinutes,
       );
+
+  /// Kehadiran shift N di akhir pekan sebagai lembur: tidak terlambat, dan
+  /// lamanya = [overtimeMinutes] dari endpoint overtime bila ada, selain itu
+  /// lama kerja hari itu ([workedMinutes]).
+  AttendanceDay asWeekendOvertime() {
+    final minutes = overtimeMinutes > 0 ? overtimeMinutes : workedMinutes;
+    return AttendanceDay(
+      date: date,
+      status: AttendanceDayStatus.lembur,
+      shiftCode: shiftCode,
+      shiftTimeRange: shiftTimeRange,
+      timeText: timeText,
+      noteText: noteText,
+      badgeLabel: minutes > 0 ? null : 'Overtime',
+      overtimeMinutes: minutes,
+      workedMinutes: workedMinutes,
+    );
+  }
 
   /// Salinan hari ini dengan jadwal shift terisi. Dipakai saat realisasi
   /// dari server tidak membawa info shift, tapi jadwalnya diketahui
@@ -252,6 +296,7 @@ class AttendanceDay {
         noteText: noteText,
         badgeLabel: badgeLabel,
         overtimeMinutes: overtimeMinutes,
+        workedMinutes: workedMinutes,
       );
 
   bool get isScheduledOnly => status == AttendanceDayStatus.terjadwal;

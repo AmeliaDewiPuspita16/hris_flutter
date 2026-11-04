@@ -37,14 +37,26 @@ class AttendanceMonth {
     final daysInMonth = DateTime(month.year, month.month + 1, 0).day;
     final days = [
       for (var d = 1; d <= daysInMonth; d++)
-        _withOvertime(
-          _withSchedule(
-              byDate[_key(DateTime(month.year, month.month, d))],
-              DateTime(month.year, month.month, d),
-              shifts[_key(DateTime(month.year, month.month, d))]),
-          overtimeMinutes,
+        _weekendRule(
+          _withOvertime(
+            _withSchedule(
+                byDate[_key(DateTime(month.year, month.month, d))],
+                DateTime(month.year, month.month, d),
+                shifts[_key(DateTime(month.year, month.month, d))]),
+            overtimeMinutes,
+          ),
         ),
     ];
+
+    // Lembur akhir pekan shift N yang TIDAK tercatat di endpoint overtime
+    // (lamanya diambil dari jam kerja) ikut dijumlahkan ke ringkasan, supaya
+    // kartu "Overtime Hours" sama dengan badge di kalender.
+    final weekendExtraMinutes = days
+        .where((d) =>
+            d.isNormalShiftWeekend &&
+            d.status == AttendanceDayStatus.lembur &&
+            (overtimeMinutes[_key(d.date)] ?? 0) <= 0)
+        .fold<int>(0, (sum, d) => sum + d.overtimeMinutes);
 
     final raw = data['summary'];
     final fromServer = raw is Map<String, dynamic>
@@ -64,13 +76,14 @@ class AttendanceMonth {
             overtimeSummary['total_overtime_hours'] != null
         ? doubleOrZero(overtimeSummary['total_overtime_hours'])
         : fromServer.overtimeHrs;
+    final totalOvertimeHrs = overtimeHrs + weekendExtraMinutes / 60;
 
     return AttendanceMonth(
       days: days,
       summary: AttendanceSummary(
         present: fromServer.present,
         late: lateDays,
-        overtimeHrs: overtimeHrs,
+        overtimeHrs: totalOvertimeHrs,
       ),
     );
   }
@@ -109,6 +122,18 @@ class AttendanceMonth {
     if (minutes <= 0 || day.isScheduledOnly) return day;
 
     return day.withOvertime(minutes);
+  }
+
+  /// Shift N hanya Senin–Jumat: kehadiran di Sabtu/Minggu dengan shift N
+  /// dihitung lembur, bukan terlambat. Dijalankan SETELAH jadwal digabung,
+  /// karena kode shift bisa baru diketahui dari endpoint jadwal. Hari yang
+  /// belum selesai (berlangsung/terjadwal) dibiarkan.
+  static AttendanceDay _weekendRule(AttendanceDay day) {
+    final finished = day.status == AttendanceDayStatus.tepatWaktu ||
+        day.status == AttendanceDayStatus.terlambat;
+    if (!finished || !day.isNormalShiftWeekend) return day;
+
+    return day.asWeekendOvertime();
   }
 
   /// jadwal shift per tanggal dari `days[]` endpoint shift. Item yang
