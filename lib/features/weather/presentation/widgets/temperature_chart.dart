@@ -15,7 +15,7 @@ class TemperatureChart extends StatelessWidget {
     super.key,
     required this.slots,
     required this.now,
-    this.height = 180,
+    this.height = 196,
   });
 
   final List<WeatherSlot> slots;
@@ -71,7 +71,7 @@ class _TemperaturePainter extends CustomPainter {
 
   static const _left = 28.0;
   static const _right = 8.0;
-  static const _top = 18.0;
+  static const _top = 30.0;
   static const _bottom = 24.0;
 
   TextPainter _text(String s, {double size = 10, FontWeight? weight, Color? color}) {
@@ -164,7 +164,7 @@ class _TemperaturePainter extends CustomPainter {
         ..shader = LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [line.withValues(alpha: 0.22), line.withValues(alpha: 0)],
+          colors: [line.withValues(alpha: 0.28), line.withValues(alpha: 0.02)],
         ).createShader(chart),
     );
     canvas.drawPath(
@@ -176,26 +176,51 @@ class _TemperaturePainter extends CustomPainter {
         ..strokeCap = StrokeCap.round,
     );
 
-    // Garis "Now".
+    // Garis "Now" + pil hijau di atasnya.
+    double? nowX;
     if (!now.isBefore(t0) && !now.isAfter(slots.last.time)) {
       final x = xOf(now);
+      nowX = x;
       final dash = Paint()
-        ..color = nowLine
-        ..strokeWidth = 1.2;
-      for (var y = chart.top; y < chart.bottom; y += 6) {
+        ..color = line.withValues(alpha: 0.7)
+        ..strokeWidth = 1.3;
+      for (var y = chart.top - 4; y < chart.bottom; y += 6) {
         canvas.drawLine(Offset(x, y), Offset(x, y + 3), dash);
       }
-      final tp = _text('Now', weight: FontWeight.w700, color: nowLine);
-      final dx = (x - tp.width / 2).clamp(chart.left, size.width - tp.width);
-      tp.paint(canvas, Offset(dx, 0));
+      final tp = _text('Now', size: 10.5, weight: FontWeight.w700, color: Colors.white);
+      final w = tp.width + 16;
+      final h = tp.height + 6;
+      final left = (x - w / 2).clamp(0.0, size.width - w);
+      final pill = RRect.fromRectAndRadius(
+        Rect.fromLTWH(left, 0, w, h),
+        const Radius.circular(6),
+      );
+      canvas.drawRRect(pill, Paint()..color = line);
+      // Ekor kecil ke bawah.
+      canvas.drawPath(
+        Path()
+          ..moveTo(x - 4, h)
+          ..lineTo(x + 4, h)
+          ..lineTo(x, h + 4)
+          ..close(),
+        Paint()..color = line,
+      );
+      tp.paint(canvas, Offset(left + 8, 3));
     }
 
     // Titik tiap slot.
     final dotFill = Paint()..color = dot;
     final dotRing = Paint()..color = card;
     for (final p in points) {
-      canvas.drawCircle(p, 4, dotRing);
-      canvas.drawCircle(p, 2.8, dotFill);
+      final isNow = nowX != null && (p.dx - nowX).abs() < 0.5;
+      if (isNow) {
+        canvas.drawCircle(p, 8, Paint()..color = line.withValues(alpha: 0.18));
+        canvas.drawCircle(p, 5.5, dotRing);
+        canvas.drawCircle(p, 4, Paint()..color = line);
+      } else {
+        canvas.drawCircle(p, 4, dotRing);
+        canvas.drawCircle(p, 2.8, dotFill);
+      }
     }
   }
 

@@ -3,13 +3,14 @@ import 'package:intl/intl.dart' show DateFormat;
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
-import '../../../../core/widgets/back_header.dart';
+import '../../../menu_portal/onlineapps/hse_work_request/presentation/widgets/hse_page_chrome.dart';
 import '../../domain/weather_forecast.dart';
 import '../widgets/temperature_chart.dart';
 import '../widgets/weather_icon.dart';
 
 /// Halaman prakiraan cuaca lengkap (dibuka dari chip cuaca di Beranda):
-/// kartu "sekarang", strip per 3 jam, grafik suhu, dan ringkasan harian.
+/// kartu "sekarang", pengingat hujan, strip per 3 jam, grafik suhu, dan
+/// ringkasan harian. Latar & tombol memakai gaya halaman portal (mint).
 class WeatherForecastScreen extends StatelessWidget {
   const WeatherForecastScreen({
     super.key,
@@ -31,47 +32,64 @@ class WeatherForecastScreen extends StatelessWidget {
     final at = now ?? DateTime.now();
     final current = forecast.current(at);
     final upcoming = forecast.upcoming(at);
+    final nextRain = upcoming.where((s) => s.condition.isRainy).firstOrNull;
 
-    return Scaffold(
-      backgroundColor: AppColors.bg,
-      appBar: BackHeader(
-        title: 'Weather Forecast',
-        onBack: () => Navigator.of(context).pop(),
-      ),
-      body: current == null
-          ? Center(
-              child: Text('No forecast available.', style: AppTextStyles.bodyMuted),
-            )
-          : ListView(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
-              children: [
-                _NowCard(forecast: forecast, slot: current),
-                if (upcoming.any((s) => s.condition.isRainy)) ...[
-                  const SizedBox(height: 12),
-                  _RainNotice(
-                    slot: upcoming.firstWhere((s) => s.condition.isRainy),
-                    now: at,
-                  ),
-                ],
-                const SizedBox(height: 22),
-                const _SectionTitle('Next hours'),
-                const SizedBox(height: 10),
-                _HourStrip(slots: upcoming, currentTime: current.time),
-                const SizedBox(height: 22),
-                const _SectionTitle('Temperature'),
-                const SizedBox(height: 10),
-                _Panel(
-                  padding: const EdgeInsets.fromLTRB(12, 14, 14, 10),
-                  child: TemperatureChart(slots: forecast.slots, now: at),
-                ),
-                const SizedBox(height: 22),
-                const _SectionTitle('Next days'),
-                const SizedBox(height: 10),
-                _DaysPanel(days: forecast.days, now: at),
-                const SizedBox(height: 18),
-                _SourceNote(updatedAt: forecast.updatedAt, isSample: isSampleData),
-              ],
+    void openHourly() => _HourlySheet.show(context, slots: upcoming, now: at);
+
+    return HsePageBackdrop(
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          children: [
+            _TopBar(onBack: () => Navigator.of(context).pop()),
+            Expanded(
+              child: current == null
+                  ? Center(
+                      child: Text(
+                        'No forecast available.',
+                        style: AppTextStyles.bodyMuted,
+                      ),
+                    )
+                  : ListView(
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+                      children: [
+                        _NowCard(forecast: forecast, slot: current),
+                        if (nextRain != null) ...[
+                          const SizedBox(height: 14),
+                          _RainNotice(slot: nextRain, now: at, onTap: openHourly),
+                        ],
+                        const SizedBox(height: 22),
+                        _SectionTitle(
+                          'Next hours',
+                          trailing: _SeeMoreButton(onTap: openHourly),
+                        ),
+                        const SizedBox(height: 12),
+                        _HourStrip(slots: upcoming, currentTime: current.time),
+                        const SizedBox(height: 22),
+                        const _SectionTitle('Temperature'),
+                        const SizedBox(height: 12),
+                        _Panel(
+                          padding: const EdgeInsets.fromLTRB(12, 14, 14, 10),
+                          child: TemperatureChart(
+                            slots: forecast.slots,
+                            now: current.time,
+                          ),
+                        ),
+                        const SizedBox(height: 22),
+                        const _SectionTitle('Next days'),
+                        const SizedBox(height: 12),
+                        _DaysPanel(days: forecast.days, now: at),
+                        const SizedBox(height: 18),
+                        _SourceNote(
+                          updatedAt: forecast.updatedAt,
+                          isSample: isSampleData,
+                        ),
+                      ],
+                    ),
             ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -88,18 +106,126 @@ String _dayLabel(DateTime date, DateTime now) {
   return _dayFmt.format(date);
 }
 
-class _SectionTitle extends StatelessWidget {
-  const _SectionTitle(this.text);
+/// Gradasi hijau kartu "sekarang" & tile "Now" — sedikit lebih cerah dari
+/// hijau utama supaya terasa seperti langit siang.
+LinearGradient get _skyGradient => AppColors.isDark
+    ? AppColors.heroGradient
+    : const LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [Color(0xFF2FA374), Color(0xFF117250)],
+      );
 
-  final String text;
+List<BoxShadow> get _softShadow => [
+      BoxShadow(
+        color: Colors.black.withValues(alpha: AppColors.isDark ? 0 : 0.06),
+        blurRadius: 16,
+        offset: const Offset(0, 4),
+      ),
+    ];
+
+class _TopBar extends StatelessWidget {
+  const _TopBar({required this.onBack});
+
+  final VoidCallback onBack;
 
   @override
   Widget build(BuildContext context) {
-    return Text(
-      text,
-      style: AppTextStyles.sectionTitle.copyWith(
-        fontSize: 15,
-        fontWeight: FontWeight.w700,
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+      child: Row(
+        children: [
+          HseCircleButton(
+            icon: Icons.arrow_back_rounded,
+            tooltip: 'Back',
+            onTap: onBack,
+          ),
+          Expanded(
+            child: Text(
+              'Weather Forecast',
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppTextStyles.h2.copyWith(
+                fontSize: 20,
+                fontWeight: FontWeight.w800,
+                color: AppColors.primaryText,
+              ),
+            ),
+          ),
+          // Penyeimbang lebar tombol kembali supaya judul tetap di tengah.
+          const SizedBox.square(dimension: 44),
+        ],
+      ),
+    );
+  }
+}
+
+/// Judul bagian dengan aksen batang hijau di kiri.
+class _SectionTitle extends StatelessWidget {
+  const _SectionTitle(this.text, {this.trailing});
+
+  final String text;
+  final Widget? trailing;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          width: 4,
+          height: 18,
+          decoration: BoxDecoration(
+            color: AppColors.primary,
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            text,
+            style: AppTextStyles.sectionTitle.copyWith(
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ),
+        if (trailing != null) trailing!,
+      ],
+    );
+  }
+}
+
+class _SeeMoreButton extends StatelessWidget {
+  const _SeeMoreButton({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppColors.presentBg,
+      shape: const StadiumBorder(),
+      child: InkWell(
+        onTap: onTap,
+        customBorder: const StadiumBorder(),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 6, 8, 6),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'See More',
+                style: AppTextStyles.caption.copyWith(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.primaryText,
+                ),
+              ),
+              Icon(Icons.chevron_right_rounded, size: 18, color: AppColors.primaryText),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -117,15 +243,16 @@ class _Panel extends StatelessWidget {
       padding: padding,
       decoration: BoxDecoration(
         color: AppColors.card,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.border),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: _softShadow,
       ),
       child: child,
     );
   }
 }
 
-/// Kartu hijau besar: lokasi, suhu sekarang, kondisi, dan tiga metrik.
+/// Kartu hijau besar: lokasi, suhu sekarang, kondisi, ikon besar dengan
+/// hiasan awan + daun, lalu bilah metrik transparan.
 class _NowCard extends StatelessWidget {
   const _NowCard({required this.forecast, required this.slot});
 
@@ -134,135 +261,198 @@ class _NowCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final white70 = Colors.white.withValues(alpha: 0.75);
+    final white75 = Colors.white.withValues(alpha: 0.78);
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
       decoration: BoxDecoration(
-        gradient: AppColors.primaryGradient,
-        borderRadius: BorderRadius.circular(22),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(Icons.place_rounded, size: 16, color: Colors.white),
-              const SizedBox(width: 4),
-              Expanded(
-                child: Text(
-                  forecast.locationName,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontFamily: AppTextStyles.fontFamily,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-              Text(
-                'Now · ${_hourFmt.format(slot.time)}',
-                style: TextStyle(
-                  fontFamily: AppTextStyles.fontFamily,
-                  fontSize: 12,
-                  color: white70,
-                ),
-              ),
-            ],
+        gradient: _skyGradient,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF117250)
+                .withValues(alpha: AppColors.isDark ? 0 : 0.28),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
           ),
-          Padding(
-            padding: const EdgeInsets.only(left: 20),
-            child: Text(
-              forecast.area,
-              style: TextStyle(
-                fontFamily: AppTextStyles.fontFamily,
-                fontSize: 12,
-                color: white70,
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: Stack(
+          children: [
+            // Hiasan: awan samar & daun di kanan bawah.
+            Positioned(
+              right: 30,
+              top: 92,
+              child: Icon(
+                Icons.cloud_rounded,
+                size: 120,
+                color: Colors.white.withValues(alpha: 0.13),
               ),
             ),
-          ),
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text.rich(
-                      TextSpan(
-                        text: '${slot.tempC}',
-                        children: const [
-                          TextSpan(
-                            text: '°C',
-                            style: TextStyle(fontSize: 22, fontWeight: FontWeight.w500),
+            Positioned(
+              right: -18,
+              top: 110,
+              child: Transform.rotate(
+                angle: -0.5,
+                child: Icon(
+                  Icons.eco_rounded,
+                  size: 76,
+                  color: const Color(0xFF5BD39A).withValues(alpha: 0.55),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.place_rounded, size: 17, color: Colors.white),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          forecast.locationName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontFamily: AppTextStyles.fontFamily,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
                           ),
-                        ],
+                        ),
                       ),
-                      style: const TextStyle(
+                      Text(
+                        'Now · ${_hourFmt.format(slot.time)}',
+                        style: TextStyle(
+                          fontFamily: AppTextStyles.fontFamily,
+                          fontSize: 12,
+                          color: white75,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 21),
+                    child: Text(
+                      forecast.area,
+                      style: TextStyle(
                         fontFamily: AppTextStyles.fontFamily,
-                        fontSize: 54,
-                        height: 1.05,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
+                        fontSize: 12,
+                        color: white75,
                       ),
                     ),
-                    Text(
-                      slot.condition.label,
-                      style: const TextStyle(
-                        fontFamily: AppTextStyles.fontFamily,
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text.rich(
+                              TextSpan(
+                                text: '${slot.tempC}',
+                                children: const [
+                                  TextSpan(
+                                    text: '°C',
+                                    style: TextStyle(
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              style: const TextStyle(
+                                fontFamily: AppTextStyles.fontFamily,
+                                fontSize: 58,
+                                height: 1.05,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                              ),
+                            ),
+                            Text(
+                              slot.condition.label,
+                              style: const TextStyle(
+                                fontFamily: AppTextStyles.fontFamily,
+                                fontSize: 17,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
-                ),
+                      Padding(
+                        padding: const EdgeInsets.only(right: 10, top: 2),
+                        child: WeatherIcon(
+                          condition: slot.condition,
+                          isNight: slot.isNight,
+                          size: 76,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  _MetricBar(slot: slot),
+                ],
               ),
-              Container(
-                width: 92,
-                height: 92,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.14),
-                  shape: BoxShape.circle,
-                ),
-                child: WeatherIcon(
-                  condition: slot.condition,
-                  isNight: slot.isNight,
-                  size: 60,
-                ),
-              ),
-            ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Satu bilah kaca berisi angin, kelembapan, dan arah — dipisah garis tipis.
+class _MetricBar extends StatelessWidget {
+  const _MetricBar({required this.slot});
+
+  final WeatherSlot slot;
+
+  @override
+  Widget build(BuildContext context) {
+    Widget divider() => Container(
+          width: 1,
+          height: 40,
+          color: Colors.white.withValues(alpha: 0.25),
+        );
+
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.22)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: _Metric(
+              icon: Icons.air_rounded,
+              value: '${slot.windKmh.toStringAsFixed(1)} km/h',
+              label: 'Wind',
+            ),
           ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: _Metric(
-                  icon: Icons.air_rounded,
-                  value: '${slot.windKmh.toStringAsFixed(1)} km/h',
-                  label: 'Wind',
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _Metric(
-                  icon: Icons.water_drop_outlined,
-                  value: '${slot.humidity}%',
-                  label: 'Humidity',
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _Metric(
-                  icon: Icons.explore_outlined,
-                  value: '${slot.windFrom} – ${slot.windTo}',
-                  label: 'Direction',
-                ),
-              ),
-            ],
+          divider(),
+          Expanded(
+            child: _Metric(
+              icon: Icons.water_drop_outlined,
+              value: '${slot.humidity}%',
+              label: 'Humidity',
+            ),
+          ),
+          divider(),
+          Expanded(
+            child: _Metric(
+              icon: Icons.explore_outlined,
+              value: '${slot.windFrom} – ${slot.windTo}',
+              label: 'Direction',
+            ),
           ),
         ],
       ),
@@ -279,12 +469,8 @@ class _Metric extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.14),
-        borderRadius: BorderRadius.circular(14),
-      ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 6),
       child: Column(
         children: [
           Icon(icon, size: 18, color: Colors.white),
@@ -295,7 +481,7 @@ class _Metric extends StatelessWidget {
               value,
               style: const TextStyle(
                 fontFamily: AppTextStyles.fontFamily,
-                fontSize: 13,
+                fontSize: 13.5,
                 fontWeight: FontWeight.w700,
                 color: Colors.white,
               ),
@@ -305,8 +491,8 @@ class _Metric extends StatelessWidget {
             label,
             style: TextStyle(
               fontFamily: AppTextStyles.fontFamily,
-              fontSize: 10.5,
-              color: Colors.white.withValues(alpha: 0.75),
+              fontSize: 11,
+              color: Colors.white.withValues(alpha: 0.78),
             ),
           ),
         ],
@@ -315,41 +501,60 @@ class _Metric extends StatelessWidget {
   }
 }
 
-/// "Light rain expected at 09.00 tomorrow — bring an umbrella."
+/// "Light rain expected tomorrow at 09.00. Bring an umbrella." — ketuk
+/// untuk melihat rincian per jam.
 class _RainNotice extends StatelessWidget {
-  const _RainNotice({required this.slot, required this.now});
+  const _RainNotice({required this.slot, required this.now, required this.onTap});
 
   final WeatherSlot slot;
   final DateTime now;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final day = _dayLabel(slot.time, now).toLowerCase();
-    final when = day == 'today'
+    final day = _dayLabel(slot.time, now);
+    final when = day == 'Today'
         ? 'at ${_hourFmt.format(slot.time)}'
-        : '$day at ${_hourFmt.format(slot.time)}';
+        : '${day.toLowerCase()} at ${_hourFmt.format(slot.time)}';
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: AppColors.inProgressBg,
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.beach_access_rounded, size: 20, color: AppColors.inProgress),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              '${slot.condition.label} expected $when. Bring an umbrella.',
-              style: AppTextStyles.body.copyWith(
-                fontSize: 12.5,
-                height: 1.4,
-                color: AppColors.text,
+    return Material(
+      color: AppColors.inProgressBg,
+      borderRadius: BorderRadius.circular(18),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(18),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 12, 8, 12),
+          child: Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: AppColors.inProgress.withValues(alpha: 0.14),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.beach_access_rounded,
+                  size: 22,
+                  color: AppColors.inProgress,
+                ),
               ),
-            ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  '${slot.condition.label} expected $when. Bring an umbrella.',
+                  style: AppTextStyles.body.copyWith(
+                    fontSize: 13,
+                    height: 1.4,
+                    color: AppColors.text,
+                  ),
+                ),
+              ),
+              Icon(Icons.chevron_right_rounded, color: AppColors.textMuted),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -364,7 +569,7 @@ class _HourStrip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 132,
+      height: 138,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         clipBehavior: Clip.none,
@@ -388,17 +593,17 @@ class _HourTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final fg = isNow ? Colors.white : AppColors.text;
-    final sub = isNow ? Colors.white.withValues(alpha: 0.8) : AppColors.textMuted;
+    final sub = isNow ? Colors.white.withValues(alpha: 0.85) : AppColors.textMuted;
     final isMidnight = slot.time.hour == 0;
 
     return Container(
       width: 70,
       padding: const EdgeInsets.symmetric(vertical: 12),
       decoration: BoxDecoration(
-        color: isNow ? AppColors.primary : AppColors.card,
-        gradient: isNow ? AppColors.primaryGradient : null,
+        color: isNow ? null : AppColors.card,
+        gradient: isNow ? _skyGradient : null,
         borderRadius: BorderRadius.circular(18),
-        border: isNow ? null : Border.all(color: AppColors.border),
+        boxShadow: _softShadow,
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -413,15 +618,15 @@ class _HourTile extends StatelessWidget {
               fontFamily: AppTextStyles.fontFamily,
               fontSize: 12,
               fontWeight: isNow || isMidnight ? FontWeight.w700 : FontWeight.w500,
-              color: sub,
+              color: isNow ? Colors.white : sub,
             ),
           ),
-          WeatherIcon(condition: slot.condition, isNight: slot.isNight, size: 30),
+          WeatherIcon(condition: slot.condition, isNight: slot.isNight, size: 32),
           Text(
             '${slot.tempC}°',
             style: TextStyle(
               fontFamily: AppTextStyles.fontFamily,
-              fontSize: 16,
+              fontSize: 18,
               fontWeight: FontWeight.w700,
               color: fg,
             ),
@@ -435,7 +640,7 @@ class _HourTile extends StatelessWidget {
                 '${slot.humidity}%',
                 style: TextStyle(
                   fontFamily: AppTextStyles.fontFamily,
-                  fontSize: 10.5,
+                  fontSize: 11,
                   color: sub,
                 ),
               ),
@@ -638,6 +843,157 @@ class _SourceNote extends StatelessWidget {
           ),
         ],
       ],
+    );
+  }
+}
+
+/// Bottom sheet "See More": semua slot mendatang, dikelompokkan per hari,
+/// lengkap dengan kondisi, kelembapan, dan angin.
+class _HourlySheet extends StatelessWidget {
+  const _HourlySheet({required this.slots, required this.now});
+
+  final List<WeatherSlot> slots;
+  final DateTime now;
+
+  static Future<void> show(
+    BuildContext context, {
+    required List<WeatherSlot> slots,
+    required DateTime now,
+  }) {
+    return showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _HourlySheet(slots: slots, now: now),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final groups = <DateTime, List<WeatherSlot>>{};
+    for (final s in slots) {
+      groups
+          .putIfAbsent(DateTime(s.time.year, s.time.month, s.time.day), () => [])
+          .add(s);
+    }
+
+    return DraggableScrollableSheet(
+      initialChildSize: 0.75,
+      minChildSize: 0.4,
+      maxChildSize: 0.92,
+      expand: false,
+      builder: (context, controller) {
+        return Container(
+          decoration: BoxDecoration(
+            color: AppColors.bg,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: ListView(
+            controller: controller,
+            padding: const EdgeInsets.fromLTRB(16, 10, 16, 28),
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.border,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 14),
+              const _SectionTitle('Hourly forecast'),
+              for (final entry in groups.entries) ...[
+                const SizedBox(height: 16),
+                Text(
+                  _dayLabel(entry.key, now),
+                  style: AppTextStyles.caption.copyWith(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textMid,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                _Panel(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
+                  child: Column(
+                    children: [
+                      for (final (i, s) in entry.value.indexed) ...[
+                        if (i > 0) Divider(height: 1, color: AppColors.border),
+                        _HourlyRow(slot: s),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _HourlyRow extends StatelessWidget {
+  const _HourlyRow({required this.slot});
+
+  final WeatherSlot slot;
+
+  @override
+  Widget build(BuildContext context) {
+    final muted = AppTextStyles.caption.copyWith(fontSize: 11.5);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 46,
+            child: Text(
+              _hourFmt.format(slot.time),
+              style: AppTextStyles.body.copyWith(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: AppColors.text,
+              ),
+            ),
+          ),
+          WeatherIcon(condition: slot.condition, isNight: slot.isNight, size: 28),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  slot.condition.label,
+                  style: AppTextStyles.body.copyWith(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.text,
+                  ),
+                ),
+                Text(
+                  '${slot.humidity}% · ${slot.windKmh.toStringAsFixed(1)} km/h '
+                  '${slot.windFrom} – ${slot.windTo}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: muted,
+                ),
+              ],
+            ),
+          ),
+          Text(
+            '${slot.tempC}°',
+            style: TextStyle(
+              fontFamily: AppTextStyles.fontFamily,
+              fontSize: 17,
+              fontWeight: FontWeight.w700,
+              color: AppColors.text,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
