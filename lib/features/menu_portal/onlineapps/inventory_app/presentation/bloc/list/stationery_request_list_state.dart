@@ -1,5 +1,6 @@
 import '../../../../../../../core/network/page_meta.dart';
 import '../../../domain/stationery_request_item.dart';
+import '../../../domain/stationery_request_page.dart';
 
 enum StationeryRequestListStatus { initial, loading, success, failure }
 
@@ -19,6 +20,7 @@ class StationeryRequestListState {
       total: 0,
     ),
     this.loadingMore = false,
+    this.counts = StationeryStatusCounts.unknown,
     this.errorMessage,
   });
 
@@ -35,6 +37,9 @@ class StationeryRequestListState {
   /// Sedang memuat halaman berikutnya (skeleton kecil di dasar daftar).
   final bool loadingMore;
 
+  /// Jumlah per status dari server (seluruh data), untuk kotak ringkasan.
+  final StationeryStatusCounts counts;
+
   final String? errorMessage;
 
   /// Muat pertama kali: belum ada yang bisa ditampilkan, jadi layar
@@ -50,6 +55,7 @@ class StationeryRequestListState {
     List<StationeryRequestItem>? items,
     PageMeta? meta,
     bool? loadingMore,
+    StationeryStatusCounts? counts,
     Object? errorMessage = _unset,
   }) {
     return StationeryRequestListState(
@@ -57,6 +63,7 @@ class StationeryRequestListState {
       items: items ?? this.items,
       meta: meta ?? this.meta,
       loadingMore: loadingMore ?? this.loadingMore,
+      counts: counts ?? this.counts,
       errorMessage:
           errorMessage == _unset ? this.errorMessage : errorMessage as String?,
     );

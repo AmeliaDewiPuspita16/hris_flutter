@@ -47,6 +47,7 @@ class StationeryRequestListBloc
         status: StationeryRequestListStatus.success,
         items: page.items,
         meta: page.meta,
+        counts: page.counts,
       ));
     } on ApiException catch (e) {
       if (token != _requestToken) return;
