@@ -49,6 +49,8 @@ class AppPalette {
     required this.activeDot,
     required this.heroGreen,
     required this.heroGreenMid,
+    required this.featuredGreen,
+    required this.featuredGreenMid,
   });
 
   final Color primary;
@@ -95,6 +97,11 @@ class AppPalette {
   final Color heroGreen;
   final Color heroGreenMid;
 
+  /// Gradient kartu menu utama (featured). Sama dengan primary di mode terang;
+  /// di mode gelap sedikit lebih terang dari hero card supaya tidak "tenggelam", tapi tetap tua.
+  final Color featuredGreen;
+  final Color featuredGreenMid;
+
   static const light = AppPalette(
     primary: Color(0xFF0E4A34),
     primaryText: Color(0xFF0E4A34),
@@ -139,6 +146,8 @@ class AppPalette {
     activeDot: Color(0xFF3DDC84),
     heroGreen: Color(0xFF0E4A34),
     heroGreenMid: Color(0xFF2D6A4F),
+    featuredGreen: Color(0xFF0E4A34),
+    featuredGreenMid: Color(0xFF2D6A4F),
   );
 
   /// Palet gelap. Latar hijau-hitam (bukan abu netral) supaya tetap senada
@@ -191,6 +200,8 @@ class AppPalette {
     activeDot: Color(0xFF3DDC84),
     heroGreen: Color(0xFF0B3D2E),
     heroGreenMid: Color(0xFF14573F),
+    featuredGreen: Color(0xFF1A5E43),
+    featuredGreenMid: Color(0xFF124632),
   );
 }
 
@@ -259,6 +270,8 @@ class AppColors {
   static Color get activeDot => _p.activeDot;
   static Color get heroGreen => _p.heroGreen;
   static Color get heroGreenMid => _p.heroGreenMid;
+  static Color get featuredGreen => _p.featuredGreen;
+  static Color get featuredGreenMid => _p.featuredGreenMid;
 
   /// Warna teks/ikon jenis (cuti, izin, dst.) yang terlalu gelap untuk latar
   /// gelap: naikkan lightness-nya, hue tetap.
@@ -314,6 +327,13 @@ class AppColors {
                 stops: const [0, 0.55],
               )
             : null,
+      );
+
+  /// Gradient kartu featured di Main Menu (Record).
+  static LinearGradient get featuredGradient => LinearGradient(
+        begin: const Alignment(-0.6, -1),
+        end: const Alignment(0.6, 1),
+        colors: [featuredGreen, featuredGreenMid],
       );
 
   /// Gradient hijau hero card.
