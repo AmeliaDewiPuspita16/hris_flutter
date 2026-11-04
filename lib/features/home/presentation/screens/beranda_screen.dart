@@ -7,6 +7,7 @@ import '../../../../core/logging/app_logger.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/double_back_to_exit.dart';
 import '../../data/announcement_repository.dart';
 import '../../data/approvals_waiting_repository.dart';
 import '../../domain/approvals_waiting_summary.dart';
@@ -34,6 +35,9 @@ import '../../../menu_portal/onlineapps/procurement/data/procurement_repository.
 import '../../../menu_portal/record/presentation/screens/record_screen.dart';
 import '../../../menu_portal/data_app/presentation/screens/data_screen.dart';
 import '../../../notifikasi/data/notification_inbox_repository.dart';
+import '../../../weather/data/weather_repository.dart';
+import '../../../weather/domain/weather_forecast.dart';
+import '../../../weather/presentation/screens/weather_forecast_screen.dart';
 import '../../../notifikasi/data/pending_approval_checker.dart';
 import '../../../notifikasi/domain/notification_category.dart';
 import '../../../notifikasi/domain/notification_filter.dart';
@@ -45,6 +49,8 @@ import '../../../gaji/presentation/screens/gaji_screen.dart';
 import '../../../hris_menu/domain/hris_menu_config.dart';
 import '../../../hris_menu/domain/hris_menu_item.dart';
 import '../../../hris_menu/presentation/screens/hris_menu_screen.dart';
+import '../../../menu_portal/onlineapps/hse_work_request/data/hse_work_request_repository.dart';
+import '../../../menu_portal/onlineapps/hse_work_request/presentation/screens/hse_work_request_list_screen.dart';
 import '../../../notifikasi/domain/app_notification.dart';
 import '../../../notifikasi/domain/notification_demo_data.dart';
 import '../../../notifikasi/presentation/notification_routes.dart';
@@ -136,6 +142,10 @@ class _BerandaScreenState extends State<BerandaScreen> {
   /// supaya pengumuman yang baru diterbitkan langsung kelihatan begitu modal
   /// ditutup tanpa perlu mengambil ulang seluruh daftar.
   List<PublishedAnnouncement> _announcements = const [];
+
+  /// Prakiraan cuaca untuk chip di header. Null selama belum termuat atau
+  /// bila gagal — chip-nya disembunyikan saja, cuaca bukan info penting.
+  WeatherForecast? _weather;
   bool _loadingAnnouncements = true;
   String? _announcementsError;
 
@@ -183,6 +193,18 @@ class _BerandaScreenState extends State<BerandaScreen> {
     _loadApprovalsWaiting();
     _loadPendingAssignments();
     _loadServerNotifications();
+    _loadWeather();
+  }
+
+  Future<void> _loadWeather() async {
+    try {
+      final forecast = await context.read<WeatherRepository>().fetchForecast();
+      if (!mounted) return;
+      setState(() => _weather = forecast);
+    } on ApiException catch (e) {
+      // Biarkan data sebelumnya (kalau ada) tetap tampil.
+      AppLogger.info('Gagal memuat prakiraan cuaca: ${e.message}');
+    }
   }
 
   Future<void> _loadAnnouncements() async {
@@ -233,6 +255,14 @@ class _BerandaScreenState extends State<BerandaScreen> {
     }
   }
 
+  /// Back sistem di tab selain Home kembali ke Home dulu (lih.
+  /// [DoubleBackToExit]); `true` = sudah ditangani.
+  bool _backToHomeTab() {
+    if (_activeTab == MainTab.home) return false;
+    _openTab(MainTab.home);
+    return true;
+  }
+
   void _openTab(MainTab tab) {
     setState(() => _activeTab = tab);
     // Data assign bisa berubah sejak Beranda dibuka (request baru lolos HOD).
@@ -264,6 +294,24 @@ class _BerandaScreenState extends State<BerandaScreen> {
   }
 
   /// Log Absensi — dibuka lewat push dari menu HRIS atau kartu jam kerja.
+  void _openWeather() {
+    final forecast = _weather;
+    if (forecast == null) return;
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => WeatherForecastScreen(
+          forecast: forecast,
+          onRefresh: () async {
+            final fresh =
+                await context.read<WeatherRepository>().fetchForecast();
+            if (mounted) setState(() => _weather = fresh);
+            return fresh;
+          },
+        ),
+      ),
+    );
+  }
+
   void _openAttendance() {
     Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => const AbsensiScreen()),
@@ -401,6 +449,7 @@ class _BerandaScreenState extends State<BerandaScreen> {
       estRequestRepository: context.read<EstRequestRepository>(),
       indentVehicleRepository: context.read<IndentVehicleRepository>(),
       procurementRepository: context.read<ProcurementRepository>(),
+      hsePermitRepository: context.read<HseWorkRequestRepository>(),
     );
     final pending = await checker.stillPending(fetched);
     if (!mounted) return;
@@ -632,12 +681,14 @@ class _BerandaScreenState extends State<BerandaScreen> {
         _loadApprovalsWaiting(),
         _loadPendingAssignments(),
         _loadServerNotifications(),
+        _loadWeather(),
       ]);
 
   int get _itApprovalCount => _approvalsWaiting.itRequest;
   int get _estApprovalCount => _approvalsWaiting.estWorkOrder;
   int get _indentVehicleApprovalCount => _approvalsWaiting.indentVehicle;
   int get _eprocurementApprovalCount => _approvalsWaiting.eprocurement;
+  int get _hseApprovalCount => _approvalsWaiting.hsePermit;
 
   /// Pindah ke tab Notifications dengan filter "Action" (yang menunggu
   /// keputusan — semua modul). Dipakai badan banner "Approvals waiting" di
@@ -690,6 +741,17 @@ class _BerandaScreenState extends State<BerandaScreen> {
         builder: (_) => ProcurementPage(
           initialStatusCode: PrStatusCode.pendingHod.code,
         ),
+      ),
+    );
+  }
+
+  /// HSE Work Permit: buka daftarnya langsung di tab Approval (antrean
+  /// HOD/HSE). Tab itu sendiri hanya muncul bila server mengakui akun ini
+  /// sebagai approver.
+  void _openHseApproval() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => const HseWorkRequestListScreen(initialTabIndex: 1),
       ),
     );
   }
@@ -788,7 +850,11 @@ class _BerandaScreenState extends State<BerandaScreen> {
               statusBarIconBrightness: Brightness.dark,
               statusBarBrightness: Brightness.light,
             ),
-      child: _buildScaffold(),
+      // Tekan back 2x untuk keluar; di tab lain, back kembali ke Home dulu.
+      child: DoubleBackToExit(
+        onBack: _backToHomeTab,
+        child: _buildScaffold(),
+      ),
     );
   }
 
@@ -834,78 +900,94 @@ class _BerandaScreenState extends State<BerandaScreen> {
       // supaya warna hijaunya tidak terpotong garis putih di atas.
       child: SafeArea(
         top: false,
-        child: RefreshIndicator(
-          onRefresh: _refreshHome,
-          color: AppColors.primaryText,
-          child: SingleChildScrollView(
-            // Tanpa ini, tarikan ke bawah tidak terdeteksi saat kontennya
-            // lebih pendek dari tinggi layar (mis. layar besar atau role
-            // dengan sedikit menu) karena tidak ada overscroll untuk ditarik.
-            physics: const AlwaysScrollableScrollPhysics(),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                HomeTopHeader(
-                  role: _role,
-                  user: widget.user,
-                ),
-                ClockStatusCard(
-                  status: _todayAttendance,
-                  isLoading: _loadingAttendance,
-                  errorMessage: _attendanceError,
-                  date: DateTime.now(),
-                  onActionTap: _openAttendance,
-                  onRetry: _loadTodayAttendance,
-                ),
-                // Shortcut approval hanya untuk HOD (role `hod`). Selama belum
-                // ada sesi (mis. saat pratinjau), jatuh ke role demo.
-                if (widget.user?.isHod ?? (_role == Role.hod))
-                  ApprovalSummaryBanner(
-                    isLoading: _loadingApprovalsWaiting,
-                    leaveCount: _leaveApprovalCount,
-                    itCount: _itApprovalCount,
-                    estCount: _estApprovalCount,
-                    indentVehicleCount: _indentVehicleApprovalCount,
-                    eprocurementCount: _eprocurementApprovalCount,
-                    onTapAll: _openApprovalNotifications,
-                    onTapLeave: _openLeaveApproval,
-                    onTapIt: _openItApproval,
-                    onTapEst: _openEstApproval,
-                    onTapIndentVehicle: _openIndentVehicleApproval,
-                    onTapEprocurement: _openEprocurementApproval,
-                  ),
-                //PendingRequestCard(
-                //  count: 2,
-                //  description: 'Overtime · Business Trip',
-                //  onTap: () => _openTab(_pengajuanTab),
-                //),
-                LayananSection(services: _buildServices()),
-                SaldoSection(
-                  balances: HomeDemoData.quotaBalancesFor(_role),
-                  onSeeAll: _openLeaveRequest,
-                ),
-                AnnouncementSection(
-                  announcements: _announcements,
-                  isLoading: _loadingAnnouncements,
-                  errorMessage: _announcementsError,
-                  onRetry: _loadAnnouncements,
-                  onTapAnnouncement: (announcement) =>
-                      AnnouncementDetailSheet.show(context, announcement),
-                  // Izin hr-announcement-post: role hrga dan admin. Selama
-                  // belum ada sesi (mis. saat pratinjau), jatuh ke role demo.
-                  canCreate: widget.user?.canPublishAnnouncement ??
-                      (_role == Role.hrPublisher),
-                  onCreateTap: _openCreateAnnouncement,
-                ),
-                // Redup + "Soon" sampai API aktivitas ada (data masih demo).
-                // Aktifkan lewat FeatureFlags.recentActivity.
-                ActivitySection(
-                  activities: HomeDemoData.recentActivities(),
-                  enabled: FeatureFlags.recentActivity,
-                ),
-              ],
+        // Header dibekukan di atas: hanya konten di bawahnya yang ikut
+        // di-scroll (dan ditarik untuk refresh).
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            HomeTopHeader(
+              role: _role,
+              user: widget.user,
+              weather: _weather?.current(_weather!.nowAtLocation()),
+              onWeatherTap: _openWeather,
             ),
-          ),
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: _refreshHome,
+                color: AppColors.primaryText,
+                child: SingleChildScrollView(
+                  // Tanpa ini, tarikan ke bawah tidak terdeteksi saat kontennya
+                  // lebih pendek dari tinggi layar (mis. layar besar atau role
+                  // dengan sedikit menu) karena tidak ada overscroll untuk ditarik.
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      ClockStatusCard(
+                        status: _todayAttendance,
+                        isLoading: _loadingAttendance,
+                        errorMessage: _attendanceError,
+                        date: DateTime.now(),
+                        onActionTap: _openAttendance,
+                        onRetry: _loadTodayAttendance,
+                      ),
+                      // Shortcut approval untuk HOD (role `hod`). Selama belum ada
+                      // sesi (mis. saat pratinjau), jatuh ke role demo. Approver
+                      // HSE belum tentu HOD, jadi banner juga tampil begitu server
+                      // melaporkan antrean HSE Work Permit untuk akun ini.
+                      if ((widget.user?.isHod ?? (_role == Role.hod)) ||
+                          _hseApprovalCount > 0)
+                        ApprovalSummaryBanner(
+                          isLoading: _loadingApprovalsWaiting,
+                          leaveCount: _leaveApprovalCount,
+                          itCount: _itApprovalCount,
+                          estCount: _estApprovalCount,
+                          indentVehicleCount: _indentVehicleApprovalCount,
+                          eprocurementCount: _eprocurementApprovalCount,
+                          hseCount: _hseApprovalCount,
+                          onTapAll: _openApprovalNotifications,
+                          onTapLeave: _openLeaveApproval,
+                          onTapIt: _openItApproval,
+                          onTapEst: _openEstApproval,
+                          onTapIndentVehicle: _openIndentVehicleApproval,
+                          onTapEprocurement: _openEprocurementApproval,
+                          onTapHse: _openHseApproval,
+                        ),
+                      //PendingRequestCard(
+                      //  count: 2,
+                      //  description: 'Overtime · Business Trip',
+                      //  onTap: () => _openTab(_pengajuanTab),
+                      //),
+                      LayananSection(services: _buildServices()),
+                      SaldoSection(
+                        balances: HomeDemoData.quotaBalancesFor(_role),
+                        onSeeAll: _openLeaveRequest,
+                      ),
+                      AnnouncementSection(
+                        announcements: _announcements,
+                        isLoading: _loadingAnnouncements,
+                        errorMessage: _announcementsError,
+                        onRetry: _loadAnnouncements,
+                        onTapAnnouncement: (announcement) =>
+                            AnnouncementDetailSheet.show(context, announcement),
+                        // Izin hr-announcement-post: role hrga dan admin. Selama
+                        // belum ada sesi (mis. saat pratinjau), jatuh ke role demo.
+                        canCreate: widget.user?.canPublishAnnouncement ??
+                            (_role == Role.hrPublisher),
+                        onCreateTap: _openCreateAnnouncement,
+                      ),
+                      // Redup + "Soon" sampai API aktivitas ada (data masih demo).
+                      // Aktifkan lewat FeatureFlags.recentActivity.
+                      ActivitySection(
+                        activities: HomeDemoData.recentActivities(),
+                        enabled: FeatureFlags.recentActivity,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

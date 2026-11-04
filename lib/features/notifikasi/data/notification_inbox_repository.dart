@@ -15,9 +15,13 @@ class NotificationInboxPage {
   final int unread;
 }
 
-/// Notifikasi IT Request, eProcurement, EST Work Order, dan Indent Vehicle
-/// yang dikirim backend (sumber yang sama dengan push FCM-nya). Tidak tahu
-/// soal HTTP — itu urusan [ApiClient].
+/// Notifikasi IT Request, eProcurement, EST Work Order, Indent Vehicle, dan
+/// HSE Work Permit yang dikirim backend (sumber yang sama dengan push
+/// FCM-nya). Tidak tahu soal HTTP — itu urusan [ApiClient].
+///
+/// Inbox sengaja mengambil semua modul sekaligus; penyaringan per jenis
+/// dilakukan di aplikasi lewat `module` tiap baris. Server juga menerima
+/// `?module=` (mis. `hse_permit`) bila kelak butuh tampilan per modul.
 ///
 /// Semua method melempar [ApiException] bila gagal.
 class NotificationInboxRepository {
@@ -85,6 +89,7 @@ class NotificationInboxRepository {
         NotificationLink.moduleIndentVehicle =>
           NotificationCategory.indentVehicle,
         NotificationLink.moduleEprocurement => NotificationCategory.procurement,
+        NotificationLink.moduleHsePermit => NotificationCategory.hsePermit,
         _ => NotificationCategory.approval,
       };
 }

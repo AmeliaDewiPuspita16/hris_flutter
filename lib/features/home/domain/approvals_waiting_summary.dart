@@ -8,6 +8,7 @@ class ApprovalsWaitingSummary {
     required this.estWorkOrder,
     required this.indentVehicle,
     required this.eprocurement,
+    this.hsePermit = 0,
   });
 
   /// Dipakai sebelum respons pertama datang / saat gagal dimuat, supaya
@@ -26,9 +27,15 @@ class ApprovalsWaitingSummary {
   final int indentVehicle;
   final int eprocurement;
 
+  /// Antrean HSE Work Permit (stage HOD maupun HSE) — ikut dijumlahkan
+  /// server ke [total].
+  final int hsePermit;
+
   factory ApprovalsWaitingSummary.fromJson(Map<String, dynamic> json) {
     final categories = json['categories'];
-    final cat = categories is Map<String, dynamic> ? categories : const <String, dynamic>{};
+    final cat = categories is Map<String, dynamic>
+        ? categories
+        : const <String, dynamic>{};
 
     return ApprovalsWaitingSummary(
       total: _readInt(json, 'total'),
@@ -36,6 +43,7 @@ class ApprovalsWaitingSummary {
       estWorkOrder: _readInt(cat, 'est_work_order'),
       indentVehicle: _readInt(cat, 'indent_vehicle'),
       eprocurement: _readInt(cat, 'eprocurement'),
+      hsePermit: _readInt(cat, 'hse_permit'),
     );
   }
 

@@ -2,15 +2,15 @@ import 'package:flutter/material.dart';
 
 import '../../../../../../../core/theme/app_colors.dart';
 import '../../../../../../../core/theme/app_text_styles.dart';
-import '../../../../../../../core/widgets/app_card.dart';
 import '../../../../../../../core/widgets/app_text_field.dart';
-import '../../../../../../../core/widgets/field_label_row.dart';
+import 'hse_page_chrome.dart';
 
-/// Satu grup checklist bertitel, mis. "General Checklist".
+/// Satu grup checklist bertitel, mis. "General Checklist", dalam kartu
+/// [HseSectionCard].
 ///
 /// Set [onChanged] & [otherController] untuk mode isi (form Add Request);
-/// biarkan null untuk mode baca saja (layar detail) — item yang tidak
-/// tercentang otomatis tidak ditampilkan sama sekali di mode baca
+/// [readOnly] untuk mode baca (review) — item yang tidak tercentang tidak
+/// ditampilkan sama sekali di mode baca.
 class HseChecklistGroup extends StatelessWidget {
   const HseChecklistGroup({
     super.key,
@@ -21,6 +21,7 @@ class HseChecklistGroup extends StatelessWidget {
     this.otherController,
     this.readOnly = false,
     this.required = false,
+    this.icon = Icons.fact_check_outlined,
   });
 
   final String title;
@@ -30,6 +31,7 @@ class HseChecklistGroup extends StatelessWidget {
   final TextEditingController? otherController;
   final bool readOnly;
   final bool required;
+  final IconData icon;
 
   @override
   Widget build(BuildContext context) {
@@ -43,62 +45,86 @@ class HseChecklistGroup extends StatelessWidget {
 
       return Padding(
         padding: const EdgeInsets.only(bottom: 16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(title, style: AppTextStyles.sectionTitle),
-            const SizedBox(height: 8),
-            AppCard(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-              child: Column(
-                children: [
-                  for (final item in chosen) _ReadOnlyRow(label: item),
-                  if (hasOther) _ReadOnlyRow(label: otherController!.text),
-                ],
-              ),
-            ),
-          ],
+        child: HseSectionCard(
+          title: title,
+          icon: icon,
+          child: Column(
+            children: [
+              for (final item in chosen) _ReadOnlyRow(label: item),
+              if (hasOther) _ReadOnlyRow(label: otherController!.text),
+            ],
+          ),
         ),
       );
     }
 
+    final count = options.where(selected.contains).length;
+
     return Padding(
-      padding: const EdgeInsets.only(bottom: 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          FieldLabelRow(label: title, required: required),
-          const SizedBox(height: 4),
-          AppCard(
-            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-            child: Column(
-              children: [
-                for (final option in options)
-                  _CheckRow(
-                    label: option,
-                    checked: selected.contains(option),
-                    onTap: () => onChanged?.call(option),
-                  ),
-              ],
-            ),
-          ),
-          if (otherController != null) ...[
-            const SizedBox(height: 10),
-            AppTextField(
-              label: 'Lainnya (opsional)',
-              controller: otherController!,
-              hint: 'Isi manual bila tidak ada di daftar di atas',
-            ),
+      padding: const EdgeInsets.only(bottom: 16),
+      child: HseSectionCard(
+        title: title,
+        icon: icon,
+        required: required,
+        trailing: HseCountPill(count: count, total: options.length),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            for (final option in options) ...[
+              _CheckRow(
+                label: option,
+                checked: selected.contains(option),
+                onTap: () => onChanged?.call(option),
+              ),
+              const SizedBox(height: 8),
+            ],
+            if (otherController != null) ...[
+              const SizedBox(height: 4),
+              AppTextField(
+                label: 'Other (optional)',
+                controller: otherController!,
+                hint: 'Fill in manually if not listed above',
+              ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
 }
 
+/// Pil kecil "3/8" — berapa pilihan yang sudah dicentang.
+class HseCountPill extends StatelessWidget {
+  const HseCountPill({super.key, required this.count, required this.total});
+
+  final int count;
+  final int total;
+
+  @override
+  Widget build(BuildContext context) {
+    final any = count > 0;
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 180),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: any ? AppColors.primary : AppColors.neutralBg,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        '$count/$total',
+        style: AppTextStyles.caption.copyWith(
+          fontSize: 11.5,
+          fontWeight: FontWeight.w800,
+          color: any ? Colors.white : AppColors.textMuted,
+        ),
+      ),
+    );
+  }
+}
+
+/// Satu baris checklist: kotak bersudut yang ikut berwarna saat dicentang.
 class _CheckRow extends StatelessWidget {
-  const _CheckRow(
-      {required this.label, required this.checked, required this.onTap});
+  const _CheckRow({required this.label, required this.checked, required this.onTap});
 
   final String label;
   final bool checked;
@@ -106,29 +132,52 @@ class _CheckRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(
-              checked ? Icons.check_box : Icons.check_box_outline_blank,
-              size: 20,
-              color: checked ? AppColors.primaryText : AppColors.textMuted,
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                label,
-                style: AppTextStyles.body.copyWith(
-                  color: checked ? AppColors.text : AppColors.textMid,
-                  fontWeight: checked ? FontWeight.w600 : FontWeight.w400,
+    return Material(
+      color: checked ? AppColors.presentBg : AppColors.card,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(
+          color: checked ? AppColors.primaryText.withValues(alpha: 0.35) : AppColors.border,
+        ),
+      ),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 160),
+                width: 22,
+                height: 22,
+                decoration: BoxDecoration(
+                  color: checked ? AppColors.primary : AppColors.card,
+                  borderRadius: BorderRadius.circular(7),
+                  border: Border.all(
+                    color: checked ? AppColors.primary : AppColors.textMuted,
+                    width: 1.6,
+                  ),
+                ),
+                child: checked
+                    ? const Icon(Icons.check_rounded, size: 16, color: Colors.white)
+                    : null,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  label,
+                  style: AppTextStyles.body.copyWith(
+                    fontSize: 13.5,
+                    height: 1.4,
+                    color: checked ? AppColors.text : AppColors.textMid,
+                    fontWeight: checked ? FontWeight.w600 : FontWeight.w400,
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -143,13 +192,15 @@ class _ReadOnlyRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.check_circle, size: 16, color: AppColors.present),
-          const SizedBox(width: 8),
-          Expanded(child: Text(label, style: AppTextStyles.body)),
+          Icon(Icons.check_circle_rounded, size: 18, color: AppColors.present),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(label, style: AppTextStyles.body.copyWith(fontSize: 13.5, height: 1.4)),
+          ),
         ],
       ),
     );

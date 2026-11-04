@@ -118,7 +118,9 @@ void main() {
 
     expect(find.text('Request tidak ditemukan.'), findsOneWidget);
 
-    await tester.tap(find.text('Coba lagi'));
+    // Pesan galat ada di bawah kartu Request Detail — gulir dulu ke sana.
+    await tester.ensureVisible(find.text('Try again'));
+    await tester.tap(find.text('Try again'));
     await settle(tester);
 
     expect(find.text('Frida Khaerani'), findsOneWidget);

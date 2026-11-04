@@ -9,6 +9,8 @@
          walau user belum pernah diminta izin. Diminta runtime lewat
          FirebaseMessaging.requestPermission() di NotificationService. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
 
     <application
         android:label="BIIE Portal"

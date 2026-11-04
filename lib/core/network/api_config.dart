@@ -96,6 +96,16 @@ class ApiConfig {
   /// karakter). Setelah ini status WO menjadi `finished`.
   static String estRequestRating(int id) => '$estRequest/$id/rating';
 
+  /// HSE Work Permit — daftar (`?status=`, `?mine=1`, paginasi) dan submit
+  /// di path ini, detail/hapus di `$hsePermit/{id}`.
+  static const String hsePermit = '/api/portal/apps/hse_permit';
+  static const String hsePermitOptions = '$hsePermit/options';
+  static const String hsePermitApprovals = '$hsePermit/approvals';
+  static String hsePermitDetail(int id) => '$hsePermit/$id';
+  static String hsePermitApprove(int id) => '$hsePermit/$id/approve';
+  static String hsePermitReject(int id) => '$hsePermit/$id/reject';
+  static String hsePermitClose(int id) => '$hsePermit/$id/close';
+
   /// Daftar driver untuk dropdown Asign Vehicle (role admin driver).
   /// Responnya array polos, bukan amplop {data: ...}
   static const String indentDrivers = '/api/indent/admin/list_driver';
@@ -150,6 +160,10 @@ class ApiConfig {
   /// dan, nanti, tab Summary di Overtime Request.
   static const String overtime = '/api/portal/apps/hris/overtime';
 
+  /// Prakiraan cuaca Teluk Lobam per 3 jam (sumber BMKG, di-cache server).
+  /// `data`: location, slots[], updated_at; `meta`: source, source_url, stale.
+  static const String weather = '/api/portal/apps/weather';
+
   // ------------------------------ Notifications ------------------------
 
   /// Ringkasan jumlah approval yang masih menunggu, dipecah per modul
@@ -189,4 +203,28 @@ class ApiConfig {
   /// inline`), bukan JSON. Galatnya JSON `{message}`: 401, 403 (Daily
   /// Worker), 404, 422 (Form Template, bukan PDF).
   static String imsDocumentPdf(int id) => '$imsDocuments/$id/pdf';
+
+  // EST Project Monitoring
+  static const String estExecutiveDashboard = '/api/est/dashboard/executive';
+  static const String estProjects = '/api/est/projects';
+  static String estProject(int id) => '$estProjects/$id';
+  static String estProjectWorkers(int id) => '$estProjects/$id/workers';
+  static String estAssignTeam(int id) => '$estProjects/$id/assign';
+  static String estTransferWorkers(int id) =>
+      '$estProjects/$id/workers/transfer';
+  static String estUnassignWorkers(int id) =>
+      '$estProjects/$id/workers/unassign';
+  static String estCloseProject(int id) => '$estProjects/$id/close';
+  static String estSubstitute(int projectId) =>
+      '$estProjects/$projectId/substitute';
+  static String estEndSubstitute(int projectId, int assignmentId) =>
+      '$estProjects/$projectId/substitute/$assignmentId';
+  static String estOpenSession(int projectId) =>
+      '$estProjects/$projectId/sessions/open';
+  static String estCloseSession(int projectId) =>
+      '$estProjects/$projectId/sessions/close';
+  static const String estMandors = '/api/est/resources/mandors';
+  static const String estAvailableWorkers =
+      '/api/est/resources/workers/available';
+  static const String estAllWorkers = '/api/est/resources/workers/all';
 }

@@ -45,6 +45,14 @@ extension HseRequestStatusX on HseRequestStatus {
         HseRequestStatus.reject => AppColors.rejectedBg,
       };
 
+  /// Nilai `?status=` untuk `GET /hse_permit`.
+  String toApi() => switch (this) {
+        HseRequestStatus.onWaiting => 'waiting',
+        HseRequestStatus.onProgress => 'on_progress',
+        HseRequestStatus.done => 'done',
+        HseRequestStatus.reject => 'reject',
+      };
+
   static HseRequestStatus fromApi(String? value) => switch (value) {
         'on_progress' || 'On Progress' => HseRequestStatus.onProgress,
         'done' || 'Done' => HseRequestStatus.done,

@@ -5,8 +5,11 @@ import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/user_avatar.dart';
 import '../../../auth/domain/auth_user.dart';
 import '../../../shared/domain/role.dart';
+import '../../../weather/domain/weather_forecast.dart';
+import '../../../weather/presentation/widgets/weather_header_chip.dart';
 
-/// Panel hijau di atas: avatar inisial, sapaan, dan jabatan.
+/// Panel hijau di atas: avatar inisial, sapaan, jabatan, dan (bila ada)
+/// chip cuaca di kanan.
 ///
 /// Warnanya sengaja dibiarkan naik sampai ke balik status bar — karena itu
 /// layar pemanggilnya tidak boleh membungkus bagian ini dengan SafeArea atas,
@@ -16,6 +19,8 @@ class HomeTopHeader extends StatelessWidget {
     super.key,
     required this.role,
     this.user,
+    this.weather,
+    this.onWeatherTap,
   });
 
   final Role role;
@@ -23,6 +28,10 @@ class HomeTopHeader extends StatelessWidget {
   /// Pengguna yang sedang masuk. Null berarti belum ada sesi — tampilan
   /// jatuh kembali ke data demo milik [role].
   final AuthUser? user;
+
+  /// Slot cuaca saat ini; null = chip cuaca tidak ditampilkan.
+  final WeatherSlot? weather;
+  final VoidCallback? onWeatherTap;
 
   @override
   Widget build(BuildContext context) {
@@ -86,6 +95,10 @@ class HomeTopHeader extends StatelessWidget {
               ],
             ),
           ),
+          if (weather != null) ...[
+            const SizedBox(width: 10),
+            WeatherHeaderChip(slot: weather!, onTap: onWeatherTap),
+          ],
         ],
       ),
     );

@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hris_mobile/features/menu_portal/data_app/indent_vehicle/presentation/screens/indent_vehicle_screen.dart';
+import 'package:hris_mobile/features/menu_portal/onlineapps/hse_work_request/presentation/screens/hse_work_request_list_screen.dart';
 import 'package:hris_mobile/features/menu_portal/onlineapps/procurement/presentation/screens/procurement_page.dart';
 import 'package:hris_mobile/features/menu_portal/onlineapps/work_order/est_request/presentation/screens/est_request_screen.dart';
 import 'package:hris_mobile/features/menu_portal/onlineapps/work_order/it_request/presentation/screens/it_request_screen.dart';
@@ -97,6 +98,18 @@ void main() {
 
       expect(approver.initialStatusCode, 'pending_hod');
       expect(requester.initialStatusCode, isNull);
+    });
+
+    test('HSE permit: approver ke tab Approval, requester ke daftar', () {
+      final approver = NotificationRoutes.screenFor(
+        link('hse_permit', 'approver'),
+      ) as HseWorkRequestListScreen;
+      final requester = NotificationRoutes.screenFor(
+        link('hse_permit', 'requester'),
+      ) as HseWorkRequestListScreen;
+
+      expect(approver.initialTabIndex, 1);
+      expect(requester.initialTabIndex, 0);
     });
 
     test('modul tidak dikenal tidak membuka apa-apa', () {

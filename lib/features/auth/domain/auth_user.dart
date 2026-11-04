@@ -194,6 +194,14 @@ class AuthUser {
   /// menu, server tetap penentu terakhir.
   bool get canAccessProcurement => eprocurementRoles.any(hasRole);
 
+  /// Boleh membuka menu EST Project Monitoring — role `admin` atau
+  /// `est building`.
+  ///
+  /// Sama seperti getter lain di sini: hanya untuk mengaktifkan menu,
+  /// server tetap penentu terakhir.
+  bool get canAccessEstProjectMonitoring =>
+      hasRole('admin') || hasRole('est building');
+
   bool hasRole(String role) {
     final target = role.toLowerCase();
     return roles.any((r) => r.toLowerCase() == target);

@@ -19,7 +19,9 @@ import 'features/auth/presentation/bloc/auth/auth_event.dart';
 import 'features/auth/presentation/widgets/auth_gate.dart';
 import 'features/home/data/announcement_repository.dart';
 import 'features/home/data/approvals_waiting_repository.dart';
+import 'features/menu_portal/data_app/est_project_monitoring/data/est_project_repository.dart';
 import 'features/menu_portal/data_app/indent_vehicle/data/indent_vehicle_repository.dart';
+import 'features/menu_portal/onlineapps/hse_work_request/data/hse_work_request_repository.dart';
 import 'features/menu_portal/onlineapps/procurement/data/procurement_repository.dart';
 import 'features/menu_portal/onlineapps/work_order/est_request/data/est_request_repository.dart';
 import 'features/menu_portal/onlineapps/work_order/it_request/data/it_request_repository.dart';
@@ -31,6 +33,7 @@ import 'features/profil/data/profil_repository.dart';
 import 'features/shared/data/department_repository.dart';
 import 'features/menu_portal/record/ims_document/master_document_file/data/master_document_repository.dart';
 import 'firebase_options.dart';
+import 'features/weather/data/weather_repository.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -78,6 +81,7 @@ Future<void> main() async {
       itRequestRepository: ItRequestRepository(apiClient: apiClient),
       estRequestRepository: EstRequestRepository(apiClient: apiClient),
       indentVehicleRepository: IndentVehicleRepository(apiClient: apiClient),
+      estProjectRepository: EstProjectRepository(apiClient: apiClient),
       profilRepository: ProfilRepository(apiClient: apiClient),
       absensiRepository: AbsensiRepository(apiClient: apiClient),
       pengajuanRepository: PengajuanRepository(apiClient: apiClient),
@@ -87,6 +91,8 @@ Future<void> main() async {
       notificationInboxRepository:
           NotificationInboxRepository(apiClient: apiClient),
       masterDocumentRepository: MasterDocumentRepository(apiClient: apiClient),
+      hseWorkRequestRepository: HseWorkRequestRepository(apiClient: apiClient),
+      weatherRepository: WeatherRepository(apiClient: apiClient),
     ),
   );
 
@@ -109,6 +115,7 @@ class MyApp extends StatelessWidget {
     ItRequestRepository? itRequestRepository,
     EstRequestRepository? estRequestRepository,
     IndentVehicleRepository? indentVehicleRepository,
+    EstProjectRepository? estProjectRepository,
     ProfilRepository? profilRepository,
     AbsensiRepository? absensiRepository,
     PengajuanRepository? pengajuanRepository,
@@ -116,6 +123,8 @@ class MyApp extends StatelessWidget {
     ApprovalsWaitingRepository? approvalsWaitingRepository,
     NotificationInboxRepository? notificationInboxRepository,
     MasterDocumentRepository? masterDocumentRepository,
+    HseWorkRequestRepository? hseWorkRequestRepository,
+    WeatherRepository? weatherRepository,
   })  : themeCubit = themeCubit ?? ThemeCubit(),
         departmentRepository = departmentRepository ??
             DepartmentRepository(apiClient: ApiClient()),
@@ -129,6 +138,8 @@ class MyApp extends StatelessWidget {
             EstRequestRepository(apiClient: ApiClient()),
         indentVehicleRepository = indentVehicleRepository ??
             IndentVehicleRepository(apiClient: ApiClient()),
+        estProjectRepository = estProjectRepository ??
+            EstProjectRepository(apiClient: ApiClient()),
         profilRepository =
             profilRepository ?? ProfilRepository(apiClient: ApiClient()),
         absensiRepository =
@@ -142,7 +153,11 @@ class MyApp extends StatelessWidget {
         notificationInboxRepository = notificationInboxRepository ??
             NotificationInboxRepository(apiClient: ApiClient()),
         masterDocumentRepository = masterDocumentRepository ??
-            MasterDocumentRepository(apiClient: ApiClient());
+            MasterDocumentRepository(apiClient: ApiClient()),
+        hseWorkRequestRepository = hseWorkRequestRepository ??
+            HseWorkRequestRepository(apiClient: ApiClient()),
+        weatherRepository =
+            weatherRepository ?? WeatherRepository(apiClient: ApiClient());
 
   final AuthRepository authRepository;
   final ThemeCubit themeCubit;
@@ -152,6 +167,7 @@ class MyApp extends StatelessWidget {
   final ItRequestRepository itRequestRepository;
   final EstRequestRepository estRequestRepository;
   final IndentVehicleRepository indentVehicleRepository;
+  final EstProjectRepository estProjectRepository;
   final ProfilRepository profilRepository;
   final AbsensiRepository absensiRepository;
   final PengajuanRepository pengajuanRepository;
@@ -159,6 +175,8 @@ class MyApp extends StatelessWidget {
   final ApprovalsWaitingRepository approvalsWaitingRepository;
   final NotificationInboxRepository notificationInboxRepository;
   final MasterDocumentRepository masterDocumentRepository;
+  final HseWorkRequestRepository hseWorkRequestRepository;
+  final WeatherRepository weatherRepository;
 
   @override
   Widget build(BuildContext context) {
@@ -175,6 +193,7 @@ class MyApp extends StatelessWidget {
         RepositoryProvider.value(value: itRequestRepository),
         RepositoryProvider.value(value: estRequestRepository),
         RepositoryProvider.value(value: indentVehicleRepository),
+        RepositoryProvider.value(value: estProjectRepository),
         RepositoryProvider.value(value: profilRepository),
         RepositoryProvider.value(value: absensiRepository),
         RepositoryProvider.value(value: pengajuanRepository),
@@ -182,6 +201,8 @@ class MyApp extends StatelessWidget {
         RepositoryProvider.value(value: approvalsWaitingRepository),
         RepositoryProvider.value(value: notificationInboxRepository),
         RepositoryProvider.value(value: masterDocumentRepository),
+        RepositoryProvider.value(value: hseWorkRequestRepository),
+        RepositoryProvider.value(value: weatherRepository),
       ],
       child: BlocProvider.value(
         value: themeCubit,

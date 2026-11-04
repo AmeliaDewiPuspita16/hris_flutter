@@ -77,6 +77,9 @@
 		     aplikasi begitu kamera dibuka. -->
 		<key>NSCameraUsageDescription</key>
 		<string>Aplikasi memerlukan akses kamera untuk mengambil foto profil.</string>
+		<!-- Dibutuhkan geolocator saat memilih titik lokasi proyek EST di peta. -->
+		<key>NSLocationWhenInUseUsageDescription</key>
+		<string>Lokasi dipakai untuk menandai titik proyek di peta.</string>
 		<!-- Dibutuhkan supaya push notification FCM bisa diterima & diproses
 		     (termasuk silent/data-only push) saat app di background.
 		     Capability "Push Notifications" & "Background Modes" di Xcode

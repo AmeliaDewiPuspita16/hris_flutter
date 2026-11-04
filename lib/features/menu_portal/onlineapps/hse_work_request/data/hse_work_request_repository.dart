@@ -1,138 +1,148 @@
-import '../domain/hse_request_category.dart';
+import '../../../../../core/network/api_client.dart';
+import '../../../../../core/network/api_config.dart';
+import '../../../../../core/network/api_exception.dart';
+import '../domain/hse_form_options.dart';
+import '../domain/hse_permit_page.dart';
 import '../domain/hse_request_status.dart';
 import '../domain/hse_work_request.dart';
 
-/// repository ini untuk sementara mengembalikan data demo statis sebelum tersambung API.
+/// Hasil aksi yang mengubah permit: pesan dari server + permit terbaru.
+typedef HsePermitResult = ({String message, HseWorkRequest permit});
+
+/// Akses API HSE Work Permit (`/api/portal/apps/hse_permit`).
 ///
-/// Begitu endpoint-nya siap, cukup ganti isi method di bawah ini dengan
-/// pemanggilan `ApiClient` — signature method & model [HseWorkRequest] tidak perlu berubah,
-/// jadi layar-layar yang sudah memakai repository ini tidak perlu disentuh.
+/// Semua method melempar [ApiException] bila gagal; pesan validasi 422
+/// (mis. dokumen NON-RUTIN belum lengkap) sudah siap ditampilkan.
 class HseWorkRequestRepository {
-  HseWorkRequestRepository();
+  HseWorkRequestRepository({required ApiClient apiClient})
+      : _apiClient = apiClient;
 
-  Future<List<HseWorkRequest>> fetchRequests({HseRequestStatus? status}) async {
-    await Future.delayed(const Duration(milliseconds: 300));
-    if (status == null) return List.unmodifiable(_demoData);
-    return _demoData.where((r) => r.status == status).toList(growable: false);
+  final ApiClient _apiClient;
+
+  /// Isi dropdown & checklist form — `GET /hse_permit/options`.
+  Future<HseFormOptions> fetchOptions() async {
+    final data = await _apiClient.get(ApiConfig.hsePermitOptions);
+    return HseFormOptions.fromJson(data);
   }
 
+  /// Daftar permit — `GET /hse_permit`.
+  ///
+  /// Tanpa [status], server menampilkan semua permit KECUALI yang Reject.
+  /// [mine] membatasi ke permit milik user yang login.
+  Future<HsePermitPage> fetchPermits({
+    int page = 1,
+    int perPage = 20,
+    HseRequestStatus? status,
+    bool mine = false,
+  }) async {
+    final envelope = await _apiClient.getEnvelope(
+      _withQuery(ApiConfig.hsePermit, {
+        'page': '$page',
+        'per_page': '$perPage',
+        if (status != null) 'status': status.toApi(),
+        if (mine) 'mine': '1',
+      }),
+    );
+    return HsePermitPage.fromEnvelope(envelope);
+  }
+
+  /// Detail lengkap (checklist, dokumen, closing) — `GET /hse_permit/{id}`.
   Future<HseWorkRequest> fetchDetail(int id) async {
-    await Future.delayed(const Duration(milliseconds: 200));
-    return _demoData.firstWhere(
-      (r) => r.id == id,
-      orElse: () => throw StateError('Permit HSE #$id tidak ditemukan.'),
-    );
+    final data = await _apiClient.get(ApiConfig.hsePermitDetail(id));
+    return _parse(data);
   }
 
-  /// Mengirim permit baru. Selama belum ada API, cuma menandai draft
-  /// sebagai "terkirim" (status On Waiting) supaya alur form bisa dicoba
-  /// end-to-end di layar.
-  Future<HseWorkRequest> submit(HseWorkRequest draft) async {
-    await Future.delayed(const Duration(milliseconds: 500));
-    return draft.copyWith(
-      id: DateTime.now().millisecondsSinceEpoch,
-      idRegister: 'HSE/REG/DRAFT/${DateTime.now().millisecondsSinceEpoch}',
-      status: HseRequestStatus.onWaiting,
+  /// Mengajukan permit — `POST /hse_permit`.
+  ///
+  /// Selalu dikirim multipart: NON-RUTIN wajib begitu (ada 3 PDF), dan
+  /// RUTIN juga diterima server dalam bentuk form.
+  Future<HsePermitResult> submit(HsePermitDraft draft) async {
+    final body = await _apiClient.postMultipartJson(
+      ApiConfig.hsePermit,
+      fields: draft.toFields(),
+      files: {
+        for (final entry in draft.documents.entries) entry.key: [entry.value],
+      },
     );
+    return _result(body, 'HSE work permit submitted.');
   }
 
-  static final List<HseWorkRequest> _demoData = [
-    HseWorkRequest(
-      id: 1017,
-      idRegister: 'HSE/REG/2026/09/017',
-      pic: 'Diko Despabera Rosdianto',
-      department: 'EST',
-      category: HseRequestCategory.nonRutin,
-      location: 'Jalan Lot 20 PT BIIE',
-      materials: 'Genset, kabel las, alat las',
-      totalWorkers: 4,
-      dateStart: DateTime(2026, 9, 11),
-      dateEnd: DateTime(2026, 9, 11),
-      generalChecklist: const [
-        'Timeline pekerjaan tersedia',
-        'Melakukan briefing kerja',
-      ],
-      typeOfWorks: const [
-        'Hot work',
-        'Heavy equipment operation',
-        'Shut down & start up engine generator',
-      ],
-      ppe: const ['Helm safety', 'Sepatu safety', 'Ear plug'],
-      acknowledgeBy: 'Mulyadi',
-      approvalBy: 'Habib Twindy Lubis',
-      status: HseRequestStatus.onProgress,
-    ),
-    HseWorkRequest(
-      id: 1093,
-      idRegister: 'HSE/REG/2026/08/093',
-      pic: 'Alen Pepa',
-      department: 'EST',
-      category: HseRequestCategory.rutin,
-      location: 'STP 1, STP 2, Dorm Kawasan BIE',
-      materials: 'Tabung gas, blower',
-      totalWorkers: 2,
-      dateStart: DateTime(2026, 8, 20),
-      dateEnd: DateTime(2026, 8, 20),
-      generalChecklist: const ['Alat pendeteksi gas dan berfungsi dengan baik'],
-      typeOfWorks: const ['Confined space'],
-      ppe: const ['Full body harness', 'Respirator protection'],
-      acknowledgeBy: 'Habib Twindy Lubis',
-      approvalBy: 'Mulyadi',
-      status: HseRequestStatus.onProgress,
-    ),
-    HseWorkRequest(
-      id: 7,
-      idRegister: 'HSE/REG/2026/08/007',
-      pic: 'Reynold Pandiangan',
-      department: 'FIN',
-      category: HseRequestCategory.rutin,
-      location: 'PH 2 & RWPS',
-      materials: '-',
-      totalWorkers: 1,
-      dateStart: DateTime(2026, 8, 18),
-      dateEnd: DateTime(2026, 8, 18),
-      generalChecklist: const [],
-      typeOfWorks: const [],
-      ppe: const [],
-      approvalBy: 'Habib Twindy Lubis',
-      status: HseRequestStatus.onWaiting,
-    ),
-    HseWorkRequest(
-      id: 16,
-      idRegister: 'HSE/REG/2026/09/016',
-      pic: 'Reza Zulfiansyah',
-      department: 'EVD',
-      category: HseRequestCategory.rutin,
-      location: 'BIEV depan pos security',
-      materials: 'Gerinda potong, APAR',
-      totalWorkers: 3,
-      dateStart: DateTime(2026, 9, 2),
-      dateEnd: DateTime(2026, 9, 2),
-      generalChecklist: const [
-        'Peralatan kerja dalam kondisi baik dan tidak ada tools yang rusak',
-      ],
-      typeOfWorks: const ['Hot work'],
-      otherTypeOfWork: 'Trimming bafia',
-      ppe: const ['Helm safety', 'Kacamata safety', 'Sarung tangan / sarung tangan las'],
-      acknowledgeBy: 'Habib Twindy Lubis',
-      approvalBy: 'Kiki Mulyadi',
-      status: HseRequestStatus.done,
-    ),
-    HseWorkRequest(
-      id: 2025903,
-      idRegister: 'HSE/REG/2025/09/003',
-      pic: 'Anastacia Febriyanti Sibarani',
-      department: 'EST',
-      category: HseRequestCategory.nonRutin,
-      location: 'WTP 03',
-      materials: 'Tangga, tali pengaman',
-      totalWorkers: 2,
-      dateStart: DateTime(2025, 9, 22),
-      dateEnd: DateTime(2025, 9, 22),
-      generalChecklist: const [],
-      typeOfWorks: const ['Working at height', 'Hot work'],
-      ppe: const [],
-      status: HseRequestStatus.reject,
-    ),
-  ];
+  /// Antrean approval — `GET /hse_permit/approvals`.
+  ///
+  /// [stage] `hod` / `hse`; null = semua stage milik user. Akun yang bukan
+  /// approver dibalas 403 (`ApiErrorKind.unauthorized`).
+  Future<HsePermitPage> fetchApprovals({
+    String? stage,
+    int page = 1,
+    int perPage = 100,
+  }) async {
+    final envelope = await _apiClient.getEnvelope(
+      _withQuery(ApiConfig.hsePermitApprovals, {
+        'page': '$page',
+        'per_page': '$perPage',
+        if (stage != null) 'stage': stage,
+      }),
+    );
+    return HsePermitPage.fromEnvelope(envelope);
+  }
+
+  /// `POST /hse_permit/{id}/approve` (tanpa body).
+  Future<HsePermitResult> approve(int id) async {
+    final body = await _apiClient.postJson(ApiConfig.hsePermitApprove(id));
+    return _result(body, 'HSE work permit approved.');
+  }
+
+  /// `POST /hse_permit/{id}/reject` (tanpa body — alasan belum didukung).
+  Future<HsePermitResult> reject(int id) async {
+    final body = await _apiClient.postJson(ApiConfig.hsePermitReject(id));
+    return _result(body, 'HSE work permit rejected.');
+  }
+
+  /// Menutup permit On Progress milik sendiri — `POST /hse_permit/{id}/close`.
+  /// [evidencePath]: jpeg/jpg/png/gif/pdf, maks 10 MB.
+  Future<HsePermitResult> close(
+    int id, {
+    required String description,
+    required String evidencePath,
+  }) async {
+    final body = await _apiClient.postMultipartJson(
+      ApiConfig.hsePermitClose(id),
+      fields: {'description': description.trim()},
+      files: {
+        'evidence': [evidencePath],
+      },
+    );
+    return _result(body, 'HSE work permit closed.');
+  }
+
+  /// Menghapus permit milik sendiri yang masih waiting —
+  /// `DELETE /hse_permit/{id}`. Mengembalikan pesan dari server.
+  Future<String> delete(int id) async {
+    final body = await _apiClient.deleteJson(ApiConfig.hsePermitDetail(id));
+    return _message(body) ?? 'HSE work permit deleted.';
+  }
+
+  HsePermitResult _result(Map<String, dynamic> body, String fallback) {
+    final data = body['data'];
+    if (data is! Map<String, dynamic>) throw const ApiException.server();
+    return (message: _message(body) ?? fallback, permit: _parse(data));
+  }
+
+  HseWorkRequest _parse(Map<String, dynamic> data) {
+    try {
+      return HseWorkRequest.fromJson(data);
+    } on FormatException {
+      throw const ApiException.server(
+        'The server response for this permit was not recognized.',
+      );
+    }
+  }
+
+  static String? _message(Map<String, dynamic> body) {
+    final message = body['message'];
+    return message is String && message.isNotEmpty ? message : null;
+  }
+
+  static String _withQuery(String path, Map<String, String> query) =>
+      Uri(path: path, queryParameters: query).toString();
 }

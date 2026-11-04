@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+import '../../../../auth/presentation/bloc/auth/auth_bloc.dart';
 
 import '../../indent_vehicle/presentation/screens/indent_vehicle_screen.dart';
 import '../../est_project_monitoring/presentation/screens/est_project_monitoring_screen.dart';
@@ -15,6 +18,11 @@ class DataScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // EST Project Monitoring hanya aktif untuk role `admin` / `est building`.
+    // Tanpa sesi (user null) tile ikut redup.
+    final user = context.read<AuthBloc>().state.session?.user;
+    final canOpenEst = user?.canAccessEstProjectMonitoring ?? false;
+
     final items = DataDemoData.items(
       // null = belum siap: tile tampil redup & tidak bisa diketuk.
       onAwardRecognition: null,
@@ -22,9 +30,13 @@ class DataScreen extends StatelessWidget {
       onCatalogKitchen: null,
       onDailyWorker: null,
       onDormitoryBie: null,
-      onEstProjectMonitoring: () => Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => EstProjectMonitoringScreen()),
-      ),
+      onEstProjectMonitoring: canOpenEst
+          ? () => Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => const EstProjectMonitoringScreen(),
+                ),
+              )
+          : null,
       onExportImport: null,
       onFacility: null,
       onFoodCost: null,
