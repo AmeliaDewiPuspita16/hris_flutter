@@ -7,6 +7,7 @@ import '../../../../core/logging/app_logger.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/double_back_to_exit.dart';
 import '../../data/announcement_repository.dart';
 import '../../data/approvals_waiting_repository.dart';
 import '../../domain/approvals_waiting_summary.dart';
@@ -233,6 +234,14 @@ class _BerandaScreenState extends State<BerandaScreen> {
         _loadingAttendance = false;
       });
     }
+  }
+
+  /// Back sistem di tab selain Home kembali ke Home dulu (lih.
+  /// [DoubleBackToExit]); `true` = sudah ditangani.
+  bool _backToHomeTab() {
+    if (_activeTab == MainTab.home) return false;
+    _openTab(MainTab.home);
+    return true;
   }
 
   void _openTab(MainTab tab) {
@@ -803,7 +812,11 @@ class _BerandaScreenState extends State<BerandaScreen> {
               statusBarIconBrightness: Brightness.dark,
               statusBarBrightness: Brightness.light,
             ),
-      child: _buildScaffold(),
+      // Tekan back 2x untuk keluar; di tab lain, back kembali ke Home dulu.
+      child: DoubleBackToExit(
+        onBack: _backToHomeTab,
+        child: _buildScaffold(),
+      ),
     );
   }
 
