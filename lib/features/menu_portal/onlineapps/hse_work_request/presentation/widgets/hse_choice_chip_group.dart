@@ -3,15 +3,16 @@ import 'package:flutter/material.dart';
 import '../../../../../../../core/theme/app_colors.dart';
 import '../../../../../../../core/theme/app_text_styles.dart';
 import '../../../../../../../core/widgets/app_text_field.dart';
-import '../../../../../../../core/widgets/field_label_row.dart';
+import 'hse_checklist_group.dart';
+import 'hse_page_chrome.dart';
 
-/// Grup pilihan majemuk berbentuk chip, mis. "Type of Works" & "Personal
-/// Protective Equipment".
+/// Grup pilihan majemuk berbentuk chip dalam kartu [HseSectionCard], mis.
+/// "Type of Works" & "Personal Protective Equipment".
 ///
 /// Dipisah dari [HseChecklistGroup]: General Checklist isinya kalimat
 /// panjang (cocok sebagai baris), sedangkan Type of Works/PPE isinya
 /// istilah pendek (cocok sebagai chip yang lebih padat & cepat di-scan).
-/// Set [onChanged] untuk mode isi; biarkan null untuk mode baca (detail).
+/// Set [onChanged] untuk mode isi; [readOnly] untuk mode baca (review).
 class HseChoiceChipGroup extends StatelessWidget {
   const HseChoiceChipGroup({
     super.key,
@@ -22,6 +23,7 @@ class HseChoiceChipGroup extends StatelessWidget {
     this.otherController,
     this.readOnly = false,
     this.required = false,
+    this.icon = Icons.category_outlined,
   });
 
   final String title;
@@ -31,6 +33,7 @@ class HseChoiceChipGroup extends StatelessWidget {
   final TextEditingController? otherController;
   final bool readOnly;
   final bool required;
+  final IconData icon;
 
   @override
   Widget build(BuildContext context) {
@@ -41,84 +44,101 @@ class HseChoiceChipGroup extends StatelessWidget {
 
       return Padding(
         padding: const EdgeInsets.only(bottom: 16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(title, style: AppTextStyles.sectionTitle),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                for (final item in chosen) _ReadOnlyChip(label: item),
-                if (other.isNotEmpty) _ReadOnlyChip(label: other),
-              ],
-            ),
-          ],
+        child: HseSectionCard(
+          title: title,
+          icon: icon,
+          child: Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final item in chosen) _Chip(label: item, selected: true),
+              if (other.isNotEmpty) _Chip(label: other, selected: true),
+            ],
+          ),
         ),
       );
     }
 
+    final count = options.where(selected.contains).length;
+
     return Padding(
-      padding: const EdgeInsets.only(bottom: 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          FieldLabelRow(label: title, required: required),
-          const SizedBox(height: 4),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              for (final option in options)
-                FilterChip(
-                  label: Text(option),
-                  selected: selected.contains(option),
-                  onSelected: (_) => onChanged?.call(option),
-                  labelStyle: AppTextStyles.caption.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: selected.contains(option) ? Colors.white : AppColors.textMid,
+      padding: const EdgeInsets.only(bottom: 16),
+      child: HseSectionCard(
+        title: title,
+        icon: icon,
+        required: required,
+        trailing: HseCountPill(count: count, total: options.length),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final option in options)
+                  _Chip(
+                    label: option,
+                    selected: selected.contains(option),
+                    onTap: () => onChanged?.call(option),
                   ),
-                  backgroundColor: AppColors.card,
-                  selectedColor: AppColors.primaryMidText,
-                  side: BorderSide(
-                    color: selected.contains(option) ? AppColors.primaryMidText : AppColors.border,
-                  ),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                  showCheckmark: false,
-                ),
-            ],
-          ),
-          if (otherController != null) ...[
-            const SizedBox(height: 10),
-            AppTextField(
-              label: 'Other (optional)',
-              controller: otherController!,
-              hint: 'Fill in manually if not listed above',
+              ],
             ),
+            if (otherController != null) ...[
+              const SizedBox(height: 14),
+              AppTextField(
+                label: 'Other (optional)',
+                controller: otherController!,
+                hint: 'Fill in manually if not listed above',
+              ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
 }
 
-class _ReadOnlyChip extends StatelessWidget {
-  const _ReadOnlyChip({required this.label});
+/// Chip pil: hijau tua solid dengan centang saat dipilih, putih bergaris
+/// tepi saat tidak.
+class _Chip extends StatelessWidget {
+  const _Chip({required this.label, required this.selected, this.onTap});
 
   final String label;
+  final bool selected;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-      decoration: BoxDecoration(
-        color: AppColors.primaryLight,
-        borderRadius: BorderRadius.circular(20),
+    return Material(
+      color: selected ? AppColors.primary : AppColors.card,
+      shape: StadiumBorder(
+        side: BorderSide(color: selected ? AppColors.primary : AppColors.border),
       ),
-      child: Text(
-        label,
-        style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.primaryMidText),
+      child: InkWell(
+        onTap: onTap,
+        customBorder: const StadiumBorder(),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (selected) ...[
+                const Icon(Icons.check_rounded, size: 15, color: Colors.white),
+                const SizedBox(width: 5),
+              ],
+              Flexible(
+                child: Text(
+                  label,
+                  style: AppTextStyles.caption.copyWith(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w600,
+                    color: selected ? Colors.white : AppColors.textMid,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

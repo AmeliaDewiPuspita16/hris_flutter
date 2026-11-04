@@ -138,16 +138,27 @@ class HseCircleButton extends StatelessWidget {
 }
 
 /// Kartu putih bersudut besar dengan judul di dalamnya — dipakai bagian-
-/// bagian layar detail (Detail Pekerjaan, General Checklist, dst).
+/// bagian layar detail dan form (Detail Pekerjaan, General Checklist, dst).
+///
+/// [icon] opsional menambah kotak ikon hijau di kiri judul; [trailing]
+/// opsional di ujung kanan judul (mis. penghitung "3/8").
 class HseSectionCard extends StatelessWidget {
   const HseSectionCard({
     super.key,
     required this.title,
     required this.child,
+    this.icon,
+    this.trailing,
+    this.required = false,
   });
 
   final String title;
   final Widget child;
+  final IconData? icon;
+  final Widget? trailing;
+
+  /// Tanda bintang merah di belakang judul.
+  final bool required;
 
   @override
   Widget build(BuildContext context) {
@@ -168,14 +179,42 @@ class HseSectionCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: AppTextStyles.sectionTitle.copyWith(
-              fontSize: 16,
-              fontWeight: FontWeight.w800,
-            ),
+          Row(
+            children: [
+              if (icon != null) ...[
+                Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    color: AppColors.presentBg,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(icon, size: 18, color: AppColors.primaryText),
+                ),
+                const SizedBox(width: 10),
+              ],
+              Expanded(
+                child: Text.rich(
+                  TextSpan(
+                    text: title,
+                    children: [
+                      if (required)
+                        TextSpan(
+                          text: ' *',
+                          style: TextStyle(color: AppColors.rejected),
+                        ),
+                    ],
+                  ),
+                  style: AppTextStyles.sectionTitle.copyWith(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              if (trailing != null) trailing!,
+            ],
           ),
-          const SizedBox(height: 10),
+          SizedBox(height: icon != null ? 14 : 10),
           child,
         ],
       ),

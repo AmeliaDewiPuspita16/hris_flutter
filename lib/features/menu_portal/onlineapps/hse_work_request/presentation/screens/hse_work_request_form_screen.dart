@@ -6,18 +6,17 @@ import '../../../../../../core/theme/app_colors.dart';
 import '../../../../../../core/theme/app_text_styles.dart';
 import '../../../../../../core/widgets/app_attachment_field.dart';
 import '../../../../../../core/widgets/app_button.dart';
-import '../../../../../../core/widgets/app_card.dart';
 import '../../../../../../core/widgets/app_date_range_field.dart';
 import '../../../../../../core/widgets/app_dropdown.dart';
 import '../../../../../../core/widgets/app_error_view.dart';
 import '../../../../../../core/widgets/app_text_field.dart';
-import '../../../../../../core/widgets/back_header.dart';
 import '../../data/hse_work_request_repository.dart';
 import '../../domain/hse_form_options.dart';
 import '../../domain/hse_work_request.dart';
 import '../widgets/hse_checklist_group.dart';
 import '../widgets/hse_choice_chip_group.dart';
 import '../widgets/hse_file_picker.dart';
+import '../widgets/hse_page_chrome.dart';
 import '../widgets/hse_wizard_header.dart';
 
 /// Wizard "Add Permit Request" — `POST /hse_permit`.
@@ -42,6 +41,16 @@ class _HseWorkRequestFormScreenState extends State<HseWorkRequestFormScreen> {
     'General Checklist',
     'Work Type & PPE',
     'Review & Submit',
+  ];
+
+  /// Label pendek di bawah lingkaran stepper.
+  static const _stepLabels = ['Job', 'Checklist', 'Work & PPE', 'Review'];
+
+  static const _stepSubtitles = [
+    'Fill in the job details before continuing to the safety checklist.',
+    'Make sure site conditions meet the following checklist before work begins.',
+    'Select the type of work and the protective equipment to be used.',
+    'Double-check before submitting — submitted permits wait for HOD approval and cannot be edited.',
   ];
 
   late final HseWorkRequestRepository _repository;
@@ -274,16 +283,77 @@ class _HseWorkRequestFormScreenState extends State<HseWorkRequestFormScreen> {
   Widget build(BuildContext context) {
     final options = _options;
 
-    return Scaffold(
-      backgroundColor: AppColors.bg,
-      appBar: BackHeader(title: 'Add Permit Request', onBack: _back),
-      body: SafeArea(
+    return PopScope(
+      // Tombol kembali sistem mundur satu step dulu, bukan menutup form.
+      canPop: _step == 0 && !_isSubmitting,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop && !_isSubmitting) _back();
+      },
+      child: HsePageBackdrop(
+        bottomNavigationBar: options == null ? null : _buildActionBar(),
+        body: SafeArea(
+          bottom: false,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _FormTopBar(onBack: _isSubmitting ? null : _back),
+              Expanded(
+                child: options == null
+                    ? (_optionsError != null
+                        ? AppErrorView(
+                            message: _optionsError!,
+                            onRetry: _loadOptions,
+                          )
+                        : const Center(child: CircularProgressIndicator()))
+                    : _buildWizard(options),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionBar() {
+    final isLast = _step == _stepTitles.length - 1;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: AppColors.isDark ? 0 : 0.08),
+            blurRadius: 18,
+            offset: const Offset(0, -4),
+          ),
+        ],
+      ),
+      child: SafeArea(
         top: false,
-        child: options == null
-            ? (_optionsError != null
-                ? AppErrorView(message: _optionsError!, onRetry: _loadOptions)
-                : const Center(child: CircularProgressIndicator()))
-            : _buildWizard(options),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+          child: Row(
+            children: [
+              Expanded(
+                child: AppButton(
+                  label: _step == 0 ? 'Cancel' : 'Back',
+                  variant: AppButtonVariant.ghost,
+                  onPressed: _isSubmitting ? null : _back,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                flex: 2,
+                child: AppButton(
+                  label: isLast ? 'Submit Permit' : 'Next',
+                  isLoading: _isSubmitting,
+                  onPressed: isLast ? _submit : _next,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -292,11 +362,12 @@ class _HseWorkRequestFormScreenState extends State<HseWorkRequestFormScreen> {
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 6),
           child: HseWizardHeader(
             stepIndex: _step,
-            stepCount: _stepTitles.length,
+            labels: _stepLabels,
             title: _stepTitles[_step],
+            subtitle: _stepSubtitles[_step],
           ),
         ),
         Expanded(
@@ -379,33 +450,6 @@ class _HseWorkRequestFormScreenState extends State<HseWorkRequestFormScreen> {
             ],
           ),
         ),
-        Container(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-          decoration: BoxDecoration(
-            color: AppColors.card,
-            border: Border(top: BorderSide(color: AppColors.border)),
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: AppButton(
-                  label: _step == 0 ? 'Cancel' : 'Back',
-                  variant: AppButtonVariant.ghost,
-                  onPressed: _isSubmitting ? null : _back,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                flex: 2,
-                child: AppButton(
-                  label: _step == _stepTitles.length - 1 ? 'Submit' : 'Next',
-                  isLoading: _isSubmitting,
-                  onPressed: _step == _stepTitles.length - 1 ? _submit : _next,
-                ),
-              ),
-            ],
-          ),
-        ),
       ],
     );
   }
@@ -460,13 +504,24 @@ class _StepDetailPekerjaan extends StatelessWidget {
         : options.documentExtensions.map((e) => e.toUpperCase()).join(', ');
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 24),
       children: [
-        Text(
-          'Fill in the job details before continuing to the safety checklist.',
-          style: AppTextStyles.bodyMuted,
+        _SectionCard(
+          icon: Icons.category_outlined,
+          title: 'Permit Category',
+          children: [
+            for (final c in options.categories) ...[
+              _CategoryTile(
+                label: c.label,
+                needsDocuments: options.requiresDocuments(c.code),
+                selected: c.code == categoryCode,
+                onTap: () => onCategoryChanged(c.code),
+              ),
+              if (c != options.categories.last) const SizedBox(height: 10),
+            ],
+          ],
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 16),
         _SectionCard(
           icon: Icons.badge_outlined,
           title: 'PIC Information',
@@ -505,20 +560,6 @@ class _StepDetailPekerjaan extends StatelessWidget {
                     onSectionChanged(value.isEmpty ? null : value),
               ),
             ],
-            const SizedBox(height: 14),
-            AppDropdown<String>(
-              label: 'Category',
-              value: categoryCode ?? '',
-              required: true,
-              items: [
-                if (categoryCode == null) const (value: '', label: 'Select'),
-                for (final c in options.categories)
-                  (value: c.code, label: c.label),
-              ],
-              onChanged: (value) {
-                if (value.isNotEmpty) onCategoryChanged(value);
-              },
-            ),
           ],
         ),
         const SizedBox(height: 16),
@@ -577,9 +618,27 @@ class _StepDetailPekerjaan extends StatelessWidget {
             icon: Icons.picture_as_pdf_outlined,
             title: 'Supporting Documents',
             children: [
-              Text(
-                'Required for non-routine permits.',
-                style: AppTextStyles.caption,
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                decoration: BoxDecoration(
+                  color: AppColors.pendingBg,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.info_outline_rounded, size: 16, color: AppColors.pending),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Required for non-routine permits.',
+                        style: AppTextStyles.caption.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.pending,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
               for (final field in options.documentFields) ...[
                 const SizedBox(height: 14),
@@ -599,7 +658,8 @@ class _StepDetailPekerjaan extends StatelessWidget {
   }
 }
 
-/// Kartu bertajuk (ikon bulat + judul) yang membungkus satu grup field.
+/// Kartu bertajuk (ikon + judul) yang membungkus satu grup field — gaya
+/// sama dengan kartu di layar detail ([HseSectionCard]).
 class _SectionCard extends StatelessWidget {
   const _SectionCard({
     required this.icon,
@@ -613,28 +673,12 @@ class _SectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AppCard(
-      padding: const EdgeInsets.all(14),
+    return HseSectionCard(
+      title: title,
+      icon: icon,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: AppColors.primaryLight,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(icon, size: 16, color: AppColors.primaryText),
-              ),
-              const SizedBox(width: 8),
-              Text(title, style: AppTextStyles.sectionTitle),
-            ],
-          ),
-          const SizedBox(height: 14),
-          ...children,
-        ],
+        children: children,
       ),
     );
   }
@@ -656,13 +700,8 @@ class _StepGeneralChecklist extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 24),
       children: [
-        Text(
-          'Make sure site conditions meet the following checklist before work begins.',
-          style: AppTextStyles.bodyMuted,
-        ),
-        const SizedBox(height: 12),
         HseChecklistGroup(
           title: 'General Checklist',
           required: true,
@@ -700,10 +739,11 @@ class _StepTypeAndPpe extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 24),
       children: [
         HseChoiceChipGroup(
           title: 'Type of Works',
+          icon: Icons.construction_outlined,
           options: typeOptions,
           selected: selectedTypes,
           onChanged: onToggleType,
@@ -712,6 +752,7 @@ class _StepTypeAndPpe extends StatelessWidget {
         ),
         HseChoiceChipGroup(
           title: 'Personal Protective Equipment',
+          icon: Icons.health_and_safety_outlined,
           options: ppeOptions,
           selected: selectedPpe,
           onChanged: onTogglePpe,
@@ -779,22 +820,16 @@ class _StepReview extends StatelessWidget {
         'Date of Work',
         dateStart == null || dateEnd == null
             ? '-'
-            : '${dateStart!.day}/${dateStart!.month}/${dateStart!.year} – '
-                '${dateEnd!.day}/${dateEnd!.month}/${dateEnd!.year}',
+            : hseDateRange(dateStart!, dateEnd!),
       ),
-      for (final doc in documents.entries) (doc.key, doc.value),
     ];
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 24),
       children: [
-        Text(
-          'Double-check before submitting — submitted permits wait for HOD approval and cannot be edited.',
-          style: AppTextStyles.bodyMuted,
-        ),
-        const SizedBox(height: 12),
-        AppCard(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        HseSectionCard(
+          title: 'Job Details',
+          icon: Icons.work_outline_rounded,
           child: Column(
             children: [
               for (var i = 0; i < rows.length; i++)
@@ -807,6 +842,23 @@ class _StepReview extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
+        if (documents.isNotEmpty) ...[
+          HseSectionCard(
+            title: 'Supporting Documents',
+            icon: Icons.picture_as_pdf_outlined,
+            child: Column(
+              children: [
+                for (final doc in documents.entries)
+                  _ReviewRow(
+                    label: doc.key,
+                    value: doc.value,
+                    showDivider: doc.key != documents.keys.last,
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
         HseChecklistGroup(
           title: 'General Checklist',
           options: generalChecklist.toList(),
@@ -816,6 +868,7 @@ class _StepReview extends StatelessWidget {
         ),
         HseChoiceChipGroup(
           title: 'Type of Works',
+          icon: Icons.construction_outlined,
           options: typeOfWorks.toList(),
           selected: typeOfWorks,
           readOnly: true,
@@ -823,6 +876,7 @@ class _StepReview extends StatelessWidget {
         ),
         HseChoiceChipGroup(
           title: 'Personal Protective Equipment',
+          icon: Icons.health_and_safety_outlined,
           options: ppe.toList(),
           selected: ppe,
           readOnly: true,
@@ -876,6 +930,137 @@ class _ReviewRow extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Bar atas: tombol kembali bulat + judul hijau di tengah, sama dengan
+/// daftar HSE Work Permit.
+class _FormTopBar extends StatelessWidget {
+  const _FormTopBar({required this.onBack});
+
+  final VoidCallback? onBack;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+      child: Row(
+        children: [
+          HseCircleButton(
+            icon: Icons.arrow_back_rounded,
+            tooltip: 'Back',
+            onTap: onBack,
+          ),
+          Expanded(
+            child: Text(
+              'Add Permit Request',
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppTextStyles.h2.copyWith(
+                fontSize: 20,
+                fontWeight: FontWeight.w800,
+                color: AppColors.primaryText,
+              ),
+            ),
+          ),
+          // Penyeimbang lebar tombol kembali supaya judul tetap di tengah.
+          const SizedBox.square(dimension: 44),
+        ],
+      ),
+    );
+  }
+}
+
+/// Kartu pilihan kategori permit (Routine / Non-routine). Label server
+/// "Routine (maintenance, repair)" dipecah jadi judul + keterangan.
+class _CategoryTile extends StatelessWidget {
+  const _CategoryTile({
+    required this.label,
+    required this.needsDocuments,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+
+  /// Kategori yang wajib melampirkan dokumen PDF (NON-RUTIN), menurut
+  /// aturan dari `GET /hse_permit/options`.
+  final bool needsDocuments;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final match = RegExp(r'^(.*?)\s*\((.+)\)\s*$').firstMatch(label);
+    final title = match?.group(1) ?? label;
+    final description = match?.group(2);
+
+    return Material(
+      color: selected ? AppColors.presentBg : AppColors.card,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+        side: BorderSide(
+          color: selected ? AppColors.primary : AppColors.border,
+          width: selected ? 1.6 : 1,
+        ),
+      ),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: selected ? AppColors.primary : AppColors.neutralBg,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  needsDocuments ? Icons.engineering_outlined : Icons.autorenew_rounded,
+                  size: 20,
+                  color: selected ? Colors.white : AppColors.textMid,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: AppTextStyles.body.copyWith(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.text,
+                      ),
+                    ),
+                    if (description != null)
+                      Text(
+                        needsDocuments
+                            ? '$description · PDF documents required'
+                            : description,
+                        style: AppTextStyles.caption.copyWith(fontSize: 12),
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Icon(
+                selected
+                    ? Icons.radio_button_checked_rounded
+                    : Icons.radio_button_off_rounded,
+                size: 22,
+                color: selected ? AppColors.primary : AppColors.textMuted,
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
