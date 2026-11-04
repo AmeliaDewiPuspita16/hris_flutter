@@ -74,7 +74,8 @@ class _TemperaturePainter extends CustomPainter {
   static const _top = 30.0;
   static const _bottom = 24.0;
 
-  TextPainter _text(String s, {double size = 10, FontWeight? weight, Color? color}) {
+  TextPainter _text(String s,
+      {double size = 10, FontWeight? weight, Color? color}) {
     return TextPainter(
       text: TextSpan(
         text: s,
@@ -187,7 +188,8 @@ class _TemperaturePainter extends CustomPainter {
       for (var y = chart.top - 4; y < chart.bottom; y += 6) {
         canvas.drawLine(Offset(x, y), Offset(x, y + 3), dash);
       }
-      final tp = _text('Now', size: 10.5, weight: FontWeight.w700, color: Colors.white);
+      final tp = _text('Now',
+          size: 10.5, weight: FontWeight.w700, color: Colors.white);
       final w = tp.width + 16;
       final h = tp.height + 6;
       final left = (x - w / 2).clamp(0.0, size.width - w);

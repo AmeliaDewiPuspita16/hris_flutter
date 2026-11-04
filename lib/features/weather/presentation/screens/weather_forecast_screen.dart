@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart' show DateFormat;
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
@@ -11,25 +12,50 @@ import '../widgets/weather_icon.dart';
 /// Halaman prakiraan cuaca lengkap (dibuka dari chip cuaca di Beranda):
 /// kartu "sekarang", pengingat hujan, strip per 3 jam, grafik suhu, dan
 /// ringkasan harian. Latar & tombol memakai gaya halaman portal (mint).
-class WeatherForecastScreen extends StatelessWidget {
+class WeatherForecastScreen extends StatefulWidget {
   const WeatherForecastScreen({
     super.key,
     required this.forecast,
+    this.onRefresh,
     this.now,
-    this.isSampleData = false,
   });
 
+  /// Prakiraan yang sudah dimuat Beranda — tampil seketika tanpa loading.
   final WeatherForecast forecast;
 
-  /// Untuk test; default [DateTime.now].
+  /// Tarik-untuk-refresh; null = tidak bisa di-refresh. Melempar
+  /// [Exception] bila gagal (data lama tetap tampil).
+  final Future<WeatherForecast> Function()? onRefresh;
+
+  /// Untuk test, dalam jam dinding lokasi; default
+  /// [WeatherForecast.nowAtLocation].
   final DateTime? now;
 
-  /// Tampilkan label "Sample data" selama sumber asli belum dipasang.
-  final bool isSampleData;
+  @override
+  State<WeatherForecastScreen> createState() => _WeatherForecastScreenState();
+}
+
+class _WeatherForecastScreenState extends State<WeatherForecastScreen> {
+  late WeatherForecast forecast = widget.forecast;
+
+  Future<void> _refresh() async {
+    try {
+      final fresh = await widget.onRefresh!();
+      if (mounted) setState(() => forecast = fresh);
+    } on Exception {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          behavior: SnackBarBehavior.floating,
+          content: Text('Could not refresh the forecast. Try again later.'),
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final at = now ?? DateTime.now();
+    final at = widget.now ?? forecast.nowAtLocation();
     final current = forecast.current(at);
     final upcoming = forecast.upcoming(at);
     final nextRain = upcoming.where((s) => s.condition.isRainy).firstOrNull;
@@ -50,41 +76,48 @@ class WeatherForecastScreen extends StatelessWidget {
                         style: AppTextStyles.bodyMuted,
                       ),
                     )
-                  : ListView(
-                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
-                      children: [
-                        _NowCard(forecast: forecast, slot: current),
-                        if (nextRain != null) ...[
-                          const SizedBox(height: 14),
-                          _RainNotice(slot: nextRain, now: at, onTap: openHourly),
-                        ],
-                        const SizedBox(height: 22),
-                        _SectionTitle(
-                          'Next hours',
-                          trailing: _SeeMoreButton(onTap: openHourly),
-                        ),
-                        const SizedBox(height: 12),
-                        _HourStrip(slots: upcoming, currentTime: current.time),
-                        const SizedBox(height: 22),
-                        const _SectionTitle('Temperature'),
-                        const SizedBox(height: 12),
-                        _Panel(
-                          padding: const EdgeInsets.fromLTRB(12, 14, 14, 10),
-                          child: TemperatureChart(
-                            slots: forecast.slots,
-                            now: current.time,
+                  : RefreshIndicator(
+                      onRefresh:
+                          widget.onRefresh == null ? () async {} : _refresh,
+                      notificationPredicate: (n) =>
+                          widget.onRefresh != null && n.depth == 0,
+                      color: AppColors.primaryText,
+                      child: ListView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+                        children: [
+                          _NowCard(forecast: forecast, slot: current),
+                          if (nextRain != null) ...[
+                            const SizedBox(height: 14),
+                            _RainNotice(
+                                slot: nextRain, now: at, onTap: openHourly),
+                          ],
+                          const SizedBox(height: 22),
+                          _SectionTitle(
+                            'Next hours',
+                            trailing: _SeeMoreButton(onTap: openHourly),
                           ),
-                        ),
-                        const SizedBox(height: 22),
-                        const _SectionTitle('Next days'),
-                        const SizedBox(height: 12),
-                        _DaysPanel(days: forecast.days, now: at),
-                        const SizedBox(height: 18),
-                        _SourceNote(
-                          updatedAt: forecast.updatedAt,
-                          isSample: isSampleData,
-                        ),
-                      ],
+                          const SizedBox(height: 12),
+                          _HourStrip(
+                              slots: upcoming, currentTime: current.time),
+                          const SizedBox(height: 22),
+                          const _SectionTitle('Temperature'),
+                          const SizedBox(height: 12),
+                          _Panel(
+                            padding: const EdgeInsets.fromLTRB(12, 14, 14, 10),
+                            child: TemperatureChart(
+                              slots: forecast.slots,
+                              now: current.time,
+                            ),
+                          ),
+                          const SizedBox(height: 22),
+                          const _SectionTitle('Next days'),
+                          const SizedBox(height: 12),
+                          _DaysPanel(days: forecast.days, now: at),
+                          const SizedBox(height: 18),
+                          _SourceNote(forecast: forecast),
+                        ],
+                      ),
                     ),
             ),
           ],
@@ -222,7 +255,8 @@ class _SeeMoreButton extends StatelessWidget {
                   color: AppColors.primaryText,
                 ),
               ),
-              Icon(Icons.chevron_right_rounded, size: 18, color: AppColors.primaryText),
+              Icon(Icons.chevron_right_rounded,
+                  size: 18, color: AppColors.primaryText),
             ],
           ),
         ),
@@ -309,7 +343,8 @@ class _NowCard extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      const Icon(Icons.place_rounded, size: 17, color: Colors.white),
+                      const Icon(Icons.place_rounded,
+                          size: 17, color: Colors.white),
                       const SizedBox(width: 4),
                       Expanded(
                         child: Text(
@@ -375,7 +410,7 @@ class _NowCard extends StatelessWidget {
                               ),
                             ),
                             Text(
-                              slot.condition.label,
+                              slot.conditionLabel,
                               style: const TextStyle(
                                 fontFamily: AppTextStyles.fontFamily,
                                 fontSize: 17,
@@ -504,7 +539,8 @@ class _Metric extends StatelessWidget {
 /// "Light rain expected tomorrow at 09.00. Bring an umbrella." — ketuk
 /// untuk melihat rincian per jam.
 class _RainNotice extends StatelessWidget {
-  const _RainNotice({required this.slot, required this.now, required this.onTap});
+  const _RainNotice(
+      {required this.slot, required this.now, required this.onTap});
 
   final WeatherSlot slot;
   final DateTime now;
@@ -543,7 +579,7 @@ class _RainNotice extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  '${slot.condition.label} expected $when. Bring an umbrella.',
+                  '${slot.conditionLabel} expected $when. Bring an umbrella.',
                   style: AppTextStyles.body.copyWith(
                     fontSize: 13,
                     height: 1.4,
@@ -593,7 +629,8 @@ class _HourTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final fg = isNow ? Colors.white : AppColors.text;
-    final sub = isNow ? Colors.white.withValues(alpha: 0.85) : AppColors.textMuted;
+    final sub =
+        isNow ? Colors.white.withValues(alpha: 0.85) : AppColors.textMuted;
     final isMidnight = slot.time.hour == 0;
 
     return Container(
@@ -617,11 +654,13 @@ class _HourTile extends StatelessWidget {
             style: TextStyle(
               fontFamily: AppTextStyles.fontFamily,
               fontSize: 12,
-              fontWeight: isNow || isMidnight ? FontWeight.w700 : FontWeight.w500,
+              fontWeight:
+                  isNow || isMidnight ? FontWeight.w700 : FontWeight.w500,
               color: isNow ? Colors.white : sub,
             ),
           ),
-          WeatherIcon(condition: slot.condition, isNight: slot.isNight, size: 32),
+          WeatherIcon(
+              condition: slot.condition, isNight: slot.isNight, size: 32),
           Text(
             '${slot.tempC}°',
             style: TextStyle(
@@ -728,7 +767,8 @@ class _DayRow extends StatelessWidget {
           ),
           WeatherIcon(condition: day.condition, size: 28),
           const SizedBox(width: 14),
-          Text('${day.minC}°', style: tempStyle.copyWith(color: AppColors.textMuted)),
+          Text('${day.minC}°',
+              style: tempStyle.copyWith(color: AppColors.textMuted)),
           const SizedBox(width: 8),
           Expanded(
             child: _RangeBar(
@@ -799,33 +839,52 @@ class _RangeBar extends StatelessWidget {
 }
 
 class _SourceNote extends StatelessWidget {
-  const _SourceNote({required this.updatedAt, required this.isSample});
+  const _SourceNote({required this.forecast});
 
-  final DateTime updatedAt;
-  final bool isSample;
+  final WeatherForecast forecast;
 
   @override
   Widget build(BuildContext context) {
     final style = AppTextStyles.caption.copyWith(fontSize: 11.5);
+    final url =
+        forecast.sourceUrl == null ? null : Uri.tryParse(forecast.sourceUrl!);
+    final updated = _sameDay(forecast.updatedAt, forecast.nowAtLocation())
+        ? _hourFmt.format(forecast.updatedAt)
+        : '${_dayFmt.format(forecast.updatedAt)}, ${_hourFmt.format(forecast.updatedAt)}';
+
     return Column(
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.info_outline_rounded, size: 14, color: AppColors.textMuted),
+            Icon(Icons.info_outline_rounded,
+                size: 14, color: AppColors.textMuted),
             const SizedBox(width: 4),
             Text('Source: ', style: style),
-            Text(
-              'BMKG',
-              style: style.copyWith(
-                fontWeight: FontWeight.w700,
-                color: AppColors.primaryText,
+            GestureDetector(
+              onTap: url == null
+                  ? null
+                  : () => launchUrl(url, mode: LaunchMode.externalApplication),
+              child: Text(
+                forecast.source,
+                style: style.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.primaryText,
+                  decoration: url == null ? null : TextDecoration.underline,
+                  decorationColor: AppColors.primaryText,
+                ),
               ),
             ),
-            Text(' · Updated ${_hourFmt.format(updatedAt)}', style: style),
+            Flexible(
+              child: Text(
+                ' · Updated $updated',
+                style: style,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
           ],
         ),
-        if (isSample) ...[
+        if (forecast.isStale) ...[
           const SizedBox(height: 6),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
@@ -834,7 +893,7 @@ class _SourceNote extends StatelessWidget {
               borderRadius: BorderRadius.circular(20),
             ),
             child: Text(
-              'Sample data, not live yet',
+              'Forecast may be out of date',
               style: style.copyWith(
                 fontWeight: FontWeight.w600,
                 color: AppColors.pending,
@@ -873,7 +932,8 @@ class _HourlySheet extends StatelessWidget {
     final groups = <DateTime, List<WeatherSlot>>{};
     for (final s in slots) {
       groups
-          .putIfAbsent(DateTime(s.time.year, s.time.month, s.time.day), () => [])
+          .putIfAbsent(
+              DateTime(s.time.year, s.time.month, s.time.day), () => [])
           .add(s);
     }
 
@@ -916,7 +976,8 @@ class _HourlySheet extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 _Panel(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
                   child: Column(
                     children: [
                       for (final (i, s) in entry.value.indexed) ...[
@@ -959,14 +1020,15 @@ class _HourlyRow extends StatelessWidget {
               ),
             ),
           ),
-          WeatherIcon(condition: slot.condition, isNight: slot.isNight, size: 28),
+          WeatherIcon(
+              condition: slot.condition, isNight: slot.isNight, size: 28),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  slot.condition.label,
+                  slot.conditionLabel,
                   style: AppTextStyles.body.copyWith(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,

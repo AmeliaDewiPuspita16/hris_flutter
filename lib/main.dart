@@ -33,6 +33,7 @@ import 'features/profil/data/profil_repository.dart';
 import 'features/shared/data/department_repository.dart';
 import 'features/menu_portal/record/ims_document/master_document_file/data/master_document_repository.dart';
 import 'firebase_options.dart';
+import 'features/weather/data/weather_repository.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -91,6 +92,7 @@ Future<void> main() async {
           NotificationInboxRepository(apiClient: apiClient),
       masterDocumentRepository: MasterDocumentRepository(apiClient: apiClient),
       hseWorkRequestRepository: HseWorkRequestRepository(apiClient: apiClient),
+      weatherRepository: WeatherRepository(apiClient: apiClient),
     ),
   );
 
@@ -122,6 +124,7 @@ class MyApp extends StatelessWidget {
     NotificationInboxRepository? notificationInboxRepository,
     MasterDocumentRepository? masterDocumentRepository,
     HseWorkRequestRepository? hseWorkRequestRepository,
+    WeatherRepository? weatherRepository,
   })  : themeCubit = themeCubit ?? ThemeCubit(),
         departmentRepository = departmentRepository ??
             DepartmentRepository(apiClient: ApiClient()),
@@ -152,7 +155,9 @@ class MyApp extends StatelessWidget {
         masterDocumentRepository = masterDocumentRepository ??
             MasterDocumentRepository(apiClient: ApiClient()),
         hseWorkRequestRepository = hseWorkRequestRepository ??
-            HseWorkRequestRepository(apiClient: ApiClient());
+            HseWorkRequestRepository(apiClient: ApiClient()),
+        weatherRepository =
+            weatherRepository ?? WeatherRepository(apiClient: ApiClient());
 
   final AuthRepository authRepository;
   final ThemeCubit themeCubit;
@@ -171,6 +176,7 @@ class MyApp extends StatelessWidget {
   final NotificationInboxRepository notificationInboxRepository;
   final MasterDocumentRepository masterDocumentRepository;
   final HseWorkRequestRepository hseWorkRequestRepository;
+  final WeatherRepository weatherRepository;
 
   @override
   Widget build(BuildContext context) {
@@ -196,6 +202,7 @@ class MyApp extends StatelessWidget {
         RepositoryProvider.value(value: notificationInboxRepository),
         RepositoryProvider.value(value: masterDocumentRepository),
         RepositoryProvider.value(value: hseWorkRequestRepository),
+        RepositoryProvider.value(value: weatherRepository),
       ],
       child: BlocProvider.value(
         value: themeCubit,

@@ -40,13 +40,16 @@ class WeatherIcon extends StatelessWidget {
               top: 0,
               left: 0,
               child: isNight
-                  ? Icon(Icons.nightlight_round, size: size * 0.66, color: _moon)
-                  : Icon(Icons.wb_sunny_rounded, size: size * 0.66, color: _sun),
+                  ? Icon(Icons.nightlight_round,
+                      size: size * 0.66, color: _moon)
+                  : Icon(Icons.wb_sunny_rounded,
+                      size: size * 0.66, color: _sun),
             ),
             Positioned(
               right: 0,
               bottom: 0,
-              child: Icon(Icons.cloud_rounded, size: size * 0.78, color: _cloudLight),
+              child: Icon(Icons.cloud_rounded,
+                  size: size * 0.78, color: _cloudLight),
             ),
           ],
         ),

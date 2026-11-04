@@ -35,7 +35,7 @@ import '../../../menu_portal/onlineapps/procurement/data/procurement_repository.
 import '../../../menu_portal/record/presentation/screens/record_screen.dart';
 import '../../../menu_portal/data_app/presentation/screens/data_screen.dart';
 import '../../../notifikasi/data/notification_inbox_repository.dart';
-import '../../../weather/data/weather_demo_data.dart';
+import '../../../weather/data/weather_repository.dart';
 import '../../../weather/domain/weather_forecast.dart';
 import '../../../weather/presentation/screens/weather_forecast_screen.dart';
 import '../../../notifikasi/data/pending_approval_checker.dart';
@@ -143,8 +143,9 @@ class _BerandaScreenState extends State<BerandaScreen> {
   /// ditutup tanpa perlu mengambil ulang seluruh daftar.
   List<PublishedAnnouncement> _announcements = const [];
 
-  /// Prakiraan cuaca — masih data contoh sampai sumber BMKG dipasang.
-  final WeatherForecast _weather = WeatherDemoData.forecast();
+  /// Prakiraan cuaca untuk chip di header. Null selama belum termuat atau
+  /// bila gagal — chip-nya disembunyikan saja, cuaca bukan info penting.
+  WeatherForecast? _weather;
   bool _loadingAnnouncements = true;
   String? _announcementsError;
 
@@ -192,6 +193,18 @@ class _BerandaScreenState extends State<BerandaScreen> {
     _loadApprovalsWaiting();
     _loadPendingAssignments();
     _loadServerNotifications();
+    _loadWeather();
+  }
+
+  Future<void> _loadWeather() async {
+    try {
+      final forecast = await context.read<WeatherRepository>().fetchForecast();
+      if (!mounted) return;
+      setState(() => _weather = forecast);
+    } on ApiException catch (e) {
+      // Biarkan data sebelumnya (kalau ada) tetap tampil.
+      AppLogger.info('Gagal memuat prakiraan cuaca: ${e.message}');
+    }
   }
 
   Future<void> _loadAnnouncements() async {
@@ -282,11 +295,18 @@ class _BerandaScreenState extends State<BerandaScreen> {
 
   /// Log Absensi — dibuka lewat push dari menu HRIS atau kartu jam kerja.
   void _openWeather() {
+    final forecast = _weather;
+    if (forecast == null) return;
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => WeatherForecastScreen(
-          forecast: _weather,
-          isSampleData: true,
+          forecast: forecast,
+          onRefresh: () async {
+            final fresh =
+                await context.read<WeatherRepository>().fetchForecast();
+            if (mounted) setState(() => _weather = fresh);
+            return fresh;
+          },
         ),
       ),
     );
@@ -661,6 +681,7 @@ class _BerandaScreenState extends State<BerandaScreen> {
         _loadApprovalsWaiting(),
         _loadPendingAssignments(),
         _loadServerNotifications(),
+        _loadWeather(),
       ]);
 
   int get _itApprovalCount => _approvalsWaiting.itRequest;
@@ -887,7 +908,7 @@ class _BerandaScreenState extends State<BerandaScreen> {
             HomeTopHeader(
               role: _role,
               user: widget.user,
-              weather: _weather.current(DateTime.now()),
+              weather: _weather?.current(_weather!.nowAtLocation()),
               onWeatherTap: _openWeather,
             ),
             Expanded(

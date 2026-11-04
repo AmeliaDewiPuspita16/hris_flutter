@@ -160,6 +160,10 @@ class ApiConfig {
   /// dan, nanti, tab Summary di Overtime Request.
   static const String overtime = '/api/portal/apps/hris/overtime';
 
+  /// Prakiraan cuaca Teluk Lobam per 3 jam (sumber BMKG, di-cache server).
+  /// `data`: location, slots[], updated_at; `meta`: source, source_url, stale.
+  static const String weather = '/api/portal/apps/weather';
+
   // ------------------------------ Notifications ------------------------
 
   /// Ringkasan jumlah approval yang masih menunggu, dipecah per modul

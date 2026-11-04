@@ -16,7 +16,7 @@ class WeatherHeaderChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return Semantics(
       button: true,
-      label: 'Weather ${slot.tempC}°C, ${slot.condition.label}. Open forecast',
+      label: 'Weather ${slot.tempC}°C, ${slot.conditionLabel}. Open forecast',
       excludeSemantics: true,
       child: Material(
         color: Colors.white.withValues(alpha: 0.16),
@@ -55,7 +55,7 @@ class WeatherHeaderChip extends StatelessWidget {
                     ConstrainedBox(
                       constraints: const BoxConstraints(maxWidth: 84),
                       child: Text(
-                        slot.condition.label,
+                        slot.conditionLabel,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
