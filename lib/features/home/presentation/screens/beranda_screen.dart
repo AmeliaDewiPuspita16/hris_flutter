@@ -35,6 +35,9 @@ import '../../../menu_portal/onlineapps/procurement/data/procurement_repository.
 import '../../../menu_portal/record/presentation/screens/record_screen.dart';
 import '../../../menu_portal/data_app/presentation/screens/data_screen.dart';
 import '../../../notifikasi/data/notification_inbox_repository.dart';
+import '../../../weather/data/weather_demo_data.dart';
+import '../../../weather/domain/weather_forecast.dart';
+import '../../../weather/presentation/screens/weather_forecast_screen.dart';
 import '../../../notifikasi/data/pending_approval_checker.dart';
 import '../../../notifikasi/domain/notification_category.dart';
 import '../../../notifikasi/domain/notification_filter.dart';
@@ -139,6 +142,9 @@ class _BerandaScreenState extends State<BerandaScreen> {
   /// supaya pengumuman yang baru diterbitkan langsung kelihatan begitu modal
   /// ditutup tanpa perlu mengambil ulang seluruh daftar.
   List<PublishedAnnouncement> _announcements = const [];
+
+  /// Prakiraan cuaca — masih data contoh sampai sumber BMKG dipasang.
+  final WeatherForecast _weather = WeatherDemoData.forecast();
   bool _loadingAnnouncements = true;
   String? _announcementsError;
 
@@ -275,6 +281,17 @@ class _BerandaScreenState extends State<BerandaScreen> {
   }
 
   /// Log Absensi — dibuka lewat push dari menu HRIS atau kartu jam kerja.
+  void _openWeather() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => WeatherForecastScreen(
+          forecast: _weather,
+          isSampleData: true,
+        ),
+      ),
+    );
+  }
+
   void _openAttendance() {
     Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => const AbsensiScreen()),
@@ -862,83 +879,94 @@ class _BerandaScreenState extends State<BerandaScreen> {
       // supaya warna hijaunya tidak terpotong garis putih di atas.
       child: SafeArea(
         top: false,
-        child: RefreshIndicator(
-          onRefresh: _refreshHome,
-          color: AppColors.primaryText,
-          child: SingleChildScrollView(
-            // Tanpa ini, tarikan ke bawah tidak terdeteksi saat kontennya
-            // lebih pendek dari tinggi layar (mis. layar besar atau role
-            // dengan sedikit menu) karena tidak ada overscroll untuk ditarik.
-            physics: const AlwaysScrollableScrollPhysics(),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                HomeTopHeader(
-                  role: _role,
-                  user: widget.user,
-                ),
-                ClockStatusCard(
-                  status: _todayAttendance,
-                  isLoading: _loadingAttendance,
-                  errorMessage: _attendanceError,
-                  date: DateTime.now(),
-                  onActionTap: _openAttendance,
-                  onRetry: _loadTodayAttendance,
-                ),
-                // Shortcut approval untuk HOD (role `hod`). Selama belum ada
-                // sesi (mis. saat pratinjau), jatuh ke role demo. Approver
-                // HSE belum tentu HOD, jadi banner juga tampil begitu server
-                // melaporkan antrean HSE Work Permit untuk akun ini.
-                if ((widget.user?.isHod ?? (_role == Role.hod)) ||
-                    _hseApprovalCount > 0)
-                  ApprovalSummaryBanner(
-                    isLoading: _loadingApprovalsWaiting,
-                    leaveCount: _leaveApprovalCount,
-                    itCount: _itApprovalCount,
-                    estCount: _estApprovalCount,
-                    indentVehicleCount: _indentVehicleApprovalCount,
-                    eprocurementCount: _eprocurementApprovalCount,
-                    hseCount: _hseApprovalCount,
-                    onTapAll: _openApprovalNotifications,
-                    onTapLeave: _openLeaveApproval,
-                    onTapIt: _openItApproval,
-                    onTapEst: _openEstApproval,
-                    onTapIndentVehicle: _openIndentVehicleApproval,
-                    onTapEprocurement: _openEprocurementApproval,
-                    onTapHse: _openHseApproval,
-                  ),
-                //PendingRequestCard(
-                //  count: 2,
-                //  description: 'Overtime · Business Trip',
-                //  onTap: () => _openTab(_pengajuanTab),
-                //),
-                LayananSection(services: _buildServices()),
-                SaldoSection(
-                  balances: HomeDemoData.quotaBalancesFor(_role),
-                  onSeeAll: _openLeaveRequest,
-                ),
-                AnnouncementSection(
-                  announcements: _announcements,
-                  isLoading: _loadingAnnouncements,
-                  errorMessage: _announcementsError,
-                  onRetry: _loadAnnouncements,
-                  onTapAnnouncement: (announcement) =>
-                      AnnouncementDetailSheet.show(context, announcement),
-                  // Izin hr-announcement-post: role hrga dan admin. Selama
-                  // belum ada sesi (mis. saat pratinjau), jatuh ke role demo.
-                  canCreate: widget.user?.canPublishAnnouncement ??
-                      (_role == Role.hrPublisher),
-                  onCreateTap: _openCreateAnnouncement,
-                ),
-                // Redup + "Soon" sampai API aktivitas ada (data masih demo).
-                // Aktifkan lewat FeatureFlags.recentActivity.
-                ActivitySection(
-                  activities: HomeDemoData.recentActivities(),
-                  enabled: FeatureFlags.recentActivity,
-                ),
-              ],
+        // Header dibekukan di atas: hanya konten di bawahnya yang ikut
+        // di-scroll (dan ditarik untuk refresh).
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            HomeTopHeader(
+              role: _role,
+              user: widget.user,
+              weather: _weather.current(DateTime.now()),
+              onWeatherTap: _openWeather,
             ),
-          ),
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: _refreshHome,
+                color: AppColors.primaryText,
+                child: SingleChildScrollView(
+                  // Tanpa ini, tarikan ke bawah tidak terdeteksi saat kontennya
+                  // lebih pendek dari tinggi layar (mis. layar besar atau role
+                  // dengan sedikit menu) karena tidak ada overscroll untuk ditarik.
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      ClockStatusCard(
+                        status: _todayAttendance,
+                        isLoading: _loadingAttendance,
+                        errorMessage: _attendanceError,
+                        date: DateTime.now(),
+                        onActionTap: _openAttendance,
+                        onRetry: _loadTodayAttendance,
+                      ),
+                      // Shortcut approval untuk HOD (role `hod`). Selama belum ada
+                      // sesi (mis. saat pratinjau), jatuh ke role demo. Approver
+                      // HSE belum tentu HOD, jadi banner juga tampil begitu server
+                      // melaporkan antrean HSE Work Permit untuk akun ini.
+                      if ((widget.user?.isHod ?? (_role == Role.hod)) ||
+                          _hseApprovalCount > 0)
+                        ApprovalSummaryBanner(
+                          isLoading: _loadingApprovalsWaiting,
+                          leaveCount: _leaveApprovalCount,
+                          itCount: _itApprovalCount,
+                          estCount: _estApprovalCount,
+                          indentVehicleCount: _indentVehicleApprovalCount,
+                          eprocurementCount: _eprocurementApprovalCount,
+                          hseCount: _hseApprovalCount,
+                          onTapAll: _openApprovalNotifications,
+                          onTapLeave: _openLeaveApproval,
+                          onTapIt: _openItApproval,
+                          onTapEst: _openEstApproval,
+                          onTapIndentVehicle: _openIndentVehicleApproval,
+                          onTapEprocurement: _openEprocurementApproval,
+                          onTapHse: _openHseApproval,
+                        ),
+                      //PendingRequestCard(
+                      //  count: 2,
+                      //  description: 'Overtime · Business Trip',
+                      //  onTap: () => _openTab(_pengajuanTab),
+                      //),
+                      LayananSection(services: _buildServices()),
+                      SaldoSection(
+                        balances: HomeDemoData.quotaBalancesFor(_role),
+                        onSeeAll: _openLeaveRequest,
+                      ),
+                      AnnouncementSection(
+                        announcements: _announcements,
+                        isLoading: _loadingAnnouncements,
+                        errorMessage: _announcementsError,
+                        onRetry: _loadAnnouncements,
+                        onTapAnnouncement: (announcement) =>
+                            AnnouncementDetailSheet.show(context, announcement),
+                        // Izin hr-announcement-post: role hrga dan admin. Selama
+                        // belum ada sesi (mis. saat pratinjau), jatuh ke role demo.
+                        canCreate: widget.user?.canPublishAnnouncement ??
+                            (_role == Role.hrPublisher),
+                        onCreateTap: _openCreateAnnouncement,
+                      ),
+                      // Redup + "Soon" sampai API aktivitas ada (data masih demo).
+                      // Aktifkan lewat FeatureFlags.recentActivity.
+                      ActivitySection(
+                        activities: HomeDemoData.recentActivities(),
+                        enabled: FeatureFlags.recentActivity,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
