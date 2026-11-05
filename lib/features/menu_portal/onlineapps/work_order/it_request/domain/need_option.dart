@@ -65,14 +65,15 @@ class NeedOption {
 /// `ItRequestFormOptions`); daftar ini hanya dipakai kalau permintaan itu
 /// belum selesai atau gagal, jadi isinya dijaga sama dengan yang terakhir
 /// dikirim server (30 Okt 2026: Backup dan Internet dihapus; hardware dan
-/// event equipment ditambah).
+/// event equipment ditambah. 2 Nov 2026: hardware bertambah CCTV dan
+/// Internet / WiFi, labelnya jadi "Setup IT Hardware").
 class NeedOptionCatalog {
   NeedOptionCatalog._();
 
   static const _it = <NeedOption>[
     NeedOption(
       id: 'account_creation',
-      label: 'Account creation',
+      label: 'Account creation (existing employee without an account)',
       requestCategoryCode: 'new_account_req',
       fieldKind: NeedFieldKind.checkboxGroup,
       checkboxLabels: [
@@ -116,7 +117,7 @@ class NeedOptionCatalog {
     ),
     NeedOption(
       id: 'hardware',
-      label: 'Computer/IT hardware',
+      label: 'Setup IT Hardware',
       requestCategoryCode: 'perangkat_komputer_req',
       fieldKind: NeedFieldKind.checkboxGroup,
       checkboxLabels: [
@@ -128,6 +129,8 @@ class NeedOptionCatalog {
         'Mousepad',
         'Monitor',
         'TV',
+        'CCTV installation',
+        'Internet / WiFi network',
       ],
       checkboxFieldCodes: [
         'hardware_need_laptop',
@@ -138,6 +141,8 @@ class NeedOptionCatalog {
         'hardware_need_mousepad',
         'hardware_need_monitor',
         'hardware_need_tv',
+        'hardware_need_cctv',
+        'hardware_need_wifi',
       ],
     ),
     NeedOption(
