@@ -1,0 +1,250 @@
+import 'package:flutter/material.dart';
+
+import '../../../../../../core/theme/app_colors.dart';
+import '../../../../../../core/theme/app_text_styles.dart';
+import '../../../../../../core/utils/date_formatter.dart';
+import '../../../../../../core/widgets/app_button.dart';
+import '../../../../../../core/widgets/app_card.dart';
+import '../../../../../../core/widgets/back_header.dart';
+import '../../../../../../core/widgets/detail_field_tile.dart';
+import '../../data/observation_repository.dart';
+import '../../domain/observation_item.dart';
+import '../widgets/observation_close_sheet.dart';
+import '../widgets/observation_image_view.dart';
+import '../widgets/observation_status_pill.dart';
+
+/// Detail satu observasi. Isinya sama dengan PDF "Observation Department"
+/// di web (Name, To Department, Category Finding, Date, Status, Description,
+/// Description Close, Close Date, Closed By, Image Finding, Image Close),
+/// tapi dibaca langsung di layar.
+///
+/// Hasilnya lewat Navigator.pop: `true` bila observasi ditutup dari layar
+/// ini, supaya layar daftar memuat ulang.
+class ObservationDetailScreen extends StatefulWidget {
+  const ObservationDetailScreen({
+    super.key,
+    required this.item,
+    required this.repository,
+  });
+
+  final ObservationItem item;
+  final ObservationRepository repository;
+
+  @override
+  State<ObservationDetailScreen> createState() =>
+      _ObservationDetailScreenState();
+}
+
+class _ObservationDetailScreenState extends State<ObservationDetailScreen> {
+  late ObservationItem _item = widget.item;
+  bool _changed = false;
+
+  Future<void> _close() async {
+    final closed = await ObservationCloseSheet.show(
+      context,
+      item: _item,
+      repository: widget.repository,
+    );
+    if (closed == null || !mounted) return;
+
+    setState(() {
+      _item = closed;
+      _changed = true;
+    });
+    ScaffoldMessenger.of(context)
+        .showSnackBar(const SnackBar(content: Text('Observation closed.')));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final item = _item;
+
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) Navigator.of(context).pop(_changed);
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.bg,
+        appBar: BackHeader(
+          title: 'Observation Detail',
+          onBack: () => Navigator.of(context).pop(_changed),
+        ),
+        bottomNavigationBar: item.canClose ? _buildActionBar() : null,
+        body: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            _buildHero(item),
+            const SizedBox(height: 14),
+            _SectionCard(
+              icon: Icons.info_outline,
+              title: 'OBSERVATION SUMMARY',
+              children: [
+                _rows([
+                  ('Name', item.reporterName),
+                  ('Department', item.reporterDept),
+                  ('To Department', item.relevantDept),
+                  ('Category Finding', item.categoryLabel),
+                  ('Date Finding', DateFormatter.shortDate(item.createdDate)),
+                  ('Location', item.location),
+                  ('Description', item.description),
+                ]),
+              ],
+            ),
+            const SizedBox(height: 14),
+            _SectionCard(
+              icon: Icons.photo_outlined,
+              title: 'IMAGE FINDING',
+              children: [ObservationImageView(source: item.findingImage)],
+            ),
+            if (!item.isOpen) ...[
+              const SizedBox(height: 14),
+              _SectionCard(
+                icon: Icons.check_circle_outline,
+                title: 'CLOSURE',
+                children: [
+                  _rows([
+                    ('Description Close', item.closeReason ?? 'N/A'),
+                    (
+                      'Close Date',
+                      item.closeDate == null
+                          ? 'N/A'
+                          : DateFormatter.shortDate(item.closeDate!),
+                    ),
+                    ('Closed By', item.closedBy ?? 'N/A'),
+                  ]),
+                ],
+              ),
+              const SizedBox(height: 14),
+              _SectionCard(
+                icon: Icons.photo_outlined,
+                title: 'IMAGE CLOSE',
+                children: [ObservationImageView(source: item.closeImage)],
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _rows(List<(String, String)> rows) {
+    return Column(
+      children: [
+        for (var i = 0; i < rows.length; i++)
+          DetailFieldTile(
+            label: rows[i].$1,
+            value: rows[i].$2,
+            showDivider: i != rows.length - 1,
+          ),
+      ],
+    );
+  }
+
+  Widget _buildHero(ObservationItem item) {
+    final category = item.category;
+
+    return AppCard(
+      padding: const EdgeInsets.all(14),
+      child: Row(
+        children: [
+          Container(
+            width: 46,
+            height: 46,
+            decoration: BoxDecoration(
+              color: category.background,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(category.icon, size: 24, color: category.color),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  item.categoryLabel,
+                  style: AppTextStyles.body.copyWith(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  DateFormatter.shortDate(item.createdDate),
+                  style: AppTextStyles.caption,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          ObservationStatusPill(status: item.status),
+        ],
+      ),
+    );
+  }
+
+  /// Tombol Close di bawah layar, hanya untuk observasi open milik dept
+  /// sendiri ([ObservationItem.canClose]).
+  Widget _buildActionBar() {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        border: Border(top: BorderSide(color: AppColors.border)),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+          child: AppButton(label: 'Close Observation', onPressed: _close),
+        ),
+      ),
+    );
+  }
+}
+
+/// Kartu putih dengan judul kecil huruf kapital + ikon, sama dengan
+/// kartu section di detail IT Request.
+class _SectionCard extends StatelessWidget {
+  const _SectionCard({
+    required this.icon,
+    required this.title,
+    required this.children,
+  });
+
+  final IconData icon;
+  final String title;
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return AppCard(
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 16, color: AppColors.primaryText),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    fontFamily: AppTextStyles.fontFamily,
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.text,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          ...children,
+        ],
+      ),
+    );
+  }
+}
