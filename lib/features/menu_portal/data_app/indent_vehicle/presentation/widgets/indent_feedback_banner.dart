@@ -5,8 +5,8 @@ import '../../../../../../core/theme/app_text_styles.dart';
 import '../../../../../../core/widgets/app_card.dart';
 import '../../domain/indent_request_item.dart';
 
-/// Kartu untuk request yang perjalanannya sudah selesai (done) tapi belum
-/// diberi  feedback. Pola sama dengan ItRequestFeedbackBanner. Feedback
+/// Kartu untuk request milik sendiri yang menunggu feedback (status 1, sama
+/// dengan web). Pola sama dengan ItRequestFeedbackBanner. Feedback
 /// bersifat opsional — tidak memblokir pengajuan request baru.
 class IndentFeedbackBanner extends StatelessWidget {
   const IndentFeedbackBanner({
@@ -41,7 +41,7 @@ class IndentFeedbackBanner extends StatelessWidget {
                               size: 15, color: AppColors.accent),
                           const SizedBox(width: 6),
                           Text(
-                            'TRIP COMPLETED · GIVE FEEDBACK',
+                            'GIVE FEEDBACK',
                             style: TextStyle(
                               fontFamily: AppTextStyles.fontFamily,
                               fontSize: 10,

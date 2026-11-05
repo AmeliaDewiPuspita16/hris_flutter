@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../../../../core/logging/app_logger.dart';
 import '../../../../../../../core/network/api_exception.dart';
 import '../../../data/indent_vehicle_repository.dart';
+import '../../../domain/indent_request_item.dart';
 import 'indent_request_list_event.dart';
 import 'indent_request_list_state.dart';
 
@@ -52,11 +53,17 @@ class IndentRequestListBloc
         page: 1,
         currentUserId: _currentUserId,
       );
+      final awaitingFeedback = await _awaitingFeedback();
       if (token != _requestToken) return;
+
+      final known = {for (final item in awaitingFeedback) item.id};
 
       emit(state.copyWith(
         status: IndentRequestListStatus.success,
-        items: page.items,
+        items: [
+          ...awaitingFeedback,
+          ...page.items.where((item) => !known.contains(item.id)),
+        ],
         meta: page.meta,
       ));
     } on ApiException catch (e) {
@@ -78,6 +85,22 @@ class IndentRequestListBloc
         errorMessage: 'An unexpected error occurred. Please try again.',
       ));
     }
+  }
+
+  /// Indent milik sendiri yang menunggu feedback, karena bisa saja berada di
+  /// luar halaman yang sudah dimuat. Pelengkap saja: bila gagal, daftar
+  /// request tetap tampil.
+  Future<List<IndentRequestItem>> _awaitingFeedback() async {
+    try {
+      return await _repository.fetchAwaitingFeedback(
+        currentUserId: _currentUserId,
+      );
+    } on ApiException catch (e) {
+      AppLogger.info('Daftar feedback indent gagal: ${e.message}');
+    } catch (e, stack) {
+      AppLogger.error('Daftar feedback indent gagal tak terduga', e, stack);
+    }
+    return const [];
   }
 
   /// Halaman berikutnya ditambahkan di bawah daftar yang sudah ada. Bila

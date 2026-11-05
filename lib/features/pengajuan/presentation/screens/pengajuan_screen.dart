@@ -118,7 +118,8 @@ class _PengajuanViewState extends State<_PengajuanView> {
                     ),
                   _SubmitTab.ajukan => AjukanTab(
                       role: widget.role,
-                      onSubmitted: () => setState(() => _tab = _SubmitTab.status),
+                      onSubmitted: () =>
+                          setState(() => _tab = _SubmitTab.status),
                     ),
                   _SubmitTab.status => StatusTab(role: widget.role),
                 },
@@ -133,8 +134,8 @@ class _PengajuanViewState extends State<_PengajuanView> {
   Widget _buildHeader() {
     Widget tabButton(_SubmitTab tab, String label, IconData icon) {
       final active = _tab == tab;
-      final pillColor = AppColors.isDark ? AppColors.primaryText : AppColors.card;
-      final activeContent = AppColors.isDark ? AppColors.primary : AppColors.primaryText;
+      // final pillColor = AppColors.isDark ? AppColors.primaryText : AppColors.card;
+      // final activeContent = AppColors.isDark ? AppColors.primary : AppColors.primaryText;
 
       return Expanded(
         child: InkWell(
@@ -155,7 +156,9 @@ class _PengajuanViewState extends State<_PengajuanView> {
                 Icon(
                   icon,
                   size: 14,
-                  color: active ? AppColors.primaryText : Colors.white.withValues(alpha: 0.75),
+                  color: active
+                      ? AppColors.primaryText
+                      : Colors.white.withValues(alpha: 0.75),
                 ),
                 const SizedBox(width: 5),
                 Text(
@@ -163,7 +166,9 @@ class _PengajuanViewState extends State<_PengajuanView> {
                   style: TextStyle(
                     fontSize: 12.5,
                     fontWeight: FontWeight.w700,
-                    color: active ? AppColors.primaryText : Colors.white.withValues(alpha: 0.75),
+                    color: active
+                        ? AppColors.primaryText
+                        : Colors.white.withValues(alpha: 0.75),
                   ),
                 ),
               ],
@@ -192,9 +197,11 @@ class _PengajuanViewState extends State<_PengajuanView> {
             ),
             child: Row(
               children: [
-                tabButton(_SubmitTab.ringkasan, 'Summary', Icons.pie_chart_outline_rounded),
+                tabButton(_SubmitTab.ringkasan, 'Summary',
+                    Icons.pie_chart_outline_rounded),
                 tabButton(_SubmitTab.ajukan, 'Submit', Icons.edit_outlined),
-                tabButton(_SubmitTab.status, 'Status', Icons.calendar_month_outlined),
+                tabButton(
+                    _SubmitTab.status, 'Status', Icons.calendar_month_outlined),
               ],
             ),
           ),

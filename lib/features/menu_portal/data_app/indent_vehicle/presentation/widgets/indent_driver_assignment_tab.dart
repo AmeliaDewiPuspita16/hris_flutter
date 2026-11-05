@@ -157,7 +157,7 @@ class _AssignedCardState extends State<_AssignedCard> {
               ),
               if (vehicle != null) ...[
                 const SizedBox(width: 8),
-                _PlateChip(plate: vehicle),
+                IndentPlateChip(plate: vehicle),
               ],
             ],
           ),
@@ -242,8 +242,8 @@ class _AssignedCardState extends State<_AssignedCard> {
   }
 }
 
-class _PlateChip extends StatelessWidget {
-  const _PlateChip({required this.plate});
+class IndentPlateChip extends StatelessWidget {
+  const IndentPlateChip({super.key, required this.plate});
 
   final String plate;
 

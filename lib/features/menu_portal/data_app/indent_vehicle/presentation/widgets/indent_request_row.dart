@@ -116,7 +116,7 @@ class IndentRequestRow extends StatelessWidget {
                 background: item.status.background,
               ),
               const Spacer(),
-              if (item.rating != null) _Stars(rating: item.rating!),
+              if (item.rating != null) IndentStars(rating: item.rating!),
             ],
           ),
         ],
@@ -280,8 +280,8 @@ class _LabeledPill extends StatelessWidget {
   }
 }
 
-class _Stars extends StatelessWidget {
-  const _Stars({required this.rating});
+class IndentStars extends StatelessWidget {
+  const IndentStars({super.key, required this.rating});
 
   final int rating;
 

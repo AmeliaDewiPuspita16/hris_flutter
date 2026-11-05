@@ -16,11 +16,13 @@ import '../../data/indent_vehicle_repository.dart';
 import '../../domain/indent_approval_item.dart';
 import '../../domain/indent_assign_result.dart';
 import '../../domain/indent_assigned_item.dart';
+import '../../domain/indent_completed_item.dart';
 import '../../domain/indent_pending_item.dart';
 import '../../domain/indent_request_item.dart';
 import '../bloc/approval/indent_approval_bloc.dart';
 import '../bloc/approval/indent_approval_event.dart';
 import '../bloc/approval/indent_approval_state.dart';
+import '../bloc/driver/indent_completed_cubit.dart';
 import '../bloc/driver/indent_driver_cubit.dart';
 import '../bloc/list/indent_request_list_bloc.dart';
 import '../bloc/list/indent_request_list_event.dart';
@@ -29,6 +31,7 @@ import '../bloc/pending/indent_pending_bloc.dart';
 import '../bloc/pending/indent_pending_event.dart';
 import '../bloc/pending/indent_pending_state.dart';
 import '../widgets/indent_assign_sheet.dart';
+import '../widgets/indent_completed_tab.dart';
 import '../widgets/indent_driver_assignment_tab.dart';
 import '../widgets/indent_finish_dialog.dart';
 import '../widgets/indent_feedback_banner.dart';
@@ -45,6 +48,10 @@ enum IndentTab {
   /// Perjalanan yang ditugaskan ke driver yang login. Hanya untuk role
   /// `driver` (`AuthUser.isDriver`); driver tidak melihat tab lain.
   driverAssignments('My Assignments'),
+
+  /// Perjalanan driver yang sudah di-Finish atau sudah diberi feedback.
+  /// Hanya untuk role `driver`.
+  driverCompleted('Completed'),
 
   /// Admin driver menetapkan plat & driver lewat tombol Assign.
   /// Hanya untuk role `driver-admin` (`AuthUser.canAssignIndentVehicle`).
@@ -121,6 +128,9 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
 
   // Tab My Assignments (role `driver`): hanya dimuat untuk driver.
   late final IndentDriverCubit _driverCubit;
+
+  // Tab Completed (role `driver`): hanya dimuat untuk driver.
+  late final IndentCompletedCubit _completedCubit;
   final _searchController = TextEditingController();
   String _query = '';
 
@@ -148,6 +158,7 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
 
     _tabs = [
       if (showDriverTab) IndentTab.driverAssignments,
+      if (_isDriver) IndentTab.driverCompleted,
       if (_canAssign) IndentTab.pendingAssignment,
       if (_isHod) IndentTab.supervisorApproval,
       // Driver hanya melihat tugasnya sendiri, bukan daftar semua request.
@@ -168,6 +179,11 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
     );
     if (showDriverTab) _driverCubit.load();
 
+    _completedCubit = IndentCompletedCubit(
+      repository: context.read<IndentVehicleRepository>(),
+    );
+    if (_isDriver) _completedCubit.load();
+
     _approvalBloc = IndentApprovalBloc(
       repository: context.read<IndentVehicleRepository>(),
     );
@@ -185,6 +201,7 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
     _approvalBloc.close();
     _pendingBloc.close();
     _driverCubit.close();
+    _completedCubit.close();
     _searchController.dispose();
     super.dispose();
   }
@@ -225,6 +242,19 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
           r.destination.toLowerCase().contains(q) ||
           r.remark.toLowerCase().contains(q) ||
           (r.vehicle ?? '').toLowerCase().contains(q);
+    }).toList();
+  }
+
+  List<IndentCompletedItem> _filterCompleted(List<IndentCompletedItem> items) {
+    if (_query.trim().isEmpty) return items;
+
+    final q = _query.trim().toLowerCase();
+    return items.where((r) {
+      return r.name.toLowerCase().contains(q) ||
+          r.destination.toLowerCase().contains(q) ||
+          r.remark.toLowerCase().contains(q) ||
+          (r.vehicle ?? '').toLowerCase().contains(q) ||
+          (r.feedback ?? '').toLowerCase().contains(q);
     }).toList();
   }
 
@@ -276,8 +306,7 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
   /// hanya bila server sukses. Hasilnya (berhasil/gagal) ditampilkan oleh
   /// BlocListener di [build].
   /// Driver menutup perjalanan: konfirmasi dulu, lalu kirim ke server. Yang
-  /// berhasil hilang dari daftar driver; requester baru bisa memberi rating
-  /// setelah ini.
+  /// berhasil pindah dari My Assignments ke tab Completed.
   Future<void> _finishTrip(IndentAssignedItem item) async {
     final confirmed = await IndentFinishDialog.show(context, item);
     if (!confirmed || !mounted) return;
@@ -285,10 +314,12 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
     final error = await _driverCubit.finish(item);
     if (!mounted) return;
 
+    if (error == null && _isDriver) _completedCubit.load();
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          error ?? 'Trip finished. The requester can now rate it.',
+          error ?? 'Trip finished. You can see it under Completed.',
         ),
       ),
     );
@@ -570,6 +601,8 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
     switch (tab) {
       case IndentTab.driverAssignments:
         return _buildDriverAssignments();
+      case IndentTab.driverCompleted:
+        return _buildDriverCompleted();
       case IndentTab.pendingAssignment:
         return _buildPendingAssignment();
       case IndentTab.supervisorApproval:
@@ -607,6 +640,32 @@ class _IndentVehicleScreenState extends State<IndentVehicleScreen> {
           items: _filterAssigned(state.items),
           onRefresh: _driverCubit.load,
           onFinish: _finishTrip,
+        );
+      },
+    );
+  }
+
+  Widget _buildDriverCompleted() {
+    return BlocBuilder<IndentCompletedCubit, IndentCompletedState>(
+      bloc: _completedCubit,
+      builder: (context, state) {
+        if (state.isFirstLoad) {
+          return const _IndentCardList(skeleton: _PendingCardSkeleton());
+        }
+
+        if (state.status == IndentCompletedStatus.failure) {
+          return AppErrorView(
+            message: state.errorMessage ?? 'Failed to load your completed trips.',
+            onRetry: _completedCubit.load,
+          );
+        }
+
+        return IndentCompletedTab(
+          items: _filterCompleted(state.items),
+          loadingMore: state.loadingMore,
+          highlightId: _highlightFor(IndentTab.driverCompleted),
+          onRefresh: _completedCubit.load,
+          onNearEnd: _completedCubit.loadMore,
         );
       },
     );

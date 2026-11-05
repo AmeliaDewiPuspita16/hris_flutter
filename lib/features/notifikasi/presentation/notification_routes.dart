@@ -69,12 +69,16 @@ class NotificationRoutes {
       };
 
   /// Pending Vehicle Assignment untuk admin driver, Supervisor Approval
-  /// untuk HOD, List of User Requests untuk pemohon dan driver. Kalau akun
-  /// tidak berhak atas tabnya, layar jatuh ke List of User Requests.
+  /// untuk HOD, Completed untuk driver yang menerima feedback, List of User
+  /// Requests untuk pemohon dan driver. Kalau akun tidak berhak atas tabnya,
+  /// layar jatuh ke List of User Requests (atau tab pertama bagi driver).
   static IndentTab _indentTab(NotificationLink link) {
     if (link.isApprover) return IndentTab.supervisorApproval;
     if (link.isHandler && link.type == 'new_task') {
       return IndentTab.pendingAssignment;
+    }
+    if (link.isHandler && link.type == 'feedback_received') {
+      return IndentTab.driverCompleted;
     }
     return IndentTab.requests;
   }

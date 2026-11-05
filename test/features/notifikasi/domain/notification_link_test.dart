@@ -85,6 +85,7 @@ void main() {
           tabFor('approver', 'approval_needed'), IndentTab.supervisorApproval);
       expect(tabFor('handler', 'new_task'), IndentTab.pendingAssignment);
       expect(tabFor('handler', 'trip_assigned'), IndentTab.requests);
+      expect(tabFor('handler', 'feedback_received'), IndentTab.driverCompleted);
       expect(tabFor('requester', 'approved'), IndentTab.requests);
     });
 

@@ -20,7 +20,6 @@ class IndentRequestItem {
     this.rating,
     this.withDriver = true,
     this.isMine = true,
-    this.closed = false,
   });
 
   /// Pengenal unik request (bukan nomor urut). Nomor "No" di web tidak
@@ -61,21 +60,13 @@ class IndentRequestItem {
   /// request yang baru dibuat lewat form tetap dianggap milik sendiri.
   final bool isMine;
 
-  /// True kalau driver sudah menutup request (`date_close` terisi). Server
-  /// TIDAK mengubah `status` saat ditutup: status tetap 1 (On Progress) dan
-  /// baru menjadi 3 (Done) ketika requester memberi rating lewat
-  /// `store_rating`. Jadi "perjalanan selesai, menunggu feedback" =
-  /// status 1 + [closed], bukan status 3.
-  final bool closed;
-
-  /// True kalau perjalanan sudah selesai (ditutup driver) tapi request
-  /// MILIK SENDIRI belum memberi rating. Dipakai untuk menampilkan banner
-  /// feedback; tidak memblokir pengajuan request baru.
+  /// True kalau request MILIK SENDIRI berstatus 1 (On Progress) — aturan yang
+  /// sama dengan tabel "Indent Verification" di web, tanpa menunggu driver
+  /// mengisi `date_close`. Status baru menjadi 3 (Done) setelah requester
+  /// memberi rating. Dipakai untuk menampilkan banner feedback; tidak
+  /// memblokir pengajuan request baru.
   bool get needsFeedback =>
-      isMine &&
-      rating == null &&
-      (status == IndentProgressStatus.done ||
-          (status == IndentProgressStatus.onProgress && closed));
+      isMine && status == IndentProgressStatus.onProgress;
 
   /// boleh diedit/dihapus requester selama atasan belum meng-approve.
   bool get canModify => isMine && approve == IndentApproveStatus.onWaiting;
@@ -105,7 +96,6 @@ class IndentRequestItem {
       rating: rating ?? this.rating,
       withDriver: withDriver ?? this.withDriver,
       isMine: isMine,
-      closed: closed,
     );
   }
 
@@ -125,9 +115,7 @@ class IndentRequestItem {
   /// - tidak ada nama driver, cuma `id_driver` (null bila belum ditunjuk) —
   ///   dicocokkan lewat [driverNames] (id driver -> nama, dari list_driver);
   /// - `driver` berisi angka penanda "With Driver" (bukan nama);
-  /// - `rating` 0 = belum diberi rating;
-  /// - `date_close` (jam, mis. '14:11:27') terisi saat driver menutup
-  ///   request; null sebelum itu (lihat [closed]).
+  /// - `rating` 0 = belum diberi rating.
   ///
   /// [currentUserId] dipakai untuk menandai request milik sendiri
   /// ([isMine]).
@@ -169,7 +157,6 @@ class IndentRequestItem {
       status: _progressFrom(json['status']),
       withDriver: indentWithDriver(json['driver']),
       isMine: isMine,
-      closed: textOrNull(json['date_close']) != null,
     );
   }
 
