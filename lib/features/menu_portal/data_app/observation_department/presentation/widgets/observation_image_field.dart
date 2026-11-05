@@ -89,31 +89,41 @@ class ObservationImageField extends StatelessWidget {
             onTap: () => _pick(context),
             borderRadius: BorderRadius.circular(12),
             child: Container(
-              height: 92,
               width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               decoration: BoxDecoration(
-                color: AppColors.presentBg,
+                // Krem lembut: tidak sekuat hijau, supaya field opsional ini
+                // tidak mendominasi form.
+                color: AppColors.orangeBg,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: AppColors.primaryText.withValues(alpha: 0.35),
+                  color: AppColors.orange.withValues(alpha: 0.3),
                 ),
               ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+              child: Row(
                 children: [
                   Icon(Icons.add_photo_alternate_outlined,
-                      size: 26, color: AppColors.primaryText),
-                  const SizedBox(height: 6),
-                  Text(
-                    'Add photo',
-                    style: AppTextStyles.caption.copyWith(
-                      color: AppColors.primaryText,
-                      fontWeight: FontWeight.w700,
+                      size: 22, color: AppColors.orange),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Add photo',
+                          style: AppTextStyles.caption.copyWith(
+                            color: AppColors.text,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        Text(
+                          'PNG / JPG / JPEG — max 2 MB',
+                          style:
+                              AppTextStyles.caption.copyWith(fontSize: 10.5),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 2),
-                  Text('PNG / JPG / JPEG — max 2 MB',
-                      style: AppTextStyles.caption.copyWith(fontSize: 10.5)),
                 ],
               ),
             ),
@@ -124,12 +134,20 @@ class ObservationImageField extends StatelessWidget {
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(12),
-                child: Image.file(
-                  File(path!),
-                  height: 160,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                ),
+                // Saat Edit, foto lama berupa URL; foto baru berupa file lokal.
+                child: path!.startsWith('http')
+                    ? Image.network(
+                        path!,
+                        height: 120,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                      )
+                    : Image.file(
+                        File(path!),
+                        height: 120,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                      ),
               ),
               Positioned(
                 top: -8,

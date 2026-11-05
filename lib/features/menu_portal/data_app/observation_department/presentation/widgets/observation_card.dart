@@ -12,21 +12,33 @@ import 'observation_status_pill.dart';
 /// Status, Actions) jadi satu kartu ringkas, sama seperti `IndentRequestRow`.
 ///
 /// Urutan: kategori + tanggal + status (utama) → lokasi & pelapor →
-/// deskripsi → dept tujuan + aksi (Close bila boleh, kalau tidak "Details").
+/// deskripsi → dept tujuan + aksi (Close bila boleh, "Details" bila sudah
+/// closed). Bila [onTap] null kartu tidak bisa diketuk (dipakai tab My Dept
+/// Open, yang tidak menampilkan detail). Menu titik tiga Edit / Delete
+/// muncul bila [onEdit] / [onDelete] diisi (milik sendiri, lihat
+/// [ObservationItem.canModify]).
 class ObservationCard extends StatelessWidget {
   const ObservationCard({
     super.key,
     required this.item,
-    required this.onTap,
+    this.onTap,
     this.onClose,
+    this.onEdit,
+    this.onDelete,
   });
 
   final ObservationItem item;
-  final VoidCallback onTap;
+
+  /// Null = kartu tidak bisa diketuk dan "Details" tidak ditampilkan.
+  final VoidCallback? onTap;
 
   /// Tombol Close hanya tampil bila [ObservationItem.canClose] dan callback
   /// ini diisi.
   final VoidCallback? onClose;
+  final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
+
+  bool get _showMenu => onEdit != null || onDelete != null;
 
   @override
   Widget build(BuildContext context) {
@@ -72,6 +84,8 @@ class ObservationCard extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               ObservationStatusPill(status: item.status),
+              if (_showMenu) const SizedBox(width: 2),
+              if (_showMenu) _ActionMenu(onEdit: onEdit, onDelete: onDelete),
             ],
           ),
           const SizedBox(height: 10),
@@ -119,7 +133,7 @@ class ObservationCard extends StatelessWidget {
               ),
               if (item.canClose && onClose != null)
                 _CloseButton(onTap: onClose!)
-              else
+              else if (onTap != null)
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -203,6 +217,64 @@ class _CloseButton extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+enum _RowAction { edit, delete }
+
+/// Menu titik tiga Edit / Delete — pola sama dengan `IndentRequestRow`.
+class _ActionMenu extends StatelessWidget {
+  const _ActionMenu({this.onEdit, this.onDelete});
+
+  final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 28,
+      height: 24,
+      child: PopupMenuButton<_RowAction>(
+        padding: EdgeInsets.zero,
+        tooltip: 'More',
+        icon: Icon(Icons.more_vert, size: 20, color: AppColors.textMuted),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        color: AppColors.card,
+        onSelected: (action) => switch (action) {
+          _RowAction.edit => onEdit?.call(),
+          _RowAction.delete => onDelete?.call(),
+        },
+        itemBuilder: (_) => [
+          if (onEdit != null)
+            PopupMenuItem(
+              value: _RowAction.edit,
+              child: Row(
+                children: [
+                  Icon(Icons.edit_outlined, size: 18, color: AppColors.text),
+                  const SizedBox(width: 10),
+                  Text('Edit', style: AppTextStyles.body),
+                ],
+              ),
+            ),
+          if (onDelete != null)
+            PopupMenuItem(
+              value: _RowAction.delete,
+              child: Row(
+                children: [
+                  Icon(Icons.delete_outline,
+                      size: 18, color: AppColors.rejected),
+                  const SizedBox(width: 10),
+                  Text(
+                    'Delete',
+                    style: AppTextStyles.body
+                        .copyWith(color: AppColors.rejected),
+                  ),
+                ],
+              ),
+            ),
+        ],
       ),
     );
   }

@@ -76,10 +76,65 @@ class ObservationRepository {
       description: description,
       status: ObservationStatus.open,
       isFromMyDept: true,
+      isMine: true,
       findingImage: imagePath,
     );
     _items.add(item);
     return item;
+  }
+
+  /// Form "Edit Observation": field sama dengan Add. Hanya milik sendiri
+  /// yang masih open ([ObservationItem.canModify]).
+  Future<ObservationItem> update(
+    String id, {
+    required ObservationCategory category,
+    String? subCategory,
+    required DateTime dateFinding,
+    required String relevantDept,
+    required String location,
+    required String description,
+    String? imagePath,
+  }) async {
+    await Future<void>.delayed(_latency);
+
+    final index = _indexOfModifiable(id);
+    final current = _items[index];
+    final updated = ObservationItem(
+      id: current.id,
+      createdDate: dateFinding,
+      reporterName: current.reporterName,
+      reporterDept: current.reporterDept,
+      category: category,
+      subCategory: subCategory,
+      location: location,
+      relevantDept: relevantDept,
+      description: description,
+      status: current.status,
+      isFromMyDept: current.isFromMyDept,
+      isMine: current.isMine,
+      findingImage: imagePath,
+    );
+    _items[index] = updated;
+    return updated;
+  }
+
+  /// Hapus observasi milik sendiri yang masih open
+  Future<void> delete(String id) async {
+    await Future<void>.delayed(_latency);
+    _items.removeAt(_indexOfModifiable(id));
+  }
+
+  int _indexOfModifiable(String id) {
+    final index = _items.indexWhere((i) => i.id == id);
+    if (index < 0) {
+      throw const ApiException.server('This observation no longer exists.');
+    }
+    if (!_items[index].canModify) {
+      throw const ApiException.server(
+        'You can only change your own open observations.',
+      );
+    }
+    return index;
   }
 
   /// Form "Close Observation": alasan wajib, foto opsional.
@@ -137,6 +192,7 @@ class ObservationRepository {
               'Rambu plang parkiran segera dilepas karena sudah tidak layak lagi',
           status: ObservationStatus.open,
           isFromMyDept: true,
+          isMine: true
         ),
         ObservationItem(
           id: '2',
@@ -150,6 +206,7 @@ class ObservationRepository {
               'Disarankan memasang label ruangan driver room, agar karyawan/ti mengetahui letak ruangan driver room',
           status: ObservationStatus.open,
           isFromMyDept: true,
+          isMine: true
         ),
         ObservationItem(
           id: '3',
@@ -164,6 +221,7 @@ class ObservationRepository {
               'Muatan motor roda tiga Dept Estate (besi) menjulur ke badan jalan saat diparkir di dorm blok 5. Berpotensi bahaya kecelakaan/ kerugian (materil/korban jiwa) bagi pengendara lain.',
           status: ObservationStatus.closed,
           isFromMyDept: false,
+          isMine: false,
           closeDate: DateTime(2024, 4, 30),
           closeReason: 'N/A',
           closedBy: 'N/A',
@@ -181,6 +239,7 @@ class ObservationRepository {
               'Belum ada sign tanda arah panah naik ataupun turun di tangga emergency wisma',
           status: ObservationStatus.closed,
           isFromMyDept: false,
+          isMine: false,
         ),
         ObservationItem(
           id: '5',
@@ -195,6 +254,7 @@ class ObservationRepository {
               'Antislip di pintu samping area absensi karyawan sudah tidak bekerja maksimal perlu adanya penggantian antislip',
           status: ObservationStatus.closed,
           isFromMyDept: false,
+          isMine: false,
         ),
         ObservationItem(
           id: '6',
@@ -209,6 +269,7 @@ class ObservationRepository {
               'Terdapat potongan dahan ranting di jalan matahari dari wisma arah PT Majapahit, sehingga membahayakan pengendara yang melintas',
           status: ObservationStatus.closed,
           isFromMyDept: false,
+          isMine: false,
         ),
       ];
 }

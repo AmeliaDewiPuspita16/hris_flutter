@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../../../core/network/api_exception.dart';
 import '../../../../../../core/theme/app_colors.dart';
 import '../../../../../../core/widgets/app_text_field.dart';
 import '../../../../shared/presentation/widgets/portal_category_page.dart';
@@ -19,13 +20,16 @@ import 'observation_detail_screen.dart';
 ///
 /// Padanan halaman "All Observations" di web, dipecah jadi dua tab:
 /// - **My Dept Open** — tabel "OPEN Observations from Your Department",
-///   dengan tombol Close di tiap kartu.
+///   dengan tombol Close di tiap kartu. Kartunya tidak bisa dibuka: selama
+///   masih open, detail tidak tersedia (sama dengan web); ringkasan
+///   observasi dilihat dari sheet Close.
 /// - **All Observations** — semua observasi, dengan filter Month / Relevant
-///   Dept. / Category.
+///   Dept. / Category. Detail (isi PDF di web) bisa dibuka untuk semua
+///   status, dan observasi milik sendiri yang masih open punya menu Edit &
+///   Delete.
 ///
 /// Kolom search di atas berlaku di kedua tab; tombol filter hanya muncul di
-/// tab All Observations. FAB oranye membuka form Add. Ketuk kartu untuk
-/// detail (isi PDF di web, ditampilkan langsung di layar).
+/// tab All Observations. FAB oranye membuka form Add.
 ///
 /// Data masih DEMO lewat [ObservationRepository] (belum ada endpoint).
 class ObservationDeptScreen extends StatefulWidget {
@@ -79,15 +83,11 @@ class _ObservationDeptScreenState extends State<ObservationDeptScreen> {
   }
 
   Future<void> _openDetail(ObservationItem item) async {
-    final changed = await Navigator.of(context).push<bool>(
+    await Navigator.of(context).push<void>(
       MaterialPageRoute(
-        builder: (_) => ObservationDetailScreen(
-          item: item,
-          repository: _repository,
-        ),
+        builder: (_) => ObservationDetailScreen(item: item),
       ),
     );
-    if (changed == true && mounted) await _cubit.load();
   }
 
   Future<void> _closeItem(ObservationItem item) async {
@@ -98,6 +98,58 @@ class _ObservationDeptScreenState extends State<ObservationDeptScreen> {
     );
     if (closed == null || !mounted) return;
     _showMessage('Observation closed.');
+    await _cubit.load();
+  }
+
+  Future<void> _edit(ObservationItem item) async {
+    final saved = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => AddObservationScreen(
+          repository: _repository,
+          initialItem: item,
+        ),
+      ),
+    );
+    if (saved != true || !mounted) return;
+    _showMessage('Observation updated.');
+    await _cubit.load();
+  }
+
+  Future<void> _delete(ObservationItem item) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.card,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Delete observation?'),
+        content: Text(
+          'This will permanently delete your observation at "${item.location}".',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(
+              'Delete',
+              style: TextStyle(color: AppColors.rejected),
+            ),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    try {
+      await _repository.delete(item.id);
+      if (!mounted) return;
+      _showMessage('Observation deleted.');
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      _showMessage(e.message);
+    }
     await _cubit.load();
   }
 
@@ -142,7 +194,7 @@ class _ObservationDeptScreenState extends State<ObservationDeptScreen> {
                     _buildSearchRow(state),
                     const SizedBox(height: 12),
                     ObservationTabBar(
-                      labels: const ['My Dept Open', 'All Observations'],
+                      labels: const ['To Close', 'All Observations'],
                       activeIndex: _tabIndex,
                       badgeCounts: {_myOpenTab: state.myOpen.length},
                       onChanged: (i) => setState(() => _tabIndex = i),
@@ -177,7 +229,11 @@ class _ObservationDeptScreenState extends State<ObservationDeptScreen> {
                         items: state.visibleAll,
                         onRefresh: _cubit.load,
                         onOpen: _openDetail,
-                        onClose: _closeItem,
+                        // Di sini observasi open pun bisa dilihat detailnya,
+                        // dan milik sendiri bisa di-edit / dihapus.
+                        detailForOpen: true,
+                        onEdit: _edit,
+                        onDelete: _delete,
                         emptyTitle: 'No observations yet',
                         emptyMessage:
                             'Observations from all departments will appear here.',

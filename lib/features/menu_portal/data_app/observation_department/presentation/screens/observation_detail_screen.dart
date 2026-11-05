@@ -3,13 +3,10 @@ import 'package:flutter/material.dart';
 import '../../../../../../core/theme/app_colors.dart';
 import '../../../../../../core/theme/app_text_styles.dart';
 import '../../../../../../core/utils/date_formatter.dart';
-import '../../../../../../core/widgets/app_button.dart';
 import '../../../../../../core/widgets/app_card.dart';
 import '../../../../../../core/widgets/back_header.dart';
 import '../../../../../../core/widgets/detail_field_tile.dart';
-import '../../data/observation_repository.dart';
 import '../../domain/observation_item.dart';
-import '../widgets/observation_close_sheet.dart';
 import '../widgets/observation_image_view.dart';
 import '../widgets/observation_status_pill.dart';
 
@@ -18,112 +15,73 @@ import '../widgets/observation_status_pill.dart';
 /// Description Close, Close Date, Closed By, Image Finding, Image Close),
 /// tapi dibaca langsung di layar.
 ///
-/// Hasilnya lewat Navigator.pop: `true` bila observasi ditutup dari layar
-/// ini, supaya layar daftar memuat ulang.
-class ObservationDetailScreen extends StatefulWidget {
-  const ObservationDetailScreen({
-    super.key,
-    required this.item,
-    required this.repository,
-  });
+/// Murni baca. Bagian Closure & Image Close hanya tampil bila observasinya
+/// sudah closed. Tab My Dept Open tidak membuka layar ini.
+class ObservationDetailScreen extends StatelessWidget {
+  const ObservationDetailScreen({super.key, required this.item});
 
   final ObservationItem item;
-  final ObservationRepository repository;
-
-  @override
-  State<ObservationDetailScreen> createState() =>
-      _ObservationDetailScreenState();
-}
-
-class _ObservationDetailScreenState extends State<ObservationDetailScreen> {
-  late ObservationItem _item = widget.item;
-  bool _changed = false;
-
-  Future<void> _close() async {
-    final closed = await ObservationCloseSheet.show(
-      context,
-      item: _item,
-      repository: widget.repository,
-    );
-    if (closed == null || !mounted) return;
-
-    setState(() {
-      _item = closed;
-      _changed = true;
-    });
-    ScaffoldMessenger.of(context)
-        .showSnackBar(const SnackBar(content: Text('Observation closed.')));
-  }
 
   @override
   Widget build(BuildContext context) {
-    final item = _item;
-
-    return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, _) {
-        if (!didPop) Navigator.of(context).pop(_changed);
-      },
-      child: Scaffold(
-        backgroundColor: AppColors.bg,
-        appBar: BackHeader(
-          title: 'Observation Detail',
-          onBack: () => Navigator.of(context).pop(_changed),
-        ),
-        bottomNavigationBar: item.canClose ? _buildActionBar() : null,
-        body: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            _buildHero(item),
+    return Scaffold(
+      backgroundColor: AppColors.bg,
+      appBar: BackHeader(
+        title: 'Observation Detail',
+        onBack: () => Navigator.of(context).pop(),
+      ),
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          _buildHero(item),
+          const SizedBox(height: 14),
+          _SectionCard(
+            icon: Icons.info_outline,
+            title: 'OBSERVATION SUMMARY',
+            children: [
+              _rows([
+                ('Name', item.reporterName),
+                ('Department', item.reporterDept),
+                ('To Department', item.relevantDept),
+                ('Category Finding', item.categoryLabel),
+                ('Date Finding', DateFormatter.shortDate(item.createdDate)),
+                ('Location', item.location),
+                ('Description', item.description),
+              ]),
+            ],
+          ),
+          const SizedBox(height: 14),
+          _SectionCard(
+            icon: Icons.photo_outlined,
+            title: 'IMAGE FINDING',
+            children: [ObservationImageView(source: item.findingImage)],
+          ),
+          if (!item.isOpen) ...[
             const SizedBox(height: 14),
             _SectionCard(
-              icon: Icons.info_outline,
-              title: 'OBSERVATION SUMMARY',
+              icon: Icons.check_circle_outline,
+              title: 'CLOSURE',
               children: [
                 _rows([
-                  ('Name', item.reporterName),
-                  ('Department', item.reporterDept),
-                  ('To Department', item.relevantDept),
-                  ('Category Finding', item.categoryLabel),
-                  ('Date Finding', DateFormatter.shortDate(item.createdDate)),
-                  ('Location', item.location),
-                  ('Description', item.description),
+                  ('Description Close', item.closeReason ?? 'N/A'),
+                  (
+                    'Close Date',
+                    item.closeDate == null
+                        ? 'N/A'
+                        : DateFormatter.shortDate(item.closeDate!),
+                  ),
+                  ('Closed By', item.closedBy ?? 'N/A'),
                 ]),
               ],
             ),
             const SizedBox(height: 14),
             _SectionCard(
               icon: Icons.photo_outlined,
-              title: 'IMAGE FINDING',
-              children: [ObservationImageView(source: item.findingImage)],
+              title: 'IMAGE CLOSE',
+              children: [ObservationImageView(source: item.closeImage)],
             ),
-            if (!item.isOpen) ...[
-              const SizedBox(height: 14),
-              _SectionCard(
-                icon: Icons.check_circle_outline,
-                title: 'CLOSURE',
-                children: [
-                  _rows([
-                    ('Description Close', item.closeReason ?? 'N/A'),
-                    (
-                      'Close Date',
-                      item.closeDate == null
-                          ? 'N/A'
-                          : DateFormatter.shortDate(item.closeDate!),
-                    ),
-                    ('Closed By', item.closedBy ?? 'N/A'),
-                  ]),
-                ],
-              ),
-              const SizedBox(height: 14),
-              _SectionCard(
-                icon: Icons.photo_outlined,
-                title: 'IMAGE CLOSE',
-                children: [ObservationImageView(source: item.closeImage)],
-              ),
-            ],
           ],
-        ),
+        ],
       ),
     );
   }
@@ -180,24 +138,6 @@ class _ObservationDetailScreenState extends State<ObservationDetailScreen> {
           const SizedBox(width: 8),
           ObservationStatusPill(status: item.status),
         ],
-      ),
-    );
-  }
-
-  /// Tombol Close di bawah layar, hanya untuk observasi open milik dept
-  /// sendiri ([ObservationItem.canClose]).
-  Widget _buildActionBar() {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.card,
-        border: Border(top: BorderSide(color: AppColors.border)),
-      ),
-      child: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-          child: AppButton(label: 'Close Observation', onPressed: _close),
-        ),
       ),
     );
   }

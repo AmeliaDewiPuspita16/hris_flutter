@@ -16,7 +16,10 @@ class ObservationListTab extends StatelessWidget {
     required this.items,
     required this.onRefresh,
     required this.onOpen,
-    required this.onClose,
+    this.onClose,
+    this.onEdit,
+    this.onDelete,
+    this.detailForOpen = false,
     required this.emptyTitle,
     required this.emptyMessage,
   });
@@ -27,7 +30,17 @@ class ObservationListTab extends StatelessWidget {
   final List<ObservationItem> items;
   final Future<void> Function() onRefresh;
   final ValueChanged<ObservationItem> onOpen;
-  final ValueChanged<ObservationItem> onClose;
+
+  /// Null = tab ini tanpa tombol Close (tab All Observations).
+  final ValueChanged<ObservationItem>? onClose;
+
+  /// Null = tab ini tanpa menu Edit / Delete (hanya tab All Observations).
+  final ValueChanged<ObservationItem>? onEdit;
+  final ValueChanged<ObservationItem>? onDelete;
+
+  /// True = observasi yang masih open juga bisa dibuka detailnya (tab All
+  /// Observations). False = hanya yang sudah closed (tab My Dept Open).
+  final bool detailForOpen;
   final String emptyTitle;
   final String emptyMessage;
 
@@ -81,8 +94,18 @@ class ObservationListTab extends StatelessWidget {
                 final item = items[index];
                 return ObservationCard(
                   item: item,
-                  onTap: () => onOpen(item),
-                  onClose: item.canClose ? () => onClose(item) : null,
+                  onTap: item.isOpen && !detailForOpen
+                      ? null
+                      : () => onOpen(item),
+                  onClose: item.canClose && onClose != null
+                      ? () => onClose!(item)
+                      : null,
+                  onEdit: item.canModify && onEdit != null
+                      ? () => onEdit!(item)
+                      : null,
+                  onDelete: item.canModify && onDelete != null
+                      ? () => onDelete!(item)
+                      : null,
                 );
               },
             ),

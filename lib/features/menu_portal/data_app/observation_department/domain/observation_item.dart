@@ -18,6 +18,7 @@ class ObservationItem {
     required this.description,
     required this.status,
     required this.isFromMyDept,
+    required this.isMine,
     this.findingImage,
     this.closeReason,
     this.closeDate,
@@ -44,6 +45,9 @@ class ObservationItem {
   /// Observations from Your Department" di web).
   final bool isFromMyDept;
 
+  /// Dibuat oleh user yang sedang login - pemilik berhak Edit & Delete.
+  final bool isMine;
+
   /// Foto temuan / foto penutupan: URL (http...) atau path file lokal.
   final String? findingImage;
   final String? closeReason;
@@ -53,6 +57,10 @@ class ObservationItem {
 
   bool get isOpen => status == ObservationStatus.open;
   bool get canClose => isOpen && isFromMyDept;
+
+  /// Edit & Delete hanya untuk observasi milik sendiri yang masih open
+  /// (observasi yang sudah closed dianggap final).
+  bool get canModify => isMine && isOpen;
 
   /// "Safety (Nearmiss)" / "Quality".
   String get categoryLabel => subCategory == null
@@ -81,6 +89,7 @@ class ObservationItem {
       description: description,
       status: status ?? this.status,
       isFromMyDept: isFromMyDept,
+      isMine: isMine,
       findingImage: findingImage,
       closeReason: closeReason ?? this.closeReason,
       closeDate: closeDate ?? this.closeDate,

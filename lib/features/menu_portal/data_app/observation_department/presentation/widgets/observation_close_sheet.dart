@@ -7,6 +7,7 @@ import '../../../../../../core/theme/app_text_styles.dart';
 import '../../../../../../core/widgets/app_button.dart';
 import '../../../../../../core/widgets/app_text_field.dart';
 import '../../data/observation_repository.dart';
+import '../../../../../../core/utils/date_formatter.dart';
 import '../../domain/observation_item.dart';
 import 'observation_image_field.dart';
 
@@ -123,52 +124,20 @@ class _ObservationCloseSheetState extends State<ObservationCloseSheet> {
                   style: AppTextStyles.bodyMuted,
                 ),
                 const SizedBox(height: 14),
-                // Ringkasan singkat (di web ada di kartu "Observation Summary").
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: item.category.background,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Icon(item.category.icon,
-                          size: 18, color: item.category.color),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              '${item.categoryLabel}  ·  ${item.relevantDept}',
-                              style: AppTextStyles.caption.copyWith(
-                                color: AppColors.text,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              item.description,
-                              maxLines: 3,
-                              overflow: TextOverflow.ellipsis,
-                              style:
-                                  AppTextStyles.caption.copyWith(height: 1.4),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                // Ringkasan observasi — di web ada di kartu "Observation
+                // Summary"; di sini jadi satu-satunya tempat melihat isi
+                // observasi yang masih open.
+                _Summary(item: item),
                 const SizedBox(height: 16),
                 AppTextField(
                   label: 'Reason close',
                   controller: _reasonController,
                   required: true,
                   hint: 'Reason for closing the observation',
-                  maxLines: 4,
-                  minLines: 3,
+                  // Mulai satu baris, memanjang mengikuti isi (maks 10 baris,
+                  // lalu menggulir di dalam field).
+                  minLines: 1,
+                  maxLines: 10,
                 ),
                 const SizedBox(height: 14),
                 ObservationImageField(
@@ -198,6 +167,71 @@ class _ObservationCloseSheetState extends State<ObservationCloseSheet> {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Kartu "Observation Summary": Category, Relevant Department, Date Finding,
+/// Location, Description — urutan sama dengan halaman Close di web.
+class _Summary extends StatelessWidget {
+  const _Summary({required this.item});
+
+  final ObservationItem item;
+
+  @override
+  Widget build(BuildContext context) {
+    final rows = <(String, String)>[
+      ('CATEGORY', item.categoryLabel),
+      ('RELEVANT DEPARTMENT', item.relevantDept),
+      ('DATE FINDING', DateFormatter.shortDate(item.createdDate)),
+      ('LOCATION', item.location),
+      ('DESCRIPTION', item.description),
+    ];
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+      decoration: BoxDecoration(
+        color: item.category.background,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(item.category.icon, size: 16, color: item.category.color),
+              const SizedBox(width: 8),
+              Text(
+                'OBSERVATION SUMMARY',
+                style: TextStyle(
+                  fontFamily: AppTextStyles.fontFamily,
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.text,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          for (var i = 0; i < rows.length; i++) ...[
+            if (i > 0) const SizedBox(height: 8),
+            Text(
+              rows[i].$1,
+              style: AppTextStyles.caption.copyWith(
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.4,
+              ),
+            ),
+            const SizedBox(height: 1),
+            Text(
+              rows[i].$2,
+              style: AppTextStyles.body.copyWith(fontSize: 13, height: 1.4),
+            ),
+          ],
+        ],
       ),
     );
   }

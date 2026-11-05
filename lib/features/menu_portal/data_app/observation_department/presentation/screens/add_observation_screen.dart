@@ -11,19 +11,28 @@ import '../../../../../../core/widgets/app_text_field.dart';
 import '../../../../../../core/widgets/back_header.dart';
 import '../../data/observation_repository.dart';
 import '../../domain/observation_category.dart';
+import '../../domain/observation_item.dart';
 import '../widgets/observation_image_field.dart';
 
-/// Layar "+ Add Observation" — padanan form Add di web: Category, Date
-/// Finding, Relevant Dept., Location, Description (semua wajib) dan Image
-/// (opsional).
+/// Layar "+ Add Observation" dan "Edit Observation" — padanan form Add di
+/// web: Category, Date Finding, Relevant Dept., Location, Description (semua
+/// wajib) dan Image (opsional).
 ///
 /// Dibuka lewat Navigator.push. Validasi lewat snackbar. Hasilnya lewat
 /// Navigator.pop: `true` bila tersimpan, null bila ditutup tanpa menyimpan.
 /// [repository] harus instance yang sama dengan layar daftar.
 class AddObservationScreen extends StatefulWidget {
-  const AddObservationScreen({super.key, required this.repository});
+  const AddObservationScreen({
+    super.key,
+    required this.repository,
+    this.initialItem,
+  });
 
   final ObservationRepository repository;
+
+  /// Diisi untuk mode edit: form terisi data lama dan perubahan disimpan ke
+  /// observasi yang sama. Null = mode tambah.
+  final ObservationItem? initialItem;
 
   @override
   State<AddObservationScreen> createState() => _AddObservationScreenState();
@@ -44,6 +53,23 @@ class _AddObservationScreenState extends State<AddObservationScreen> {
   /// True selama permintaan berjalan: tombol dikunci supaya ketukan ganda
   /// tidak membuat data dobel.
   bool _submitting = false;
+
+  bool get _isEdit => widget.initialItem != null;
+
+  @override
+  void initState() {
+    super.initState();
+    final item = widget.initialItem;
+    if (item == null) return;
+
+    _category = item.category.name;
+    _subCategory = item.subCategory ?? _none;
+    _dept = item.relevantDept;
+    _date = item.createdDate;
+    _imagePath = item.findingImage;
+    _locationController.text = item.location;
+    _descriptionController.text = item.description;
+  }
 
   ObservationCategory? get _selectedCategory {
     for (final c in ObservationCategory.values) {
@@ -92,15 +118,33 @@ class _AddObservationScreenState extends State<AddObservationScreen> {
 
     setState(() => _submitting = true);
     try {
-      await widget.repository.add(
-        category: _selectedCategory!,
-        subCategory: _subCategory == _none ? null : _subCategory,
-        dateFinding: _date!,
-        relevantDept: _dept,
-        location: _locationController.text.trim(),
-        description: _descriptionController.text.trim(),
-        imagePath: _imagePath,
-      );
+      final category = _selectedCategory!;
+      final subCategory = _subCategory == _none ? null : _subCategory;
+      final location = _locationController.text.trim();
+      final description = _descriptionController.text.trim();
+
+      if (_isEdit) {
+        await widget.repository.update(
+          widget.initialItem!.id,
+          category: category,
+          subCategory: subCategory,
+          dateFinding: _date!,
+          relevantDept: _dept,
+          location: location,
+          description: description,
+          imagePath: _imagePath,
+        );
+      } else {
+        await widget.repository.add(
+          category: category,
+          subCategory: subCategory,
+          dateFinding: _date!,
+          relevantDept: _dept,
+          location: location,
+          description: description,
+          imagePath: _imagePath,
+        );
+      }
       if (!mounted) return;
       Navigator.of(context).pop(true);
     } on ApiException catch (e) {
@@ -122,7 +166,7 @@ class _AddObservationScreenState extends State<AddObservationScreen> {
     return Scaffold(
       backgroundColor: AppColors.bg,
       appBar: BackHeader(
-        title: 'Add Observation',
+        title: _isEdit ? 'Edit Observation' : 'Add Observation',
         onBack: () => Navigator.of(context).pop(),
       ),
       // Tombol submit di bawah layar (bukan ikut scroll), sama dengan
@@ -200,8 +244,9 @@ class _AddObservationScreenState extends State<AddObservationScreen> {
                   controller: _descriptionController,
                   required: true,
                   hint: 'Describe what you found',
-                  maxLines: 5,
-                  minLines: 3,
+                  // Mulai satu baris, memanjang mengikuti isi.
+                  minLines: 1,
+                  maxLines: 10,
                 ),
               ],
             ),
@@ -259,7 +304,7 @@ class _AddObservationScreenState extends State<AddObservationScreen> {
                       ),
                     )
                   : Text(
-                      'Save',
+                      _isEdit ? 'Save changes' : 'Save',
                       style: AppTextStyles.buttonText
                           .copyWith(color: Colors.white),
                     ),
