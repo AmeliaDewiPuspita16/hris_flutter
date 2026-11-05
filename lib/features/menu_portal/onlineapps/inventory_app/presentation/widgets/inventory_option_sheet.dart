@@ -16,9 +16,13 @@ class InventoryOptionSheet<T> extends StatelessWidget {
     super.key,
     required this.title,
     required this.options,
+    this.subtitle,
   });
 
   final String title;
+
+  /// Keterangan satu baris di bawah judul (opsional).
+  final String? subtitle;
   final List<InventoryOption<T>> options;
 
   /// Pembuka singkat: `await InventoryOptionSheet.show(context, ...)`.
@@ -26,12 +30,17 @@ class InventoryOptionSheet<T> extends StatelessWidget {
     BuildContext context, {
     required String title,
     required List<InventoryOption<T>> options,
+    String? subtitle,
   }) {
     return showModalBottomSheet<T>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => InventoryOptionSheet<T>(title: title, options: options),
+      builder: (_) => InventoryOptionSheet<T>(
+        title: title,
+        subtitle: subtitle,
+        options: options,
+      ),
     );
   }
 
@@ -61,7 +70,14 @@ class InventoryOptionSheet<T> extends StatelessWidget {
               ),
             ),
             Text(title, style: AppTextStyles.sectionTitle),
-            const SizedBox(height: 12),
+            if (subtitle != null) ...[
+              const SizedBox(height: 2),
+              Text(
+                subtitle!,
+                style: AppTextStyles.caption.copyWith(color: AppColors.textMuted),
+              ),
+            ],
+            const SizedBox(height: 14),
             for (final option in options) ...[
               _OptionTile<T>(
                 option: option,
@@ -91,61 +107,92 @@ class _OptionTile<T> extends StatelessWidget {
   Widget build(BuildContext context) {
     final ready = option.ready;
 
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Opacity(
-        opacity: ready ? 1 : 0.6,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-          decoration: BoxDecoration(
-            border: Border.all(color: AppColors.border),
-            borderRadius: BorderRadius.circular(12),
-          ),
+    return Material(
+      color: ready ? AppColors.card : AppColors.neutralBg.withAlpha(120),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(14),
+        side: BorderSide(color: AppColors.border),
+      ),
+      child: InkWell(
+        onTap: onTap,
+        customBorder: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
           child: Row(
             children: [
               Container(
-                width: 40,
-                height: 40,
+                width: 44,
+                height: 44,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
                   color: ready ? AppColors.primaryLight : AppColors.neutralBg,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(13),
                 ),
                 child: Icon(
                   option.icon,
-                  size: 19,
+                  size: 21,
                   color: ready ? AppColors.primaryText : AppColors.textMuted,
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      option.title,
-                      style: AppTextStyles.body
-                          .copyWith(fontWeight: FontWeight.w600),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      option.subtitle,
-                      style: AppTextStyles.caption
-                          .copyWith(color: AppColors.textMuted),
-                    ),
-                  ],
+                child: Opacity(
+                  opacity: ready ? 1 : 0.6,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        option.title,
+                        style: AppTextStyles.body.copyWith(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        option.subtitle,
+                        style: AppTextStyles.caption.copyWith(
+                          height: 1.35,
+                          color: AppColors.textMuted,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
               const SizedBox(width: 8),
               if (ready)
-                Icon(Icons.chevron_right, size: 18, color: AppColors.textMuted)
+                Container(
+                  width: 28,
+                  height: 28,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryLight,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.arrow_forward_rounded,
+                    size: 15,
+                    color: AppColors.primaryText,
+                  ),
+                )
               else
-                Text(
-                  'Coming soon',
-                  style: AppTextStyles.caption.copyWith(
-                    color: AppColors.textMuted,
-                    fontWeight: FontWeight.w600,
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppColors.neutralBg,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    'Coming soon',
+                    style: AppTextStyles.caption.copyWith(
+                      fontSize: 10,
+                      color: AppColors.textMuted,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
             ],

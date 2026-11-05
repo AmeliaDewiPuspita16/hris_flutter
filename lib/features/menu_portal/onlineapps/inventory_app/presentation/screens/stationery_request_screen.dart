@@ -4,7 +4,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../../../core/logging/app_logger.dart';
 import '../../../../../../core/network/api_exception.dart';
 import '../../../../../../core/theme/app_colors.dart';
-import '../../../../../../core/theme/app_text_styles.dart';
 import '../../../../../../core/widgets/app_error_view.dart';
 import '../../../../../../core/widgets/app_shimmer.dart';
 import '../../../../../../core/widgets/app_text_field.dart';
@@ -20,8 +19,10 @@ import '../bloc/verification/stationery_verification_event.dart';
 import '../bloc/verification/stationery_verification_state.dart';
 import '../widgets/stationery_cancel_dialog.dart';
 import '../widgets/stationery_decision_dialog.dart';
+import '../widgets/stationery_empty_state.dart';
 import '../widgets/stationery_filter_sheet.dart';
 import '../widgets/stationery_request_row.dart';
+import '../widgets/stationery_summary_strip.dart';
 import '../widgets/stationery_verification_tab.dart';
 import 'add_stationery_request_screen.dart';
 
@@ -115,11 +116,15 @@ class _StationeryRequestScreenState extends State<StationeryRequestScreen> {
     }).toList();
   }
 
-  Future<void> _openFilter() async {
-    final result = await StationeryFilterSheet.show(context, _requestFilter);
-    if (result == null || !mounted) return;
-
-    setState(() => _requestFilter = result);
+  /// Filter status sudah ada di kotak ringkasan; tombol di samping search
+  /// khusus untuk "My requests".
+  void _toggleMine() {
+    setState(() {
+      _requestFilter = StationeryRequestFilter(
+        status: _requestFilter.status,
+        onlyMine: !_requestFilter.onlyMine,
+      );
+    });
   }
 
   void _toast(String message) {
@@ -335,9 +340,9 @@ class _StationeryRequestScreenState extends State<StationeryRequestScreen> {
               ),
               if (showFilter) ...[
                 const SizedBox(width: 10),
-                _FilterButton(
-                  active: _requestFilter.isActive,
-                  onTap: _openFilter,
+                _MineButton(
+                  active: _requestFilter.onlyMine,
+                  onTap: _toggleMine,
                 ),
               ],
             ],
@@ -435,6 +440,21 @@ class _StationeryRequestScreenState extends State<StationeryRequestScreen> {
           });
         }
 
+        final header = Padding(
+          padding: const EdgeInsets.only(bottom: 2),
+          child: StationerySummaryStrip(
+            counts: state.counts,
+            total: state.meta.total,
+            selectedStatus: _requestFilter.status,
+            onStatusSelected: (code) => setState(() {
+              _requestFilter = StationeryRequestFilter(
+                status: code,
+                onlyMine: _requestFilter.onlyMine,
+              );
+            }),
+          ),
+        );
+
         return RefreshIndicator(
           onRefresh: _refreshRequests,
           child: NotificationListener<ScrollNotification>(
@@ -444,14 +464,30 @@ class _StationeryRequestScreenState extends State<StationeryRequestScreen> {
                 // tetap bisa dipakai saat daftar kosong.
                 ? ListView(
                     physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 88),
                     children: [
-                      const SizedBox(height: 120),
-                      Center(
-                        child: Text(
-                          _filtering ? 'No matching requests' : 'No data',
-                          style: AppTextStyles.bodyMuted,
+                      header,
+                      if (_filtering)
+                        StationeryEmptyState(
+                          icon: Icons.search_off_rounded,
+                          title: 'No matching requests',
+                          message:
+                              'Try a different keyword or clear the filters.',
+                          actionLabel: 'Clear filters',
+                          onAction: () => setState(() {
+                            _searchController.clear();
+                            _query = '';
+                            _requestFilter = StationeryRequestFilter.none;
+                          }),
+                        )
+                      else
+                        const StationeryEmptyState(
+                          icon: Icons.inventory_2_outlined,
+                          title: 'No requests yet',
+                          message:
+                              'Tap + to request stationery. Your requests and '
+                              'their approval status will show up here.',
                         ),
-                      ),
                     ],
                   )
                 : ListView.separated(
@@ -459,16 +495,19 @@ class _StationeryRequestScreenState extends State<StationeryRequestScreen> {
                     // Padding bawah ekstra (88) supaya baris terakhir tidak
                     // tertutup FAB "Add Request".
                     padding: const EdgeInsets.fromLTRB(16, 4, 16, 88),
-                    // +1 untuk skeleton di dasar saat halaman berikutnya
-                    // sedang dimuat.
-                    itemCount: results.length + (state.loadingMore ? 1 : 0),
+                    // +1 header ringkasan di atas, +1 skeleton di dasar saat
+                    // halaman berikutnya sedang dimuat.
+                    itemCount: 1 + results.length + (state.loadingMore ? 1 : 0),
                     separatorBuilder: (_, __) => const SizedBox(height: 10),
                     itemBuilder: (context, index) {
-                      if (index == results.length) {
+                      if (index == 0) return header;
+
+                      final rowIndex = index - 1;
+                      if (rowIndex == results.length) {
                         return const _RequestRowSkeleton();
                       }
 
-                      final item = results[index];
+                      final item = results[rowIndex];
                       final busy = _busyIds.contains(item.id);
                       return Opacity(
                         opacity: busy ? 0.5 : 1,
@@ -490,10 +529,10 @@ class _StationeryRequestScreenState extends State<StationeryRequestScreen> {
   }
 }
 
-/// Tombol persegi di samping kolom search. Bertitik oranye bila ada filter
-/// yang sedang aktif.
-class _FilterButton extends StatelessWidget {
-  const _FilterButton({required this.active, required this.onTap});
+/// Tombol persegi di samping kolom search: toggle "My requests". Terisi hijau
+/// bila aktif.
+class _MineButton extends StatelessWidget {
+  const _MineButton({required this.active, required this.onTap});
 
   final bool active;
   final VoidCallback onTap;
@@ -501,14 +540,13 @@ class _FilterButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Tooltip(
-      message: 'Filter',
+      message: 'My requests',
       child: Material(
-        color: AppColors.card,
+        color: active ? AppColors.primary : AppColors.card,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(14),
           side: BorderSide(
             color: active ? AppColors.primary : AppColors.border,
-            width: active ? 1.5 : 1,
           ),
         ),
         child: InkWell(
@@ -518,29 +556,10 @@ class _FilterButton extends StatelessWidget {
           onTap: onTap,
           child: SizedBox(
             width: 48,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                Icon(
-                  Icons.tune_rounded,
-                  size: 22,
-                  color: active ? AppColors.primary : AppColors.textMid,
-                ),
-                if (active)
-                  Positioned(
-                    top: 10,
-                    right: 10,
-                    child: Container(
-                      width: 9,
-                      height: 9,
-                      decoration: BoxDecoration(
-                        color: AppColors.orange,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: AppColors.card, width: 1.5),
-                      ),
-                    ),
-                  ),
-              ],
+            child: Icon(
+              active ? Icons.person_rounded : Icons.person_outline_rounded,
+              size: 22,
+              color: active ? Colors.white : AppColors.textMid,
             ),
           ),
         ),

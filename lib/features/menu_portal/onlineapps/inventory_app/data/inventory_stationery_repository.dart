@@ -55,6 +55,15 @@ class InventoryStationeryRepository {
     return StationeryRequestPage(
       items: [for (final r in slice) _toItem(r)],
       pending: all.where((r) => r.isPending).length,
+      counts: StationeryStatusCounts(
+        pending: all.where((r) => r.isPending).length,
+        approved: all
+            .where((r) => r.status == StationeryRequestStatus.codeApproved)
+            .length,
+        rejected: all
+            .where((r) => r.status == StationeryRequestStatus.codeRejected)
+            .length,
+      ),
       meta: PageMeta(
         currentPage: page,
         lastPage: lastPage,

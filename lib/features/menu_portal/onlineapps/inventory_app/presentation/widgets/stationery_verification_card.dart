@@ -4,7 +4,6 @@ import '../../../../../../core/theme/app_colors.dart';
 import '../../../../../../core/theme/app_text_styles.dart';
 import '../../domain/stationery_request_item.dart';
 import 'stationery_action_button.dart';
-import 'stationery_item_icon.dart';
 import 'stationery_request_parts.dart';
 
 /// Kartu satu request yang menunggu verifikasi (baris tabel "Verification
@@ -30,7 +29,6 @@ class StationeryVerificationCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return StationeryCard(
-      borderColor: AppColors.accent,
       padding: const EdgeInsets.all(14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -38,8 +36,6 @@ class StationeryVerificationCard extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              StationeryItemIcon(itemName: item.itemName, size: 40),
-              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

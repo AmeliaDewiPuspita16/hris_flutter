@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../../../core/theme/app_text_styles.dart';
 import '../../domain/stationery_request_item.dart';
+import 'stationery_empty_state.dart';
 import 'stationery_verification_card.dart';
 
 /// Isi tab "Verification": antrean request stationery yang menunggu
@@ -40,13 +41,11 @@ class StationeryVerificationTab extends StatelessWidget {
           // bisa dipakai saat daftar kosong.
           ? ListView(
               physics: const AlwaysScrollableScrollPhysics(),
-              children: [
-                const SizedBox(height: 120),
-                Center(
-                  child: Text(
-                    'No requests waiting for verification',
-                    style: AppTextStyles.bodyMuted,
-                  ),
+              children: const [
+                StationeryEmptyState(
+                  icon: Icons.fact_check_outlined,
+                  title: 'All caught up',
+                  message: 'No requests are waiting for verification.',
                 ),
               ],
             )
