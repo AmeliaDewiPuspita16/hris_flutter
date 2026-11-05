@@ -394,6 +394,11 @@ class _ItRequestDetailView extends StatelessWidget {
       if (newEmployee.department != null)
         (label: 'Department', value: newEmployee.department!),
       if (newEmployee.section != null) (label: 'Section', value: newEmployee.section!),
+      if (newEmployee.equipmentNeeded.isNotEmpty)
+        (
+          label: 'Equipment / Access',
+          value: newEmployee.equipmentNeeded.join(', '),
+        ),
     ];
 
     return Column(

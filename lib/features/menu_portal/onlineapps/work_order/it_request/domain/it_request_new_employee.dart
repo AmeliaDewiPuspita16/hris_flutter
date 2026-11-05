@@ -11,7 +11,6 @@ import '../../../../../../core/utils/json_value.dart';
 class ItRequestNewEmployee {
   const ItRequestNewEmployee({
     this.fullName,
-    this.preferredName,
     this.employeeNumber,
     this.executiveType,
     this.department,
@@ -21,7 +20,6 @@ class ItRequestNewEmployee {
   });
 
   final String? fullName;
-  final String? preferredName;
   final String? employeeNumber;
   final String? executiveType;
   final String? department;
@@ -38,7 +36,6 @@ class ItRequestNewEmployee {
 
     return ItRequestNewEmployee(
       fullName: textOrNull(json['full_name']),
-      preferredName: textOrNull(json['preferred_name']),
       employeeNumber: textOrNull(json['employee_number']),
       executiveType: textOrNull(json['executive_type']),
       department: textOrNull(json['department']),

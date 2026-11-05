@@ -139,67 +139,76 @@ class _OptionGroupCard extends StatelessWidget {
   }
 }
 
-/// Ikon + subjudul singkat per opsi, dicocokkan dari teks labelnya supaya
-/// tidak perlu menambah field baru di [NeedOption]. Kalau ada label baru
-/// yang belum kena mapping di sini, ikon jatuh ke [Icons.more_horiz] dan
-/// subjudulnya jatuh ke deskripsi generik.
+/// Ikon + subjudul per opsi "What do you need?". Isinya sengaja lebih ringkas
+/// daripada versi web (yang harus menjelaskan lengkap karena pilihannya baru
+/// muncul di langkah berikutnya): di mobile pilihannya langsung tampil di
+/// bawah opsi yang dipilih, jadi cukup contoh singkat + "etc.".
+///
+/// Dicocokkan dari `requestCategoryCode` (kode yang juga dikirim ke server),
+/// bukan dari teks label — label datang dari server dan boleh berubah
+/// (mis. "Computer/IT Hardware" -> "Setup IT Hardware"), kodenya tidak.
+/// Kode yang belum dikenal tampil tanpa subjudul daripada diberi teks yang
+/// menyesatkan.
 ({IconData icon, String description}) _metaFor(NeedOption option) {
-  final label = option.label.toLowerCase();
-  if (label.contains('new employee')) {
-    return (
-      icon: Icons.person_add_alt_outlined,
-      description: 'Opens an 8-field form'
-    );
+  switch (option.requestCategoryCode) {
+    case 'new_account_req':
+      return (
+        icon: Icons.person_outline,
+        description: 'Email, BIIE Portal, Synology Drive, etc.',
+      );
+    case 'account_mgmt_req':
+      return (
+        icon: Icons.lock_outline,
+        description: 'New username, password reset, role change, etc.',
+      );
+    case 'download_req':
+      return (
+        icon: Icons.file_download_outlined,
+        description: 'Install an application on your computer',
+      );
+    case 'perangkat_komputer_req':
+      return (
+        icon: Icons.desktop_windows_outlined,
+        description: 'Laptop, PC, printer, monitor, etc.',
+      );
+    case 'event_equipment_req':
+      return (
+        icon: Icons.cast_outlined,
+        description: 'Projector, videotron, webcam, etc.',
+      );
+    case 'new_employee_req':
+      return (
+        icon: Icons.person_add_alt_outlined,
+        description: 'Laptop, email, BIIE Portal, etc. for new employees',
+      );
+    case 'other_req':
+      return (
+        icon: Icons.more_horiz,
+        description: 'Anything not listed above',
+      );
+    // Media
+    case 'desain_req':
+      return (
+        icon: Icons.palette_outlined,
+        description: 'Poster, banner, streamer, logo',
+      );
+    case 'dokumentasi_req':
+      return (
+        icon: Icons.photo_camera_outlined,
+        description: 'Photo or video coverage',
+      );
+    case 'printing_req':
+      return (
+        icon: Icons.print_outlined,
+        description: 'ID card, certificate',
+      );
+    case 'social_media_req':
+      return (
+        icon: Icons.share_outlined,
+        description: 'Instagram, WhatsApp',
+      );
   }
-  if (label.contains('account creation')) {
-    return (
-      icon: Icons.person_outline,
-      description: 'Existing employee, no account yet'
-    );
-  }
-  if (label.contains('account management')) {
-    return (
-      icon: Icons.lock_outline,
-      description: 'Update login, username, role, or deactivate',
-    );
-  }
-  if (label.contains('download') || label.contains('install')) {
-    return (
-      icon: Icons.file_download_outlined,
-      description: 'Tell us which application you need',
-    );
-  }
-  if (label.contains('hardware') || label.contains('computer')) {
-    return (
-      icon: Icons.desktop_windows_outlined,
-      description: 'Laptop, PC, monitor, keyboard, printer'
-    );
-  }
-  if (label.contains('event') || label.contains('meeting')) {
-    return (
-      icon: Icons.cast_outlined,
-      description: 'Projector, videotron, webcam, monitor, TV'
-    );
-  }
-  if (label.contains('design')) {
-    return (
-      icon: Icons.palette_outlined,
-      description: 'Poster, banner, streamer, logo'
-    );
-  }
-  if (label.contains('documentation')) {
-    return (
-      icon: Icons.photo_camera_outlined,
-      description: 'Photo or video coverage'
-    );
-  }
-  if (label.contains('print')) {
-    return (icon: Icons.print_outlined, description: 'ID card, certificate');
-  }
-  if (label.contains('social')) {
-    return (icon: Icons.share_outlined, description: 'Instagram, WhatsApp');
-  }
-  return (icon: Icons.more_horiz, description: 'Tell us what you need');
+  return (icon: Icons.more_horiz, description: '');
 }
 
 class _OptionRow extends StatelessWidget {

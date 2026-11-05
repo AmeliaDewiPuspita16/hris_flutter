@@ -52,7 +52,6 @@ class NewEmployeeEquipment {
 class NewEmployeeData {
   const NewEmployeeData({
     this.fullName = '',
-    this.preferredName = '',
     this.employeeNumber = '',
     this.executiveType,
     this.department,
@@ -61,7 +60,6 @@ class NewEmployeeData {
   });
 
   final String fullName;
-  final String preferredName;
   final String employeeNumber;
   final ExecutiveType? executiveType;
   final Department? department;
@@ -69,8 +67,8 @@ class NewEmployeeData {
   final Set<String> equipmentNeeded;
 
   /// Field wajib (Full name, Employee number, Executive/Non-Executive,
-  /// Department) sudah terisi — Preferred name, Section, dan Equipment
-  /// memang opsional di form ini.
+  /// Department) sudah terisi — Section dan Equipment memang opsional di
+  /// form ini (sama dengan versi web).
   bool get isComplete =>
       fullName.trim().isNotEmpty &&
       employeeNumber.trim().isNotEmpty &&
@@ -79,7 +77,6 @@ class NewEmployeeData {
 
   NewEmployeeData copyWith({
     String? fullName,
-    String? preferredName,
     String? employeeNumber,
     ExecutiveType? executiveType,
     Department? department,
@@ -88,7 +85,6 @@ class NewEmployeeData {
   }) {
     return NewEmployeeData(
       fullName: fullName ?? this.fullName,
-      preferredName: preferredName ?? this.preferredName,
       employeeNumber: employeeNumber ?? this.employeeNumber,
       executiveType: executiveType ?? this.executiveType,
       department: department ?? this.department,

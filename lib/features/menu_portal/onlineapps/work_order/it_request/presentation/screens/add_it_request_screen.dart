@@ -296,8 +296,6 @@ class _AddItRequestScreenState extends State<AddItRequestScreen> {
   }) {
     return {
       name('new_employee_name'): data.fullName.trim(),
-      if (data.preferredName.trim().isNotEmpty)
-        name('new_employee_preferred_name'): data.preferredName.trim(),
       name('new_employee_number'): data.employeeNumber.trim(),
       name('new_employee_level'): data.executiveType!.label,
       name('new_employee_department'): '${data.department!.id}',
