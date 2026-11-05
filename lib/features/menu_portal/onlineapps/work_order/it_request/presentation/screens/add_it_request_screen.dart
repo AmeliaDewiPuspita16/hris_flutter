@@ -609,7 +609,7 @@ class _AddItRequestScreenState extends State<AddItRequestScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (max > 0) const _EmployeeHeader(title: 'Employee 1'),
+        const _EmployeeHeader(title: 'Employee 1'),
         NewEmployeeSubform(
           key: const ValueKey('employee-0'),
           data: _newEmployeeData,
@@ -684,15 +684,29 @@ class _EmployeeHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.only(bottom: 12),
       child: Row(
         children: [
-          Expanded(
-            child: Text(
-              title,
-              style: AppTextStyles.label.copyWith(fontWeight: FontWeight.w700),
+          // Teks tebal + garis di bawahnya, supaya jelas ini judul satu blok
+          // karyawan, bukan sekadar label field.
+          IntrinsicWidth(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  title,
+                  style: AppTextStyles.body.copyWith(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 13.5,
+                    color: AppColors.primaryText,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Container(height: 2, color: AppColors.primaryText),
+              ],
             ),
           ),
+          const Spacer(),
           if (onRemove != null)
             InkWell(
               onTap: onRemove,

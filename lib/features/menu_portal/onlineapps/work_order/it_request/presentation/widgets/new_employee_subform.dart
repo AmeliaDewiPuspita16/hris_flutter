@@ -3,8 +3,6 @@ import 'package:flutter/material.dart';
 import '../../../../../../../core/theme/app_colors.dart';
 import '../../../../../../../core/theme/app_text_styles.dart';
 import '../../../../../../../core/widgets/app_shimmer.dart';
-import '../../../../../../../core/widgets/app_text_field.dart';
-import '../../../../../../../core/widgets/field_label_row.dart';
 import '../../../../../../shared/domain/department.dart';
 import '../../domain/new_employee_data.dart';
 import 'need_choice_chips.dart';
@@ -48,6 +46,12 @@ class NewEmployeeSubform extends StatefulWidget {
   State<NewEmployeeSubform> createState() => _NewEmployeeSubformState();
 }
 
+/// Jarak antar grup (label + kotak) lebih besar daripada jarak label ke
+/// kotaknya sendiri, supaya jelas label itu milik kotak yang tepat di
+/// bawahnya, bukan kotak di atasnya.
+const double _groupGap = 18;
+const double _labelGap = 6;
+
 class _NewEmployeeSubformState extends State<NewEmployeeSubform> {
   late final _fullNameCtrl = TextEditingController(text: widget.data.fullName);
   late final _employeeNumberCtrl = TextEditingController(text: widget.data.employeeNumber);
@@ -70,22 +74,22 @@ class _NewEmployeeSubformState extends State<NewEmployeeSubform> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        AppTextField(
+        _LabeledTextField(
           label: 'Full name',
           controller: _fullNameCtrl,
           hint: 'Full name',
           required: true,
           onChanged: (v) => _emit((d) => d.copyWith(fullName: v)),
         ),
-        const SizedBox(height: 12),
-        AppTextField(
+        const SizedBox(height: _groupGap),
+        _LabeledTextField(
           label: 'Employee number',
           controller: _employeeNumberCtrl,
           hint: 'Employee number',
           required: true,
           onChanged: (v) => _emit((d) => d.copyWith(employeeNumber: v)),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: _groupGap),
         _SelectField<ExecutiveType>(
           label: 'Executive / Non-Executive',
           required: true,
@@ -95,18 +99,18 @@ class _NewEmployeeSubformState extends State<NewEmployeeSubform> {
           ],
           onChanged: (v) => _emit((d) => d.copyWith(executiveType: v)),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: _groupGap),
         _buildDepartmentField(),
-        const SizedBox(height: 12),
-        AppTextField(
+        const SizedBox(height: _groupGap),
+        _LabeledTextField(
           label: 'Section (optional)',
           controller: _sectionCtrl,
           hint: 'Section',
           onChanged: (v) => _emit((d) => d.copyWith(section: v)),
         ),
-        const SizedBox(height: 12),
-        Text('Equipment / Access needed (optional)', style: AppTextStyles.label),
-        const SizedBox(height: 8),
+        const SizedBox(height: _groupGap),
+        const _FieldLabel(label: 'Equipment / Access needed (optional)'),
+        const SizedBox(height: _labelGap),
         NeedChoiceChips(
           labels: NewEmployeeEquipment.all,
           selected: widget.data.equipmentNeeded,
@@ -197,7 +201,8 @@ class _SelectField<T> extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        FieldLabelRow(label: label, required: required),
+        _FieldLabel(label: label, required: required),
+        const SizedBox(height: _labelGap),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
           decoration: BoxDecoration(
@@ -232,6 +237,80 @@ class _SelectField<T> extends StatelessWidget {
                 if (v != null) onChanged(v);
               },
             ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Label field: teks kecil + tanda bintang merah bila wajib.
+class _FieldLabel extends StatelessWidget {
+  const _FieldLabel({required this.label, this.required = false});
+
+  final String label;
+  final bool required;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text.rich(
+      TextSpan(
+        text: label,
+        style: AppTextStyles.label,
+        children: [
+          if (required)
+            TextSpan(
+              text: ' *',
+              style: AppTextStyles.label.copyWith(color: AppColors.rejected),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Text field berlabel dengan jarak label-ke-kotak yang rapat ([_labelGap]).
+class _LabeledTextField extends StatelessWidget {
+  const _LabeledTextField({
+    required this.label,
+    required this.hint,
+    required this.controller,
+    required this.onChanged,
+    this.required = false,
+  });
+
+  final String label;
+  final String hint;
+  final bool required;
+  final TextEditingController controller;
+  final ValueChanged<String> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    OutlineInputBorder border(Color color) => OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: color, width: 1.2),
+        );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _FieldLabel(label: label, required: required),
+        const SizedBox(height: _labelGap),
+        TextField(
+          controller: controller,
+          onChanged: onChanged,
+          style: AppTextStyles.body,
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: AppTextStyles.body.copyWith(color: AppColors.textMuted),
+            filled: true,
+            fillColor: AppColors.card,
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            border: border(AppColors.border),
+            enabledBorder: border(AppColors.border),
+            focusedBorder: border(AppColors.primaryMid),
           ),
         ),
       ],
