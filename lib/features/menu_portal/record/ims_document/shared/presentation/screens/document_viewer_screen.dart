@@ -13,12 +13,14 @@ import '../../../../../../../core/theme/app_colors.dart';
 import '../../../../../../../core/theme/app_text_styles.dart';
 import '../../../../../../../core/widgets/app_error_view.dart';
 import '../../../../../../../core/widgets/back_header.dart';
+import '../../../../../../../core/widgets/screen_capture_guard.dart';
 import '../../domain/master_document.dart';
 
 /// Layar baca dokumen master di dalam aplikasi — hanya untuk dilihat.
 ///
 /// Sengaja tanpa tombol simpan/bagikan/cetak dan seleksi teks dimatikan —
-/// dokumen master hanya boleh dibaca, tidak diunduh.
+/// dokumen master hanya boleh dibaca, tidak diunduh. Screenshot dan rekam
+/// layar juga dicegah lewat [ScreenCaptureGuard].
 ///
 /// Byte PDF diambil sendiri lewat `http` lalu dirender dari memori dengan
 /// `PdfViewer.data`, bukan `PdfViewer.uri` — yang terakhir menyimpan salinan
@@ -114,29 +116,31 @@ class _DocumentViewerScreenState extends State<DocumentViewerScreen> {
         title: document.docNo,
         onBack: () => Navigator.of(context).pop(),
       ),
-      body: FutureBuilder<Uint8List>(
-        future: _bytes,
-        builder: (context, snapshot) {
-          if (snapshot.hasError) {
-            final error = snapshot.error;
-            return AppErrorView(
-              message: error is _ViewerError ? error.message : 'Failed to load the document. Please try again.',
-              onRetry: () => setState(() => _bytes = _load()),
+      body: ScreenCaptureGuard(
+        child: FutureBuilder<Uint8List>(
+          future: _bytes,
+          builder: (context, snapshot) {
+            if (snapshot.hasError) {
+              final error = snapshot.error;
+              return AppErrorView(
+                message: error is _ViewerError ? error.message : 'Failed to load the document. Please try again.',
+                onRetry: () => setState(() => _bytes = _load()),
+              );
+            }
+
+            final bytes = snapshot.data;
+            if (bytes == null) {
+              return Center(child: CircularProgressIndicator(color: AppColors.primaryText));
+            }
+
+            return PdfViewer.data(
+              bytes,
+              // Wajib unik per sumber (lihat dokumentasi `PdfViewer.data`).
+              sourceName: document.viewUrl ?? '${document.docNo}-sample',
+              params: _params,
             );
-          }
-
-          final bytes = snapshot.data;
-          if (bytes == null) {
-            return Center(child: CircularProgressIndicator(color: AppColors.primaryText));
-          }
-
-          return PdfViewer.data(
-            bytes,
-            // Wajib unik per sumber (lihat dokumentasi `PdfViewer.data`).
-            sourceName: document.viewUrl ?? '${document.docNo}-sample',
-            params: _params,
-          );
-        },
+          },
+        ),
       ),
     );
   }
