@@ -106,6 +106,7 @@ class ApiConfig {
   static String hsePermitReject(int id) => '$hsePermit/$id/reject';
   static String hsePermitClose(int id) => '$hsePermit/$id/close';
 
+  /// ___________________________MENU INDENT___________________________
   /// Daftar driver untuk dropdown Asign Vehicle (role admin driver).
   /// Responnya array polos, bukan amplop {data: ...}
   static const String indentDrivers = '/api/indent/admin/list_driver';
@@ -114,13 +115,10 @@ class ApiConfig {
   /// Respons dibungkus {message, status, data: [...]} dengan 'status
   /// berupa angka 200 (bukan kata 'success')
   static const String indent = '/api/indent';
-
   static const String indentMyList = '/api/indent/list';
 
   /// Buat indent baru, atau perbarui yang ada bila `id_recuitment` dikirim.
   static const String indentStore = '/api/indent/vehicle/store';
-
-  /// Untuk request yang sudah selesai, dan user mharus memberikan feedback
   static const String indentStoreRating = '/api/indent/vehicle/store_rating';
 
   /// Request yang menunggu keputusan atasan (hanya role `hod`).
@@ -138,6 +136,22 @@ class ApiConfig {
   /// Admin menetapkan kendaraan + driver ('status: 1') atau membatalkan
   /// ('status: 5').
   static const String indentAdminApprove = '/api/admin_indent/approve';
+
+  /// ___________________________MENU OBSERVATION___________________________
+  /// Observation Department — daftar semua temuan (`?month=YYYY-MM`,
+  /// `category`, `id_dept`, `per_page`, `page`) dan buat temuan baru
+  /// (POST multipart) di path ini.
+  static const String observation = '/api/data/observation';
+
+  /// Temuan OPEN untuk departemen user atau milik user sendiri.
+  static const String observationRequests = '$observation/requests';
+  static const String observationOptions = '$observation/options';
+
+  /// Detail / edit (POST) / hapus (DELETE) satu temuan.
+  static String observationDetail(int id) => '$observation/$id';
+  static String observationClose(int id) => '$observation/$id/close';
+
+
 
   // --------------------------------- HRIS ----------------------------
 

@@ -31,7 +31,9 @@ import 'observation_detail_screen.dart';
 /// Kolom search di atas berlaku di kedua tab; tombol filter hanya muncul di
 /// tab All Observations. FAB oranye membuka form Add.
 ///
-/// Data masih DEMO lewat [ObservationRepository] (belum ada endpoint).
+/// Tab All Observations sudah memakai data asli dari API lewat
+/// [ObservationRepository.fetchAll]; tab To Close, Add, Edit, Delete, dan
+/// Close menyusul (lihat catatan di repository).
 class ObservationDeptScreen extends StatefulWidget {
   const ObservationDeptScreen({super.key});
 
@@ -51,9 +53,9 @@ class _ObservationDeptScreenState extends State<ObservationDeptScreen> {
   @override
   void initState() {
     super.initState();
-    // Satu instance dipakai bersama layar Add / Detail (data demo tersimpan
-    // di memori instance ini).
-    _repository = ObservationRepository();
+    // Satu instance (dari RepositoryProvider) dipakai bersama layar Add /
+    // Close.
+    _repository = context.read<ObservationRepository>();
     _cubit = ObservationListCubit(repository: _repository)..load();
   }
 
@@ -158,6 +160,7 @@ class _ObservationDeptScreenState extends State<ObservationDeptScreen> {
       context,
       initial: state.filter,
       months: state.monthOptions,
+      departments: state.departmentOptions,
     );
     if (result != null) _cubit.setFilter(result);
   }

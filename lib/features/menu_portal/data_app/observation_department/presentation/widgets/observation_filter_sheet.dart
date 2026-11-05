@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../../../../../../core/theme/app_colors.dart';
 import '../../../../../../core/theme/app_text_styles.dart';
 import '../../../../../../core/widgets/app_dropdown.dart';
-import '../../data/observation_repository.dart';
 import '../../domain/observation_category.dart';
 import '../../domain/observation_filter.dart';
 
@@ -17,6 +16,7 @@ class ObservationFilterSheet extends StatefulWidget {
     super.key,
     required this.initial,
     required this.months,
+    required this.departments,
   });
 
   final ObservationFilter initial;
@@ -24,16 +24,24 @@ class ObservationFilterSheet extends StatefulWidget {
   /// Bulan yang ada di data (pilihan "Month").
   final List<DateTime> months;
 
+  /// Departemen tujuan yang ada di data (pilihan "Relevant Dept.").
+  final List<String> departments;
+
   static Future<ObservationFilter?> show(
     BuildContext context, {
     required ObservationFilter initial,
     required List<DateTime> months,
+    required List<String> departments,
   }) {
     return showModalBottomSheet<ObservationFilter>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => ObservationFilterSheet(initial: initial, months: months),
+      builder: (_) => ObservationFilterSheet(
+        initial: initial,
+        months: months,
+        departments: departments,
+      ),
     );
   }
 
@@ -55,6 +63,13 @@ class _ObservationFilterSheetState extends State<ObservationFilterSheet> {
       : _monthKey(widget.initial.month!);
   late String _dept = widget.initial.relevantDept ?? _all;
   late String _category = widget.initial.category?.name ?? _all;
+
+  /// Daftar dept dari data, ditambah dept filter aktif bila sudah tidak ada
+  /// di data (dropdown tidak boleh memuat nilai yang tak ada di pilihan).
+  List<String> get _departmentChoices => {
+        ...widget.departments,
+        if (_dept != _all) _dept,
+      }.toList();
 
   static String _monthKey(DateTime d) => '${d.year}-${d.month}';
 
@@ -142,7 +157,7 @@ class _ObservationFilterSheetState extends State<ObservationFilterSheet> {
                 value: _dept,
                 items: [
                   (value: _all, label: 'All Departments'),
-                  for (final d in ObservationRepository.departments)
+                  for (final d in _departmentChoices)
                     (value: d, label: d),
                 ],
                 onChanged: (v) => setState(() => _dept = v),

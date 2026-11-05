@@ -100,10 +100,10 @@ class ObservationListTab extends StatelessWidget {
                   onClose: item.canClose && onClose != null
                       ? () => onClose!(item)
                       : null,
-                  onEdit: item.canModify && onEdit != null
+                  onEdit: item.canEdit && onEdit != null
                       ? () => onEdit!(item)
                       : null,
-                  onDelete: item.canModify && onDelete != null
+                  onDelete: item.canDelete && onDelete != null
                       ? () => onDelete!(item)
                       : null,
                 );

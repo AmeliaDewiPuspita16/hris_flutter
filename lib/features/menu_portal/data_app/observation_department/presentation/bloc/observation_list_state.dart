@@ -52,6 +52,17 @@ class ObservationListState {
     return months;
   }
 
+  /// Departemen tujuan yang ada di data (urut abjad) untuk pilihan filter
+  /// Relevant Dept. — diambil dari data server, bukan daftar hardcode.
+  List<String> get departmentOptions {
+    final depts = {
+      for (final i in all)
+        if (i.relevantDept != '-') i.relevantDept,
+    }.toList()
+      ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+    return depts;
+  }
+
   List<ObservationItem> _search(List<ObservationItem> source) {
     final q = query.trim().toLowerCase();
     if (q.isEmpty) return source;
