@@ -60,7 +60,39 @@ class IndentVehicleRepository {
     );
     final driverNames = await driverNamesRequest;
 
-    final rows = data['data'];
+    final items = _requestItems(
+      data['data'],
+      currentUserId: currentUserId,
+      driverNames: driverNames,
+    );
+
+    return IndentRequestPage(items: items, meta: PageMeta.fromJson(data));
+  }
+
+  /// Indent milik user yang menunggu feedback — `GET /api/indent/list/verify`,
+  /// aturan yang sama dengan tabel "Indent Verification" di web. Daftar utama
+  /// berisi semua user per halaman, jadi milik sendiri bisa saja belum termuat.
+  ///
+  /// Melempar [ApiException] bila gagal.
+  Future<List<IndentRequestItem>> fetchAwaitingFeedback({
+    int? currentUserId,
+  }) async {
+    final driverNames = await _driverNames(refresh: false);
+    final envelope =
+        await _apiClient.getEnvelope(ApiConfig.indentAwaitingFeedback);
+
+    return _requestItems(
+      envelope['data'],
+      currentUserId: currentUserId,
+      driverNames: driverNames,
+    );
+  }
+
+  List<IndentRequestItem> _requestItems(
+    dynamic rows, {
+    int? currentUserId,
+    required Map<int, String> driverNames,
+  }) {
     if (rows is! List) {
       throw const ApiException.server(
         'The indent list was received, but its format was not recognized.',
@@ -78,12 +110,11 @@ class IndentVehicleRepository {
           ),
         );
       } on FormatException catch (e) {
-        // Satu baris cacat tidak boleh menghilangkan seluruh halaman.
+        // Satu baris cacat tidak boleh menghilangkan seluruh daftar.
         AppLogger.info('Melewati indent yang tidak bisa dibaca: $e');
       }
     }
-
-    return IndentRequestPage(items: items, meta: PageMeta.fromJson(data));
+    return items;
   }
 
   /// Membuat request indent baru, atau memperbarui yang sudah ada bila [id]
@@ -303,7 +334,8 @@ class IndentVehicleRepository {
   /// `POST /api/driver_indent/close_request`.
   ///
   /// Server hanya mengisi `date_close`; `status` tetap 1. Status baru jadi 3
-  /// setelah requester memberi rating (`store_rating`). Dokumentasi API
+  /// setelah requester memberi rating (`store_rating`), yang bisa dilakukan
+  /// walau driver belum menutup request. Dokumentasi API
   /// menulis sebaliknya, tapi perilaku server yang berlaku adalah yang ini.
   ///
   /// Hanya status HTTP yang diperiksa, seperti [assignByAdmin].
