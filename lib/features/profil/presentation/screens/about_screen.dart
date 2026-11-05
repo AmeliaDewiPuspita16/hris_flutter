@@ -40,7 +40,7 @@ class AboutScreen extends StatelessWidget {
               const _AboutCard(),
               const SizedBox(height: 40),
               Text(
-                'Crafted with extra ❤️ by ITM Department',
+                'Crafted with extra ❤️',
                 textAlign: TextAlign.center,
                 style: AppTextStyles.caption,
               ),

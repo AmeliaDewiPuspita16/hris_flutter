@@ -11,6 +11,7 @@ import 'core/network/api_client.dart';
 import 'core/notifications/notification_service.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_cubit.dart';
+import 'core/widgets/screen_capture_guard.dart';
 import 'features/absensi/data/absensi_repository.dart';
 import 'features/auth/data/auth_repository.dart';
 import 'features/auth/data/session_storage.dart';
@@ -64,6 +65,10 @@ Future<void> main() async {
 
   // Mode terang/gelap dibaca dulu supaya frame pertama sudah benar.
   final themeCubit = await ThemeCubit.load();
+
+  // Sisa proteksi kalau sesi sebelumnya mati saat dokumen IMS sedang dibuka.
+  // Tidak di-await: panggilan plugin tidak boleh menahan splash screen.
+  unawaited(ScreenCaptureGuard.clearLeftoverProtection());
 
   runApp(
     MyApp(

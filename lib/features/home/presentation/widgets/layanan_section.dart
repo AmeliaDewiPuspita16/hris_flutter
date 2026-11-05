@@ -105,11 +105,16 @@ class _ServiceCard extends StatelessWidget {
               ? AppColors.featuredGradient
               : null,
           borderRadius: BorderRadius.circular(18),
-          // Border tipis supaya tepi kartu terlihat di background gelap.
-          border: darkFeatured
-              ? Border.all(color: Colors.white.withValues(alpha: 0.10))
-              : null,
         ),
+        // Border tipis supaya tepi kartu terlihat di background gelap. Sengaja
+        // di foregroundDecoration: border di decoration menjadi padding yang
+        // memakan 2px tinggi konten dan membuat kartu overflow.
+        foregroundDecoration: darkFeatured
+            ? BoxDecoration(
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.10)),
+              )
+            : null,
         child: Stack(
           children: [
             Positioned(
