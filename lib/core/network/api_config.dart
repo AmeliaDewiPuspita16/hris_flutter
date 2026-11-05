@@ -121,6 +121,10 @@ class ApiConfig {
   /// tabel "Indent Verification" di web.
   static const String indentAwaitingFeedback = '/api/indent/list/verify';
 
+  /// Riwayat perjalanan driver yang login (berpaginasi): sudah di-Finish
+  /// atau sudah diberi feedback.
+  static const String indentDriverHistory = '/api/indent/driver/history';
+
   /// Buat indent baru, atau perbarui yang ada bila `id_recuitment` dikirim.
   static const String indentStore = '/api/indent/vehicle/store';
 

@@ -5,6 +5,7 @@ import '../../../../../core/network/api_exception.dart';
 import '../../../../../core/network/page_meta.dart';
 import '../domain/indent_approval_item.dart';
 import '../domain/indent_assigned_item.dart';
+import '../domain/indent_completed_item.dart';
 import '../domain/indent_driver.dart';
 import '../domain/indent_json.dart';
 import '../domain/indent_pending_item.dart';
@@ -329,6 +330,35 @@ class IndentVehicleRepository {
         if (driverId != null) 'id_driver': driverId,
         if (driverName != null) 'driver': driverName,
       });
+
+  /// Riwayat perjalanan driver yang login — `GET /api/indent/driver/history`.
+  /// Server yang menyaring per driver, terbaru di atas.
+  ///
+  /// Melempar [ApiException] bila gagal.
+  Future<IndentCompletedPage> fetchDriverHistory({int page = 1}) async {
+    final data = await _apiClient.get(
+      Uri(path: ApiConfig.indentDriverHistory, queryParameters: {'page': '$page'})
+          .toString(),
+    );
+
+    final rows = data['data'];
+    if (rows is! List) {
+      throw const ApiException.server(
+        'The trip history was received, but its format was not recognized.',
+      );
+    }
+
+    final items = <IndentCompletedItem>[];
+    for (final row in rows.whereType<Map<String, dynamic>>()) {
+      try {
+        items.add(IndentCompletedItem.fromJson(row));
+      } on FormatException catch (e) {
+        AppLogger.info('Melewati riwayat driver yang tidak bisa dibaca: $e');
+      }
+    }
+
+    return IndentCompletedPage(items: items, meta: PageMeta.fromJson(data));
+  }
 
   /// Driver menutup request setelah perjalanan selesai —
   /// `POST /api/driver_indent/close_request`.
