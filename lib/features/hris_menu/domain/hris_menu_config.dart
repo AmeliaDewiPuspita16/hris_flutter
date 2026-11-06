@@ -164,7 +164,7 @@ class HrisMenuConfig {
           background: AppColors.violetBg,
           onTap: onOvertimeRequest,
           // API vendor masih error; aktifkan lagi setelah diperbaiki.
-          isReady: false,
+          isReady: true,
           // SEMENTARA tanpa gerbang role: requirement-nya hanya untuk
           // Non-Executive, tapi role di AuthGate masih dipatok sehingga
           // item ini akan selalu tersembunyi. Pasang aturan role setelah

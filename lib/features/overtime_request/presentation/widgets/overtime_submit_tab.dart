@@ -1,23 +1,29 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/logging/app_logger.dart';
+import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/app_date_field.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import '../../../../core/widgets/app_time_field.dart';
-import '../../../../core/widgets/status_badge.dart';
 import '../../domain/overtime_format.dart';
-import '../../domain/overtime_request_entry.dart';
+import '../../domain/overtime_submission.dart';
 
-/// Tab "Submit" — form pengajuan lembur: tanggal, jam mulai/selesai, alasan.
+/// Tab "Submit" — form pengajuan lembur: tanggal, jam mulai/selesai, jam
+/// lembur, alasan.
 ///
-/// Belum tersambung ke API: pengajuan hanya diteruskan ke [onSubmit] dan
-/// ditampung layar induk.
+/// Jam lembur diisi user, bukan dihitung dari jam mulai dan selesai, karena
+/// waktu istirahat tidak ikut dihitung. Jam selesai yang lebih awal dari jam
+/// mulai berarti lembur melewati tengah malam.
+///
+/// Pengiriman dilakukan layar induk lewat [onSubmit]; bila gagal, pesannya
+/// tampil di sini dan isian form tetap ada.
 class OvertimeSubmitTab extends StatefulWidget {
   const OvertimeSubmitTab({super.key, required this.onSubmit});
 
-  final ValueChanged<OvertimeRequestEntry> onSubmit;
+  final Future<void> Function(OvertimeSubmission submission) onSubmit;
 
   @override
   State<OvertimeSubmitTab> createState() => _OvertimeSubmitTabState();
@@ -25,19 +31,22 @@ class OvertimeSubmitTab extends StatefulWidget {
 
 class _OvertimeSubmitTabState extends State<OvertimeSubmitTab> {
   final _reasonCtrl = TextEditingController();
+  final _hoursCtrl = TextEditingController();
 
   DateTime? _date;
   TimeOfDay? _start;
   TimeOfDay? _end;
   String? _error;
+  bool _submitting = false;
 
   @override
   void dispose() {
     _reasonCtrl.dispose();
+    _hoursCtrl.dispose();
     super.dispose();
   }
 
-  /// Durasi bila jam mulai & selesai sudah diisi dan urutannya masuk akal.
+  /// Selisih jam mulai dan selesai, bila keduanya sudah diisi dan berbeda.
   int? get _minutes {
     final start = _start;
     final end = _end;
@@ -47,32 +56,72 @@ class _OvertimeSubmitTabState extends State<OvertimeSubmitTab> {
     return minutes > 0 ? minutes : null;
   }
 
-  void _submit() {
+  bool get _crossesMidnight {
+    final start = _start;
+    final end = _end;
+    if (start == null || end == null) return false;
+
+    return end.hour * 60 + end.minute < start.hour * 60 + start.minute;
+  }
+
+  Future<void> _submit() async {
     final date = _date;
     final start = _start;
     final end = _end;
     final reason = _reasonCtrl.text.trim();
+    final hoursText = _hoursCtrl.text.trim();
 
-    if (date == null || start == null || end == null || reason.isEmpty) {
+    if (date == null ||
+        start == null ||
+        end == null ||
+        hoursText.isEmpty ||
+        reason.isEmpty) {
       setState(() => _error = 'Please complete all required fields.');
       return;
     }
-    if (_minutes == null) {
-      setState(() => _error = 'End time must be later than start time.');
+
+    final minutes = _minutes;
+    if (minutes == null) {
+      setState(() => _error = 'End time must be different from start time.');
       return;
     }
 
-    widget.onSubmit(
-      OvertimeRequestEntry(
-        id: 'OT-${DateTime.now().millisecondsSinceEpoch}',
-        date: date,
-        start: start,
-        end: end,
-        reason: reason,
-        status: AppStatus.pending,
-        statusLabel: 'Pending',
-      ),
-    );
+    final hours = parseOvertimeHours(hoursText);
+    if (hours == null) {
+      setState(() => _error = 'Overtime hours must be a number above 0.');
+      return;
+    }
+    if (hours > minutes / 60) {
+      setState(() => _error =
+          'Overtime hours cannot exceed the time between start and end.');
+      return;
+    }
+
+    setState(() {
+      _error = null;
+      _submitting = true;
+    });
+
+    try {
+      await widget.onSubmit(
+        OvertimeSubmission(
+          date: date,
+          start: start,
+          end: end,
+          durationHours: hours,
+          reason: reason,
+        ),
+      );
+    } on ApiException catch (e) {
+      if (mounted) setState(() => _error = e.message);
+    } catch (e, stack) {
+      AppLogger.error('Pengajuan lembur gagal dikirim', e, stack);
+      if (mounted) {
+        setState(() => _error = 'Failed to submit overtime. Please try again.');
+      }
+    } finally {
+      if (mounted) setState(() => _submitting = false);
+    }
   }
 
   @override
@@ -143,7 +192,8 @@ class _OvertimeSubmitTabState extends State<OvertimeSubmitTab> {
                         Icon(Icons.timer_outlined, size: 16, color: AppColors.overtime),
                         const SizedBox(width: 8),
                         Text(
-                          'Duration: ${formatOvertimeDuration(minutes)}',
+                          'Start to end: ${formatOvertimeDuration(minutes)}'
+                          '${_crossesMidnight ? ' (ends next day)' : ''}',
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
@@ -154,6 +204,15 @@ class _OvertimeSubmitTabState extends State<OvertimeSubmitTab> {
                     ),
                   ),
                 ],
+                const SizedBox(height: 16),
+                AppTextField(
+                  label: 'Overtime Hours',
+                  controller: _hoursCtrl,
+                  hint: 'Excluding breaks, e.g. 2.5',
+                  required: true,
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
+                ),
                 const SizedBox(height: 16),
                 AppTextField(
                   label: 'Reason',
@@ -177,6 +236,7 @@ class _OvertimeSubmitTabState extends State<OvertimeSubmitTab> {
           AppButton(
             label: 'Submit Request',
             variant: AppButtonVariant.green,
+            isLoading: _submitting,
             onPressed: _submit,
           ),
         ],

@@ -1,7 +1,8 @@
 import '../../../core/utils/json_value.dart';
 
-/// Lembur yang sudah TERJADI pada satu hari — realisasi dari check-in/out
-/// fingerprint, bukan pengajuan. Satu item `days[]` dari
+/// Lembur yang sudah DISETUJUI pada satu hari, gabungan pengajuan berstatus
+/// `CO` di tanggal itu. Jam mulai dan selesainya dari pengajuan, bukan dari
+/// fingerprint. Satu item `days[]` dari
 /// `GET /api/portal/apps/hris/overtime`.
 class OvertimeDay {
   const OvertimeDay({
@@ -15,9 +16,9 @@ class OvertimeDay {
   /// Satu item `days[]`:
   /// ```json
   /// { "date": "2026-10-03", "overtime_minutes": 90, "overtime_hours": 1.5,
-  ///   "checkin": "2026-10-03T07:52:00+07:00",
+  ///   "checkin": "2026-10-03T17:00:00+07:00",
   ///   "checkout": "2026-10-03T18:30:00+07:00",
-  ///   "shift": "N (08:00-17:00) - Normal Shift" }
+  ///   "shift": null }
   /// ```
   /// Null bila tanggalnya tidak terbaca.
   static OvertimeDay? tryFromJson(Map<String, dynamic> json) {

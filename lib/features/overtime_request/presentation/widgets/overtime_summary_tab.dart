@@ -12,9 +12,8 @@ import '../bloc/summary/overtime_summary_bloc.dart';
 import '../bloc/summary/overtime_summary_event.dart';
 import '../bloc/summary/overtime_summary_state.dart';
 
-/// Tab "Summary" — lembur yang sudah terjadi pada bulan terpilih (realisasi
-/// dari absensi, `GET .../hris/overtime`): total jam, jumlah hari, dan
-/// daftar per hari. Datanya dimuat [OvertimeSummaryBloc].
+/// Tab "Summary" — lembur yang sudah disetujui pada bulan terpilih
+/// (`GET .../hris/overtime`): total jam, jumlah hari, dan daftar per hari. Datanya dimuat [OvertimeSummaryBloc].
 class OvertimeSummaryTab extends StatelessWidget {
   const OvertimeSummaryTab({super.key});
 
@@ -105,8 +104,8 @@ class _Content extends StatelessWidget {
           ),
         const SizedBox(height: 12),
         Text(
-          'Overtime is calculated from your attendance log, based on the '
-          'time you check out after your shift ends.',
+          'Based on your approved overtime requests. Pending requests are '
+          'not counted.',
           style: TextStyle(fontSize: 11, color: AppColors.textMuted, height: 1.4),
         ),
       ],
@@ -330,7 +329,7 @@ class _EmptyMonth extends StatelessWidget {
           Icon(Icons.more_time_outlined, size: 28, color: AppColors.textMuted),
           SizedBox(height: 8),
           Text(
-            'No overtime this month',
+            'No approved overtime this month',
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
