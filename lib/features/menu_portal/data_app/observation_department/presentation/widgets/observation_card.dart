@@ -7,9 +7,7 @@ import '../../../../../../core/widgets/app_card.dart';
 import '../../domain/observation_item.dart';
 import 'observation_status_pill.dart';
 
-/// Satu baris di daftar Observation — mengemas kolom tabel web (Created
-/// Date, Name - Dept, Category, Location, Relevant Dept, Description,
-/// Status, Actions) jadi satu kartu ringkas, sama seperti `IndentRequestRow`.
+/// Satu baris di daftar Observation
 ///
 /// Urutan: kategori + tanggal + status (utama) → lokasi & pelapor →
 /// deskripsi → dept tujuan + aksi (Close bila boleh, "Details" bila sudah
@@ -25,9 +23,14 @@ class ObservationCard extends StatelessWidget {
     this.onClose,
     this.onEdit,
     this.onDelete,
+    this.showOwnership = false,
   });
 
   final ObservationItem item;
+
+  /// True = di samping tanggal tampil penanda "Your report" / "For your
+  /// dept" (dipakai tab To Close, yang memuat dua jenis kartu itu).
+  final bool showOwnership;
 
   /// Null = kartu tidak bisa diketuk dan "Details" tidak ditampilkan.
   final VoidCallback? onTap;
@@ -39,6 +42,14 @@ class ObservationCard extends StatelessWidget {
   final VoidCallback? onDelete;
 
   bool get _showMenu => onEdit != null || onDelete != null;
+
+  String get _dateLine {
+    final date = DateFormatter.shortDate(item.createdDate);
+    if (!showOwnership) return date;
+    if (item.isMine) return '$date · Your report';
+    if (item.isFromMyDept) return '$date · For your dept';
+    return date;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -75,10 +86,7 @@ class ObservationCard extends StatelessWidget {
                           .copyWith(fontWeight: FontWeight.w700),
                     ),
                     const SizedBox(height: 2),
-                    Text(
-                      DateFormatter.shortDate(item.createdDate),
-                      style: AppTextStyles.caption,
-                    ),
+                    Text(_dateLine, style: AppTextStyles.caption),
                   ],
                 ),
               ),

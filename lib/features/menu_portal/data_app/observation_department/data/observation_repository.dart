@@ -1,3 +1,5 @@
+import 'package:hris_mobile/features/menu_portal/data_app/observation_department/domain/observation_options.dart';
+
 import '../../../../../core/logging/app_logger.dart';
 import '../../../../../core/network/api_client.dart';
 import '../../../../../core/network/api_config.dart';
@@ -9,12 +11,8 @@ import '../domain/observation_item.dart';
 /// endpoint per langkah:
 ///
 /// - [fetchAll] — SUDAH dari API (`GET /api/data/observation`).
-/// - [fetchOpenFromMyDept], [add], [update], [delete], [close] — BELUM
-///   disambungkan; sementara dibiarkan kosong / melempar galat supaya tidak
-///   ada data dummy yang tercampur dengan data asli.
-///
-/// Instance-nya didaftarkan di `RepositoryProvider` (seperti
-/// `IndentVehicleRepository`) dan dipakai bersama layar Add / Detail.
+/// - [fetchOpenFromMyDept] - SUDAH juga (`GET /api/data/observation/requests`)
+/// - [add], [update], [delete], [close] — BELUM
 class ObservationRepository {
   ObservationRepository({required ApiClient apiClient})
       : _apiClient = apiClient;
@@ -29,24 +27,37 @@ class ObservationRepository {
   static const _notConnected =
       'This feature is not connected to the server yet.';
 
-  /// Pilihan "Relevant Dept." di form Add. MASIH hardcode — akan diganti
-  /// dengan `GET /api/data/observation/options` saat form Add disambungkan.
-  /// (Filter di daftar sudah tidak memakai ini.)
-  static const departments = <String>[
-    'CDD',
-    'ENV',
-    'EST',
-    'HR & GA',
-    'HSE',
-    'ITM',
-  ];
+  /// Pilihan form (kategori, sub-kategori, department, aturan foto) dari
+  /// `GET /api/data/observation/options`. Dipanggil tiap form dibuka, tanpa
+  /// cache, supaya perubahan di server langsung terbaca.
+  Future<ObservationOptions> fetchOptions() async {
+    final data = await _apiClient.get(ApiConfig.observationOptions);
+    try {
+      return ObservationOptions.fromJson(data);
+    } on Object catch (e) {
+      AppLogger.info('Options observation tidak terbaca: $e');
+      throw const ApiException.server(
+        'The form options were received, but their format was not recognized.'
+      );
+    }
+  }
 
   /// Tabel "All Observations": semua observasi, terbaru di atas.
   ///
   /// Semua halaman diambil sekaligus (mengikuti `meta.last_page`) karena
   /// pencarian dan filter di layar masih dilakukan lokal atas seluruh data.
   /// Melempar [ApiException] bila request gagal.
-  Future<List<ObservationItem>> fetchAll() async {
+  Future<List<ObservationItem>> fetchAll() =>
+      _fetchAllPages(ApiConfig.observation);
+
+  /// Tab "To Close": temuan berstatus open yang ditujukan ke department
+  /// user atau dibuat oleh user sendiri. Hanya yang 'can_close = true' yang
+  /// mendapat tombol close.
+  Future<List<ObservationItem>> fetchOpenFromMyDept() =>
+      _fetchAllPages(ApiConfig.observationRequests);
+
+  /// Mengambil semua halaman dari [path] (mengikuti `meta.last_page`).
+  Future<List<ObservationItem>> _fetchAllPages(String path) async {
     final items = <ObservationItem>[];
     var page = 1;
     var lastPage = 1;
@@ -54,7 +65,7 @@ class ObservationRepository {
     do {
       final envelope = await _apiClient.getEnvelope(
         Uri(
-          path: ApiConfig.observation,
+          path: path,
           queryParameters: {'per_page': '$_perPage', 'page': '$page'},
         ).toString(),
       );
@@ -104,16 +115,12 @@ class ObservationRepository {
   // BELUM disambungkan ke API (langkah berikutnya)
   // ---------------------------------------------------------------------------
 
-  /// Tab "To Close" — nanti dari `GET /api/data/observation/requests`.
-  /// Sementara kosong.
-  Future<List<ObservationItem>> fetchOpenFromMyDept() async => const [];
-
   /// Form "Add Observation" — nanti `POST /api/data/observation`.
   Future<ObservationItem> add({
-    required ObservationCategory category,
+    required String category,
     String? subCategory,
     required DateTime dateFinding,
-    required String relevantDept,
+    required int idDept,
     required String location,
     required String description,
     String? imagePath,
@@ -123,10 +130,10 @@ class ObservationRepository {
   /// Form "Edit Observation" — nanti `POST /api/data/observation/{id}`.
   Future<ObservationItem> update(
     String id, {
-    required ObservationCategory category,
+    required String category,
     String? subCategory,
     required DateTime dateFinding,
-    required String relevantDept,
+    required int idDept,
     required String location,
     required String description,
     String? imagePath,

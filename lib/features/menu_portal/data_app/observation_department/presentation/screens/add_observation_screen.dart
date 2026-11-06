@@ -7,16 +7,15 @@ import '../../../../../../core/theme/app_text_styles.dart';
 import '../../../../../../core/widgets/app_card.dart';
 import '../../../../../../core/widgets/app_date_field.dart';
 import '../../../../../../core/widgets/app_dropdown.dart';
+import '../../../../../../core/widgets/app_error_view.dart';
 import '../../../../../../core/widgets/app_text_field.dart';
 import '../../../../../../core/widgets/back_header.dart';
 import '../../data/observation_repository.dart';
-import '../../domain/observation_category.dart';
 import '../../domain/observation_item.dart';
+import '../../domain/observation_options.dart';
 import '../widgets/observation_image_field.dart';
 
-/// Layar "+ Add Observation" dan "Edit Observation" — padanan form Add di
-/// web: Category, Date Finding, Relevant Dept., Location, Description (semua
-/// wajib) dan Image (opsional).
+/// Layar "+ Add Observation" dan "Edit Observation"
 ///
 /// Dibuka lewat Navigator.push. Validasi lewat snackbar. Hasilnya lewat
 /// Navigator.pop: `true` bila tersimpan, null bila ditutup tanpa menyimpan.
@@ -54,29 +53,55 @@ class _AddObservationScreenState extends State<AddObservationScreen> {
   /// tidak membuat data dobel.
   bool _submitting = false;
 
+  /// Pilihan form dari server (`/options`); null selama masih dimuat atau
+  /// bila gagal dimuat ([_optionsError]).
+  ObservationOptions? _options;
+  String? _optionsError;
+
   bool get _isEdit => widget.initialItem != null;
 
   @override
   void initState() {
     super.initState();
     final item = widget.initialItem;
-    if (item == null) return;
-
-    _category = item.category.name;
-    _subCategory = item.subCategory ?? _none;
-    _dept = item.relevantDept;
-    _date = item.createdDate;
-    _imagePath = item.findingImage;
-    _locationController.text = item.location;
-    _descriptionController.text = item.description;
-  }
-
-  ObservationCategory? get _selectedCategory {
-    for (final c in ObservationCategory.values) {
-      if (c.name == _category) return c;
+    if (item != null) {
+      _category = item.category.label;
+      _subCategory = item.subCategory ?? _none;
+      _date = item.createdDate;
+      _imagePath = item.findingImage;
+      _locationController.text = item.location;
+      _descriptionController.text = item.description;
     }
-    return null;
+    _loadOptions();
   }
+
+  Future<void> _loadOptions() async {
+    if (_optionsError != null) setState(() => _optionsError = null);
+    try {
+      final options = await widget.repository.fetchOptions();
+      if (!mounted) return;
+      setState(() {
+        _options = options;
+        // Mode edit: item hanya membawa nama departemen, id-nya dicari di
+        // daftar dari server.
+        final name = widget.initialItem?.relevantDept;
+        final dept = name == null ? null : options.departmentByName(name);
+        if (dept != null) _dept = '${dept.id}';
+      });
+    } on ApiException catch (e) {
+      if (mounted) setState(() => _optionsError = e.message);
+    } catch (e, stack) {
+      AppLogger.error('Options observation gagal tak terduga', e, stack);
+      if (mounted) {
+        setState(() {
+          _optionsError = 'An unexpected error occurred. Please try again.';
+        });
+      }
+    }
+  }
+
+  ObservationCategoryOption? get _selectedCategory =>
+      _options?.categoryByValue(_category);
 
   @override
   void dispose() {
@@ -89,7 +114,7 @@ class _AddObservationScreenState extends State<AddObservationScreen> {
     final category = _selectedCategory;
     if (category == null) return 'Please select a category.';
     if (category.subCategories.isNotEmpty && _subCategory == _none) {
-      return 'Please select the ${category.label.toLowerCase()} type.';
+      return 'Please select the ${category.value.toLowerCase()} type.';
     }
     if (_date == null) return 'Please select the date of the finding.';
     if (_dept == _none) return 'Please select the relevant department.';
@@ -98,6 +123,9 @@ class _AddObservationScreenState extends State<AddObservationScreen> {
     }
     if (_descriptionController.text.trim().isEmpty) {
       return 'Please fill in the description.';
+    }
+    if (category.imageRequiredToReport && _imagePath == null) {
+      return 'A photo is required for ${category.value} findings.';
     }
     return null;
   }
@@ -110,6 +138,8 @@ class _AddObservationScreenState extends State<AddObservationScreen> {
   Future<void> _submit() async {
     if (_submitting) return;
 
+    if (_options == null) return;
+
     final error = _validate();
     if (error != null) {
       _showMessage(error);
@@ -118,7 +148,8 @@ class _AddObservationScreenState extends State<AddObservationScreen> {
 
     setState(() => _submitting = true);
     try {
-      final category = _selectedCategory!;
+      final category = _selectedCategory!.value;
+      final idDept = int.parse(_dept);
       final subCategory = _subCategory == _none ? null : _subCategory;
       final location = _locationController.text.trim();
       final description = _descriptionController.text.trim();
@@ -129,7 +160,7 @@ class _AddObservationScreenState extends State<AddObservationScreen> {
           category: category,
           subCategory: subCategory,
           dateFinding: _date!,
-          relevantDept: _dept,
+          idDept: idDept,
           location: location,
           description: description,
           imagePath: _imagePath,
@@ -139,7 +170,7 @@ class _AddObservationScreenState extends State<AddObservationScreen> {
           category: category,
           subCategory: subCategory,
           dateFinding: _date!,
-          relevantDept: _dept,
+          idDept: idDept,
           location: location,
           description: description,
           imagePath: _imagePath,
@@ -161,7 +192,23 @@ class _AddObservationScreenState extends State<AddObservationScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final subCategories = _selectedCategory?.subCategories ?? const [];
+    final options = _options;
+    final selected = _selectedCategory;
+    final subCategories = selected?.subCategories ?? const <String>[];
+
+    // Form baru ditampilkan setelah pilihan dari server siap.
+    if (options == null) {
+      return Scaffold(
+        backgroundColor: AppColors.bg,
+        appBar: BackHeader(
+          title: _isEdit ? 'Edit Observation' : 'Add Observation',
+          onBack: () => Navigator.of(context).pop(),
+        ),
+        body: _optionsError == null
+            ? const Center(child: CircularProgressIndicator())
+            : AppErrorView(message: _optionsError!, onRetry: _loadOptions),
+      );
+    }
 
     return Scaffold(
       backgroundColor: AppColors.bg,
@@ -169,8 +216,7 @@ class _AddObservationScreenState extends State<AddObservationScreen> {
         title: _isEdit ? 'Edit Observation' : 'Add Observation',
         onBack: () => Navigator.of(context).pop(),
       ),
-      // Tombol submit di bawah layar (bukan ikut scroll), sama dengan
-      // Add Indent.
+      // Tombol submit di bawah layar (bukan ikut scroll)
       bottomNavigationBar: _buildSubmitBar(),
       // Ketuk area kosong untuk menutup keyboard.
       body: GestureDetector(
@@ -189,9 +235,9 @@ class _AddObservationScreenState extends State<AddObservationScreen> {
                   required: true,
                   value: _category,
                   items: [
-                    (value: _none, label: '-- Select --'),
-                    for (final c in ObservationCategory.values)
-                      (value: c.name, label: c.label),
+                    (value: _none, label: 'Select'),
+                    for (final c in options.categories)
+                      (value: c.value, label: c.value),
                   ],
                   onChanged: (v) => setState(() {
                     _category = v;
@@ -200,11 +246,11 @@ class _AddObservationScreenState extends State<AddObservationScreen> {
                 ),
                 if (subCategories.isNotEmpty)
                   AppDropdown<String>(
-                    label: '${_selectedCategory!.label} type',
+                    label: '${selected!.value} type',
                     required: true,
                     value: _subCategory,
                     items: [
-                      (value: _none, label: '-- Select --'),
+                      (value: _none, label: 'Select'),
                       for (final s in subCategories) (value: s, label: s),
                     ],
                     onChanged: (v) => setState(() => _subCategory = v),
@@ -220,9 +266,9 @@ class _AddObservationScreenState extends State<AddObservationScreen> {
                   required: true,
                   value: _dept,
                   items: [
-                    (value: _none, label: '-- Select --'),
-                    for (final d in ObservationRepository.departments)
-                      (value: d, label: d),
+                    (value: _none, label: 'Select'),
+                    for (final d in options.departments)
+                      (value: '${d.id}', label: d.name),
                   ],
                   onChanged: (v) => setState(() => _dept = v),
                 ),
@@ -256,7 +302,9 @@ class _AddObservationScreenState extends State<AddObservationScreen> {
               title: 'Photo',
               children: [
                 ObservationImageField(
-                  label: 'Image Finding (optional)',
+                  label: selected?.imageRequiredToReport == true
+                      ? 'Image Finding'
+                      : 'Image Finding (optional)',
                   path: _imagePath,
                   onChanged: (p) => setState(() => _imagePath = p),
                   onError: _showMessage,
@@ -317,7 +365,7 @@ class _AddObservationScreenState extends State<AddObservationScreen> {
 }
 
 /// Kartu putih berisi satu kelompok field: ikon + judul di atas, lalu
-/// field-nya dengan jarak seragam (sama dengan form Add Indent).
+/// field-nya dengan jarak seragam.
 class _FormSection extends StatelessWidget {
   const _FormSection({
     required this.icon,

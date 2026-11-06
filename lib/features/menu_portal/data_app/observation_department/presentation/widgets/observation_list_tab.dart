@@ -20,8 +20,10 @@ class ObservationListTab extends StatelessWidget {
     this.onEdit,
     this.onDelete,
     this.detailForOpen = false,
+    this.showOwnership = false,
     required this.emptyTitle,
     required this.emptyMessage,
+    this.emptyIcon,
   });
 
   final ObservationListState state;
@@ -41,8 +43,14 @@ class ObservationListTab extends StatelessWidget {
   /// True = observasi yang masih open juga bisa dibuka detailnya (tab All
   /// Observations). False = hanya yang sudah closed (tab My Dept Open).
   final bool detailForOpen;
+
+  /// Teruskan ke kartu: tampilkan penanda "Your report" / "For your dept".
+  final bool showOwnership;
   final String emptyTitle;
   final String emptyMessage;
+
+  /// Ikon keadaan kosong; null = ikon bawaan [ObservationEmptyView].
+  final IconData? emptyIcon;
 
   /// Ruang di bawah daftar supaya kartu terakhir tidak tertutup FAB.
   static const _bottomPadding = 100.0;
@@ -82,6 +90,7 @@ class ObservationListTab extends StatelessWidget {
                     : ObservationEmptyView(
                         title: emptyTitle,
                         message: emptyMessage,
+                        icon: emptyIcon ?? Icons.inbox_outlined,
                       ),
               ],
             )
@@ -94,6 +103,7 @@ class ObservationListTab extends StatelessWidget {
                 final item = items[index];
                 return ObservationCard(
                   item: item,
+                  showOwnership: showOwnership,
                   onTap: item.isOpen && !detailForOpen
                       ? null
                       : () => onOpen(item),

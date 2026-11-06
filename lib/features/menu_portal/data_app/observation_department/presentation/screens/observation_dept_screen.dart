@@ -16,24 +16,7 @@ import '../widgets/observation_tab_bar.dart';
 import 'add_observation_screen.dart';
 import 'observation_detail_screen.dart';
 
-/// Layar Observation Department (menu Data).
-///
-/// Padanan halaman "All Observations" di web, dipecah jadi dua tab:
-/// - **My Dept Open** — tabel "OPEN Observations from Your Department",
-///   dengan tombol Close di tiap kartu. Kartunya tidak bisa dibuka: selama
-///   masih open, detail tidak tersedia (sama dengan web); ringkasan
-///   observasi dilihat dari sheet Close.
-/// - **All Observations** — semua observasi, dengan filter Month / Relevant
-///   Dept. / Category. Detail (isi PDF di web) bisa dibuka untuk semua
-///   status, dan observasi milik sendiri yang masih open punya menu Edit &
-///   Delete.
-///
-/// Kolom search di atas berlaku di kedua tab; tombol filter hanya muncul di
-/// tab All Observations. FAB oranye membuka form Add.
-///
-/// Tab All Observations sudah memakai data asli dari API lewat
-/// [ObservationRepository.fetchAll]; tab To Close, Add, Edit, Delete, dan
-/// Close menyusul (lihat catatan di repository).
+/// Layar Observation Department. Kolom search di atas berlaku di kedua tab;
 class ObservationDeptScreen extends StatefulWidget {
   const ObservationDeptScreen({super.key});
 
@@ -220,6 +203,10 @@ class _ObservationDeptScreenState extends State<ObservationDeptScreen> {
                         onRefresh: _cubit.load,
                         onOpen: _openDetail,
                         onClose: _closeItem,
+                        showOwnership: true,
+                        // Kosong di sini kabar baik (tidak ada yang perlu
+                        // ditindaklanjuti), jadi pakai ikon centang.
+                        emptyIcon: Icons.task_alt_rounded,
                         emptyTitle: 'No open observations',
                         emptyMessage:
                             'Open observations reported by your department will appear here.',
