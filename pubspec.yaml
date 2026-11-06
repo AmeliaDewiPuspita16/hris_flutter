@@ -76,8 +76,9 @@ flutter_native_splash:
 # - app_icon_background.png: gradasi hijaunya saja, lapisan belakang ikon
 #   adaptif — supaya sama dengan app_icon.png, bukan hijau polos.
 #
-# Ketiganya diturunkan dari assets/images/m_logo.jpg (simbol emas dipisahkan
-# dari latarnya, gradasi diukur ulang dari logo itu).
+# Ketiganya diturunkan dari "assets/launcher/Industrial Factory and Curved Road
+# Logo.png" (margin putih dibuang, simbol dipisahkan dari latarnya, gradasi
+# diambil dari logo itu).
 #
 # Regenerasi setelah mengganti gambar atau mengubah blok ini:
 #   dart run flutter_launcher_icons
