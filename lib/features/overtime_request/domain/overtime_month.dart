@@ -1,7 +1,7 @@
 import '../../../core/utils/json_value.dart';
 import 'overtime_day.dart';
 
-/// Realisasi lembur satu bulan — isi `data` dari
+/// Lembur yang disetujui selama satu bulan — isi `data` dari
 /// `GET /api/portal/apps/hris/overtime?month=YYYY-MM`.
 class OvertimeMonth {
   const OvertimeMonth({

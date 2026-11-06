@@ -10,10 +10,10 @@ class AttendanceSummary {
 
   /// membaca objek 'summary' dari respons attendance.
   ///
-  /// 'overtime_hours' di endpoint ini hanya perkiraan: nilai akuratnya
-  /// (jam pecahan, mis. 4,5) datang dari endpoint overtime dan menimpanya di
-  /// [AttendanceMonth.fromJson]. Angka ini jadi cadangan saat endpoint
-  /// overtime gagal dimuat.
+  /// 'overtime_hours' sumbernya sama dengan endpoint overtime (pengajuan yang
+  /// disetujui) dan null bila HRIS gagal menyediakannya. Nilai dari endpoint
+  /// overtime menimpanya di [AttendanceMonth.fromJson]; angka ini jadi cadangan
+  /// saat endpoint overtime gagal dimuat.
   factory AttendanceSummary.fromJson(Map<String, dynamic> json) {
     return AttendanceSummary(
       present: amountOrZero(json['present_days']),

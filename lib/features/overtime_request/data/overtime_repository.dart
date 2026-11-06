@@ -11,7 +11,7 @@ class OvertimeRepository {
 
   final ApiClient _apiClient;
 
-  /// Realisasi lembur untuk satu bulan.
+  /// Lembur yang disetujui untuk satu bulan.
   ///
   /// Melempar [ApiException] bila gagal.
   Future<OvertimeMonth> fetchMonth(DateTime month) async {
