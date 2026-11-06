@@ -9,9 +9,11 @@ import '../domain/observation_options.dart';
 /// endpoint per langkah:
 ///
 /// - [fetchAll] — SUDAH dari API (`GET /api/data/observation`).
-/// - [fetchOpenFromMyDept] - SUDAH juga (`GET /api/data/observation/requests`)
-/// - [add] - SUDAH (`POST /api/data/observation`)
-/// - [update], [delete], [close]
+/// - [fetchOpenFromMyDept] — SUDAH juga (`GET /api/data/observation/requests`)
+/// - [add] — SUDAH (`POST /api/data/observation`)
+/// - [update] — SUDAH dari API (`POST /api/data/observation/{id}`)
+/// - [delete] — SUDAH dari API (`DELETE /api/data/observation/{id}`).
+/// - [close] — SUDAH dari API (`POST /api/data/observation/{id}/close`).
 class ObservationRepository {
   ObservationRepository({required ApiClient apiClient})
       : _apiClient = apiClient;
@@ -203,19 +205,29 @@ class ObservationRepository {
     return '${date.year}-${two(date.month)}-${two(date.day)}';
   }
 
-  // ---------------------------------------------------------------------------
-  // BELUM disambungkan ke API (langkah berikutnya)
-  // ---------------------------------------------------------------------------
+  /// Hapus satu temuan. Hanya berhasil bila server mengizinkan
+  /// (`can_delete`); selain itu [ApiException] dengan pesan dari
+  /// server (403 tanpa izin, 404 sudah tidak ada).
+  Future<void> delete(String id) =>
+      _apiClient.delete(ApiConfig.observationDetail(int.parse(id)));
 
-  /// Hapus — nanti `DELETE /api/data/observation/{id}`.
-  Future<void> delete(String id) async =>
-      throw const ApiException.server(_notConnected);
-
-  /// Form "Close Observation" — nanti `POST /api/data/observation/{id}/close`.
-  Future<ObservationItem> close(
+  /// Form "Close Observation": `POST /api/data/observation/{id}/close`
+  /// (multipart). [reason] maksimal 255 karakter. [imagePath] (berkas lokal,
+  /// dikirim sebagai `image_close`) wajib bila `image_required_to_close`
+  /// bernilai true; bila dilanggar server membalas 422 dengan pesannya.
+  Future<void> close(
     String id, {
     required String reason,
     String? imagePath,
-  }) async =>
-      throw const ApiException.server(_notConnected);
+  }) async {
+    await _apiClient.postMultipart(
+      ApiConfig.observationClose(int.parse(id)),
+      fields: {'reason_close': reason},
+      files: imagePath == null
+          ? null
+          : {
+            'image_close': [imagePath],
+          }
+    );
+  }
 }

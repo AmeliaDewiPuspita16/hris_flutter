@@ -9,10 +9,12 @@ import '../../../../../../core/widgets/app_text_field.dart';
 import '../../data/observation_repository.dart';
 import '../../../../../../core/utils/date_formatter.dart';
 import '../../domain/observation_item.dart';
+import '../../domain/observation_status.dart';
 import 'observation_image_field.dart';
 
 /// Bottom sheet "Close Observation": ringkasan observasi, alasan penutupan
-/// (wajib), dan foto opsional. Pop dengan [ObservationItem] yang sudah
+/// (wajib, maks 255 karakter), dan foto bukti (wajib bila
+/// `item.imageRequiredToClose`). Pop dengan [ObservationItem] yang sudah
 /// closed bila berhasil, null bila ditutup.
 class ObservationCloseSheet extends StatefulWidget {
   const ObservationCloseSheet({
@@ -42,6 +44,9 @@ class ObservationCloseSheet extends StatefulWidget {
 }
 
 class _ObservationCloseSheetState extends State<ObservationCloseSheet> {
+  /// Batas `reason_close` di server.
+  static const _maxReasonLength = 255;
+
   final _reasonController = TextEditingController();
   String? _imagePath;
   bool _submitting = false;
@@ -61,16 +66,32 @@ class _ObservationCloseSheetState extends State<ObservationCloseSheet> {
       setState(() => _error = 'Please enter the reason for closing.');
       return;
     }
+    if (reason.length > _maxReasonLength) {
+      setState(() => _error =
+          'The reason must not exceed $_maxReasonLength characters.');
+      return;
+    }
+    if (widget.item.imageRequiredToClose && _imagePath == null) {
+      setState(() => _error = 'A photo is required to close this observation.');
+      return;
+    }
 
     setState(() {
       _submitting = true;
       _error = null;
     });
     try {
-      final closed = await widget.repository.close(
+      await widget.repository.close(
         widget.item.id,
         reason: reason,
         imagePath: _imagePath,
+      );
+      // Isi balasan server tidak dibaca (lihat ObservationRepository.add);
+      // layar pemanggil memuat ulang daftar, jadi cukup tandai lokal.
+      final closed = widget.item.copyWith(
+        status: ObservationStatus.closed,
+        closeReason: reason,
+        closeDate: DateTime.now(),
       );
       if (mounted) Navigator.of(context).pop(closed);
     } on ApiException catch (e) {
@@ -141,7 +162,9 @@ class _ObservationCloseSheetState extends State<ObservationCloseSheet> {
                 ),
                 const SizedBox(height: 14),
                 ObservationImageField(
-                  label: 'Image (optional)',
+                  label: widget.item.imageRequiredToClose
+                      ? 'Image'
+                      : 'Image (optional)',
                   path: _imagePath,
                   onChanged: (p) => setState(() {
                     _imagePath = p;
