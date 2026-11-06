@@ -3,10 +3,20 @@ import 'package:flutter/material.dart';
 /// Pemformat kecil untuk layar Overtime Request (teks berbahasa Inggris,
 /// sama seperti layar Leave Request).
 
-/// Selisih menit dari [start] ke [end] pada hari yang sama. Bernilai <= 0
-/// bila [end] tidak lebih lambat dari [start].
-int overtimeMinutesBetween(TimeOfDay start, TimeOfDay end) =>
-    (end.hour * 60 + end.minute) - (start.hour * 60 + start.minute);
+/// Selisih menit dari [start] ke [end]. Bila [end] lebih awal dari [start],
+/// lembur dianggap melewati tengah malam (17:00 - 01:00 = 480). Bernilai 0
+/// bila keduanya sama.
+int overtimeMinutesBetween(TimeOfDay start, TimeOfDay end) {
+  final minutes = (end.hour * 60 + end.minute) - (start.hour * 60 + start.minute);
+  return minutes < 0 ? minutes + 24 * 60 : minutes;
+}
+
+/// Jam lembur yang diketik user, atau null bila bukan angka positif. Koma
+/// diterima karena keyboard berlokal Indonesia memakainya sebagai desimal.
+double? parseOvertimeHours(String text) {
+  final hours = double.tryParse(text.trim().replaceAll(',', '.'));
+  return hours != null && hours > 0 ? hours : null;
+}
 
 /// Contoh: 90 → "1h 30m", 120 → "2h", 45 → "45m".
 String formatOvertimeDuration(int minutes) {

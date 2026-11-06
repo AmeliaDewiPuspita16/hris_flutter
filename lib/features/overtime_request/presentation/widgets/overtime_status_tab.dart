@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_card.dart';
+import '../../../../core/widgets/app_shimmer.dart';
 import '../../../../core/widgets/status_badge.dart';
 import '../../domain/overtime_format.dart';
 import '../../domain/overtime_request_entry.dart';
+import '../bloc/requests/overtime_requests_bloc.dart';
+import '../bloc/requests/overtime_requests_event.dart';
+import '../bloc/requests/overtime_requests_state.dart';
 
 enum _Filter {
   all('All'),
@@ -25,11 +30,10 @@ enum _Filter {
       };
 }
 
-/// Tab "Status" — riwayat pengajuan lembur dengan filter status.
+/// Tab "Status" — riwayat pengajuan lembur dengan filter status. Datanya
+/// dimuat [OvertimeRequestsBloc].
 class OvertimeStatusTab extends StatefulWidget {
-  const OvertimeStatusTab({super.key, required this.requests});
-
-  final List<OvertimeRequestEntry> requests;
+  const OvertimeStatusTab({super.key});
 
   @override
   State<OvertimeStatusTab> createState() => _OvertimeStatusTabState();
@@ -40,8 +44,25 @@ class _OvertimeStatusTabState extends State<OvertimeStatusTab> {
 
   @override
   Widget build(BuildContext context) {
+    return BlocBuilder<OvertimeRequestsBloc, OvertimeRequestsState>(
+      builder: (context, state) => switch (state.status) {
+        OvertimeRequestsStatus.initial ||
+        OvertimeRequestsStatus.loading =>
+          const _RequestsSkeleton(),
+        OvertimeRequestsStatus.failure => _ErrorState(
+            message: state.errorMessage ?? 'Failed to load overtime requests.',
+            onRetry: () => context
+                .read<OvertimeRequestsBloc>()
+                .add(const OvertimeRequestsLoaded()),
+          ),
+        OvertimeRequestsStatus.success => _buildList(state.requests),
+      },
+    );
+  }
+
+  Widget _buildList(List<OvertimeRequestEntry> requests) {
     final items = [
-      for (final entry in widget.requests)
+      for (final entry in requests)
         if (_filter.matches(entry.status)) entry,
     ];
 
@@ -110,6 +131,18 @@ class _RequestCard extends StatelessWidget {
 
   final OvertimeRequestEntry entry;
 
+  String get _dateText {
+    final date = entry.date;
+    return date == null ? '-' : DateFormat('EEE, d MMM yyyy', 'en_US').format(date);
+  }
+
+  String get _detailText {
+    final hours = entry.durationHours;
+    return hours == null
+        ? entry.timeRange
+        : '${entry.timeRange} · ${formatOvertimeDuration((hours * 60).round())}';
+  }
+
   @override
   Widget build(BuildContext context) {
     return AppCard(
@@ -121,7 +154,7 @@ class _RequestCard extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  DateFormat('EEE, d MMM yyyy', 'en_US').format(entry.date),
+                  _dateText,
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
@@ -134,7 +167,7 @@ class _RequestCard extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            '${entry.timeRange} · ${formatOvertimeDuration(entry.minutes)}',
+            _detailText,
             style: TextStyle(fontSize: 11, color: AppColors.textMuted),
           ),
           const SizedBox(height: 8),
@@ -143,6 +176,70 @@ class _RequestCard extends StatelessWidget {
             style: TextStyle(fontSize: 12, color: AppColors.textMid, height: 1.4),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _ErrorState extends StatelessWidget {
+  const _ErrorState({required this.message, required this.onRetry});
+
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 48, 20, 24),
+      child: Column(
+        children: [
+          Icon(Icons.cloud_off_outlined, size: 32, color: AppColors.textMuted),
+          const SizedBox(height: 12),
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 12, color: AppColors.textMuted),
+          ),
+          const SizedBox(height: 12),
+          OutlinedButton(
+            onPressed: onRetry,
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.primaryText,
+              side: BorderSide(color: AppColors.primaryText),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            child: const Text('Try again'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Skeleton daftar pengajuan, meniru [_RequestCard].
+class _RequestsSkeleton extends StatelessWidget {
+  const _RequestsSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.separated(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+      itemCount: 4,
+      separatorBuilder: (_, __) => const SizedBox(height: 10),
+      itemBuilder: (_, __) => const ShimmerCard(
+        padding: EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ShimmerLine(width: 130, height: 13),
+            SizedBox(height: 8),
+            ShimmerLine(width: 110, height: 10),
+            SizedBox(height: 12),
+            ShimmerLine(width: 200, height: 11),
+          ],
+        ),
       ),
     );
   }
