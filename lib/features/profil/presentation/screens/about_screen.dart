@@ -73,7 +73,7 @@ class _AppIdentity extends StatelessWidget {
         ClipRRect(
           borderRadius: BorderRadius.circular(20),
           child: Image.asset(
-            'assets/images/m_logo.jpg',
+            'assets/launcher/app_icon.png',
             width: 84,
             height: 84,
             fit: BoxFit.cover,

@@ -1,7 +1,7 @@
 name: hris_mobile
 description: HRIS Mobile App - Flutter
 publish_to: "none"
-version: 1.0.0+2
+version: 1.0.0+3
 
 environment:
   sdk: ">=3.3.0 <4.0.0"
@@ -104,3 +104,4 @@ flutter:
     - assets/icons/
     # PDF contoh untuk viewer dokumen IMS selama URL dokumen masih dummy.
     - assets/documents/
+    - assets/launcher/ 
