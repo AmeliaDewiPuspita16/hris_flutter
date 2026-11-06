@@ -1,18 +1,17 @@
-import 'package:hris_mobile/features/menu_portal/data_app/observation_department/domain/observation_options.dart';
-
 import '../../../../../core/logging/app_logger.dart';
 import '../../../../../core/network/api_client.dart';
 import '../../../../../core/network/api_config.dart';
 import '../../../../../core/network/api_exception.dart';
-import '../domain/observation_category.dart';
 import '../domain/observation_item.dart';
+import '../domain/observation_options.dart';
 
 /// Pintu ke API Observation Department. Disambungkan bertahap, satu
 /// endpoint per langkah:
 ///
 /// - [fetchAll] — SUDAH dari API (`GET /api/data/observation`).
 /// - [fetchOpenFromMyDept] - SUDAH juga (`GET /api/data/observation/requests`)
-/// - [add], [update], [delete], [close] — BELUM
+/// - [add] - SUDAH (`POST /api/data/observation`)
+/// - [update], [delete], [close]
 class ObservationRepository {
   ObservationRepository({required ApiClient apiClient})
       : _apiClient = apiClient;
@@ -37,8 +36,7 @@ class ObservationRepository {
     } on Object catch (e) {
       AppLogger.info('Options observation tidak terbaca: $e');
       throw const ApiException.server(
-        'The form options were received, but their format was not recognized.'
-      );
+          'The form options were received, but their format was not recognized.');
     }
   }
 
@@ -111,12 +109,15 @@ class ObservationRepository {
     return list;
   }
 
-  // ---------------------------------------------------------------------------
-  // BELUM disambungkan ke API (langkah berikutnya)
-  // ---------------------------------------------------------------------------
-
-  /// Form "Add Observation" — nanti `POST /api/data/observation`.
-  Future<ObservationItem> add({
+  /// Form "Add Observation": `POST /api/data/observation` (multipart).
+  ///
+  /// [subCategory] hanya dikirim bila ada (praktis hanya Safety). [imagePath]
+  /// adalah path berkas lokal; dikirim sebagai `image_finding`. Pelanggaran
+  /// aturan (mis. foto wajib) dibalas 422 dan muncul sebagai [ApiException]
+  /// dengan pesan dari server. Isi balasan 201 tidak dibaca: layar memuat
+  /// ulang daftar, dan menolak balasan yang aneh justru mengundang kirim
+  /// ulang padahal data sudah tersimpan.
+  Future<void> add({
     required String category,
     String? subCategory,
     required DateTime dateFinding,
@@ -124,11 +125,28 @@ class ObservationRepository {
     required String location,
     required String description,
     String? imagePath,
-  }) async =>
-      throw const ApiException.server(_notConnected);
+  }) async {
+    await _apiClient.postMultipart(
+      ApiConfig.observation,
+      fields: _formFields(
+        category: category,
+        subCategory: subCategory,
+        dateFinding: dateFinding,
+        idDept: idDept,
+        location: location,
+        description: description,
+      ),
+      files: _imageFiles(imagePath),
+    );
+  }
 
-  /// Form "Edit Observation" — nanti `POST /api/data/observation/{id}`.
-  Future<ObservationItem> update(
+  /// Form "Edit Observation": `POST /api/data/observation/{id}` (multipart;
+  /// edit memakai POST, bukan PUT/PATCH).
+  ///
+  /// Field-nya sama dengan [add]. [imagePath] yang berupa URL (foto lama dari
+  /// server, `http...`) tidak diunggah ulang: tanpa `image_finding`, server
+  /// mempertahankan foto lama. Hanya foto baru dari perangkat yang dikirim.
+  Future<void> update(
     String id, {
     required String category,
     String? subCategory,
@@ -137,8 +155,57 @@ class ObservationRepository {
     required String location,
     required String description,
     String? imagePath,
-  }) async =>
-      throw const ApiException.server(_notConnected);
+  }) async {
+    await _apiClient.postMultipart(
+      ApiConfig.observationDetail(int.parse(id)),
+      fields: _formFields(
+        category: category,
+        subCategory: subCategory,
+        dateFinding: dateFinding,
+        idDept: idDept,
+        location: location,
+        description: description,
+      ),
+      files: _imageFiles(imagePath),
+    );
+  }
+
+  /// Field teks form Add / Edit (nama field sesuai dokumen API).
+  Map<String, String> _formFields({
+    required String category,
+    String? subCategory,
+    required DateTime dateFinding,
+    required int idDept,
+    required String location,
+    required String description,
+  }) =>
+      {
+        'category': category,
+        if (subCategory != null) 'finding_category': subCategory,
+        'date_finding': _apiDate(dateFinding),
+        'id_dept': '$idDept',
+        'location': location,
+        'description': description,
+      };
+
+  /// Berkas yang diunggah: hanya path lokal. URL berarti foto yang sudah ada
+  /// di server, jadi tidak dikirim lagi.
+  Map<String, List<String>>? _imageFiles(String? imagePath) {
+    if (imagePath == null || imagePath.startsWith('http')) return null;
+    return {
+      'image_finding': [imagePath],
+    };
+  }
+
+  /// `YYYY-MM-DD` seperti yang diminta server.
+  String _apiDate(DateTime date) {
+    String two(int n) => n.toString().padLeft(2, '0');
+    return '${date.year}-${two(date.month)}-${two(date.day)}';
+  }
+
+  // ---------------------------------------------------------------------------
+  // BELUM disambungkan ke API (langkah berikutnya)
+  // ---------------------------------------------------------------------------
 
   /// Hapus — nanti `DELETE /api/data/observation/{id}`.
   Future<void> delete(String id) async =>
