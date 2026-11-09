@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/logging/app_logger.dart';
 import '../../menu_portal/data_app/indent_vehicle/presentation/screens/indent_vehicle_screen.dart';
+import '../../menu_portal/data_app/observation_department/presentation/screens/observation_dept_screen.dart';
 import '../../menu_portal/onlineapps/hse_work_request/presentation/screens/hse_work_request_list_screen.dart';
 import '../../menu_portal/onlineapps/procurement/presentation/screens/procurement_page.dart';
 import '../../menu_portal/onlineapps/work_order/est_request/presentation/screens/est_request_screen.dart';
@@ -36,7 +37,17 @@ class NotificationRoutes {
 
   /// Null kalau modulnya tidak dikenal (mis. pesan uji dari Firebase
   /// console) — cukup ditandai sudah dibaca.
-  static Widget? screenFor(NotificationLink link) => switch (link.module) {
+  static Widget? screenFor(NotificationLink link) {
+    if (NotificationLink.isObservationModule(link.module)) {
+      // Notifikasi observation umumnya "ada temuan untuk dept-mu": buka tab
+      // To Close. Kalau temuannya tidak ada di sana (mis. sudah ditutup),
+      // layar pindah sendiri ke All Observations.
+      return ObservationDeptScreen(highlightId: link.refId?.toString());
+    }
+    return _moduleScreen(link);
+  }
+
+  static Widget? _moduleScreen(NotificationLink link) => switch (link.module) {
         NotificationLink.moduleItRequest => ItRequestScreen(
             initialTab: link.isApprover
                 ? ItRequestTab.approve

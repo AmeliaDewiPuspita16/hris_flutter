@@ -1,5 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hris_mobile/features/menu_portal/data_app/indent_vehicle/presentation/screens/indent_vehicle_screen.dart';
+import 'package:hris_mobile/features/menu_portal/data_app/observation_department/presentation/screens/observation_dept_screen.dart';
+import 'package:hris_mobile/features/notifikasi/data/notification_inbox_repository.dart';
+import 'package:hris_mobile/features/notifikasi/domain/notification_category.dart';
 import 'package:hris_mobile/features/menu_portal/onlineapps/hse_work_request/presentation/screens/hse_work_request_list_screen.dart';
 import 'package:hris_mobile/features/menu_portal/onlineapps/procurement/presentation/screens/procurement_page.dart';
 import 'package:hris_mobile/features/menu_portal/onlineapps/work_order/est_request/presentation/screens/est_request_screen.dart';
@@ -113,8 +116,36 @@ void main() {
       expect(requester.initialTabIndex, 0);
     });
 
+    test('Observation: semua nama modul observation* membuka layar Observation',
+        () {
+      for (final module in ['observation', 'observation_department']) {
+        final screen = NotificationRoutes.screenFor(
+          NotificationLink(
+            module: module,
+            type: 'new_observation',
+            audience: 'handler',
+            refId: 12,
+          ),
+        );
+
+        expect(screen, isA<ObservationDeptScreen>(), reason: module);
+        expect((screen as ObservationDeptScreen).highlightId, '12');
+      }
+    });
+
     test('modul tidak dikenal tidak membuka apa-apa', () {
       expect(NotificationRoutes.screenFor(link('hse', 'approver')), isNull);
     });
+  });
+
+  test('kategori inbox: observation punya ikon sendiri', () {
+    expect(
+      NotificationInboxRepository.categoryFor('observation'),
+      NotificationCategory.observation,
+    );
+    expect(
+      NotificationInboxRepository.categoryFor('lainnya'),
+      NotificationCategory.approval,
+    );
   });
 }

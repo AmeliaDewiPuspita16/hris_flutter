@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../../../core/widgets/app_error_view.dart';
 import '../../../../../../core/widgets/app_shimmer.dart';
+import '../../../../../../core/widgets/flash_highlight.dart';
 import '../../domain/observation_item.dart';
 import '../bloc/observation_list_state.dart';
 import 'observation_card.dart';
@@ -24,7 +25,12 @@ class ObservationListTab extends StatelessWidget {
     required this.emptyTitle,
     required this.emptyMessage,
     this.emptyIcon,
+    this.highlightId,
   });
+
+  /// id observasi dari notifikasi: kartunya dinaikkan ke paling atas dan
+  /// dikedipkan sekali (lihat [FlashHighlight]).
+  final String? highlightId;
 
   final ObservationListState state;
 
@@ -69,6 +75,7 @@ class ObservationListTab extends StatelessWidget {
     }
 
     final searching = state.query.trim().isNotEmpty || state.filter.isActive;
+    final items = _withHighlightFirst(this.items);
 
     return RefreshIndicator(
       onRefresh: onRefresh,
@@ -101,25 +108,36 @@ class ObservationListTab extends StatelessWidget {
               separatorBuilder: (_, __) => const SizedBox(height: 12),
               itemBuilder: (context, index) {
                 final item = items[index];
-                return ObservationCard(
-                  item: item,
-                  showOwnership: showOwnership,
-                  onTap: item.isOpen && !detailForOpen
-                      ? null
-                      : () => onOpen(item),
-                  onClose: item.canClose && onClose != null
-                      ? () => onClose!(item)
-                      : null,
-                  onEdit: item.canEdit && onEdit != null
-                      ? () => onEdit!(item)
-                      : null,
-                  onDelete: item.canDelete && onDelete != null
-                      ? () => onDelete!(item)
-                      : null,
+                return FlashHighlight(
+                  key: ValueKey('hl-${item.id}'),
+                  active: item.id == highlightId,
+                  child: ObservationCard(
+                    item: item,
+                    showOwnership: showOwnership,
+                    onTap: item.isOpen && !detailForOpen
+                        ? null
+                        : () => onOpen(item),
+                    onClose: item.canClose && onClose != null
+                        ? () => onClose!(item)
+                        : null,
+                    onEdit: item.canEdit && onEdit != null
+                        ? () => onEdit!(item)
+                        : null,
+                    onDelete: item.canDelete && onDelete != null
+                        ? () => onDelete!(item)
+                        : null,
+                  ),
                 );
               },
             ),
     );
+  }
+
+  List<ObservationItem> _withHighlightFirst(List<ObservationItem> items) {
+    final id = highlightId;
+    final at = id == null ? -1 : items.indexWhere((o) => o.id == id);
+    if (at <= 0) return items;
+    return [items[at], ...items.take(at), ...items.skip(at + 1)];
   }
 }
 
