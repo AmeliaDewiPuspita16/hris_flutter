@@ -3,63 +3,144 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/app_card.dart';
+import '../../../../core/widgets/app_shimmer.dart';
 import '../../domain/quota_balance.dart';
 import 'section_header.dart';
 
-/// Bagian "Your balances".
+/// Bagian kartu ringkasan Beranda ("This month").
 ///
-/// Kartu bersaldo terbatas disusun dua kolom dengan progress bar, lalu kartu
-/// tanpa batas kuota menyusul selebar layar. Pemisahan ini bikin barisnya
-/// tetap rapi berapa pun jumlah kartu yang muncul untuk sebuah role.
+/// Kartu yang punya pembanding disusun dua kolom, lalu kartu tanpa
+/// pembanding menyusul selebar layar. Pemisahan ini bikin barisnya tetap
+/// rapi berapa pun jumlah kartu yang muncul.
 class SaldoSection extends StatelessWidget {
   const SaldoSection({
     super.key,
+    required this.title,
     required this.balances,
+    required this.actionLabel,
     required this.onSeeAll,
+    this.isLoading = false,
+    this.errorMessage,
+    this.onRetry,
   });
 
   static const _gap = 12.0;
 
+  final String title;
   final List<QuotaBalance> balances;
+  final String actionLabel;
   final VoidCallback onSeeAll;
+
+  /// True selama data pertama dimuat dan belum ada kartu untuk ditampilkan.
+  final bool isLoading;
+
+  /// Ditampilkan bila tidak ada kartu sama sekali karena pemuatan gagal.
+  final String? errorMessage;
+  final VoidCallback? onRetry;
 
   @override
   Widget build(BuildContext context) {
-    final gridCards = balances.where((b) => !b.isWide).toList();
-    final wideCards = balances.where((b) => b.isWide).toList();
-
     return Padding(
       padding: const EdgeInsets.only(top: 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           SectionHeader(
-            title: 'Your balances',
-            actionLabel: 'Request',
+            title: title,
+            actionLabel: actionLabel,
             actionIcon: Icons.arrow_forward,
             onActionTap: onSeeAll,
           ),
           const SizedBox(height: 12),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Column(
-              children: [
-                for (var i = 0; i < gridCards.length; i += 2)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: _gap),
-                    child: _CardRow(
-                      left: gridCards[i],
-                      right: i + 1 < gridCards.length ? gridCards[i + 1] : null,
-                    ),
-                  ),
-                for (final balance in wideCards)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: _gap),
-                    child: _BalanceCard(balance: balance),
-                  ),
-              ],
+            child: _buildBody(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBody() {
+    if (balances.isEmpty && isLoading) return const _Skeleton();
+    if (balances.isEmpty && errorMessage != null) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: _gap),
+        child: _ErrorCard(message: errorMessage!, onRetry: onRetry),
+      );
+    }
+
+    final gridCards = balances.where((b) => !b.isWide).toList();
+    final wideCards = balances.where((b) => b.isWide).toList();
+
+    return Column(
+      children: [
+        for (var i = 0; i < gridCards.length; i += 2)
+          Padding(
+            padding: const EdgeInsets.only(bottom: _gap),
+            child: _CardRow(
+              left: gridCards[i],
+              right: i + 1 < gridCards.length ? gridCards[i + 1] : null,
             ),
           ),
+        for (final balance in wideCards)
+          Padding(
+            padding: const EdgeInsets.only(bottom: _gap),
+            child: _BalanceCard(balance: balance),
+          ),
+      ],
+    );
+  }
+}
+
+class _Skeleton extends StatelessWidget {
+  const _Skeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return const AppShimmer(
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Expanded(child: ShimmerBox(height: 104, borderRadius: 12)),
+              SizedBox(width: SaldoSection._gap),
+              Expanded(child: ShimmerBox(height: 104, borderRadius: 12)),
+            ],
+          ),
+          SizedBox(height: SaldoSection._gap),
+          ShimmerBox(height: 80, borderRadius: 12),
+          SizedBox(height: SaldoSection._gap),
+        ],
+      ),
+    );
+  }
+}
+
+class _ErrorCard extends StatelessWidget {
+  const _ErrorCard({required this.message, this.onRetry});
+
+  final String message;
+  final VoidCallback? onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return AppCard(
+      padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              message,
+              style: TextStyle(
+                fontFamily: AppTextStyles.fontFamily,
+                fontSize: 13,
+                color: AppColors.textMuted,
+              ),
+            ),
+          ),
+          if (onRetry != null)
+            TextButton(onPressed: onRetry, child: const Text('Retry')),
         ],
       ),
     );

@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
-import '../../pengajuan/domain/leave_type.dart';
-import '../../shared/domain/role.dart';
 import 'activity_entry.dart';
-import 'quota_balance.dart';
 
 /// Data contoh untuk halaman Beranda.
 ///
@@ -12,40 +9,6 @@ import 'quota_balance.dart';
 /// widget-widget Beranda tidak perlu diubah.
 class HomeDemoData {
   HomeDemoData._();
-
-  /// Kartu saldo. Dua kartu pertama punya kuota sehingga tampil berdampingan
-  /// dengan progress bar; kartu ketiga tanpa kuota, jadi melebar penuh.
-  ///
-  /// Kartu ketiga berbeda per role: yang berhak lembur melihat off in lieu,
-  /// selain itu cuti pengganti.
-  static List<QuotaBalance> quotaBalancesFor(Role role) => [
-        const QuotaBalance(
-          label: 'Annual Leave',
-          value: 7.5,
-          total: 12,
-          caption: '/ 12 days',
-        ),
-        const QuotaBalance(
-          label: 'Medical Check',
-          value: 2.4,
-          total: 5,
-          caption: 'of 5.0 M',
-        ),
-        if (LeaveTypeX.showPersonalLembur(role))
-          const QuotaBalance(
-            label: 'Off in Lieu',
-            value: 2,
-            caption: 'days',
-            note: '1 day expires 30 Sep',
-          )
-        else
-          const QuotaBalance(
-            label: 'Replacement Leave',
-            value: 3,
-            caption: 'days',
-            note: '1 day expires 31 Dec',
-          ),
-      ];
 
   // Pengumuman tidak lagi punya data demo: daftarnya diambil dari
   // GET /api/portal/hr_announcement. Menampilkan pengumuman HR palsu saat

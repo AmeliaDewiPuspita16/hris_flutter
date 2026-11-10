@@ -13,6 +13,7 @@ import '../../data/approvals_waiting_repository.dart';
 import '../../domain/approvals_waiting_summary.dart';
 import '../../../absensi/presentation/screens/absensi_screen.dart';
 import '../../../absensi/data/absensi_repository.dart';
+import '../../../absensi/domain/attendance_month.dart';
 import '../../../kelola_tim/presentation/screens/kelola_tim_screen.dart';
 import '../../../department_attendance/presentation/screens/department_attendance_screen.dart';
 import '../../../leave_approval/data/leave_approval_repository.dart';
@@ -42,6 +43,8 @@ import '../../../notifikasi/data/pending_approval_checker.dart';
 import '../../../notifikasi/domain/notification_category.dart';
 import '../../../notifikasi/domain/notification_filter.dart';
 import '../widgets/approval_summary_banner.dart';
+import '../../../pengajuan/data/pengajuan_repository.dart';
+import '../../../pengajuan/domain/leave_history_entry.dart';
 import '../../../pengajuan/presentation/screens/pengajuan_screen.dart';
 import '../../../overtime_request/presentation/screens/overtime_request_screen.dart';
 import '../../../profil/presentation/screens/profil_screen.dart';
@@ -60,6 +63,8 @@ import '../../../shared/domain/role.dart';
 import '../../domain/attendance_status.dart';
 import '../../domain/published_announcement.dart';
 import '../../domain/home_demo_data.dart';
+import '../../domain/month_summary_cards.dart';
+import '../../domain/quota_balance.dart';
 import '../../domain/main_tab.dart';
 import '../../domain/service_shortcut.dart';
 import '../widgets/activity_section.dart';
@@ -154,6 +159,12 @@ class _BerandaScreenState extends State<BerandaScreen> {
   bool _loadingAttendance = true;
   String? _attendanceError;
 
+  /// Kartu ringkasan "This month" (absensi, lembur, pengajuan cuti). Kosong
+  /// selama belum termuat; kartu dari sumber yang gagal dimuat dilewati.
+  List<QuotaBalance> _monthCards = const [];
+  bool _loadingMonthCards = true;
+  String? _monthCardsError;
+
   /// Repository approval Leave — satu instance untuk seluruh Beranda.
   late final LeaveApprovalRepository _leaveApprovalRepository =
       widget.leaveApprovalRepository ??
@@ -190,6 +201,7 @@ class _BerandaScreenState extends State<BerandaScreen> {
     _loadAnnouncements();
     _loadLeaveApprovalCount();
     _loadTodayAttendance();
+    _loadMonthCards();
     _loadApprovalsWaiting();
     _loadPendingAssignments();
     _loadServerNotifications();
@@ -253,6 +265,46 @@ class _BerandaScreenState extends State<BerandaScreen> {
         _loadingAttendance = false;
       });
     }
+  }
+
+  /// Ringkasan bulan berjalan dari dua sumber yang dimuat bersamaan. Satu
+  /// sumber gagal tidak menyembunyikan kartu dari sumber lainnya.
+  Future<void> _loadMonthCards() async {
+    setState(() {
+      _loadingMonthCards = true;
+      _monthCardsError = null;
+    });
+
+    final absensi = context.read<AbsensiRepository>();
+    final pengajuan = context.read<PengajuanRepository>();
+    String? error;
+
+    Future<T?> attempt<T>(String label, Future<T> Function() call) async {
+      try {
+        return await call();
+      } on ApiException catch (e) {
+        AppLogger.info('$label gagal dimuat: ${e.message}');
+        error ??= e.message;
+        return null;
+      }
+    }
+
+    final now = DateTime.now();
+    final results = await Future.wait<Object?>([
+      attempt('Absensi bulan ini', () => absensi.fetchMonth(now)),
+      attempt('Riwayat cuti', pengajuan.fetchHistory),
+    ]);
+    if (!mounted) return;
+
+    setState(() {
+      _monthCards = MonthSummaryCards.build(
+        attendance: results[0] as AttendanceMonth?,
+        leaveHistory: results[1] as List<LeaveHistoryEntry>?,
+        now: now,
+      );
+      _monthCardsError = error;
+      _loadingMonthCards = false;
+    });
   }
 
   /// Back sistem di tab selain Home kembali ke Home dulu (lih.
@@ -677,6 +729,7 @@ class _BerandaScreenState extends State<BerandaScreen> {
   Future<void> _refreshHome() => Future.wait([
         _loadAnnouncements(),
         _loadTodayAttendance(),
+        _loadMonthCards(),
         _loadLeaveApprovalCount(),
         _loadApprovalsWaiting(),
         _loadPendingAssignments(),
@@ -959,9 +1012,16 @@ class _BerandaScreenState extends State<BerandaScreen> {
                       //  onTap: () => _openTab(_pengajuanTab),
                       //),
                       LayananSection(services: _buildServices()),
+                      // Ringkasan bulan berjalan dari data HRIS yang sudah
+                      // ada; saldo cuti menunggu endpoint-nya di HRIS.
                       SaldoSection(
-                        balances: HomeDemoData.quotaBalancesFor(_role),
-                        onSeeAll: _openLeaveRequest,
+                        title: 'This month',
+                        balances: _monthCards,
+                        isLoading: _loadingMonthCards,
+                        errorMessage: _monthCardsError,
+                        onRetry: _loadMonthCards,
+                        actionLabel: 'Log',
+                        onSeeAll: _openAttendance,
                       ),
                       AnnouncementSection(
                         announcements: _announcements,
