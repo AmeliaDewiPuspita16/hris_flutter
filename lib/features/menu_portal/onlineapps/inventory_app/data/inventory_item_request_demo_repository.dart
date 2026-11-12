@@ -7,19 +7,12 @@ import '../domain/item_request_page.dart';
 import '../domain/item_request_status.dart';
 
 /// Repository Inventory > Request > Item Request yang masih memakai DATA DEMO
-/// di memori, karena endpoint-nya belum tersedia. Polanya sama dengan
-/// `MasterEditedDocumentRepository`: konstruktor tanpa `ApiClient`, dan
-/// layar membuat sendiri instance-nya (tanpa `RepositoryProvider`).
+/// di memori, karena endpoint-nya belum tersedia.
 ///
 /// Perubahan (tambah, edit, cancel, approve, reject) tersimpan selama
 /// instance ini hidup, jadi alurnya bisa dicoba penuh. Data kembali ke awal
 /// begitu layar Item Request ditutup. Layar Add/Edit harus memakai instance
 /// yang SAMA dengan layar daftar (dioper lewat parameter `repository`).
-///
-/// Begitu endpoint siap: tambahkan `ApiClient` ke konstruktor, daftarkan di
-/// `RepositoryProvider`, lalu ganti isi tiap method dengan pemanggilan
-/// `ApiClient` (lihat `EstRequestRepository`). Signature method tidak perlu
-/// berubah; model di `domain/` sudah punya `fromJson`.
 class InventoryItemRequestDemoRepository {
   InventoryItemRequestDemoRepository() {
     for (final item in _catalog) {
@@ -130,8 +123,8 @@ class InventoryItemRequestDemoRepository {
         id: _nextId(),
         requester: _me,
         itemId: line.itemId,
-        quantity: line.quantity,
-        description: line.description.trim(),
+        quantity: line.quantity.toInt(),
+        description: line.reason.trim(),
         status: ItemRequestStatus.codePending,
         requestedAt: DateTime.now(),
       ));

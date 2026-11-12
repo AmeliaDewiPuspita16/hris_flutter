@@ -18,12 +18,13 @@ class ItemRequestVerificationTab extends StatelessWidget {
     required this.onRefresh,
     this.onOpen,
     this.busyIds = const {},
+    this.loadingMore = false,
   });
 
   final List<ItemRequestEntry> items;
 
-  /// Total antrean dari server (`summary.pending`) — bisa lebih besar dari
-  /// [items] bila sedang disaring pencarian.
+  /// Total antrean dari server (`pending-count`) — bisa lebih besar dari
+  /// [items] bila belum semua halaman termuat atau sedang mencari.
   final int pending;
 
   final ValueChanged<ItemRequestEntry> onApprove;
@@ -35,6 +36,9 @@ class ItemRequestVerificationTab extends StatelessWidget {
 
   /// id request yang keputusannya sedang dikirim; kartunya dikunci.
   final Set<int> busyIds;
+
+  /// Sedang memuat halaman berikutnya: indikator kecil di dasar daftar.
+  final bool loadingMore;
 
   @override
   Widget build(BuildContext context) {
@@ -56,8 +60,9 @@ class ItemRequestVerificationTab extends StatelessWidget {
           : ListView.separated(
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
-              // +1 untuk baris keterangan jumlah di atas.
-              itemCount: items.length + 1,
+              // +1 untuk baris keterangan jumlah di atas, +1 untuk indikator
+              // halaman berikutnya.
+              itemCount: items.length + 1 + (loadingMore ? 1 : 0),
               separatorBuilder: (_, index) =>
                   SizedBox(height: index == 0 ? 0 : 10),
               itemBuilder: (context, index) {
@@ -67,6 +72,19 @@ class ItemRequestVerificationTab extends StatelessWidget {
                     child: Text(
                       '$pending ${pending == 1 ? 'request' : 'requests'} waiting for verification',
                       style: AppTextStyles.label,
+                    ),
+                  );
+                }
+
+                if (index == items.length + 1) {
+                  return const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 8),
+                    child: Center(
+                      child: SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
                     ),
                   );
                 }

@@ -27,73 +27,27 @@ Future<bool> showItemRequestApproveDialog(
   return confirmed == true;
 }
 
-/// Dialog konfirmasi Reject dengan alasan opsional (maks 1000 karakter).
-///
-/// Mengembalikan alasan yang diketik (boleh string kosong) bila verifier
-/// menekan Reject, atau null bila dibatalkan.
-Future<String?> showItemRequestRejectDialog(
+/// Dialog konfirmasi Reject. Server tidak menyimpan alasan penolakan, jadi
+/// tidak ada kolom alasan. Mengembalikan true bila verifier menekan Reject,
+/// false bila dibatalkan.
+Future<bool> showItemRequestRejectDialog(
   BuildContext context,
   ItemRequestEntry item,
-) {
-  return showDialog<String>(
+) async {
+  final confirmed = await showDialog<bool>(
     context: context,
-    builder: (_) => _RejectDialog(item: item),
-  );
-}
-
-class _RejectDialog extends StatefulWidget {
-  const _RejectDialog({required this.item});
-
-  final ItemRequestEntry item;
-
-  @override
-  State<_RejectDialog> createState() => _RejectDialogState();
-}
-
-class _RejectDialogState extends State<_RejectDialog> {
-  final _reasonController = TextEditingController();
-
-  @override
-  void dispose() {
-    _reasonController.dispose();
-    super.dispose();
-  }
-
-  static OutlineInputBorder _border(Color color) => OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10),
-        borderSide: BorderSide(color: color, width: 1.5),
-      );
-
-  @override
-  Widget build(BuildContext context) {
-    return _DecisionDialog(
-      item: widget.item,
+    builder: (_) => _DecisionDialog(
+      item: item,
       title: 'Reject request?',
       icon: Icons.close,
       color: AppColors.rejected,
       background: AppColors.rejectedBg,
       confirmLabel: 'Reject',
       confirmFilled: false,
-      result: () => _reasonController.text,
-      extra: TextField(
-        controller: _reasonController,
-        maxLength: 1000,
-        minLines: 2,
-        maxLines: 4,
-        textCapitalization: TextCapitalization.sentences,
-        style: AppTextStyles.body,
-        decoration: InputDecoration(
-          hintText: 'Reason (optional)',
-          hintStyle: AppTextStyles.body.copyWith(color: AppColors.textMuted),
-          filled: true,
-          fillColor: AppColors.card,
-          border: _border(AppColors.border),
-          enabledBorder: _border(AppColors.border),
-          focusedBorder: _border(AppColors.primaryMidText),
-        ),
-      ),
-    );
-  }
+      result: () => true,
+    ),
+  );
+  return confirmed == true;
 }
 
 /// Kerangka dialog: ikon bulat + judul, ringkasan request, [extra] opsional,

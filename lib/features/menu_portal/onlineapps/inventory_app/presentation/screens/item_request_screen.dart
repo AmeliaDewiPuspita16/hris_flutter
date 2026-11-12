@@ -12,7 +12,6 @@ import '../../../../../../core/widgets/app_text_field.dart';
 import '../../../../shared/presentation/widgets/portal_category_page.dart';
 import '../../../work_order/est_request/presentation/widgets/est_request_tab_bar.dart';
 import '../../data/inventory_item_request_repository.dart';
-import '../../data/inventory_item_request_demo_repository.dart';
 import '../../domain/item_request_status.dart';
 import '../../domain/item_request_entry.dart';
 import '../bloc/list/item_request_list_bloc.dart';
@@ -31,8 +30,7 @@ import '../widgets/item_request_row.dart';
 import '../widgets/item_request_verification_tab.dart';
 import 'add_item_request_screen.dart';
 
-/// Layar Inventory > Item Request. Padanan halaman web
-/// `inventory/item-request`:
+/// Layar Inventory > Item Request.
 ///
 /// - Tab **Request** ("Request Items"): daftar request SEMUA user, tombol
 ///   Add Request (FAB), dan Edit / Cancel pada request milik sendiri yang
@@ -41,19 +39,11 @@ import 'add_item_request_screen.dart';
 ///   Reject. Hanya tampil untuk akun yang diizinkan server (lihat
 ///   [ItemRequestVerificationState.showTab]); user biasa cuma melihat daftar
 ///   Request tanpa tab bar.
-///
-/// Tab "Management" dan "Report" di web belum dibuat di aplikasi.
 class ItemRequestScreen extends StatefulWidget {
   const ItemRequestScreen({
     super.key,
-    this.repository,
     this.itemRequestRepository,
   });
-
-  /// Repository DEMO untuk bagian yang belum tersambung ke API (Add, Edit,
-  /// Cancel, dan tab Verification). Diisi test; kalau kosong layar membuat
-  /// sendiri.
-  final InventoryItemRequestDemoRepository? repository;
 
   /// Repository API. Kalau kosong diambil dari `RepositoryProvider`.
   final InventoryItemRequestRepository? itemRequestRepository;
@@ -64,9 +54,6 @@ class ItemRequestScreen extends StatefulWidget {
 }
 
 class _ItemRequestScreenState extends State<ItemRequestScreen> {
-  /// DEMO — hapus bersama file `inventory_item_request_demo_repository.dart` bila
-  /// semua bagian sudah tersambung ke [_itemRequests].
-  late final InventoryItemRequestDemoRepository _repository;
   late final InventoryItemRequestRepository _itemRequests;
   late final ItemRequestListBloc _listBloc;
   late final ItemRequestVerificationBloc _verifyBloc;
@@ -90,21 +77,16 @@ class _ItemRequestScreenState extends State<ItemRequestScreen> {
   @override
   void initState() {
     super.initState();
-    // Data demo di memori: instance ini dioper juga ke layar Add/Edit supaya
-    // perubahan yang dibuat di sana langsung tampak di daftar.
-    _repository = widget.repository ?? InventoryItemRequestDemoRepository();
-
     _itemRequests = widget.itemRequestRepository ??
         context.read<InventoryItemRequestRepository>();
 
     _listBloc = ItemRequestListBloc(repository: _itemRequests)
       ..add(const ItemRequestListStarted());
-    _loadStatusOptions();
+    _loadOptions();
 
-    // Dimulai untuk semua user: server yang memutuskan siapa verifier
-    // (401/403 -> tab disembunyikan).
-    _verifyBloc = ItemRequestVerificationBloc(repository: _repository)
-      ..add(const ItemRequestVerificationStarted());
+    // Antrean baru dimuat setelah `options.permissions` diketahui (lihat
+    // [_loadOptions]); user biasa tidak pernah memanggil endpoint-nya.
+    _verifyBloc = ItemRequestVerificationBloc(repository: _itemRequests);
   }
 
   @override
@@ -116,38 +98,40 @@ class _ItemRequestScreenState extends State<ItemRequestScreen> {
     super.dispose();
   }
 
-  /// Chip status mengikuti `options.statuses`. Gagal dimuat bukan masalah:
-  /// chip bawaan (Pending / Approved / Rejected) tetap dipakai.
-  Future<void> _loadStatusOptions() async {
+  /// `options` memberi dua hal: chip status (`statuses`) dan hak akses
+  /// (`permissions`) yang menentukan apakah tab Verification dimuat.
+  ///
+  /// Gagal dimuat bukan masalah untuk chip: chip bawaan (Pending / Approved /
+  /// Rejected) tetap dipakai. Untuk hak akses, bila `options` gagal antrean
+  /// tetap dicoba dimuat dan server yang memutuskan (403 -> tab disembunyikan).
+  Future<void> _loadOptions() async {
     try {
       final options = await _itemRequests.fetchOptions();
-      if (!mounted || options.statuses.isEmpty) return;
-      setState(() => _statuses = options.statuses);
+      if (!mounted) return;
+
+      if (options.statuses.isNotEmpty) {
+        setState(() => _statuses = options.statuses);
+      }
+      if (options.permissions.canOpenVerification) _startVerification();
     } on ApiException catch (e) {
-      AppLogger.info('Opsi status Item Request gagal dimuat: ${e.message}');
+      AppLogger.info('Opsi Item Request gagal dimuat: ${e.message}');
+      if (mounted) _startVerification();
     } catch (e, stack) {
-      AppLogger.error('Opsi status Item Request gagal tak terduga', e, stack);
+      AppLogger.error('Opsi Item Request gagal tak terduga', e, stack);
+      if (mounted) _startVerification();
     }
   }
 
-  /// Pencarian lokal, khusus antrean Verification (yang masih memakai data
-  /// demo). Daftar Request disaring oleh server lewat [_applyListFilter].
-  List<ItemRequestEntry> _filter(List<ItemRequestEntry> items) {
-    final q = _query.trim().toLowerCase();
-    if (q.isEmpty) return items;
-
-    return items.where((r) {
-      return r.code.toLowerCase().contains(q) ||
-          r.requesterName.toLowerCase().contains(q) ||
-          r.itemLabel.toLowerCase().contains(q) ||
-          r.description.toLowerCase().contains(q);
-    }).toList();
+  void _startVerification() {
+    _verifyBloc.add(const ItemRequestVerificationStarted());
   }
 
   bool get _filtering => _query.trim().isNotEmpty || _requestFilter.isActive;
 
-  /// Kirim status + kata kunci + "My requests" saat ini ke server.
+  /// Kirim status + kata kunci + "My requests" saat ini ke server. Kata kunci
+  /// yang sama juga menyaring antrean Verification (di server).
   void _applyListFilter() {
+    _verifyBloc.add(ItemRequestVerificationSearchChanged(_query.trim()));
     _listBloc.add(ItemRequestListFilterChanged(
       ItemRequestListFilter(
         status: _requestFilter.status,
@@ -209,32 +193,36 @@ class _ItemRequestScreenState extends State<ItemRequestScreen> {
   }
 
   Future<void> _addRequest() async {
-    final saved = await Navigator.of(context).push<bool>(
+    // Hasilnya pesan sukses dari server (mis. disetujui otomatis atau
+    // menunggu persetujuan), null bila layar ditutup tanpa submit.
+    final message = await Navigator.of(context).push<String>(
       MaterialPageRoute(
-        builder: (_) => AddItemRequestScreen(repository: _repository),
+        builder: (_) => AddItemRequestScreen(repository: _itemRequests),
       ),
     );
-    if (saved != true || !mounted) return;
+    if (message == null || !mounted) return;
 
     _reloadAll();
     // Kosongkan search & penyaring supaya request baru tidak tersaring.
     _clearFilters();
-    _toast('Request submitted');
+    _toast(message);
   }
 
   Future<void> _edit(ItemRequestEntry item) async {
-    final saved = await Navigator.of(context).push<bool>(
+    final message = await Navigator.of(context).push<String>(
       MaterialPageRoute(
         builder: (_) => AddItemRequestScreen(
-          repository: _repository,
+          repository: _itemRequests,
           initialItem: item,
+          // Edit ditolak karena line sudah diputuskan: muat ulang daftar.
+          onOutdated: _reloadAll,
         ),
       ),
     );
-    if (saved != true || !mounted) return;
+    if (message == null || !mounted) return;
 
     _reloadAll();
-    _toast('Request updated');
+    _toast(message);
   }
 
   Future<void> _cancel(ItemRequestEntry item) async {
@@ -243,7 +231,7 @@ class _ItemRequestScreenState extends State<ItemRequestScreen> {
 
     setState(() => _busyIds.add(item.id));
     try {
-      await _repository.cancel(item.id);
+      await _itemRequests.cancelLine(item.id);
       if (!mounted) return;
       _reloadAll();
       _toast('${item.code} cancelled');
@@ -259,26 +247,21 @@ class _ItemRequestScreenState extends State<ItemRequestScreen> {
     }
   }
 
-  /// Keputusan verifier. Approve minta konfirmasi dulu karena tidak bisa
-  /// dibatalkan dari aplikasi; Reject sekalian menanyakan alasan opsional.
+  /// Keputusan verifier atas satu LINE. Keduanya minta konfirmasi dulu karena
+  /// tidak bisa dibatalkan dari aplikasi (approve mengurangi stok; reject
+  /// tanpa alasan karena server tidak menyimpannya).
   Future<void> _decide(
     ItemRequestEntry item, {
     required bool approved,
   }) async {
-    String? reason;
+    final confirmed = approved
+        ? await showItemRequestApproveDialog(context, item)
+        : await showItemRequestRejectDialog(context, item);
+    if (!confirmed || !mounted) return;
 
-    if (approved) {
-      if (!await showItemRequestApproveDialog(context, item)) return;
-    } else {
-      reason = await showItemRequestRejectDialog(context, item);
-      if (reason == null) return;
-    }
-
-    if (!mounted) return;
     _verifyBloc.add(ItemRequestVerificationDecided(
       item: item,
       approved: approved,
-      reason: reason,
     ));
   }
 
@@ -294,13 +277,16 @@ class _ItemRequestScreenState extends State<ItemRequestScreen> {
     );
   }
 
-  /// Ketuk kartu di tab Verification: detail dengan tombol Approve / Reject.
+  /// Ketuk kartu di tab Verification: detail (dengan stok saat ini), dan
+  /// tombol Approve / Reject hanya bila server mengizinkan (`can_verify`;
+  /// Reviewer cuma melihat).
   void _openVerificationDetail(ItemRequestEntry item) {
     showItemRequestDetailSheet(
       context,
       item,
-      onApprove: () => _decide(item, approved: true),
-      onReject: () => _decide(item, approved: false),
+      repository: _itemRequests,
+      onApprove: item.canVerify ? () => _decide(item, approved: true) : null,
+      onReject: item.canVerify ? () => _decide(item, approved: false) : null,
     );
   }
 
@@ -314,6 +300,17 @@ class _ItemRequestScreenState extends State<ItemRequestScreen> {
     _verifyBloc.add(const ItemRequestVerificationRefreshed());
     await _verifyBloc.stream
         .firstWhere((s) => s.status != ItemRequestVerificationStatus.loading);
+  }
+
+  /// Seperti [_onListScroll], untuk antrean Verification.
+  bool _onVerificationScroll(ScrollNotification notification) {
+    if (notification.depth != 0 || notification.metrics.axis != Axis.vertical) {
+      return false;
+    }
+    if (notification.metrics.extentAfter < 300) {
+      _verifyBloc.add(const ItemRequestVerificationNextPageRequested());
+    }
+    return false;
   }
 
   /// Dekat dasar daftar -> minta halaman berikutnya. Lewat notifikasi, bukan
@@ -484,14 +481,18 @@ class _ItemRequestScreenState extends State<ItemRequestScreen> {
           );
         }
 
-        return ItemRequestVerificationTab(
-          items: _filter(state.items),
-          pending: state.pending,
-          busyIds: state.busyIds,
-          onRefresh: _refreshVerifications,
-          onApprove: (item) => _decide(item, approved: true),
-          onReject: (item) => _decide(item, approved: false),
-          onOpen: _openVerificationDetail,
+        return NotificationListener<ScrollNotification>(
+          onNotification: _onVerificationScroll,
+          child: ItemRequestVerificationTab(
+            items: state.items,
+            pending: state.pending,
+            busyIds: state.busyIds,
+            loadingMore: state.loadingMore,
+            onRefresh: _refreshVerifications,
+            onApprove: (item) => _decide(item, approved: true),
+            onReject: (item) => _decide(item, approved: false),
+            onOpen: _openVerificationDetail,
+          ),
         );
       },
     );

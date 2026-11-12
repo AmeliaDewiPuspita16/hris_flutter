@@ -3,6 +3,7 @@ import '../../../../../core/network/api_config.dart';
 import '../domain/item_request_options.dart';
 import '../domain/item_request_detail.dart';
 import '../domain/item_request_entry.dart';
+import '../domain/item_request_line.dart';
 import '../domain/item_request_page.dart';
 
 /// Akses API Inventory > Item Request. Tidak tahu soal HTTP — itu urusan
@@ -10,8 +11,8 @@ import '../domain/item_request_page.dart';
 ///
 /// Dibangun bertahap menggantikan `InventoryItemRequestDemoRepository` (data demo).
 /// Sudah ada: [fetchOptions], [fetchPendingCount], [fetchRequests],
-/// [fetchLine], [fetchRequest].
-/// Berikutnya: submit, edit/cancel, verifikasi, approve/reject.
+/// [fetchLine], [fetchRequest], [submitRequest], [updateLine], [cancelLine].
+/// Berikutnya: verifikasi, approve/reject.
 class InventoryItemRequestRepository {
   InventoryItemRequestRepository({required ApiClient apiClient})
       : _apiClient = apiClient;
@@ -83,6 +84,44 @@ class InventoryItemRequestRepository {
     return ItemRequestPage.fromEnvelope(envelope);
   }
 
+  /// Antrean verifikasi: LINE pending pada kategori yang boleh dikelola user
+  /// — `GET /item-request/verifications`. Bentuk tiap line sama dengan daftar
+  /// biasa (tanpa `current_stock`; stok baru ada di [fetchLine]).
+  ///
+  /// [search] menyaring di server (kode request, kode/nama barang, nama
+  /// requester).
+  Future<ItemRequestPage> fetchVerifications({
+    int page = 1,
+    int perPage = 20,
+    String? search,
+  }) async {
+    final keyword = search?.trim() ?? '';
+    final path = Uri(
+      path: ApiConfig.itemRequestVerifications,
+      queryParameters: {
+        'page': '$page',
+        'per_page': '$perPage',
+        if (keyword.isNotEmpty) 'search': keyword,
+      },
+    ).toString();
+
+    final envelope = await _apiClient.getEnvelope(path);
+    return ItemRequestPage.fromEnvelope(envelope);
+  }
+
+  /// Setujui satu LINE — `POST /item-request/{line_id}/approve`, tanpa body.
+  /// Jumlahnya dikurangi dari stok.
+  ///
+  /// Hanya Inventory Admin / Admin. Melempar `ApiException`; 422 bila line
+  /// sudah diputuskan atau stok kurang ("Insufficient stock for: …").
+  Future<void> approveLine(int lineId) =>
+      _apiClient.postAction(ApiConfig.itemRequestLineApprove(lineId));
+
+  /// Tolak satu LINE
+  Future<void> rejectLine(int lineId) =>
+      _apiClient.postAction(ApiConfig.itemRequestLineReject(lineId));
+
+
   /// Satu LINE berikut request induknya — `GET /item-request/{line_id}`.
   /// Bedanya dengan baris di daftar: memuat `current_stock` (total stok
   /// barang saat ini), jadi dipakai sheet detail untuk "Current stock".
@@ -101,5 +140,56 @@ class InventoryItemRequestRepository {
   Future<ItemRequestDetail> fetchRequest(int requestId) async {
     final data = await _apiClient.get(ApiConfig.itemRequestDetail(requestId));
     return ItemRequestDetail.fromJson(data);
+  }
+
+  /// Ajukan request baru — `POST /item-request`
+  ///
+  /// Mengembalikan `message` dari server, yang menyebut apakah line disetujui
+  /// otomatis (pengaju mengurus kategori itu) atau menunggu persetujuan.
+  ///
+  /// Melempar `ApiException` bila gagal: 422 untuk validasi (pesan pertama
+  /// saja yang diambil `ApiClient`), 403 untuk Daily Worker.
+  Future<String?> submitRequest(List<ItemRequestLine> lines) async {
+    final body = await _apiClient.postJson(
+      ApiConfig.itemRequest,
+      body: {
+        'items': [for (final line in lines) line.toJson()],
+      },
+    );
+    return _messageOf(body);
+  }
+
+  /// Ubah satu LINE yang msih pending - `PUT /item-request/{line_id}`,
+  ///
+  /// Melempar `ApiException`; 422 "This item is no longer pending." bila
+  /// line sudah diputuskan.
+  Future<String?> updateLine(
+    int lineId, {
+    required int itemId,
+    required num quantity,
+    required String reason,
+  }) async {
+    final body =
+        await _apiClient.putJson(ApiConfig.itemRequestLine(lineId), body: {
+      'item_id': itemId,
+      'quantity': quantity,
+      'reason': reason.trim(),
+    });
+    return _messageOf(body);
+  }
+
+  /// Batalkan satu LINE pending milik sendiri —
+  /// `POST /item-request/{line_id}/cancel`, tanpa body. Statusnya menjadi
+  /// `rejected`; line lain di request yang sama tidak berubah.
+  ///
+  /// Melempar `ApiException` bila gagal.
+  Future<void> cancelLine(int lineId) =>
+      _apiClient.postAction(ApiConfig.itemRequestLineCancel(lineId));
+
+  static String? _messageOf(Map<String, dynamic> body) {
+    final message = body['message'];
+    return message is String && message.trim().isNotEmpty
+        ? message.trim()
+        : null;
   }
 }

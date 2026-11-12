@@ -162,12 +162,31 @@ class ApiConfig {
   /// Badge: `data.count`
   static const String itemRequestPendingCount = '$itemRequest/pending-count';
 
+  /// Antrean verifikasi: LINE pending pada kategori yang boleh dikelola user
+  /// (`search`, `page`, `per_page`). Seperti [itemRequest], `meta` bersebelahan
+  /// dengan `data` (tanpa `summary`), jadi diambil lewat
+  /// [ApiClient.getEnvelope]. 403 untuk akun biasa.
+  static const String itemRequestVerifications = '$itemRequest/verifications';
+
   /// Satu REQUEST berikut semua line yang boleh dilihat user.
   static String itemRequestDetail(int requestId) =>
       '$itemRequest/requests/$requestId';
 
   /// Satu LINE: GET detail, PUT edit (selagi pending).
   static String itemRequestLine(int lineId) => '$itemRequest/$lineId';
+
+  /// Aksi atas satu line (POST, tanpa body). Cancel: requester membatalkan
+  /// line pending miliknya, statusnya menjadi `rejected`. Approve / reject:
+  /// InventoryAdmin / Admin; approve mengurangi stok dan gagal (422) bila
+  /// stok tidak cukup.
+  static String itemRequestLineApprove(int lineId) =>
+      '$itemRequest/$lineId/approve';
+  static String itemRequestLineReject(int lineId) =>
+      '$itemRequest/$lineId/reject';
+  static String itemRequestLineCancel(int lineId) =>
+      '$itemRequest/$lineId/cancel';
+
+
 
   /// ___________________________MENU OBSERVATION___________________________
   /// Observation Department — daftar semua temuan (`?month=YYYY-MM`,

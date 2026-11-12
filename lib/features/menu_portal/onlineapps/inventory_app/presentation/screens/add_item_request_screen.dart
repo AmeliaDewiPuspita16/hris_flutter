@@ -7,63 +7,62 @@ import '../../../../../../core/theme/app_colors.dart';
 import '../../../../../../core/theme/app_text_styles.dart';
 import '../../../../../../core/widgets/back_header.dart';
 import '../../../../../../core/widgets/field_label_row.dart';
-import '../../data/inventory_item_request_demo_repository.dart';
+import '../../data/inventory_item_request_repository.dart';
 import '../../domain/item_request_stock_option.dart';
 import '../../domain/item_request_entry.dart';
 import '../../domain/item_request_line.dart';
 import '../widgets/item_request_stock_picker_sheet.dart';
 
 /// Layar "Add Request", sekaligus form "Edit Request" bila [initialItem]
-/// diisi. Padanan modal "Request Item" / "Edit Request" di web.
+/// diisi.
 ///
-/// - Mode tambah: boleh beberapa baris barang sekaligus (tombol "Add Form"
-///   di web) dalam satu kali submit.
+/// - Mode tambah: boleh beberapa baris barang sekaligus.
 /// - Mode edit: satu baris; barangnya terkunci dan hanya jumlah +
 ///   keterangan yang bisa diubah. "Existing quantity" = stok barang.
 ///
-/// Menutup diri dengan `true` lewat Navigator.pop bila tersimpan di server
-/// (pemanggil lalu memuat ulang daftar), atau null bila ditutup tanpa
-/// submit. Galat ditangani dengan setState lokal, pola sama dengan
-/// `AddEstRequestScreen`.
+/// Menutup diri dengan pesan sukses dari server lewat Navigator.pop bila
+/// tersimpan (pemanggil lalu memuat ulang daftar dan menampilkan pesannya),
+/// atau null bila ditutup tanpa submit. Galat ditampilkan lewat snackbar.
+///
+/// Barang diambil dari `GET /options`; kolom alasan (`reason`) wajib.
 class AddItemRequestScreen extends StatefulWidget {
-  const AddItemRequestScreen({
-    super.key,
-    this.repository,
-    this.initialItem,
-  });
+  const AddItemRequestScreen(
+      {super.key, required this.repository, this.initialItem, this.onOutdated});
 
-  /// Harus instance yang sama dengan layar daftar supaya data demo
-  /// konsisten. Kalau kosong, dibuat repository demo baru.
-  final InventoryItemRequestDemoRepository? repository;
+  final InventoryItemRequestRepository repository;
 
-  /// Null = mode tambah. Diisi = mode edit untuk request ini.
+  /// Null = mode tambah. Diisi = mode edit untuk line ini.
   final ItemRequestEntry? initialItem;
 
+  /// Dipanggil saat edit ditolak karena line sudah diputuskan di server
+  /// ("no longer pending"), supaya pemanggil memuat ulang daftarnya dan
+  /// tombol edit hilang dari line itu
+  final VoidCallback? onOutdated;
+
   @override
-  State<AddItemRequestScreen> createState() =>
-      _AddItemRequestScreenState();
+  State<AddItemRequestScreen> createState() => _AddItemRequestScreenState();
 }
 
-/// Satu baris isian: barang + jumlah + keterangan.
+/// Satu baris isian: barang + jumlah + alasan.
 class _LineForm {
   _LineForm({this.item});
 
   ItemRequestStockOption? item;
   final quantity = TextEditingController();
-  final description = TextEditingController();
+  final reason = TextEditingController();
   final key = UniqueKey();
 
   void dispose() {
     quantity.dispose();
-    description.dispose();
+    reason.dispose();
   }
 }
 
-class _AddItemRequestScreenState
-    extends State<AddItemRequestScreen> {
-  static const int _maxDescriptionLength = 500;
+class _AddItemRequestScreenState extends State<AddItemRequestScreen> {
+  /// Batas server untuk `reason`.
+  static const int _maxReasonLength = 5000;
 
-  late final InventoryItemRequestDemoRepository _repository;
+  InventoryItemRequestRepository get _repository => widget.repository;
   final List<_LineForm> _lines = [];
 
   List<ItemRequestStockOption> _items = const [];
@@ -77,13 +76,12 @@ class _AddItemRequestScreenState
   @override
   void initState() {
     super.initState();
-    _repository = widget.repository ?? InventoryItemRequestDemoRepository();
 
     final initial = widget.initialItem;
     if (initial != null) {
       final line = _LineForm();
       line.quantity.text = formatInventoryQuantity(initial.quantity);
-      line.description.text = initial.description;
+      line.reason.text = initial.hasReason ? initial.description : '';
       _lines.add(line);
     } else {
       _lines.add(_LineForm());
@@ -106,9 +104,9 @@ class _AddItemRequestScreenState
     });
 
     try {
-      final items = await _repository.fetchItems();
+      final options = await _repository.fetchOptions();
       if (!mounted) return;
-      setState(() => _items = items);
+      setState(() => _items = options.items);
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() => _itemsError = e.message);
@@ -155,7 +153,8 @@ class _AddItemRequestScreenState
   }
 
   void _toast(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
   }
 
   /// Hasilnya galat pertama yang ditemukan (teks siap tampil) atau null.
@@ -187,28 +186,37 @@ class _AddItemRequestScreenState
 
     setState(() => _submitting = true);
     try {
+      final String? message;
       if (_isEdit) {
         final line = _lines.first;
-        await _repository.update(
+        message = await _repository.updateLine(
           widget.initialItem!.id,
-          quantity: int.parse(line.quantity.text.trim()),
-          description: line.description.text,
+          itemId: widget.initialItem!.itemId!,
+          quantity: parseInventoryQuantity(line.quantity.text)!,
+          reason: line.reason.text,
         );
       } else {
-        await _repository.create([
+        message = await _repository.submitRequest([
           for (final line in _lines)
             ItemRequestLine(
               itemId: line.item!.id,
-              quantity: int.parse(line.quantity.text.trim()),
-              description: line.description.text,
+              quantity: parseInventoryQuantity(line.quantity.text)!,
+              reason: line.reason.text,
             ),
         ]);
       }
       if (!mounted) return;
-      Navigator.of(context).pop(true);
+      Navigator.of(context).pop(
+        message ?? (_isEdit ? 'Request updated' : 'Request submitted'),
+      );
     } on ApiException catch (e) {
       if (!mounted) return;
       _toast(e.message);
+      // Line sudah diputuskan di server: daftar di belakang layar ini sudah
+      // basi, minta pemanggil memuat ulang.
+      if (_isEdit && e.message.toLowerCase().contains('no longer pending')) {
+        widget.onOutdated?.call();
+      }
     } catch (e, stack) {
       AppLogger.error(
         '${_isEdit ? 'Edit' : 'Submit'} item request gagal tak terduga',
@@ -386,9 +394,11 @@ class _AddItemRequestScreenState
           TextField(
             controller: line.quantity,
             enabled: !_submitting,
-            keyboardType: TextInputType.number,
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            maxLength: 6,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
+            ],
+            maxLength: 12,
             style: AppTextStyles.body,
             decoration: _fieldDecoration(
               '0',
@@ -396,13 +406,13 @@ class _AddItemRequestScreenState
             ),
           ),
           const SizedBox(height: 16),
-          const FieldLabelRow(label: 'Description'),
+          const FieldLabelRow(label: 'Reason', required: true),
           TextField(
-            controller: line.description,
+            controller: line.reason,
             enabled: !_submitting,
             minLines: 2,
             maxLines: 4,
-            maxLength: _maxDescriptionLength,
+            maxLength: _maxReasonLength,
             textCapitalization: TextCapitalization.sentences,
             style: AppTextStyles.body,
             decoration: _fieldDecoration('Reason for the request'),

@@ -14,7 +14,8 @@ import 'item_request_parts.dart';
 /// Kolom kanan memuat jumlah yang diminta DAN stok barang tepat di bawahnya,
 /// jadi verifier bisa membandingkan keduanya sekilas (merah + ikon peringatan
 /// bila permintaan melebihi stok). Footer berisi Reject dan Approve dengan
-/// lebar sama.
+/// lebar sama; footer hanya tampil bila `item.canVerify` (Reviewer tidak
+/// bisa memutuskan).
 class ItemRequestVerificationCard extends StatelessWidget {
   const ItemRequestVerificationCard({
     super.key,
@@ -88,6 +89,9 @@ class ItemRequestVerificationCard extends StatelessWidget {
               ),
             ],
           ),
+          // Reviewer hanya melihat antrean; tombol mengikuti `can_verify`
+          // dari server.
+          if (item.canVerify) ...[
           const SizedBox(height: 12),
           Row(
             children: [
@@ -112,6 +116,7 @@ class ItemRequestVerificationCard extends StatelessWidget {
               ),
             ],
           ),
+          ],
         ],
       ),
     );

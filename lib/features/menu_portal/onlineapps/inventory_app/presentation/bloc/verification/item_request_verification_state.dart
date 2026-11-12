@@ -1,3 +1,4 @@
+import '../../../../../../../core/network/page_meta.dart';
 import '../../../domain/item_request_entry.dart';
 
 enum ItemRequestVerificationStatus { initial, loading, success, failure }
@@ -23,6 +24,13 @@ class ItemRequestVerificationState {
     this.status = ItemRequestVerificationStatus.initial,
     this.items = const [],
     this.pending = 0,
+    this.meta = const PageMeta(
+      currentPage: 1,
+      lastPage: 1,
+      perPage: 20,
+      total: 0,
+    ),
+    this.loadingMore = false,
     this.busyIds = const {},
     this.errorMessage,
     this.notice,
@@ -32,14 +40,23 @@ class ItemRequestVerificationState {
 
   final ItemRequestVerificationStatus status;
 
-  /// Request yang masih menunggu keputusan.
+  /// LINE yang masih menunggu keputusan, dari halaman 1 sampai halaman
+  /// terakhir yang sudah diminta.
   final List<ItemRequestEntry> items;
 
-  /// Total antrean dari `summary.pending`, untuk badge tab. Dikurangi satu
-  /// tiap keputusan berhasil supaya tidak perlu muat ulang.
+  /// Total antrean (`pending-count`), untuk badge tab. Tidak ikut menyusut
+  /// saat pencarian aktif. Dikurangi satu tiap keputusan berhasil supaya
+  /// tidak perlu muat ulang.
   final int pending;
 
-  /// id request yang keputusannya sedang dikirim; kartunya dikunci supaya
+  /// Paginasi halaman terakhir yang dimuat; `meta.hasMore` menentukan perlu
+  /// tidaknya meminta halaman berikutnya.
+  final PageMeta meta;
+
+  /// Sedang memuat halaman berikutnya.
+  final bool loadingMore;
+
+  /// id LINE yang keputusannya sedang dikirim; kartunya dikunci supaya
   /// Approve/Reject tidak terkirim dua kali.
   final Set<int> busyIds;
 
@@ -69,6 +86,8 @@ class ItemRequestVerificationState {
     ItemRequestVerificationStatus? status,
     List<ItemRequestEntry>? items,
     int? pending,
+    PageMeta? meta,
+    bool? loadingMore,
     Set<int>? busyIds,
     Object? errorMessage = _unset,
     ItemRequestVerificationNotice? notice,
@@ -79,6 +98,8 @@ class ItemRequestVerificationState {
       status: status ?? this.status,
       items: items ?? this.items,
       pending: pending ?? this.pending,
+      meta: meta ?? this.meta,
+      loadingMore: loadingMore ?? this.loadingMore,
       busyIds: busyIds ?? this.busyIds,
       errorMessage:
           errorMessage == _unset ? this.errorMessage : errorMessage as String?,
