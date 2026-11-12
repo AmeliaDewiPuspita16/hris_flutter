@@ -1,27 +1,27 @@
 import '../../../../../core/network/api_exception.dart';
 import '../../../../../core/network/page_meta.dart';
-import '../domain/stationery_item_option.dart';
-import '../domain/stationery_request_item.dart';
-import '../domain/stationery_request_line.dart';
-import '../domain/stationery_request_page.dart';
-import '../domain/stationery_request_status.dart';
+import '../domain/item_request_stock_option.dart';
+import '../domain/item_request_entry.dart';
+import '../domain/item_request_line.dart';
+import '../domain/item_request_page.dart';
+import '../domain/item_request_status.dart';
 
-/// Repository Inventory > Request > Stationery yang masih memakai DATA DEMO
+/// Repository Inventory > Request > Item Request yang masih memakai DATA DEMO
 /// di memori, karena endpoint-nya belum tersedia. Polanya sama dengan
 /// `MasterEditedDocumentRepository`: konstruktor tanpa `ApiClient`, dan
 /// layar membuat sendiri instance-nya (tanpa `RepositoryProvider`).
 ///
 /// Perubahan (tambah, edit, cancel, approve, reject) tersimpan selama
 /// instance ini hidup, jadi alurnya bisa dicoba penuh. Data kembali ke awal
-/// begitu layar Stationery ditutup. Layar Add/Edit harus memakai instance
+/// begitu layar Item Request ditutup. Layar Add/Edit harus memakai instance
 /// yang SAMA dengan layar daftar (dioper lewat parameter `repository`).
 ///
 /// Begitu endpoint siap: tambahkan `ApiClient` ke konstruktor, daftarkan di
 /// `RepositoryProvider`, lalu ganti isi tiap method dengan pemanggilan
 /// `ApiClient` (lihat `EstRequestRepository`). Signature method tidak perlu
 /// berubah; model di `domain/` sudah punya `fromJson`.
-class InventoryStationeryRepository {
-  InventoryStationeryRepository() {
+class InventoryItemRequestDemoRepository {
+  InventoryItemRequestDemoRepository() {
     for (final item in _catalog) {
       _stock[item.id] = item.stock ?? 0;
     }
@@ -38,7 +38,7 @@ class InventoryStationeryRepository {
   final List<_DemoRequest> _requests = [];
 
   /// Daftar "Request Items": SEMUA user, terbaru di atas.
-  Future<StationeryRequestPage> fetchRequests({
+  Future<ItemRequestPage> fetchRequests({
     int page = 1,
     int perPage = 20,
   }) async {
@@ -52,16 +52,16 @@ class InventoryStationeryRepository {
         ? <_DemoRequest>[]
         : all.sublist(start, (start + perPage).clamp(0, total));
 
-    return StationeryRequestPage(
+    return ItemRequestPage(
       items: [for (final r in slice) _toItem(r)],
       pending: all.where((r) => r.isPending).length,
-      counts: StationeryStatusCounts(
+      counts: ItemRequestStatusCounts(
         pending: all.where((r) => r.isPending).length,
         approved: all
-            .where((r) => r.status == StationeryRequestStatus.codeApproved)
+            .where((r) => r.status == ItemRequestStatus.codeApproved)
             .length,
         rejected: all
-            .where((r) => r.status == StationeryRequestStatus.codeRejected)
+            .where((r) => r.status == ItemRequestStatus.codeRejected)
             .length,
       ),
       meta: PageMeta(
@@ -74,7 +74,7 @@ class InventoryStationeryRepository {
   }
 
   /// Antrean "Verification Requests": semua request pending.
-  Future<StationeryRequestPage> fetchVerifications({
+  Future<ItemRequestPage> fetchVerifications({
     int page = 1,
     int perPage = 100,
   }) async {
@@ -82,7 +82,7 @@ class InventoryStationeryRepository {
 
     final pending = _sorted().where((r) => r.isPending).toList();
 
-    return StationeryRequestPage(
+    return ItemRequestPage(
       items: [for (final r in pending) _toItem(r)],
       pending: pending.length,
       meta: PageMeta(
@@ -95,12 +95,12 @@ class InventoryStationeryRepository {
   }
 
   /// Barang untuk dropdown "Select Item".
-  Future<List<StationeryItemOption>> fetchItems() async {
+  Future<List<ItemRequestStockOption>> fetchItems() async {
     await Future<void>.delayed(_latency);
 
     return [
       for (final item in _catalog)
-        StationeryItemOption(
+        ItemRequestStockOption(
           id: item.id,
           code: item.code,
           name: item.name,
@@ -112,7 +112,7 @@ class InventoryStationeryRepository {
 
   /// Satu request (satu kode REQ) per baris, selalu atas nama user demo.
   /// Menolak jumlah yang melebihi stok, untuk mencoba tampilan galat.
-  Future<void> create(List<StationeryRequestLine> lines) async {
+  Future<void> create(List<ItemRequestLine> lines) async {
     await Future<void>.delayed(_latency);
 
     for (final line in lines) {
@@ -132,7 +132,7 @@ class InventoryStationeryRepository {
         itemId: line.itemId,
         quantity: line.quantity,
         description: line.description.trim(),
-        status: StationeryRequestStatus.codePending,
+        status: ItemRequestStatus.codePending,
         requestedAt: DateTime.now(),
       ));
     }
@@ -170,7 +170,7 @@ class InventoryStationeryRepository {
     await Future<void>.delayed(_latency);
 
     final request = _pending(id);
-    request.status = StationeryRequestStatus.codeApproved;
+    request.status = ItemRequestStatus.codeApproved;
     final left = (_stock[request.itemId] ?? 0) - request.quantity;
     _stock[request.itemId] = left < 0 ? 0 : left;
   }
@@ -179,7 +179,7 @@ class InventoryStationeryRepository {
     await Future<void>.delayed(_latency);
 
     final request = _pending(id);
-    request.status = StationeryRequestStatus.codeRejected;
+    request.status = ItemRequestStatus.codeRejected;
     request.rejectReason =
         reason != null && reason.trim().isNotEmpty ? reason.trim() : null;
   }
@@ -213,11 +213,11 @@ class InventoryStationeryRepository {
     return request;
   }
 
-  StationeryRequestItem _toItem(_DemoRequest r) {
+  ItemRequestEntry _toItem(_DemoRequest r) {
     final item = _itemById(r.itemId);
     final mine = r.requester == _me;
 
-    return StationeryRequestItem(
+    return ItemRequestEntry(
       id: r.id,
       code: 'REQ${r.id.toString().padLeft(5, '0')}',
       requesterName: r.requester,
@@ -227,7 +227,7 @@ class InventoryStationeryRepository {
       unit: item.unit,
       quantity: r.quantity,
       description: r.description,
-      status: StationeryRequestStatus(
+      status: ItemRequestStatus(
         code: r.status,
         label: '${r.status[0].toUpperCase()}${r.status.substring(1)}',
       ),
@@ -274,9 +274,9 @@ class InventoryStationeryRepository {
 
   /// 27 request, terbaru di atas, meniru isi tabel di web.
   static List<_DemoRequest> _seed() {
-    const p = StationeryRequestStatus.codePending;
-    const a = StationeryRequestStatus.codeApproved;
-    const r = StationeryRequestStatus.codeRejected;
+    const p = ItemRequestStatus.codePending;
+    const a = ItemRequestStatus.codeApproved;
+    const r = ItemRequestStatus.codeRejected;
 
     _DemoRequest row(int id, String who, int item, int qty, String desc,
             String status, {String? reason}) =>
@@ -360,5 +360,5 @@ class _DemoRequest {
   String status;
   String? rejectReason;
 
-  bool get isPending => status == StationeryRequestStatus.codePending;
+  bool get isPending => status == ItemRequestStatus.codePending;
 }

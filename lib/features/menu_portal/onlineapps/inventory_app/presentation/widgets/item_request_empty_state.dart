@@ -6,8 +6,8 @@ import '../../../../../../core/theme/app_text_styles.dart';
 /// Keadaan kosong daftar Inventory: ikon, judul, keterangan, dan (opsional)
 /// satu tombol aksi — mis. "Clear filters" saat pencarian tidak menemukan
 /// apa-apa. Menggantikan teks polos "No data".
-class StationeryEmptyState extends StatelessWidget {
-  const StationeryEmptyState({
+class ItemRequestEmptyState extends StatelessWidget {
+  const ItemRequestEmptyState({
     super.key,
     required this.icon,
     required this.title,

@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../../core/theme/app_text_styles.dart';
-import '../../domain/stationery_request_item.dart';
-import 'stationery_empty_state.dart';
-import 'stationery_verification_card.dart';
+import '../../domain/item_request_entry.dart';
+import 'item_request_empty_state.dart';
+import 'item_request_verification_card.dart';
 
-/// Isi tab "Verification": antrean request stationery yang menunggu
-/// keputusan. State-nya dipegang `StationeryVerificationBloc` di layar induk
+/// Isi tab "Verification": antrean item request yang menunggu
+/// keputusan. State-nya dipegang `ItemRequestVerificationBloc` di layar induk
 /// supaya badge jumlah di tab bar ikut berubah begitu ada yang diputuskan.
-class StationeryVerificationTab extends StatelessWidget {
-  const StationeryVerificationTab({
+class ItemRequestVerificationTab extends StatelessWidget {
+  const ItemRequestVerificationTab({
     super.key,
     required this.items,
     required this.pending,
@@ -20,18 +20,18 @@ class StationeryVerificationTab extends StatelessWidget {
     this.busyIds = const {},
   });
 
-  final List<StationeryRequestItem> items;
+  final List<ItemRequestEntry> items;
 
   /// Total antrean dari server (`summary.pending`) — bisa lebih besar dari
   /// [items] bila sedang disaring pencarian.
   final int pending;
 
-  final ValueChanged<StationeryRequestItem> onApprove;
-  final ValueChanged<StationeryRequestItem> onReject;
+  final ValueChanged<ItemRequestEntry> onApprove;
+  final ValueChanged<ItemRequestEntry> onReject;
   final RefreshCallback onRefresh;
 
   /// Ketuk kartu: buka halaman detail request itu.
-  final ValueChanged<StationeryRequestItem>? onOpen;
+  final ValueChanged<ItemRequestEntry>? onOpen;
 
   /// id request yang keputusannya sedang dikirim; kartunya dikunci.
   final Set<int> busyIds;
@@ -46,7 +46,7 @@ class StationeryVerificationTab extends StatelessWidget {
           ? ListView(
               physics: const AlwaysScrollableScrollPhysics(),
               children: const [
-                StationeryEmptyState(
+                ItemRequestEmptyState(
                   icon: Icons.fact_check_outlined,
                   title: 'All caught up',
                   message: 'No requests are waiting for verification.',
@@ -77,7 +77,7 @@ class StationeryVerificationTab extends StatelessWidget {
                   opacity: busy ? 0.5 : 1,
                   child: IgnorePointer(
                     ignoring: busy,
-                    child: StationeryVerificationCard(
+                    child: ItemRequestVerificationCard(
                       item: item,
                       onApprove: () => onApprove(item),
                       onReject: () => onReject(item),

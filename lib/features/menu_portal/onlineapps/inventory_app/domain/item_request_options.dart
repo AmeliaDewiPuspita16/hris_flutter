@@ -1,5 +1,5 @@
-import 'stationery_item_option.dart';
-import 'stationery_request_status.dart';
+import 'item_request_stock_option.dart';
+import 'item_request_status.dart';
 
 /// Hak akses user di Item Request, dari `data.permissions`. Menggantikan
 /// tebakan lewat 401/403 untuk menentukan siapa yang melihat tab Verification.
@@ -47,19 +47,19 @@ class ItemRequestOptions {
   });
 
   /// Barang aktif yang boleh diminta.
-  final List<StationeryItemOption> items;
+  final List<ItemRequestStockOption> items;
 
   /// Pilihan filter status untuk daftar (kode + label dari server).
-  final List<StationeryRequestStatus> statuses;
+  final List<ItemRequestStatus> statuses;
 
   final ItemRequestPermissions permissions;
 
   factory ItemRequestOptions.fromJson(Map<String, dynamic> json) {
-    final items = <StationeryItemOption>[];
+    final items = <ItemRequestStockOption>[];
     for (final row in (json['items'] as List<dynamic>? ?? const [])
         .whereType<Map<String, dynamic>>()) {
       try {
-        items.add(StationeryItemOption.fromJson(row));
+        items.add(ItemRequestStockOption.fromJson(row));
       } on FormatException {
         // Barang tanpa id tidak bisa diminta; lewati, sisanya tetap tampil.
       }
@@ -69,7 +69,7 @@ class ItemRequestOptions {
       items: items,
       statuses: [
         for (final row in (json['statuses'] as List<dynamic>? ?? const []))
-          StationeryRequestStatus.fromJson(row),
+          ItemRequestStatus.fromJson(row),
       ],
       permissions: ItemRequestPermissions.fromJson(json['permissions']),
     );

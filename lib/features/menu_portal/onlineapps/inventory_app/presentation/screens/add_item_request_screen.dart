@@ -7,11 +7,11 @@ import '../../../../../../core/theme/app_colors.dart';
 import '../../../../../../core/theme/app_text_styles.dart';
 import '../../../../../../core/widgets/back_header.dart';
 import '../../../../../../core/widgets/field_label_row.dart';
-import '../../data/inventory_stationery_repository.dart';
-import '../../domain/stationery_item_option.dart';
-import '../../domain/stationery_request_item.dart';
-import '../../domain/stationery_request_line.dart';
-import '../widgets/stationery_item_picker_sheet.dart';
+import '../../data/inventory_item_request_demo_repository.dart';
+import '../../domain/item_request_stock_option.dart';
+import '../../domain/item_request_entry.dart';
+import '../../domain/item_request_line.dart';
+import '../widgets/item_request_stock_picker_sheet.dart';
 
 /// Layar "Add Request", sekaligus form "Edit Request" bila [initialItem]
 /// diisi. Padanan modal "Request Item" / "Edit Request" di web.
@@ -25,8 +25,8 @@ import '../widgets/stationery_item_picker_sheet.dart';
 /// (pemanggil lalu memuat ulang daftar), atau null bila ditutup tanpa
 /// submit. Galat ditangani dengan setState lokal, pola sama dengan
 /// `AddEstRequestScreen`.
-class AddStationeryRequestScreen extends StatefulWidget {
-  const AddStationeryRequestScreen({
+class AddItemRequestScreen extends StatefulWidget {
+  const AddItemRequestScreen({
     super.key,
     this.repository,
     this.initialItem,
@@ -34,21 +34,21 @@ class AddStationeryRequestScreen extends StatefulWidget {
 
   /// Harus instance yang sama dengan layar daftar supaya data demo
   /// konsisten. Kalau kosong, dibuat repository demo baru.
-  final InventoryStationeryRepository? repository;
+  final InventoryItemRequestDemoRepository? repository;
 
   /// Null = mode tambah. Diisi = mode edit untuk request ini.
-  final StationeryRequestItem? initialItem;
+  final ItemRequestEntry? initialItem;
 
   @override
-  State<AddStationeryRequestScreen> createState() =>
-      _AddStationeryRequestScreenState();
+  State<AddItemRequestScreen> createState() =>
+      _AddItemRequestScreenState();
 }
 
 /// Satu baris isian: barang + jumlah + keterangan.
 class _LineForm {
   _LineForm({this.item});
 
-  StationeryItemOption? item;
+  ItemRequestStockOption? item;
   final quantity = TextEditingController();
   final description = TextEditingController();
   final key = UniqueKey();
@@ -59,14 +59,14 @@ class _LineForm {
   }
 }
 
-class _AddStationeryRequestScreenState
-    extends State<AddStationeryRequestScreen> {
+class _AddItemRequestScreenState
+    extends State<AddItemRequestScreen> {
   static const int _maxDescriptionLength = 500;
 
-  late final InventoryStationeryRepository _repository;
+  late final InventoryItemRequestDemoRepository _repository;
   final List<_LineForm> _lines = [];
 
-  List<StationeryItemOption> _items = const [];
+  List<ItemRequestStockOption> _items = const [];
   bool _itemsLoading = false;
   String? _itemsError;
 
@@ -77,7 +77,7 @@ class _AddStationeryRequestScreenState
   @override
   void initState() {
     super.initState();
-    _repository = widget.repository ?? InventoryStationeryRepository();
+    _repository = widget.repository ?? InventoryItemRequestDemoRepository();
 
     final initial = widget.initialItem;
     if (initial != null) {
@@ -113,7 +113,7 @@ class _AddStationeryRequestScreenState
       if (!mounted) return;
       setState(() => _itemsError = e.message);
     } catch (e, stack) {
-      AppLogger.error('Daftar barang stationery gagal dimuat', e, stack);
+      AppLogger.error('Daftar barang gagal dimuat', e, stack);
       if (!mounted) return;
       setState(() => _itemsError = 'Failed to load the item list.');
     } finally {
@@ -133,7 +133,7 @@ class _AddStationeryRequestScreenState
       return;
     }
 
-    final picked = await StationeryItemPickerSheet.show(
+    final picked = await ItemRequestStockPickerSheet.show(
       context,
       items: _items,
       selectedId: line.item?.id,
@@ -197,7 +197,7 @@ class _AddStationeryRequestScreenState
       } else {
         await _repository.create([
           for (final line in _lines)
-            StationeryRequestLine(
+            ItemRequestLine(
               itemId: line.item!.id,
               quantity: int.parse(line.quantity.text.trim()),
               description: line.description.text,
@@ -211,7 +211,7 @@ class _AddStationeryRequestScreenState
       _toast(e.message);
     } catch (e, stack) {
       AppLogger.error(
-        '${_isEdit ? 'Edit' : 'Submit'} request stationery gagal tak terduga',
+        '${_isEdit ? 'Edit' : 'Submit'} item request gagal tak terduga',
         e,
         stack,
       );

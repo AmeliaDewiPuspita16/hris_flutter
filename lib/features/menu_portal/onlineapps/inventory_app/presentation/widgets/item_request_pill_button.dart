@@ -3,12 +3,12 @@ import 'package:flutter/material.dart';
 import '../../../../../../core/theme/app_colors.dart';
 import '../../../../../../core/theme/app_text_styles.dart';
 
-/// Tombol aksi berbentuk pill untuk modul Stationery (Edit, Cancel, Approve,
+/// Tombol aksi berbentuk pill untuk modul Item Request (Edit, Cancel, Approve,
 /// Reject). [filled] true = hijau penuh (Edit / Approve), false = latar merah
 /// lembut dengan teks merah (Cancel / Reject). Gaya sama dengan
 /// `EstDecisionButton`.
-class StationeryPillButton extends StatelessWidget {
-  const StationeryPillButton({
+class ItemRequestPillButton extends StatelessWidget {
+  const ItemRequestPillButton({
     super.key,
     required this.label,
     required this.icon,

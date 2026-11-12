@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 
 import '../../../../../../core/theme/app_colors.dart';
 import '../../../../../../core/theme/app_text_styles.dart';
-import '../../domain/stationery_request_item.dart';
-import 'stationery_action_button.dart';
+import '../../domain/item_request_entry.dart';
+import 'item_request_action_button.dart';
 
 /// Dialog konfirmasi Approve di tab Verification. Mengembalikan true bila
 /// verifier menekan Approve, false bila dibatalkan.
-Future<bool> showStationeryApproveDialog(
+Future<bool> showItemRequestApproveDialog(
   BuildContext context,
-  StationeryRequestItem item,
+  ItemRequestEntry item,
 ) async {
   final confirmed = await showDialog<bool>(
     context: context,
@@ -31,9 +31,9 @@ Future<bool> showStationeryApproveDialog(
 ///
 /// Mengembalikan alasan yang diketik (boleh string kosong) bila verifier
 /// menekan Reject, atau null bila dibatalkan.
-Future<String?> showStationeryRejectDialog(
+Future<String?> showItemRequestRejectDialog(
   BuildContext context,
-  StationeryRequestItem item,
+  ItemRequestEntry item,
 ) {
   return showDialog<String>(
     context: context,
@@ -44,7 +44,7 @@ Future<String?> showStationeryRejectDialog(
 class _RejectDialog extends StatefulWidget {
   const _RejectDialog({required this.item});
 
-  final StationeryRequestItem item;
+  final ItemRequestEntry item;
 
   @override
   State<_RejectDialog> createState() => _RejectDialogState();
@@ -113,7 +113,7 @@ class _DecisionDialog extends StatelessWidget {
     this.extra,
   });
 
-  final StationeryRequestItem item;
+  final ItemRequestEntry item;
   final String title;
   final IconData icon;
   final Color color;
@@ -191,7 +191,7 @@ class _DecisionDialog extends StatelessWidget {
                 ),
                 const SizedBox(width: 10),
                 Expanded(
-                  child: StationeryActionButton(
+                  child: ItemRequestActionButton(
                     label: confirmLabel,
                     icon: icon,
                     filled: confirmFilled,

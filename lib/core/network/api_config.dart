@@ -162,7 +162,12 @@ class ApiConfig {
   /// Badge: `data.count`
   static const String itemRequestPendingCount = '$itemRequest/pending-count';
 
+  /// Satu REQUEST berikut semua line yang boleh dilihat user.
+  static String itemRequestDetail(int requestId) =>
+      '$itemRequest/requests/$requestId';
 
+  /// Satu LINE: GET detail, PUT edit (selagi pending).
+  static String itemRequestLine(int lineId) => '$itemRequest/$lineId';
 
   /// ___________________________MENU OBSERVATION___________________________
   /// Observation Department — daftar semua temuan (`?month=YYYY-MM`,

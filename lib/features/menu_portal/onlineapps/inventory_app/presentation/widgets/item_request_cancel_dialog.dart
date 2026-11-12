@@ -2,23 +2,23 @@ import 'package:flutter/material.dart';
 
 import '../../../../../../core/theme/app_colors.dart';
 import '../../../../../../core/theme/app_text_styles.dart';
-import '../../domain/stationery_request_item.dart';
+import '../../domain/item_request_entry.dart';
 
 /// Dialog konfirmasi tombol "Cancel" pada request milik sendiri. Hasilnya
 /// true kalau user menekan "Cancel request", false kalau memilih "Keep" atau
 /// dialog ditutup. Gayanya sama dengan `EstDeleteDialog`.
-class StationeryCancelDialog extends StatelessWidget {
-  const StationeryCancelDialog({super.key, required this.item});
+class ItemRequestCancelDialog extends StatelessWidget {
+  const ItemRequestCancelDialog({super.key, required this.item});
 
-  final StationeryRequestItem item;
+  final ItemRequestEntry item;
 
   static Future<bool> show(
     BuildContext context,
-    StationeryRequestItem item,
+    ItemRequestEntry item,
   ) async {
     final result = await showDialog<bool>(
       context: context,
-      builder: (_) => StationeryCancelDialog(item: item),
+      builder: (_) => ItemRequestCancelDialog(item: item),
     );
     return result ?? false;
   }

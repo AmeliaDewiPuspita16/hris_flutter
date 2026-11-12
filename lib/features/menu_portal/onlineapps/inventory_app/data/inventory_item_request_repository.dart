@@ -1,13 +1,17 @@
 import '../../../../../core/network/api_client.dart';
 import '../../../../../core/network/api_config.dart';
 import '../domain/item_request_options.dart';
-import '../domain/stationery_request_page.dart';
+import '../domain/item_request_detail.dart';
+import '../domain/item_request_entry.dart';
+import '../domain/item_request_page.dart';
 
 /// Akses API Inventory > Item Request. Tidak tahu soal HTTP — itu urusan
 /// [ApiClient]. Pola sama dengan `EstRequestRepository`.
 ///
-/// Sudah tersambung: [fetchOptions], [fetchPendingCount], [fetchRequests].
-/// Berikutnya: detail, submit, edit/cancel, verifikasi, approve/reject.
+/// Dibangun bertahap menggantikan `InventoryItemRequestDemoRepository` (data demo).
+/// Sudah ada: [fetchOptions], [fetchPendingCount], [fetchRequests],
+/// [fetchLine], [fetchRequest].
+/// Berikutnya: submit, edit/cancel, verifikasi, approve/reject.
 class InventoryItemRequestRepository {
   InventoryItemRequestRepository({required ApiClient apiClient})
       : _apiClient = apiClient;
@@ -46,17 +50,17 @@ class InventoryItemRequestRepository {
     return count is num ? count.toInt() : 0;
   }
 
-  /// Daftar LINE yang boleh dilihat user, request terbaru di atas -
+  /// Daftar LINE yang boleh dilihat user, request terbaru di atas —
   /// `GET /item-request`.
   ///
-  /// Isinya milik sendirim ditambah (Inventory Admin / Reviewer / Admin)
+  /// Isinya milik sendiri, ditambah (Inventory Admin / Reviewer / Admin)
   /// line orang lain pada kategori yang boleh dikelolanya. Semua penyaringan
   /// dilakukan server: [status] (`pending` | `approved` | `rejected`),
   /// [search] (kode request, kode/nama barang, nama requester), dan [mine]
   /// (hanya milik sendiri). Server tidak mengirim `summary`, hanya `meta`.
   ///
   /// Melempar `ApiException` bila gagal.
-  Future<StationeryRequestPage> fetchRequests({
+  Future<ItemRequestPage> fetchRequests({
     int page = 1,
     int perPage = 20,
     String? status,
@@ -76,6 +80,26 @@ class InventoryItemRequestRepository {
     ).toString();
 
     final envelope = await _apiClient.getEnvelope(path);
-    return StationeryRequestPage.fromEnvelope(envelope);
+    return ItemRequestPage.fromEnvelope(envelope);
+  }
+
+  /// Satu LINE berikut request induknya — `GET /item-request/{line_id}`.
+  /// Bedanya dengan baris di daftar: memuat `current_stock` (total stok
+  /// barang saat ini), jadi dipakai sheet detail untuk "Current stock".
+  ///
+  /// Melempar `ApiException` bila gagal (403 / 404).
+  Future<ItemRequestEntry> fetchLine(int lineId) async {
+    final data = await _apiClient.get(ApiConfig.itemRequestLine(lineId));
+    return ItemRequestEntry.fromJson(data);
+  }
+
+  /// Satu REQUEST dengan semua line yang boleh dilihat user —
+  /// `GET /item-request/requests/{request_id}`.
+  ///
+  /// Melempar `ApiException` bila gagal: 403 bila user tidak boleh melihat
+  /// satu pun line-nya, 404 bila request tidak ada.
+  Future<ItemRequestDetail> fetchRequest(int requestId) async {
+    final data = await _apiClient.get(ApiConfig.itemRequestDetail(requestId));
+    return ItemRequestDetail.fromJson(data);
   }
 }

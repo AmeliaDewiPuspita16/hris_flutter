@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../core/utils/json_value.dart';
 
-/// Status satu request stationery, dibaca dari objek `status` server:
+/// Status satu item request, dibaca dari objek `status` server:
 ///
 /// ```json
 /// "status": { "code": "pending", "label": "Pending" }
@@ -23,8 +23,8 @@ import '../../../../../core/utils/json_value.dart';
 /// Sengaja BUKAN enum (sama seperti `EstRequestStatus`): teks yang tampil
 /// selalu [label] dari server, aplikasi hanya menentukan warna. Kode baru
 /// dari server tidak membuat aplikasi error — badge-nya netral.
-class StationeryRequestStatus {
-  const StationeryRequestStatus({required this.code, required this.label});
+class ItemRequestStatus {
+  const ItemRequestStatus({required this.code, required this.label});
 
   static const codePending = 'pending';
   static const codeApproved = 'approved';
@@ -33,20 +33,20 @@ class StationeryRequestStatus {
   final String code;
   final String label;
 
-  factory StationeryRequestStatus.fromJson(Object? raw) {
+  factory ItemRequestStatus.fromJson(Object? raw) {
     // Server boleh mengirim objek {code,label} ATAU teks biasa.
     if (raw is String && raw.trim().isNotEmpty) {
-      return StationeryRequestStatus(
+      return ItemRequestStatus(
         code: raw.trim().toLowerCase(),
         label: _capitalize(raw.trim()),
       );
     }
     if (raw is! Map<String, dynamic>) {
-      return const StationeryRequestStatus(code: '', label: '-');
+      return const ItemRequestStatus(code: '', label: '-');
     }
 
     final code = (textOrNull(raw['code']) ?? '').toLowerCase();
-    return StationeryRequestStatus(
+    return ItemRequestStatus(
       code: code,
       label: textOrNull(raw['label']) ??
           (code.isEmpty ? '-' : _capitalize(code)),
@@ -74,7 +74,7 @@ class StationeryRequestStatus {
 
   @override
   bool operator ==(Object other) =>
-      other is StationeryRequestStatus &&
+      other is ItemRequestStatus &&
       other.code == code &&
       other.label == label;
 

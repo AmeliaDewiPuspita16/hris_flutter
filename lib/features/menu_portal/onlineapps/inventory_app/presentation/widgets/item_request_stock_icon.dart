@@ -2,17 +2,17 @@ import 'package:flutter/material.dart';
 
 import '../../../../../../core/theme/app_colors.dart';
 
-/// Ikon + warna untuk satu barang stationery.
+/// Ikon + warna untuk satu barang Item Request.
 ///
-/// Barang stationery tidak punya kategori di data, dan daftarnya tidak tentu
+/// Barang Item Request tidak punya kategori di data, dan daftarnya tidak tentu
 /// (bisa bertambah kapan saja). Jadi jenisnya ditebak dari KATA di nama barang
 /// ("AMPLOP A4 COKLAT" -> surat, "PENA JOYKO" -> pena, ...). Barang yang tidak
 /// dikenali jatuh ke ikon umum [_other], jadi tidak ada kartu tanpa ikon dan
 /// barang baru dari server tetap aman tampil.
 ///
 /// Menambah jenis baru cukup menambah satu baris di [_rules].
-class StationeryItemStyle {
-  const StationeryItemStyle(this.icon, this.color, this.background);
+class ItemRequestStockStyle {
+  const ItemRequestStockStyle(this.icon, this.color, this.background);
 
   final IconData icon;
   final Color color;
@@ -22,10 +22,10 @@ class StationeryItemStyle {
 
   /// Pencocokan per KATA utuh (bukan potongan teks) supaya "LEM" tidak ikut
   /// cocok dengan kata seperti "ELEMEN". Aturan yang lebih atas menang.
-  static List<(Set<String>, StationeryItemStyle Function())> get _rules => [
+  static List<(Set<String>, ItemRequestStockStyle Function())> get _rules => [
         (
           {'AMPLOP', 'ENVELOPE', 'SURAT'},
-          () => StationeryItemStyle(
+          () => ItemRequestStockStyle(
                 Icons.mail_outline_rounded,
                 AppColors.violet,
                 AppColors.violetBg,
@@ -33,7 +33,7 @@ class StationeryItemStyle {
         ),
         (
           {'SIGN', 'STICKY', 'POST'},
-          () => StationeryItemStyle(
+          () => ItemRequestStockStyle(
                 Icons.sticky_note_2_outlined,
                 AppColors.present,
                 AppColors.presentBg,
@@ -41,7 +41,7 @@ class StationeryItemStyle {
         ),
         (
           {'BATERAI', 'BATTERY', 'BATRE', 'ALKALINE'},
-          () => StationeryItemStyle(
+          () => ItemRequestStockStyle(
                 Icons.battery_full_rounded,
                 AppColors.orange,
                 AppColors.orangeBg,
@@ -49,7 +49,7 @@ class StationeryItemStyle {
         ),
         (
           {'BENDERA', 'FLAG', 'UMBUL'},
-          () => StationeryItemStyle(
+          () => ItemRequestStockStyle(
                 Icons.flag_outlined,
                 AppColors.rejected,
                 AppColors.rejectedBg,
@@ -57,7 +57,7 @@ class StationeryItemStyle {
         ),
         (
           {'ISOLASI', 'LAKBAN', 'SELOTIP', 'TAPE', 'LEM', 'GLUE'},
-          () => StationeryItemStyle(
+          () => ItemRequestStockStyle(
                 Icons.album_outlined,
                 AppColors.estRequest,
                 AppColors.estRequestBg,
@@ -65,7 +65,7 @@ class StationeryItemStyle {
         ),
         (
           {'CLIP', 'KLIP', 'BINDER', 'STAPLES', 'STAPLER', 'HECHTER'},
-          () => StationeryItemStyle(
+          () => ItemRequestStockStyle(
                 Icons.attach_file_rounded,
                 AppColors.accent,
                 AppColors.accentBg,
@@ -77,7 +77,7 @@ class StationeryItemStyle {
             'SPIDOL', 'MARKER', 'HIGHLIGHTER', 'PENGHAPUS', 'TIPEX',
             'GOBY', 'JOYKO', 'KENKO', 'SNOWMAN', 'PILOT', 'FABER', 'CASTELL',
           },
-          () => StationeryItemStyle(
+          () => ItemRequestStockStyle(
                 Icons.edit_outlined,
                 AppColors.itRequest,
                 AppColors.itRequestBg,
@@ -85,7 +85,7 @@ class StationeryItemStyle {
         ),
         (
           {'GUNTING', 'CUTTER', 'PISAU', 'SCISSORS'},
-          () => StationeryItemStyle(
+          () => ItemRequestStockStyle(
                 Icons.content_cut_rounded,
                 AppColors.neutral,
                 AppColors.neutralBg,
@@ -93,7 +93,7 @@ class StationeryItemStyle {
         ),
         (
           {'PENGGARIS', 'RULER', 'MISTAR'},
-          () => StationeryItemStyle(
+          () => ItemRequestStockStyle(
                 Icons.straighten_rounded,
                 AppColors.neutral,
                 AppColors.neutralBg,
@@ -101,7 +101,7 @@ class StationeryItemStyle {
         ),
         (
           {'MAP', 'FOLDER', 'ORDNER', 'FILE', 'MAGAZINE', 'HOLDER'},
-          () => StationeryItemStyle(
+          () => ItemRequestStockStyle(
                 Icons.folder_outlined,
                 AppColors.primaryText,
                 AppColors.primaryLight,
@@ -112,7 +112,7 @@ class StationeryItemStyle {
             'KERTAS', 'HVS', 'FOLIO', 'NOTA', 'KWITANSI', 'FORM', 'BUKU',
             'NOTES', 'MEMO', 'KARTON', 'STRUK',
           },
-          () => StationeryItemStyle(
+          () => ItemRequestStockStyle(
                 Icons.description_outlined,
                 AppColors.teal,
                 AppColors.tealBg,
@@ -121,13 +121,13 @@ class StationeryItemStyle {
       ];
 
   /// Ikon umum untuk barang yang jenisnya tidak dikenali.
-  static StationeryItemStyle get _other => StationeryItemStyle(
+  static ItemRequestStockStyle get _other => ItemRequestStockStyle(
         Icons.inventory_2_outlined,
         AppColors.primaryText,
         AppColors.primaryLight,
       );
 
-  static StationeryItemStyle of(String itemName) {
+  static ItemRequestStockStyle of(String itemName) {
     final words =
         _words.allMatches(itemName.toUpperCase()).map((m) => m.group(0)!).toSet();
 
@@ -140,15 +140,15 @@ class StationeryItemStyle {
 
 /// Kotak ikon barang di kiri kartu (gaya sama dengan ikon berkas di tile
 /// IMS Document).
-class StationeryItemIcon extends StatelessWidget {
-  const StationeryItemIcon({super.key, required this.itemName, this.size = 42});
+class ItemRequestStockIcon extends StatelessWidget {
+  const ItemRequestStockIcon({super.key, required this.itemName, this.size = 42});
 
   final String itemName;
   final double size;
 
   @override
   Widget build(BuildContext context) {
-    final style = StationeryItemStyle.of(itemName);
+    final style = ItemRequestStockStyle.of(itemName);
 
     return Container(
       width: size,

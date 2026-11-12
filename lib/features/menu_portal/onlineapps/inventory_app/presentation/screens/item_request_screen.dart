@@ -12,24 +12,24 @@ import '../../../../../../core/widgets/app_text_field.dart';
 import '../../../../shared/presentation/widgets/portal_category_page.dart';
 import '../../../work_order/est_request/presentation/widgets/est_request_tab_bar.dart';
 import '../../data/inventory_item_request_repository.dart';
-import '../../data/inventory_stationery_repository.dart';
-import '../../domain/stationery_request_status.dart';
-import '../../domain/stationery_request_item.dart';
-import '../bloc/list/stationery_request_list_bloc.dart';
-import '../bloc/list/stationery_request_list_event.dart';
-import '../bloc/list/stationery_request_list_state.dart';
-import '../bloc/verification/stationery_verification_bloc.dart';
-import '../bloc/verification/stationery_verification_event.dart';
-import '../bloc/verification/stationery_verification_state.dart';
-import '../widgets/stationery_cancel_dialog.dart';
-import '../widgets/stationery_decision_dialog.dart';
-import '../widgets/stationery_detail_sheet.dart';
-import '../widgets/stationery_empty_state.dart';
-import '../widgets/stationery_filter_bar.dart';
-import '../widgets/stationery_filter_sheet.dart';
-import '../widgets/stationery_request_row.dart';
-import '../widgets/stationery_verification_tab.dart';
-import 'add_stationery_request_screen.dart';
+import '../../data/inventory_item_request_demo_repository.dart';
+import '../../domain/item_request_status.dart';
+import '../../domain/item_request_entry.dart';
+import '../bloc/list/item_request_list_bloc.dart';
+import '../bloc/list/item_request_list_event.dart';
+import '../bloc/list/item_request_list_state.dart';
+import '../bloc/verification/item_request_verification_bloc.dart';
+import '../bloc/verification/item_request_verification_event.dart';
+import '../bloc/verification/item_request_verification_state.dart';
+import '../widgets/item_request_cancel_dialog.dart';
+import '../widgets/item_request_decision_dialog.dart';
+import '../widgets/item_request_detail_sheet.dart';
+import '../widgets/item_request_empty_state.dart';
+import '../widgets/item_request_filter_bar.dart';
+import '../widgets/item_request_filter_sheet.dart';
+import '../widgets/item_request_row.dart';
+import '../widgets/item_request_verification_tab.dart';
+import 'add_item_request_screen.dart';
 
 /// Layar Inventory > Item Request. Padanan halaman web
 /// `inventory/item-request`:
@@ -39,12 +39,12 @@ import 'add_stationery_request_screen.dart';
 ///   masih pending.
 /// - Tab **Verification** ("Verification Requests"): antrean Approve /
 ///   Reject. Hanya tampil untuk akun yang diizinkan server (lihat
-///   [StationeryVerificationState.showTab]); user biasa cuma melihat daftar
+///   [ItemRequestVerificationState.showTab]); user biasa cuma melihat daftar
 ///   Request tanpa tab bar.
 ///
 /// Tab "Management" dan "Report" di web belum dibuat di aplikasi.
-class StationeryRequestScreen extends StatefulWidget {
-  const StationeryRequestScreen({
+class ItemRequestScreen extends StatefulWidget {
+  const ItemRequestScreen({
     super.key,
     this.repository,
     this.itemRequestRepository,
@@ -53,23 +53,23 @@ class StationeryRequestScreen extends StatefulWidget {
   /// Repository DEMO untuk bagian yang belum tersambung ke API (Add, Edit,
   /// Cancel, dan tab Verification). Diisi test; kalau kosong layar membuat
   /// sendiri.
-  final InventoryStationeryRepository? repository;
+  final InventoryItemRequestDemoRepository? repository;
 
   /// Repository API. Kalau kosong diambil dari `RepositoryProvider`.
   final InventoryItemRequestRepository? itemRequestRepository;
 
   @override
-  State<StationeryRequestScreen> createState() =>
-      _StationeryRequestScreenState();
+  State<ItemRequestScreen> createState() =>
+      _ItemRequestScreenState();
 }
 
-class _StationeryRequestScreenState extends State<StationeryRequestScreen> {
-  /// DEMO — hapus bersama file `inventory_stationery_repository.dart` bila
+class _ItemRequestScreenState extends State<ItemRequestScreen> {
+  /// DEMO — hapus bersama file `inventory_item_request_demo_repository.dart` bila
   /// semua bagian sudah tersambung ke [_itemRequests].
-  late final InventoryStationeryRepository _repository;
+  late final InventoryItemRequestDemoRepository _repository;
   late final InventoryItemRequestRepository _itemRequests;
-  late final StationeryRequestListBloc _listBloc;
-  late final StationeryVerificationBloc _verifyBloc;
+  late final ItemRequestListBloc _listBloc;
+  late final ItemRequestVerificationBloc _verifyBloc;
 
   final _searchController = TextEditingController();
   String _query = '';
@@ -79,10 +79,10 @@ class _StationeryRequestScreenState extends State<StationeryRequestScreen> {
   Timer? _searchDebounce;
 
   /// Pilihan chip status; diganti isi `options.statuses` begitu termuat.
-  List<StationeryRequestStatus> _statuses = StationeryFilterBar.defaultStatuses;
+  List<ItemRequestStatus> _statuses = ItemRequestFilterBar.defaultStatuses;
 
   /// Penyaring daftar Request, dipilih lewat tombol filter di samping search.
-  StationeryRequestFilter _requestFilter = StationeryRequestFilter.none;
+  ItemRequestFilter _requestFilter = ItemRequestFilter.none;
 
   /// id request yang sedang dibatalkan; barisnya dikunci selama itu.
   final Set<int> _busyIds = {};
@@ -92,19 +92,19 @@ class _StationeryRequestScreenState extends State<StationeryRequestScreen> {
     super.initState();
     // Data demo di memori: instance ini dioper juga ke layar Add/Edit supaya
     // perubahan yang dibuat di sana langsung tampak di daftar.
-    _repository = widget.repository ?? InventoryStationeryRepository();
+    _repository = widget.repository ?? InventoryItemRequestDemoRepository();
 
     _itemRequests = widget.itemRequestRepository ??
         context.read<InventoryItemRequestRepository>();
 
-    _listBloc = StationeryRequestListBloc(repository: _itemRequests)
-      ..add(const StationeryRequestListStarted());
+    _listBloc = ItemRequestListBloc(repository: _itemRequests)
+      ..add(const ItemRequestListStarted());
     _loadStatusOptions();
 
     // Dimulai untuk semua user: server yang memutuskan siapa verifier
     // (401/403 -> tab disembunyikan).
-    _verifyBloc = StationeryVerificationBloc(repository: _repository)
-      ..add(const StationeryVerificationStarted());
+    _verifyBloc = ItemRequestVerificationBloc(repository: _repository)
+      ..add(const ItemRequestVerificationStarted());
   }
 
   @override
@@ -132,7 +132,7 @@ class _StationeryRequestScreenState extends State<StationeryRequestScreen> {
 
   /// Pencarian lokal, khusus antrean Verification (yang masih memakai data
   /// demo). Daftar Request disaring oleh server lewat [_applyListFilter].
-  List<StationeryRequestItem> _filter(List<StationeryRequestItem> items) {
+  List<ItemRequestEntry> _filter(List<ItemRequestEntry> items) {
     final q = _query.trim().toLowerCase();
     if (q.isEmpty) return items;
 
@@ -148,8 +148,8 @@ class _StationeryRequestScreenState extends State<StationeryRequestScreen> {
 
   /// Kirim status + kata kunci + "My requests" saat ini ke server.
   void _applyListFilter() {
-    _listBloc.add(StationeryRequestListFilterChanged(
-      StationeryRequestListFilter(
+    _listBloc.add(ItemRequestListFilterChanged(
+      ItemRequestListFilter(
         status: _requestFilter.status,
         search: _query.trim(),
         mine: _requestFilter.onlyMine,
@@ -167,7 +167,7 @@ class _StationeryRequestScreenState extends State<StationeryRequestScreen> {
 
   void _setStatus(String? code) {
     setState(() {
-      _requestFilter = StationeryRequestFilter(
+      _requestFilter = ItemRequestFilter(
         status: code,
         onlyMine: _requestFilter.onlyMine,
       );
@@ -177,7 +177,7 @@ class _StationeryRequestScreenState extends State<StationeryRequestScreen> {
 
   void _toggleMine() {
     setState(() {
-      _requestFilter = StationeryRequestFilter(
+      _requestFilter = ItemRequestFilter(
         status: _requestFilter.status,
         onlyMine: !_requestFilter.onlyMine,
       );
@@ -190,7 +190,7 @@ class _StationeryRequestScreenState extends State<StationeryRequestScreen> {
     setState(() {
       _searchController.clear();
       _query = '';
-      _requestFilter = StationeryRequestFilter.none;
+      _requestFilter = ItemRequestFilter.none;
     });
     _applyListFilter();
   }
@@ -202,16 +202,16 @@ class _StationeryRequestScreenState extends State<StationeryRequestScreen> {
   /// Request berubah di server: daftar dimuat ulang, dan antrean verifikasi
   /// ikut bila tab itu aktif untuk user ini.
   void _reloadAll() {
-    _listBloc.add(const StationeryRequestListRefreshed());
+    _listBloc.add(const ItemRequestListRefreshed());
     if (_verifyBloc.state.showTab) {
-      _verifyBloc.add(const StationeryVerificationRefreshed());
+      _verifyBloc.add(const ItemRequestVerificationRefreshed());
     }
   }
 
   Future<void> _addRequest() async {
     final saved = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
-        builder: (_) => AddStationeryRequestScreen(repository: _repository),
+        builder: (_) => AddItemRequestScreen(repository: _repository),
       ),
     );
     if (saved != true || !mounted) return;
@@ -222,10 +222,10 @@ class _StationeryRequestScreenState extends State<StationeryRequestScreen> {
     _toast('Request submitted');
   }
 
-  Future<void> _edit(StationeryRequestItem item) async {
+  Future<void> _edit(ItemRequestEntry item) async {
     final saved = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
-        builder: (_) => AddStationeryRequestScreen(
+        builder: (_) => AddItemRequestScreen(
           repository: _repository,
           initialItem: item,
         ),
@@ -237,8 +237,8 @@ class _StationeryRequestScreenState extends State<StationeryRequestScreen> {
     _toast('Request updated');
   }
 
-  Future<void> _cancel(StationeryRequestItem item) async {
-    if (!await StationeryCancelDialog.show(context, item)) return;
+  Future<void> _cancel(ItemRequestEntry item) async {
+    if (!await ItemRequestCancelDialog.show(context, item)) return;
     if (!mounted) return;
 
     setState(() => _busyIds.add(item.id));
@@ -251,7 +251,7 @@ class _StationeryRequestScreenState extends State<StationeryRequestScreen> {
       if (!mounted) return;
       _toast(e.message);
     } catch (e, stack) {
-      AppLogger.error('Cancel request stationery gagal tak terduga', e, stack);
+      AppLogger.error('Cancel item request gagal tak terduga', e, stack);
       if (!mounted) return;
       _toast('An unexpected error occurred. Please try again.');
     } finally {
@@ -262,20 +262,20 @@ class _StationeryRequestScreenState extends State<StationeryRequestScreen> {
   /// Keputusan verifier. Approve minta konfirmasi dulu karena tidak bisa
   /// dibatalkan dari aplikasi; Reject sekalian menanyakan alasan opsional.
   Future<void> _decide(
-    StationeryRequestItem item, {
+    ItemRequestEntry item, {
     required bool approved,
   }) async {
     String? reason;
 
     if (approved) {
-      if (!await showStationeryApproveDialog(context, item)) return;
+      if (!await showItemRequestApproveDialog(context, item)) return;
     } else {
-      reason = await showStationeryRejectDialog(context, item);
+      reason = await showItemRequestRejectDialog(context, item);
       if (reason == null) return;
     }
 
     if (!mounted) return;
-    _verifyBloc.add(StationeryVerificationDecided(
+    _verifyBloc.add(ItemRequestVerificationDecided(
       item: item,
       approved: approved,
       reason: reason,
@@ -284,18 +284,19 @@ class _StationeryRequestScreenState extends State<StationeryRequestScreen> {
 
   /// Ketuk kartu di tab Request: buka detail. Edit / Cancel hanya muncul bila
   /// server mengizinkan (request milik sendiri yang masih pending).
-  void _openDetail(StationeryRequestItem item) {
-    showStationeryDetailSheet(
+  void _openDetail(ItemRequestEntry item) {
+    showItemRequestDetailSheet(
       context,
       item,
+      repository: _itemRequests,
       onEdit: item.canEdit ? () => _edit(item) : null,
       onCancel: item.canCancel ? () => _cancel(item) : null,
     );
   }
 
   /// Ketuk kartu di tab Verification: detail dengan tombol Approve / Reject.
-  void _openVerificationDetail(StationeryRequestItem item) {
-    showStationeryDetailSheet(
+  void _openVerificationDetail(ItemRequestEntry item) {
+    showItemRequestDetailSheet(
       context,
       item,
       onApprove: () => _decide(item, approved: true),
@@ -304,15 +305,15 @@ class _StationeryRequestScreenState extends State<StationeryRequestScreen> {
   }
 
   Future<void> _refreshRequests() async {
-    _listBloc.add(const StationeryRequestListRefreshed());
+    _listBloc.add(const ItemRequestListRefreshed());
     await _listBloc.stream
-        .firstWhere((s) => s.status != StationeryRequestListStatus.loading);
+        .firstWhere((s) => s.status != ItemRequestListStatus.loading);
   }
 
   Future<void> _refreshVerifications() async {
-    _verifyBloc.add(const StationeryVerificationRefreshed());
+    _verifyBloc.add(const ItemRequestVerificationRefreshed());
     await _verifyBloc.stream
-        .firstWhere((s) => s.status != StationeryVerificationStatus.loading);
+        .firstWhere((s) => s.status != ItemRequestVerificationStatus.loading);
   }
 
   /// Dekat dasar daftar -> minta halaman berikutnya. Lewat notifikasi, bukan
@@ -324,7 +325,7 @@ class _StationeryRequestScreenState extends State<StationeryRequestScreen> {
       return false;
     }
     if (notification.metrics.extentAfter < 300) {
-      _listBloc.add(const StationeryRequestListNextPageRequested());
+      _listBloc.add(const ItemRequestListNextPageRequested());
     }
     return false;
   }
@@ -356,8 +357,8 @@ class _StationeryRequestScreenState extends State<StationeryRequestScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   _buildSearchRow(),
-                  BlocBuilder<StationeryVerificationBloc,
-                      StationeryVerificationState>(
+                  BlocBuilder<ItemRequestVerificationBloc,
+                      ItemRequestVerificationState>(
                     bloc: _verifyBloc,
                     buildWhen: (previous, current) =>
                         previous.showTab != current.showTab ||
@@ -385,8 +386,8 @@ class _StationeryRequestScreenState extends State<StationeryRequestScreen> {
               ),
             ),
             Expanded(
-              child: BlocBuilder<StationeryVerificationBloc,
-                  StationeryVerificationState>(
+              child: BlocBuilder<ItemRequestVerificationBloc,
+                  ItemRequestVerificationState>(
                 bloc: _verifyBloc,
                 buildWhen: (previous, current) =>
                     previous.showTab != current.showTab,
@@ -405,7 +406,7 @@ class _StationeryRequestScreenState extends State<StationeryRequestScreen> {
   /// Kolom search + tombol filter di kanannya. Filter hanya berlaku untuk
   /// daftar Request, jadi tombolnya disembunyikan saat tab Verification aktif.
   Widget _buildSearchRow() {
-    return BlocBuilder<StationeryVerificationBloc, StationeryVerificationState>(
+    return BlocBuilder<ItemRequestVerificationBloc, ItemRequestVerificationState>(
       bloc: _verifyBloc,
       buildWhen: (previous, current) => previous.showTab != current.showTab,
       builder: (context, state) {
@@ -459,8 +460,8 @@ class _StationeryRequestScreenState extends State<StationeryRequestScreen> {
   /// ini juga menampilkan snackbar hasil keputusan. IndexedStack membangun
   /// semua tab, jadi snackbar tetap muncul walau sedang di tab Request.
   Widget _buildVerificationTab() {
-    return BlocConsumer<StationeryVerificationBloc,
-        StationeryVerificationState>(
+    return BlocConsumer<ItemRequestVerificationBloc,
+        ItemRequestVerificationState>(
       bloc: _verifyBloc,
       listenWhen: (previous, current) =>
           current.notice != null && !identical(previous.notice, current.notice),
@@ -469,21 +470,21 @@ class _StationeryRequestScreenState extends State<StationeryRequestScreen> {
         _toast(notice.message);
         // Approve/reject mengubah status request di daftar Request.
         if (!notice.isError) {
-          _listBloc.add(const StationeryRequestListRefreshed());
+          _listBloc.add(const ItemRequestListRefreshed());
         }
       },
       builder: (context, state) {
         if (state.isFirstLoad) return const _VerificationSkeleton();
 
-        if (state.status == StationeryVerificationStatus.failure) {
+        if (state.status == ItemRequestVerificationStatus.failure) {
           return AppErrorView(
             message: state.errorMessage ?? 'Failed to load verification requests.',
             onRetry: () =>
-                _verifyBloc.add(const StationeryVerificationRefreshed()),
+                _verifyBloc.add(const ItemRequestVerificationRefreshed()),
           );
         }
 
-        return StationeryVerificationTab(
+        return ItemRequestVerificationTab(
           items: _filter(state.items),
           pending: state.pending,
           busyIds: state.busyIds,
@@ -503,7 +504,7 @@ class _StationeryRequestScreenState extends State<StationeryRequestScreen> {
       children: [
         Padding(
           padding: const EdgeInsets.only(bottom: 8),
-          child: StationeryFilterBar(
+          child: ItemRequestFilterBar(
             statuses: _statuses,
             status: _requestFilter.status,
             onStatusChanged: _setStatus,
@@ -515,15 +516,15 @@ class _StationeryRequestScreenState extends State<StationeryRequestScreen> {
   }
 
   Widget _buildRequestBody() {
-    return BlocBuilder<StationeryRequestListBloc, StationeryRequestListState>(
+    return BlocBuilder<ItemRequestListBloc, ItemRequestListState>(
       bloc: _listBloc,
       builder: (context, state) {
         if (state.isFirstLoad) return const _RequestListSkeleton();
 
-        if (state.status == StationeryRequestListStatus.failure) {
+        if (state.status == ItemRequestListStatus.failure) {
           return AppErrorView(
             message: state.errorMessage ?? 'Failed to load the request list.',
-            onRetry: () => _listBloc.add(const StationeryRequestListRefreshed()),
+            onRetry: () => _listBloc.add(const ItemRequestListRefreshed()),
           );
         }
 
@@ -541,7 +542,7 @@ class _StationeryRequestScreenState extends State<StationeryRequestScreen> {
                     padding: const EdgeInsets.fromLTRB(16, 4, 16, 88),
                     children: [
                       if (_filtering)
-                        StationeryEmptyState(
+                        ItemRequestEmptyState(
                           icon: Icons.search_off_rounded,
                           title: 'No matching requests',
                           message:
@@ -550,7 +551,7 @@ class _StationeryRequestScreenState extends State<StationeryRequestScreen> {
                           onAction: _clearFilters,
                         )
                       else
-                        const StationeryEmptyState(
+                        const ItemRequestEmptyState(
                           icon: Icons.inventory_2_outlined,
                           title: 'No requests yet',
                           message:
@@ -578,7 +579,7 @@ class _StationeryRequestScreenState extends State<StationeryRequestScreen> {
                         opacity: busy ? 0.5 : 1,
                         child: IgnorePointer(
                           ignoring: busy,
-                          child: StationeryRequestRow(
+                          child: ItemRequestRow(
                             item: item,
                             onTap: () => _openDetail(item),
                             onEdit: () => _edit(item),
@@ -653,7 +654,7 @@ class _RequestListSkeleton extends StatelessWidget {
   }
 }
 
-/// Meniru [StationeryRequestRow]: kode + badge status, jumlah + barang,
+/// Meniru [ItemRequestRow]: kode + badge status, jumlah + barang,
 /// lalu dua baris alasan.
 class _RequestRowSkeleton extends StatelessWidget {
   const _RequestRowSkeleton();

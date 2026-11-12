@@ -3,15 +3,15 @@ import 'package:flutter/material.dart';
 import '../../../../../../core/theme/app_colors.dart';
 import '../../../../../../core/theme/app_text_styles.dart';
 
-/// Tombol aksi modul Stationery (Edit, Cancel, Approve, Reject): persegi
+/// Tombol aksi modul Item Request (Edit, Cancel, Approve, Reject): persegi
 /// membulat (radius 10, sama dengan tombol Save/Update di form), dipasang
 /// [Expanded] berdampingan supaya footer kartu terisi penuh.
 ///
 /// [filled] true = hijau penuh (aksi utama: Approve / Edit).
 /// [filled] false = outline merah di atas latar putih (aksi menolak /
 /// membatalkan: Reject / Cancel) — tidak lagi berlatar merah muda pucat.
-class StationeryActionButton extends StatelessWidget {
-  const StationeryActionButton({
+class ItemRequestActionButton extends StatelessWidget {
+  const ItemRequestActionButton({
     super.key,
     required this.label,
     required this.icon,

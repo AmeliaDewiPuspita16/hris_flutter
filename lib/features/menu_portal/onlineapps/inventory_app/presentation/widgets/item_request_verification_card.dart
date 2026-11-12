@@ -2,21 +2,21 @@ import 'package:flutter/material.dart';
 
 import '../../../../../../core/theme/app_colors.dart';
 import '../../../../../../core/theme/app_text_styles.dart';
-import '../../domain/stationery_item_option.dart';
-import '../../domain/stationery_request_item.dart';
-import 'stationery_action_button.dart';
-import 'stationery_request_parts.dart';
+import '../../domain/item_request_stock_option.dart';
+import '../../domain/item_request_entry.dart';
+import 'item_request_action_button.dart';
+import 'item_request_parts.dart';
 
 /// Kartu satu request yang menunggu verifikasi (baris tabel "Verification
-/// Requests" di web). Susunannya sama dengan [StationeryRequestRow]: ikon
+/// Requests" di web). Susunannya sama dengan [ItemRequestRow]: ikon
 /// barang, nama, "kode · peminta", alasan, lalu kolom kanan.
 ///
 /// Kolom kanan memuat jumlah yang diminta DAN stok barang tepat di bawahnya,
 /// jadi verifier bisa membandingkan keduanya sekilas (merah + ikon peringatan
 /// bila permintaan melebihi stok). Footer berisi Reject dan Approve dengan
 /// lebar sama.
-class StationeryVerificationCard extends StatelessWidget {
-  const StationeryVerificationCard({
+class ItemRequestVerificationCard extends StatelessWidget {
+  const ItemRequestVerificationCard({
     super.key,
     required this.item,
     required this.onApprove,
@@ -24,7 +24,7 @@ class StationeryVerificationCard extends StatelessWidget {
     this.onTap,
   });
 
-  final StationeryRequestItem item;
+  final ItemRequestEntry item;
   final VoidCallback onApprove;
   final VoidCallback onReject;
 
@@ -33,7 +33,7 @@ class StationeryVerificationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return StationeryCard(
+    return ItemRequestCard(
       onTap: onTap,
       padding: const EdgeInsets.all(14),
       child: Column(
@@ -57,7 +57,7 @@ class StationeryVerificationCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 2),
-                    StationeryMetaLine(
+                    ItemRequestMetaLine(
                       code: item.code,
                       requester: item.requesterName,
                       isMine: item.isMine,
@@ -79,7 +79,7 @@ class StationeryVerificationCard extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  StationeryQuantityText(label: item.quantityLabel),
+                  ItemRequestQuantityText(label: item.quantityLabel),
                   if (item.stock != null) ...[
                     const SizedBox(height: 2),
                     _StockLabel(item: item),
@@ -92,7 +92,7 @@ class StationeryVerificationCard extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: StationeryActionButton(
+                child: ItemRequestActionButton(
                   label: 'Reject',
                   icon: Icons.close_rounded,
                   filled: false,
@@ -102,7 +102,7 @@ class StationeryVerificationCard extends StatelessWidget {
               ),
               const SizedBox(width: 10),
               Expanded(
-                child: StationeryActionButton(
+                child: ItemRequestActionButton(
                   label: 'Approve',
                   icon: Icons.check_rounded,
                   filled: true,
@@ -123,7 +123,7 @@ class StationeryVerificationCard extends StatelessWidget {
 class _StockLabel extends StatelessWidget {
   const _StockLabel({required this.item});
 
-  final StationeryRequestItem item;
+  final ItemRequestEntry item;
 
   @override
   Widget build(BuildContext context) {

@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 
 import '../../../../../../core/theme/app_colors.dart';
 import '../../../../../../core/theme/app_text_styles.dart';
-import '../../domain/stationery_request_status.dart';
+import '../../domain/item_request_status.dart';
 
 /// Pilihan penyaring daftar "Request Items".
-class StationeryRequestFilter {
-  const StationeryRequestFilter({this.status, this.onlyMine = false});
+class ItemRequestFilter {
+  const ItemRequestFilter({this.status, this.onlyMine = false});
 
   /// Kode status yang dipilih ("pending" / "approved" / "rejected"), atau null
   /// untuk semua status.
@@ -17,43 +17,43 @@ class StationeryRequestFilter {
 
   bool get isActive => status != null || onlyMine;
 
-  static const none = StationeryRequestFilter();
+  static const none = ItemRequestFilter();
 }
 
 /// Bottom sheet "Filter", dibuka dari tombol di samping kolom search.
-/// Mengembalikan [StationeryRequestFilter] saat "Apply" ditekan, atau null
+/// Mengembalikan [ItemRequestFilter] saat "Apply" ditekan, atau null
 /// bila ditutup tanpa menerapkan. "Reset" hanya mengosongkan pilihan di sheet;
 /// baru berlaku setelah Apply.
-class StationeryFilterSheet extends StatefulWidget {
-  const StationeryFilterSheet({super.key, required this.initial});
+class ItemRequestFilterSheet extends StatefulWidget {
+  const ItemRequestFilterSheet({super.key, required this.initial});
 
-  final StationeryRequestFilter initial;
+  final ItemRequestFilter initial;
 
-  static Future<StationeryRequestFilter?> show(
+  static Future<ItemRequestFilter?> show(
     BuildContext context,
-    StationeryRequestFilter initial,
+    ItemRequestFilter initial,
   ) {
-    return showModalBottomSheet<StationeryRequestFilter>(
+    return showModalBottomSheet<ItemRequestFilter>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => StationeryFilterSheet(initial: initial),
+      builder: (_) => ItemRequestFilterSheet(initial: initial),
     );
   }
 
   @override
-  State<StationeryFilterSheet> createState() => _StationeryFilterSheetState();
+  State<ItemRequestFilterSheet> createState() => _ItemRequestFilterSheetState();
 }
 
-class _StationeryFilterSheetState extends State<StationeryFilterSheet> {
+class _ItemRequestFilterSheetState extends State<ItemRequestFilterSheet> {
   late String? _status = widget.initial.status;
   late bool _onlyMine = widget.initial.onlyMine;
 
   static const _statuses = <(String?, String)>[
     (null, 'All status'),
-    (StationeryRequestStatus.codePending, 'Pending'),
-    (StationeryRequestStatus.codeApproved, 'Approved'),
-    (StationeryRequestStatus.codeRejected, 'Rejected'),
+    (ItemRequestStatus.codePending, 'Pending'),
+    (ItemRequestStatus.codeApproved, 'Approved'),
+    (ItemRequestStatus.codeRejected, 'Rejected'),
   ];
 
   @override
@@ -111,7 +111,7 @@ class _StationeryFilterSheetState extends State<StationeryFilterSheet> {
                 label: label,
                 dot: code == null
                     ? null
-                    : StationeryRequestStatus(code: code, label: label).color,
+                    : ItemRequestStatus(code: code, label: label).color,
                 icon: _status == code
                     ? Icons.radio_button_checked_rounded
                     : Icons.radio_button_unchecked_rounded,
@@ -132,7 +132,7 @@ class _StationeryFilterSheetState extends State<StationeryFilterSheet> {
               height: 46,
               child: ElevatedButton(
                 onPressed: () => Navigator.of(context).pop(
-                  StationeryRequestFilter(status: _status, onlyMine: _onlyMine),
+                  ItemRequestFilter(status: _status, onlyMine: _onlyMine),
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,

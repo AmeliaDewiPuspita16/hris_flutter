@@ -2,39 +2,39 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../../../../core/logging/app_logger.dart';
 import '../../../../../../../core/network/api_exception.dart';
-import '../../../data/inventory_stationery_repository.dart';
-import 'stationery_verification_event.dart';
-import 'stationery_verification_state.dart';
+import '../../../data/inventory_item_request_demo_repository.dart';
+import 'item_request_verification_event.dart';
+import 'item_request_verification_state.dart';
 
 /// Tab "Verification": memuat antrean request pending dan mengirim
 /// keputusan Approve/Reject. Polanya sama dengan `EstApprovalBloc`.
 ///
 /// Dimulai untuk SEMUA user karena aplikasi belum tahu siapa verifier —
 /// server yang menentukan. Bila server menolak (401/403) maka
-/// [StationeryVerificationState.denied] jadi true dan layar menyembunyikan
+/// [ItemRequestVerificationState.denied] jadi true dan layar menyembunyikan
 /// tabnya.
-class StationeryVerificationBloc
-    extends Bloc<StationeryVerificationEvent, StationeryVerificationState> {
-  StationeryVerificationBloc({required InventoryStationeryRepository repository})
+class ItemRequestVerificationBloc
+    extends Bloc<ItemRequestVerificationEvent, ItemRequestVerificationState> {
+  ItemRequestVerificationBloc({required InventoryItemRequestDemoRepository repository})
       : _repository = repository,
-        super(const StationeryVerificationState()) {
-    on<StationeryVerificationStarted>(_onLoad);
-    on<StationeryVerificationRefreshed>(_onLoad);
-    on<StationeryVerificationDecided>(_onDecided);
+        super(const ItemRequestVerificationState()) {
+    on<ItemRequestVerificationStarted>(_onLoad);
+    on<ItemRequestVerificationRefreshed>(_onLoad);
+    on<ItemRequestVerificationDecided>(_onDecided);
   }
 
-  final InventoryStationeryRepository _repository;
+  final InventoryItemRequestDemoRepository _repository;
 
   int _requestToken = 0;
 
   Future<void> _onLoad(
-    StationeryVerificationEvent event,
-    Emitter<StationeryVerificationState> emit,
+    ItemRequestVerificationEvent event,
+    Emitter<ItemRequestVerificationState> emit,
   ) async {
     final token = ++_requestToken;
 
     emit(state.copyWith(
-      status: StationeryVerificationStatus.loading,
+      status: ItemRequestVerificationStatus.loading,
       errorMessage: null,
     ));
 
@@ -43,7 +43,7 @@ class StationeryVerificationBloc
       if (token != _requestToken) return;
 
       emit(state.copyWith(
-        status: StationeryVerificationStatus.success,
+        status: ItemRequestVerificationStatus.success,
         items: page.items,
         pending: page.pending,
         denied: false,
@@ -53,9 +53,9 @@ class StationeryVerificationBloc
       if (token != _requestToken) return;
 
       AppLogger.info(
-          'Antrean verifikasi stationery gagal: ${e.kind.name} — ${e.message}');
+          'Antrean verifikasi item request gagal: ${e.kind.name} — ${e.message}');
       emit(state.copyWith(
-        status: StationeryVerificationStatus.failure,
+        status: ItemRequestVerificationStatus.failure,
         items: const [],
         pending: 0,
         errorMessage: e.message,
@@ -67,9 +67,9 @@ class StationeryVerificationBloc
       if (token != _requestToken) return;
 
       AppLogger.error(
-          'Antrean verifikasi stationery gagal tak terduga', e, stack);
+          'Antrean verifikasi item request gagal tak terduga', e, stack);
       emit(state.copyWith(
-        status: StationeryVerificationStatus.failure,
+        status: ItemRequestVerificationStatus.failure,
         items: const [],
         pending: 0,
         errorMessage: 'An unexpected error occurred. Please try again.',
@@ -81,8 +81,8 @@ class StationeryVerificationBloc
   /// Kirim keputusan dulu, baru keluarkan request dari antrean — kalau server
   /// gagal, request tetap ada supaya verifier bisa mencoba lagi.
   Future<void> _onDecided(
-    StationeryVerificationDecided event,
-    Emitter<StationeryVerificationState> emit,
+    ItemRequestVerificationDecided event,
+    Emitter<ItemRequestVerificationState> emit,
   ) async {
     final item = event.item;
     if (state.busyIds.contains(item.id)) return;
@@ -100,7 +100,7 @@ class StationeryVerificationBloc
         items: state.items.where((r) => r.id != item.id).toList(),
         pending: state.pending > 0 ? state.pending - 1 : 0,
         busyIds: Set.of(state.busyIds)..remove(item.id),
-        notice: StationeryVerificationNotice(
+        notice: ItemRequestVerificationNotice(
           message: event.approved
               ? '${item.code} approved'
               : '${item.code} rejected',
@@ -109,16 +109,16 @@ class StationeryVerificationBloc
       ));
     } on ApiException catch (e) {
       AppLogger.info(
-          'Keputusan stationery gagal: ${e.kind.name} — ${e.message}');
+          'Keputusan item request gagal: ${e.kind.name} — ${e.message}');
       emit(state.copyWith(
         busyIds: Set.of(state.busyIds)..remove(item.id),
-        notice: StationeryVerificationNotice(message: e.message, isError: true),
+        notice: ItemRequestVerificationNotice(message: e.message, isError: true),
       ));
     } catch (e, stack) {
-      AppLogger.error('Keputusan stationery gagal tak terduga', e, stack);
+      AppLogger.error('Keputusan item request gagal tak terduga', e, stack);
       emit(state.copyWith(
         busyIds: Set.of(state.busyIds)..remove(item.id),
-        notice: const StationeryVerificationNotice(
+        notice: const ItemRequestVerificationNotice(
           message: 'An unexpected error occurred. Please try again.',
           isError: true,
         ),

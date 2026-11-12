@@ -6,7 +6,7 @@ import '../../domain/online_apps_demo_data.dart';
 import '../../procurement/presentation/screens/procurement_page.dart';
 import '../../hse_work_request/presentation/screens/hse_work_request_list_screen.dart';
 import '../../inventory_app/domain/inventory_menu.dart';
-import '../../inventory_app/presentation/screens/stationery_request_screen.dart';
+import '../../inventory_app/presentation/screens/item_request_screen.dart';
 import '../../inventory_app/presentation/widgets/inventory_option_sheet.dart';
 import '../../work_order/domain/request_type.dart';
 import '../../work_order/est_request/presentation/screens/est_request_screen.dart';
@@ -60,7 +60,7 @@ class OnlineAppsScreen extends StatelessWidget {
     case InventoryApp.request:
       // Langsung ke Item Request, tanpa sheet "pilih product line" lagi.
       Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => const StationeryRequestScreen()),
+        MaterialPageRoute(builder: (_) => const ItemRequestScreen()),
       );
     case InventoryApp.management:
       break; // belum siap, tidak bisa dipilih dari sheet

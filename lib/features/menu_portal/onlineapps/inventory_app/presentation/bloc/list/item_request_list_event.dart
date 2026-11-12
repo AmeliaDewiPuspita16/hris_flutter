@@ -1,6 +1,6 @@
 /// Penyaring daftar yang dikirim ke server (`status`, `search`, `mine`).
-class StationeryRequestListFilter {
-  const StationeryRequestListFilter({
+class ItemRequestListFilter {
+  const ItemRequestListFilter({
     this.status,
     this.search = '',
     this.mine = false,
@@ -11,11 +11,11 @@ class StationeryRequestListFilter {
   final String search;
   final bool mine;
 
-  static const none = StationeryRequestListFilter();
+  static const none = ItemRequestListFilter();
 
   @override
   bool operator ==(Object other) =>
-      other is StationeryRequestListFilter &&
+      other is ItemRequestListFilter &&
       other.status == status &&
       other.search == search &&
       other.mine == mine;
@@ -24,34 +24,34 @@ class StationeryRequestListFilter {
   int get hashCode => Object.hash(status, search, mine);
 }
 
-/// Hal-hal yang bisa terjadi pada daftar "Request Items" stationery.
-sealed class StationeryRequestListEvent {
-  const StationeryRequestListEvent();
+/// Hal-hal yang bisa terjadi pada daftar "Request Items".
+sealed class ItemRequestListEvent {
+  const ItemRequestListEvent();
 }
 
 /// Layar baru dibuka — muat daftar dari server.
-class StationeryRequestListStarted extends StationeryRequestListEvent {
-  const StationeryRequestListStarted();
+class ItemRequestListStarted extends ItemRequestListEvent {
+  const ItemRequestListStarted();
 }
 
 /// Tarik-untuk-muat-ulang, tombol "Retry", atau setelah ada perubahan di
 /// server (request baru, edit, cancel, approve/reject).
-class StationeryRequestListRefreshed extends StationeryRequestListEvent {
-  const StationeryRequestListRefreshed();
+class ItemRequestListRefreshed extends ItemRequestListEvent {
+  const ItemRequestListRefreshed();
 }
 
 /// Pengguna menggulir sampai dekat dasar daftar — muat halaman berikutnya.
 /// Diabaikan bloc kalau sedang memuat atau sudah halaman terakhir.
-class StationeryRequestListNextPageRequested
-    extends StationeryRequestListEvent {
-  const StationeryRequestListNextPageRequested();
+class ItemRequestListNextPageRequested
+    extends ItemRequestListEvent {
+  const ItemRequestListNextPageRequested();
 }
 
 /// Status, kata kunci, atau "My requests" berubah — muat ulang dari halaman 1
 /// dengan penyaring baru. Penyaring itu tetap dipakai oleh Refreshed dan
 /// NextPageRequested sampai diganti lagi.
-class StationeryRequestListFilterChanged extends StationeryRequestListEvent {
-  const StationeryRequestListFilterChanged(this.filter);
+class ItemRequestListFilterChanged extends ItemRequestListEvent {
+  const ItemRequestListFilterChanged(this.filter);
 
-  final StationeryRequestListFilter filter;
+  final ItemRequestListFilter filter;
 }

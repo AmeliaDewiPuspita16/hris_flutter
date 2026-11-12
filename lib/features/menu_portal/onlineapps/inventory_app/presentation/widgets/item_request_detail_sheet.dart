@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 
+import '../../../../../../core/logging/app_logger.dart';
 import '../../../../../../core/theme/app_colors.dart';
 import '../../../../../../core/theme/app_text_styles.dart';
-import '../../domain/stationery_item_option.dart';
-import '../../domain/stationery_request_item.dart';
-import '../../domain/stationery_request_status.dart';
-import 'stationery_action_button.dart';
-import 'stationery_request_parts.dart';
+import '../../data/inventory_item_request_repository.dart';
+import '../../domain/item_request_stock_option.dart';
+import '../../domain/item_request_detail.dart';
+import '../../domain/item_request_entry.dart';
+import '../../domain/item_request_status.dart';
+import 'item_request_action_button.dart';
+import 'item_request_parts.dart';
 
 /// Membuka sheet detail satu request
 ///
@@ -15,9 +18,14 @@ import 'stationery_request_parts.dart';
 /// - [onEdit] / [onCancel]: dari tab Request, untuk request milik sendiri
 ///   yang masih pending.
 /// Tanpa satupun callback, sheet hanya untuk dibaca.
-Future<void> showStationeryDetailSheet(
+///
+/// [repository] diisi bila [item] berasal dari API: sheet lalu memuat detail
+/// line (stok saat ini) dan request induknya (line lain dalam request yang
+/// sama). Kosongkan untuk data demo.
+Future<void> showItemRequestDetailSheet(
   BuildContext context,
-  StationeryRequestItem item, {
+  ItemRequestEntry item, {
+  InventoryItemRequestRepository? repository,
   VoidCallback? onEdit,
   VoidCallback? onCancel,
   VoidCallback? onApprove,
@@ -27,8 +35,9 @@ Future<void> showStationeryDetailSheet(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
-    builder: (_) => StationeryDetailSheet(
+    builder: (_) => ItemRequestDetailSheet(
       item: item,
+      repository: repository,
       onEdit: onEdit,
       onCancel: onCancel,
       onApprove: onApprove,
@@ -37,20 +46,83 @@ Future<void> showStationeryDetailSheet(
   );
 }
 
-class StationeryDetailSheet extends StatelessWidget {
-  const StationeryDetailSheet(
-      {super.key,
-      required this.item,
-      this.onEdit,
-      this.onCancel,
-      this.onApprove,
-      this.onReject});
+class ItemRequestDetailSheet extends StatefulWidget {
+  const ItemRequestDetailSheet({
+    super.key,
+    required this.item,
+    this.repository,
+    this.onEdit,
+    this.onCancel,
+    this.onApprove,
+    this.onReject,
+  });
 
-  final StationeryRequestItem item;
+  final ItemRequestEntry item;
+
+  /// Null = jangan memuat apa pun, tampilkan [item] apa adanya.
+  final InventoryItemRequestRepository? repository;
   final VoidCallback? onEdit;
   final VoidCallback? onCancel;
   final VoidCallback? onApprove;
   final VoidCallback? onReject;
+
+  @override
+  State<ItemRequestDetailSheet> createState() => _ItemRequestDetailSheetState();
+}
+
+class _ItemRequestDetailSheetState extends State<ItemRequestDetailSheet> {
+  /// Mulai dari baris di daftar; diganti detail line begitu termuat (ada
+  /// `current_stock`).
+  late ItemRequestEntry _item = widget.item;
+
+  /// Semua line request ini; kosong sampai termuat atau bila gagal.
+  List<ItemRequestEntry> _lines = const [];
+  bool _loading = false;
+
+  VoidCallback? get onEdit => widget.onEdit;
+  VoidCallback? get onCancel => widget.onCancel;
+  VoidCallback? get onApprove => widget.onApprove;
+  VoidCallback? get onReject => widget.onReject;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.repository != null) {
+      _loading = true;
+      _load();
+    }
+  }
+
+  /// Dua panggilan berjalan bersamaan. Gagal bukan masalah besar: sheet tetap
+  /// menampilkan data dari daftar (stok "-", tanpa daftar line lain).
+  Future<void> _load() async {
+    final repository = widget.repository!;
+    final requestId = widget.item.requestId;
+
+    final lineFuture = _safe(() => repository.fetchLine(widget.item.id));
+    final requestFuture = requestId == null
+        ? Future<ItemRequestDetail?>.value(null)
+        : _safe(() => repository.fetchRequest(requestId));
+
+    final line = await lineFuture;
+    final request = await requestFuture;
+    if (!mounted) return;
+
+    setState(() {
+      _loading = false;
+      if (line != null) _item = line;
+      if (request != null) _lines = request.lines;
+    });
+  }
+
+  Future<T?> _safe<T>(Future<T> Function() call) async {
+    try {
+      return await call();
+    } catch (e) {
+      AppLogger.info('Detail Item Request gagal dimuat: $e');
+      return null;
+    }
+  }
 
   /// Tutup sheet, lalu jalankan [action].
   void _run(BuildContext context, VoidCallback action) {
@@ -60,7 +132,8 @@ class StationeryDetailSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final rejected = item.status.code == StationeryRequestStatus.codeRejected;
+    final item = _item;
+    final rejected = item.status.code == ItemRequestStatus.codeRejected;
     final hasDecision = onApprove != null || onReject != null;
     final hasOwnActions = onEdit != null || onCancel != null;
 
@@ -121,7 +194,7 @@ class StationeryDetailSheet extends StatelessWidget {
                             ),
                           ),
                         ),
-                        StationeryStatusPill(status: item.status),
+                        ItemRequestStatusPill(status: item.status),
                       ],
                     ),
                     const SizedBox(height: 14),
@@ -132,7 +205,7 @@ class StationeryDetailSheet extends StatelessWidget {
                           label: 'Requestor',
                           child: Row(
                             children: [
-                              StationeryAvatar(name: item.requesterName, size: 26),
+                              ItemRequestAvatar(name: item.requesterName, size: 26),
                               const SizedBox(width: 8),
                               Flexible(
                                 child: Text(
@@ -143,7 +216,7 @@ class StationeryDetailSheet extends StatelessWidget {
                               ),
                               if (item.isMine) ...[
                                 const SizedBox(width: 6),
-                                const StationeryYouBadge(),
+                                const ItemRequestYouBadge(),
                               ],
                             ],
                           ),
@@ -188,19 +261,30 @@ class StationeryDetailSheet extends StatelessWidget {
                             Expanded(
                               child: _Field(
                                 label: 'Quantity',
-                                child: StationeryQuantityChip(label: item.quantityLabel),
+                                child: ItemRequestQuantityChip(label: item.quantityLabel),
                               ),
                             ),
                             Expanded(
                               child: _Field(
                                 label: 'Current stock',
-                                child: _StockValue(item: item),
+                                child: _StockValue(item: item, loading: _loading),
                               ),
                             ),
                           ],
                         ),
                       ],
                     ),
+                    // Request yang sama bisa berisi beberapa barang.
+                    if (_lines.length > 1) ...[
+                      const SizedBox(height: 12),
+                      _Section(
+                        title: 'In this request (${_lines.length})',
+                        children: [
+                          for (final line in _lines)
+                            _LineRow(line: line, current: line.id == item.id),
+                        ],
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -211,7 +295,7 @@ class StationeryDetailSheet extends StatelessWidget {
                 children: [
                   if (onReject != null)
                     Expanded(
-                      child: StationeryActionButton(
+                      child: ItemRequestActionButton(
                         label: 'Reject',
                         icon: Icons.close_rounded,
                         filled: false,
@@ -220,7 +304,7 @@ class StationeryDetailSheet extends StatelessWidget {
                     ),
                   if (onCancel != null)
                     Expanded(
-                      child: StationeryActionButton(
+                      child: ItemRequestActionButton(
                         label: 'Cancel request',
                         icon: Icons.close_rounded,
                         filled: false,
@@ -232,7 +316,7 @@ class StationeryDetailSheet extends StatelessWidget {
                     const SizedBox(width: 10),
                   if (onApprove != null)
                     Expanded(
-                      child: StationeryActionButton(
+                      child: ItemRequestActionButton(
                         label: 'Approve',
                         icon: Icons.check_rounded,
                         filled: true,
@@ -241,7 +325,7 @@ class StationeryDetailSheet extends StatelessWidget {
                     ),
                   if (onEdit != null)
                     Expanded(
-                      child: StationeryActionButton(
+                      child: ItemRequestActionButton(
                         label: 'Edit',
                         icon: Icons.edit_outlined,
                         filled: true,
@@ -359,14 +443,25 @@ class _TextBox extends StatelessWidget {
 /// Stok saat ini. Merah dengan ikon peringatan bila request yang masih pending
 /// meminta lebih banyak dari stok.
 class _StockValue extends StatelessWidget {
-  const _StockValue({required this.item});
+  const _StockValue({required this.item, this.loading = false});
 
-  final StationeryRequestItem item;
+  final ItemRequestEntry item;
+
+  /// Detail line masih dimuat: stok belum diketahui.
+  final bool loading;
 
   @override
   Widget build(BuildContext context) {
     final stock = item.stock;
-    if (stock == null) return Text('-', style: AppTextStyles.body);
+    if (stock == null) {
+      if (!loading) return Text('-', style: AppTextStyles.body);
+
+      return const SizedBox(
+        width: 14,
+        height: 14,
+        child: CircularProgressIndicator(strokeWidth: 2),
+      );
+    }
 
     final short = item.status.isPending && item.quantity > stock;
     final color = short ? AppColors.rejected : AppColors.text;
@@ -388,6 +483,53 @@ class _StockValue extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Satu barang dalam daftar "In this request": nama, jumlah, dan status.
+/// [current] menandai line yang sedang dibuka.
+class _LineRow extends StatelessWidget {
+  const _LineRow({required this.line, required this.current});
+
+  final ItemRequestEntry line;
+  final bool current;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  line.itemName,
+                  style: AppTextStyles.body.copyWith(
+                    fontWeight: current ? FontWeight.w800 : FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  current
+                      ? '${line.quantityLabel} · this item'
+                      : line.quantityLabel,
+                  style: AppTextStyles.caption.copyWith(
+                    color: current
+                        ? AppColors.primaryText
+                        : AppColors.textMuted,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          ItemRequestStatusPill(status: line.status),
+        ],
+      ),
     );
   }
 }

@@ -1,14 +1,14 @@
-import '../../../domain/stationery_request_item.dart';
+import '../../../domain/item_request_entry.dart';
 
-enum StationeryVerificationStatus { initial, loading, success, failure }
+enum ItemRequestVerificationStatus { initial, loading, success, failure }
 
 const _unset = Object();
 
 /// Pesan sekali-tampil (snackbar) setelah sebuah keputusan. Sengaja tanpa
 /// `==`: layar menampilkan snackbar hanya bila objeknya berganti (pola sama
 /// dengan `EstApprovalNotice`).
-class StationeryVerificationNotice {
-  const StationeryVerificationNotice({
+class ItemRequestVerificationNotice {
+  const ItemRequestVerificationNotice({
     required this.message,
     required this.isError,
   });
@@ -18,9 +18,9 @@ class StationeryVerificationNotice {
 }
 
 /// Keadaan tab "Verification".
-class StationeryVerificationState {
-  const StationeryVerificationState({
-    this.status = StationeryVerificationStatus.initial,
+class ItemRequestVerificationState {
+  const ItemRequestVerificationState({
+    this.status = ItemRequestVerificationStatus.initial,
     this.items = const [],
     this.pending = 0,
     this.busyIds = const {},
@@ -30,10 +30,10 @@ class StationeryVerificationState {
     this.resolved = false,
   });
 
-  final StationeryVerificationStatus status;
+  final ItemRequestVerificationStatus status;
 
   /// Request yang masih menunggu keputusan.
-  final List<StationeryRequestItem> items;
+  final List<ItemRequestEntry> items;
 
   /// Total antrean dari `summary.pending`, untuk badge tab. Dikurangi satu
   /// tiap keputusan berhasil supaya tidak perlu muat ulang.
@@ -44,7 +44,7 @@ class StationeryVerificationState {
   final Set<int> busyIds;
 
   final String? errorMessage;
-  final StationeryVerificationNotice? notice;
+  final ItemRequestVerificationNotice? notice;
 
   /// True bila server menolak akun ini membuka antrean (401/403), artinya
   /// bukan verifier. Tab Verification disembunyikan sepenuhnya.
@@ -61,21 +61,21 @@ class StationeryVerificationState {
 
   /// Muat pertama kali: skeleton penuh. Saat refresh, daftar lama tetap tampil.
   bool get isFirstLoad =>
-      (status == StationeryVerificationStatus.initial ||
-          status == StationeryVerificationStatus.loading) &&
+      (status == ItemRequestVerificationStatus.initial ||
+          status == ItemRequestVerificationStatus.loading) &&
       items.isEmpty;
 
-  StationeryVerificationState copyWith({
-    StationeryVerificationStatus? status,
-    List<StationeryRequestItem>? items,
+  ItemRequestVerificationState copyWith({
+    ItemRequestVerificationStatus? status,
+    List<ItemRequestEntry>? items,
     int? pending,
     Set<int>? busyIds,
     Object? errorMessage = _unset,
-    StationeryVerificationNotice? notice,
+    ItemRequestVerificationNotice? notice,
     bool? denied,
     bool? resolved,
   }) {
-    return StationeryVerificationState(
+    return ItemRequestVerificationState(
       status: status ?? this.status,
       items: items ?? this.items,
       pending: pending ?? this.pending,

@@ -3,8 +3,8 @@ import '../../../../../core/utils/json_value.dart';
 /// Satu barang yang bisa dipilih di form request
 /// (`GET .../inventory/item-request/options` -> `data.items[]`), mis.
 /// `ITE00107 - ISOLASI BENING (PCS)`.
-class StationeryItemOption {
-  const StationeryItemOption({
+class ItemRequestStockOption {
+  const ItemRequestStockOption({
     required this.id,
     required this.code,
     required this.name,
@@ -50,13 +50,13 @@ class StationeryItemOption {
 
   /// Melempar [FormatException] bila `id` tidak terbaca — tanpa id, request
   /// untuk barang ini tidak bisa dikirim.
-  factory StationeryItemOption.fromJson(Map<String, dynamic> json) {
+  factory ItemRequestStockOption.fromJson(Map<String, dynamic> json) {
     final id = json['id'];
     if (id is! int) {
       throw const FormatException('Respons barang inventory tidak memuat id');
     }
 
-    return StationeryItemOption(
+    return ItemRequestStockOption(
       id: id,
       code: '${json['code'] ?? ''}',
       name: '${json['name'] ?? ''}',

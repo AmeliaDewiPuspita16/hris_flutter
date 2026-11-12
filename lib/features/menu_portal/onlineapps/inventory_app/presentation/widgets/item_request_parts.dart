@@ -2,15 +2,15 @@ import 'package:flutter/material.dart';
 
 import '../../../../../../core/theme/app_colors.dart';
 import '../../../../../../core/theme/app_text_styles.dart';
-import '../../domain/stationery_request_status.dart';
+import '../../domain/item_request_status.dart';
 
 /// Potongan kecil yang dipakai bersama oleh kartu request
-/// ([StationeryRequestRow]) dan kartu verifikasi ([StationeryVerificationCard]).
+/// ([ItemRequestRow]) dan kartu verifikasi ([ItemRequestVerificationCard]).
 
 /// Kartu polos: border netral tanpa warna. Status cukup dibedakan lewat
-/// badge [StationeryStatusPill], jadi kartu tidak perlu ikut berwarna.
-class StationeryCard extends StatelessWidget {
-  const StationeryCard({
+/// badge [ItemRequestStatusPill], jadi kartu tidak perlu ikut berwarna.
+class ItemRequestCard extends StatelessWidget {
+  const ItemRequestCard({
     super.key,
     required this.child,
     this.borderColor,
@@ -59,10 +59,10 @@ class StationeryCard extends StatelessWidget {
 }
 
 /// Badge status: titik berwarna + teks label dari server.
-class StationeryStatusPill extends StatelessWidget {
-  const StationeryStatusPill({super.key, required this.status});
+class ItemRequestStatusPill extends StatelessWidget {
+  const ItemRequestStatusPill({super.key, required this.status});
 
-  final StationeryRequestStatus status;
+  final ItemRequestStatus status;
 
   @override
   Widget build(BuildContext context) {
@@ -100,8 +100,8 @@ class StationeryStatusPill extends StatelessWidget {
 }
 
 /// Jumlah diminta dalam chip lembut, mis. "6 PCS".
-class StationeryQuantityChip extends StatelessWidget {
-  const StationeryQuantityChip({super.key, required this.label});
+class ItemRequestQuantityChip extends StatelessWidget {
+  const ItemRequestQuantityChip({super.key, required this.label});
 
   final String label;
 
@@ -127,8 +127,8 @@ class StationeryQuantityChip extends StatelessWidget {
 }
 
 /// Lingkaran inisial peminta ("Aditya Yudha" -> "AY").
-class StationeryAvatar extends StatelessWidget {
-  const StationeryAvatar({super.key, required this.name, this.size = 20});
+class ItemRequestAvatar extends StatelessWidget {
+  const ItemRequestAvatar({super.key, required this.name, this.size = 20});
 
   final String name;
   final double size;
@@ -167,8 +167,8 @@ class StationeryAvatar extends StatelessWidget {
 
 /// Jumlah yang diminta, mis. "6 PCS": teks tebal TANPA latar warna, supaya
 /// tidak menumpuk dengan badge status di dekatnya.
-class StationeryQuantityText extends StatelessWidget {
-  const StationeryQuantityText({super.key, required this.label});
+class ItemRequestQuantityText extends StatelessWidget {
+  const ItemRequestQuantityText({super.key, required this.label});
 
   final String label;
 
@@ -188,8 +188,8 @@ class StationeryQuantityText extends StatelessWidget {
 /// Satu baris info kecil: "REQ00541 · Aditya Yudha Pratama", dengan penanda
 /// "You" bila request milik sendiri. Nama panjang dipotong (ellipsis), bukan
 /// membungkus ke baris baru.
-class StationeryMetaLine extends StatelessWidget {
-  const StationeryMetaLine({
+class ItemRequestMetaLine extends StatelessWidget {
+  const ItemRequestMetaLine({
     super.key,
     required this.code,
     required this.requester,
@@ -237,8 +237,8 @@ class StationeryMetaLine extends StatelessWidget {
 }
 
 /// Penanda "You" untuk request milik sendiri.
-class StationeryYouBadge extends StatelessWidget {
-  const StationeryYouBadge({super.key});
+class ItemRequestYouBadge extends StatelessWidget {
+  const ItemRequestYouBadge({super.key});
 
   @override
   Widget build(BuildContext context) {

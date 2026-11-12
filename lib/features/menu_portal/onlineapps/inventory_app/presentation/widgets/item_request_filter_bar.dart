@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../../../core/theme/app_colors.dart';
 import '../../../../../../core/theme/app_text_styles.dart';
-import '../../domain/stationery_request_status.dart';
+import '../../domain/item_request_status.dart';
 
 /// Baris chip penyaring di atas daftar "Request Items": All + satu chip per
 /// status dari server (`options.statuses`), dan opsional "My requests".
@@ -10,8 +10,8 @@ import '../../domain/stationery_request_status.dart';
 ///
 /// Hanya menampilkan pilihan; penyaringannya dilakukan server lewat
 /// `?status=`.
-class StationeryFilterBar extends StatelessWidget {
-  const StationeryFilterBar({
+class ItemRequestFilterBar extends StatelessWidget {
+  const ItemRequestFilterBar({
     super.key,
     required this.status,
     required this.onStatusChanged,
@@ -21,23 +21,23 @@ class StationeryFilterBar extends StatelessWidget {
   });
 
   /// Dipakai sebelum `options` selesai dimuat, atau bila gagal dimuat.
-  static const defaultStatuses = <StationeryRequestStatus>[
-    StationeryRequestStatus(
-      code: StationeryRequestStatus.codePending,
+  static const defaultStatuses = <ItemRequestStatus>[
+    ItemRequestStatus(
+      code: ItemRequestStatus.codePending,
       label: 'Pending',
     ),
-    StationeryRequestStatus(
-      code: StationeryRequestStatus.codeApproved,
+    ItemRequestStatus(
+      code: ItemRequestStatus.codeApproved,
       label: 'Approved',
     ),
-    StationeryRequestStatus(
-      code: StationeryRequestStatus.codeRejected,
+    ItemRequestStatus(
+      code: ItemRequestStatus.codeRejected,
       label: 'Rejected',
     ),
   ];
 
   /// Pilihan status, urut seperti dari server.
-  final List<StationeryRequestStatus> statuses;
+  final List<ItemRequestStatus> statuses;
 
   /// Kode status yang dipilih, atau null untuk "All".
   final String? status;

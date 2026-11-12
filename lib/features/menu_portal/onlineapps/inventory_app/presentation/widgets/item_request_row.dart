@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../../../../../../core/theme/app_colors.dart';
 import '../../../../../../core/theme/app_text_styles.dart';
-import '../../domain/stationery_request_item.dart';
-import '../../domain/stationery_request_status.dart';
-import 'stationery_request_parts.dart';
+import '../../domain/item_request_entry.dart';
+import '../../domain/item_request_status.dart';
+import 'item_request_parts.dart';
 
 /// Satu baris di daftar "Request Items" — mengemas kolom tabel web (Request
 /// Code, Requestor, Item, Quantity, Reason, Status, Action) jadi satu kartu.
@@ -15,11 +15,11 @@ import 'stationery_request_parts.dart';
 /// - Tanpa ikon barang dan tanpa garis berwarna; status lewat badge saja.
 ///
 /// Edit / Cancel ada di menu ⋮ di samping badge status (bukan tombol besar)
-/// dan hanya muncul bila server mengizinkan ([StationeryRequestItem.canEdit]
-/// / [StationeryRequestItem.canCancel]), yaitu request milik sendiri yang
+/// dan hanya muncul bila server mengizinkan ([ItemRequestEntry.canEdit]
+/// / [ItemRequestEntry.canCancel]), yaitu request milik sendiri yang
 /// masih pending.
-class StationeryRequestRow extends StatelessWidget {
-  const StationeryRequestRow({
+class ItemRequestRow extends StatelessWidget {
+  const ItemRequestRow({
     super.key,
     required this.item,
     this.onEdit,
@@ -27,7 +27,7 @@ class StationeryRequestRow extends StatelessWidget {
     this.onTap,
   });
 
-  final StationeryRequestItem item;
+  final ItemRequestEntry item;
   final VoidCallback? onEdit;
   final VoidCallback? onCancel;
 
@@ -38,9 +38,9 @@ class StationeryRequestRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final showEdit = item.canEdit && onEdit != null;
     final showCancel = item.canCancel && onCancel != null;
-    final rejected = item.status.code == StationeryRequestStatus.codeRejected;
+    final rejected = item.status.code == ItemRequestStatus.codeRejected;
 
-    return StationeryCard(
+    return ItemRequestCard(
       onTap: onTap,
       padding: const EdgeInsets.fromLTRB(14, 12, 6, 12),
       child: Column(
@@ -81,7 +81,7 @@ class StationeryRequestRow extends StatelessWidget {
               const SizedBox(width: 8),
               Padding(
                 padding: const EdgeInsets.only(top: 3),
-                child: StationeryStatusPill(status: item.status),
+                child: ItemRequestStatusPill(status: item.status),
               ),
               if (showEdit || showCancel)
                 _ActionsMenu(
@@ -100,7 +100,7 @@ class StationeryRequestRow extends StatelessWidget {
             padding: const EdgeInsets.only(right: 6),
             child: Row(
               children: [
-                StationeryAvatar(name: item.requesterName),
+                ItemRequestAvatar(name: item.requesterName),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Row(
@@ -118,13 +118,13 @@ class StationeryRequestRow extends StatelessWidget {
                       ),
                       if (item.isMine) ...[
                         const SizedBox(width: 6),
-                        const StationeryYouBadge(),
+                        const ItemRequestYouBadge(),
                       ],
                     ],
                   ),
                 ),
                 const SizedBox(width: 8),
-                StationeryQuantityChip(label: item.quantityLabel),
+                ItemRequestQuantityChip(label: item.quantityLabel),
               ],
             ),
           ),

@@ -3,45 +3,45 @@ import 'package:flutter/material.dart';
 import '../../../../../../core/theme/app_colors.dart';
 import '../../../../../../core/theme/app_text_styles.dart';
 import '../../../../../../core/widgets/app_text_field.dart';
-import '../../domain/stationery_item_option.dart';
-import 'stationery_item_icon.dart';
+import '../../domain/item_request_stock_option.dart';
+import 'item_request_stock_icon.dart';
 
 /// Bottom sheet "Select Item": kolom cari + daftar barang, padanan dropdown
 /// ber-search (select2) di web. Pencarian lokal atas [items] yang sudah
 /// dimuat, mencocokkan kode maupun nama barang.
 ///
-/// Mengembalikan [StationeryItemOption] yang dipilih lewat Navigator.pop,
+/// Mengembalikan [ItemRequestStockOption] yang dipilih lewat Navigator.pop,
 /// atau null kalau ditutup tanpa memilih.
-class StationeryItemPickerSheet extends StatefulWidget {
-  const StationeryItemPickerSheet({
+class ItemRequestStockPickerSheet extends StatefulWidget {
+  const ItemRequestStockPickerSheet({
     super.key,
     required this.items,
     this.selectedId,
   });
 
-  final List<StationeryItemOption> items;
+  final List<ItemRequestStockOption> items;
   final int? selectedId;
 
-  static Future<StationeryItemOption?> show(
+  static Future<ItemRequestStockOption?> show(
     BuildContext context, {
-    required List<StationeryItemOption> items,
+    required List<ItemRequestStockOption> items,
     int? selectedId,
   }) {
-    return showModalBottomSheet<StationeryItemOption>(
+    return showModalBottomSheet<ItemRequestStockOption>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) =>
-          StationeryItemPickerSheet(items: items, selectedId: selectedId),
+          ItemRequestStockPickerSheet(items: items, selectedId: selectedId),
     );
   }
 
   @override
-  State<StationeryItemPickerSheet> createState() =>
-      _StationeryItemPickerSheetState();
+  State<ItemRequestStockPickerSheet> createState() =>
+      _ItemRequestStockPickerSheetState();
 }
 
-class _StationeryItemPickerSheetState extends State<StationeryItemPickerSheet> {
+class _ItemRequestStockPickerSheetState extends State<ItemRequestStockPickerSheet> {
   final _searchController = TextEditingController();
   String _query = '';
 
@@ -51,7 +51,7 @@ class _StationeryItemPickerSheetState extends State<StationeryItemPickerSheet> {
     super.dispose();
   }
 
-  List<StationeryItemOption> get _filtered {
+  List<ItemRequestStockOption> get _filtered {
     final q = _query.trim().toLowerCase();
     if (q.isEmpty) return widget.items;
     return widget.items
@@ -182,13 +182,13 @@ class _StationeryItemPickerSheetState extends State<StationeryItemPickerSheet> {
 class _OptionThumb extends StatelessWidget {
   const _OptionThumb({required this.option});
 
-  final StationeryItemOption option;
+  final ItemRequestStockOption option;
 
   static const _size = 36.0;
 
   @override
   Widget build(BuildContext context) {
-    final fallback = StationeryItemIcon(itemName: option.name, size: _size);
+    final fallback = ItemRequestStockIcon(itemName: option.name, size: _size);
     final url = option.imageUrl;
     if (url == null) return fallback;
 
