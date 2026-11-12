@@ -36,7 +36,7 @@ class ItemRequestVerificationCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return ItemRequestCard(
       onTap: onTap,
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

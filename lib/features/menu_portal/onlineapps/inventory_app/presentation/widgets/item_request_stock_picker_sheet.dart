@@ -17,22 +17,31 @@ class ItemRequestStockPickerSheet extends StatefulWidget {
     super.key,
     required this.items,
     this.selectedId,
+    this.takenIds = const {},
   });
 
   final List<ItemRequestStockOption> items;
   final int? selectedId;
 
+  /// Barang yang sudah dipakai di baris lain pada form yang sama: tampil
+  /// redup dan tidak bisa dipilih lagi (server menolak barang dobel).
+  final Set<int> takenIds;
+
   static Future<ItemRequestStockOption?> show(
     BuildContext context, {
     required List<ItemRequestStockOption> items,
     int? selectedId,
+    Set<int> takenIds = const {},
   }) {
     return showModalBottomSheet<ItemRequestStockOption>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) =>
-          ItemRequestStockPickerSheet(items: items, selectedId: selectedId),
+      builder: (_) => ItemRequestStockPickerSheet(
+        items: items,
+        selectedId: selectedId,
+        takenIds: takenIds,
+      ),
     );
   }
 
@@ -115,10 +124,14 @@ class _ItemRequestStockPickerSheetState extends State<ItemRequestStockPickerShee
                         itemBuilder: (context, index) {
                           final option = results[index];
                           final selected = option.id == widget.selectedId;
+                          final taken = widget.takenIds.contains(option.id);
 
                           return InkWell(
-                            onTap: () => Navigator.of(context).pop(option),
-                            child: Padding(
+                            onTap:
+                                taken ? null : () => Navigator.of(context).pop(option),
+                            child: Opacity(
+                              opacity: taken ? 0.45 : 1,
+                              child: Padding(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 4,
                                 vertical: 12,
@@ -149,6 +162,7 @@ class _ItemRequestStockPickerSheetState extends State<ItemRequestStockPickerShee
                                                 option.category!,
                                               if (option.stock != null)
                                                 'Stock: ${option.stockLabel}',
+                                              if (taken) 'Already added',
                                             ].join(' · '),
                                             style: AppTextStyles.caption
                                                 .copyWith(
@@ -164,6 +178,7 @@ class _ItemRequestStockPickerSheetState extends State<ItemRequestStockPickerShee
                                         size: 18, color: AppColors.primaryText),
                                 ],
                               ),
+                            ),
                             ),
                           );
                         },

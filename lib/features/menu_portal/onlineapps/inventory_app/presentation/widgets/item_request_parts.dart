@@ -7,14 +7,14 @@ import '../../domain/item_request_status.dart';
 /// Potongan kecil yang dipakai bersama oleh kartu request
 /// ([ItemRequestRow]) dan kartu verifikasi ([ItemRequestVerificationCard]).
 
-/// Kartu polos: border netral tanpa warna. Status cukup dibedakan lewat
-/// badge [ItemRequestStatusPill], jadi kartu tidak perlu ikut berwarna.
+/// Kartu polos: tanpa border dan tanpa warna, hanya bayangan lembut. Status
+/// cukup dibedakan lewat badge [ItemRequestStatusPill].
 class ItemRequestCard extends StatelessWidget {
   const ItemRequestCard({
     super.key,
     required this.child,
     this.borderColor,
-    this.padding = const EdgeInsets.fromLTRB(14, 12, 12, 12),
+    this.padding = const EdgeInsets.all(16),
     this.onTap,
   });
 
@@ -33,13 +33,12 @@ class ItemRequestCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.card,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.border),
+        borderRadius: BorderRadius.circular(18),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x0D000000),
-            blurRadius: 10,
-            offset: Offset(0, 3),
+            color: Color(0x0F000000),
+            blurRadius: 16,
+            offset: Offset(0, 4),
           ),
         ],
       ),
@@ -49,7 +48,7 @@ class ItemRequestCard extends StatelessWidget {
       child: Material(
         type: MaterialType.transparency,
         child: InkWell(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(18),
           onTap: onTap,
           child: Padding(padding: padding, child: child),
         ),
@@ -99,7 +98,7 @@ class ItemRequestStatusPill extends StatelessWidget {
   }
 }
 
-/// Jumlah diminta dalam chip lembut, mis. "6 PCS".
+/// Jumlah diminta dalam chip abu-abu netral, mis. "6 PCS".
 class ItemRequestQuantityChip extends StatelessWidget {
   const ItemRequestQuantityChip({super.key, required this.label});
 
@@ -108,18 +107,19 @@ class ItemRequestQuantityChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: AppColors.primaryLight,
-        borderRadius: BorderRadius.circular(8),
+        // Netral (bukan hijau) supaya tidak mirip badge status Approved.
+        color: AppColors.neutralBg,
+        borderRadius: BorderRadius.circular(10),
       ),
       child: Text(
         label,
         style: TextStyle(
           fontFamily: AppTextStyles.fontFamily,
-          fontSize: 12,
+          fontSize: 13,
           fontWeight: FontWeight.w800,
-          color: AppColors.primaryText,
+          color: AppColors.text,
         ),
       ),
     );

@@ -3,20 +3,22 @@ import 'package:flutter/material.dart';
 import '../../../../../../core/theme/app_colors.dart';
 import '../../../../../../core/theme/app_text_styles.dart';
 
-/// Keadaan kosong daftar Inventory: ikon, judul, keterangan, dan (opsional)
+/// Keadaan kosong daftar Inventory: judul, keterangan, dan (opsional)
 /// satu tombol aksi — mis. "Clear filters" saat pencarian tidak menemukan
 /// apa-apa. Menggantikan teks polos "No data".
 class ItemRequestEmptyState extends StatelessWidget {
   const ItemRequestEmptyState({
     super.key,
-    required this.icon,
+    this.icon,
     required this.title,
     required this.message,
     this.actionLabel,
     this.onAction,
   });
 
-  final IconData icon;
+  /// Tidak ditampilkan lagi (tampilan sengaja polos, tanpa ikon berwarna);
+  /// parameter dipertahankan supaya pemanggil lama tetap jalan.
+  final IconData? icon;
   final String title;
   final String message;
   final String? actionLabel;
@@ -25,21 +27,10 @@ class ItemRequestEmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(32, 56, 32, 24),
+      padding: const EdgeInsets.fromLTRB(32, 72, 32, 24),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            width: 64,
-            height: 64,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: AppColors.primaryLight,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Icon(icon, size: 30, color: AppColors.primaryText),
-          ),
-          const SizedBox(height: 16),
           Text(
             title,
             textAlign: TextAlign.center,
@@ -62,7 +53,7 @@ class ItemRequestEmptyState extends StatelessWidget {
             OutlinedButton(
               onPressed: onAction,
               style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.primaryText,
+                foregroundColor: AppColors.text,
                 side: BorderSide(color: AppColors.border),
                 shape: const StadiumBorder(),
                 padding:
@@ -72,7 +63,7 @@ class ItemRequestEmptyState extends StatelessWidget {
                 actionLabel!,
                 style: AppTextStyles.caption.copyWith(
                   fontWeight: FontWeight.w700,
-                  color: AppColors.primaryText,
+                  color: AppColors.text,
                 ),
               ),
             ),

@@ -10,7 +10,6 @@ import '../../../../../../core/widgets/app_error_view.dart';
 import '../../../../../../core/widgets/app_shimmer.dart';
 import '../../../../../../core/widgets/app_text_field.dart';
 import '../../../../shared/presentation/widgets/portal_category_page.dart';
-import '../../../work_order/est_request/presentation/widgets/est_request_tab_bar.dart';
 import '../../data/inventory_item_request_repository.dart';
 import '../../domain/item_request_status.dart';
 import '../../domain/item_request_entry.dart';
@@ -27,6 +26,7 @@ import '../widgets/item_request_empty_state.dart';
 import '../widgets/item_request_filter_bar.dart';
 import '../widgets/item_request_filter_sheet.dart';
 import '../widgets/item_request_row.dart';
+import '../widgets/item_request_tabs.dart';
 import '../widgets/item_request_verification_tab.dart';
 import 'add_item_request_screen.dart';
 
@@ -365,8 +365,8 @@ class _ItemRequestScreenState extends State<ItemRequestScreen> {
                       if (!state.showTab) return const SizedBox.shrink();
 
                       return Padding(
-                        padding: const EdgeInsets.only(top: 12),
-                        child: EstRequestTabBar(
+                        padding: const EdgeInsets.only(top: 14),
+                        child: ItemRequestTabs(
                           labels: const ['Request', 'Verification'],
                           icons: const [
                             Icons.format_list_bulleted_rounded,
@@ -398,43 +398,19 @@ class _ItemRequestScreenState extends State<ItemRequestScreen> {
     );
   }
 
-  /// IndexedStack menjaga tab Request tetap "hidup" di belakang layar saat
-  /// pindah ke Verification, jadi posisi scroll & isi pencarian tidak reset.
-  /// Kolom search + tombol filter di kanannya. Filter hanya berlaku untuk
-  /// daftar Request, jadi tombolnya disembunyikan saat tab Verification aktif.
+  /// Kolom search selebar layar. Toggle "My requests" ada di baris chip
+  /// (lihat [ItemRequestFilterBar]), bukan lagi tombol ikon di sini.
   Widget _buildSearchRow() {
-    return BlocBuilder<ItemRequestVerificationBloc, ItemRequestVerificationState>(
-      bloc: _verifyBloc,
-      buildWhen: (previous, current) => previous.showTab != current.showTab,
-      builder: (context, state) {
-        final showFilter = !state.showTab || _tabIndex == 0;
-
-        return IntrinsicHeight(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Expanded(
-                child: AppTextField(
-                  controller: _searchController,
-                  hint: 'Search request...',
-                  icon: Icons.search,
-                  onChanged: _onSearchChanged,
-                ),
-              ),
-              if (showFilter) ...[
-                const SizedBox(width: 10),
-                _MineButton(
-                  active: _requestFilter.onlyMine,
-                  onTap: _toggleMine,
-                ),
-              ],
-            ],
-          ),
-        );
-      },
+    return AppTextField(
+      controller: _searchController,
+      hint: 'Search request...',
+      icon: Icons.search,
+      onChanged: _onSearchChanged,
     );
   }
 
+  /// IndexedStack menjaga tab Request tetap "hidup" di belakang layar saat
+  /// pindah ke Verification, jadi posisi scroll & isi pencarian tidak reset.
   Widget _buildTabs() {
     return IndexedStack(
       index: _tabIndex,
@@ -509,6 +485,8 @@ class _ItemRequestScreenState extends State<ItemRequestScreen> {
             statuses: _statuses,
             status: _requestFilter.status,
             onStatusChanged: _setStatus,
+            onlyMine: _requestFilter.onlyMine,
+            onMineChanged: (_) => _toggleMine(),
           ),
         ),
         Expanded(child: _buildRequestBody()),
@@ -568,7 +546,7 @@ class _ItemRequestScreenState extends State<ItemRequestScreen> {
                     padding: const EdgeInsets.fromLTRB(16, 4, 16, 88),
                     // +1 skeleton di dasar saat halaman berikutnya dimuat.
                     itemCount: results.length + (state.loadingMore ? 1 : 0),
-                    separatorBuilder: (_, __) => const SizedBox(height: 10),
+                    separatorBuilder: (_, __) => const SizedBox(height: 12),
                     itemBuilder: (context, index) {
                       if (index == results.length) {
                         return const _RequestRowSkeleton();
@@ -593,45 +571,6 @@ class _ItemRequestScreenState extends State<ItemRequestScreen> {
           ),
         );
       },
-    );
-  }
-}
-
-/// Tombol persegi di samping kolom search: toggle "My requests". Terisi hijau
-/// bila aktif.
-class _MineButton extends StatelessWidget {
-  const _MineButton({required this.active, required this.onTap});
-
-  final bool active;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Tooltip(
-      message: 'My requests',
-      child: Material(
-        color: active ? AppColors.primary : AppColors.card,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
-          side: BorderSide(
-            color: active ? AppColors.primary : AppColors.border,
-          ),
-        ),
-        child: InkWell(
-          customBorder: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
-          ),
-          onTap: onTap,
-          child: SizedBox(
-            width: 48,
-            child: Icon(
-              active ? Icons.person_rounded : Icons.person_outline_rounded,
-              size: 22,
-              color: active ? Colors.white : AppColors.textMid,
-            ),
-          ),
-        ),
-      ),
     );
   }
 }

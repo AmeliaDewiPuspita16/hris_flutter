@@ -6,18 +6,19 @@ import '../../domain/item_request_entry.dart';
 import '../../domain/item_request_status.dart';
 import 'item_request_parts.dart';
 
-/// Satu baris di daftar "Request Items" — mengemas kolom tabel web (Request
-/// Code, Requestor, Item, Quantity, Reason, Status, Action) jadi satu kartu.
+/// Satu baris di daftar "Request Items" — mengemas kolom tabel web jadi satu
+/// kartu yang lega:
 ///
-/// - Zona 1: nama + kode request | badge status (+ menu ⋮).
-/// - Zona 2: avatar + nama peminta (+ "You") | jumlah dalam chip.
-/// - Zona 3: alasan, atau "-" bila tidak diisi (+ kotak alasan penolakan).
-/// - Tanpa ikon barang dan tanpa garis berwarna; status lewat badge saja.
+/// - Atas: kode request (kecil, abu-abu) | badge status (+ menu ⋮).
+/// - Tengah: nama barang (besar, tebal), lalu alasan bila diisi.
+/// - Bawah: avatar + nama peminta (+ "You") dengan tanggal pengajuan di
+///   bawahnya | jumlah dalam chip.
 ///
-/// Edit / Cancel ada di menu ⋮ di samping badge status (bukan tombol besar)
-/// dan hanya muncul bila server mengizinkan ([ItemRequestEntry.canEdit]
-/// / [ItemRequestEntry.canCancel]), yaitu request milik sendiri yang
-/// masih pending.
+/// Alasan yang kosong tidak ditampilkan (tidak ada "-"), supaya kartu lebih
+/// ringkas; detailnya tetap ada di sheet detail.
+///
+/// Edit / Cancel ada di menu ⋮ di samping badge status dan hanya muncul bila
+/// server mengizinkan ([ItemRequestEntry.canEdit] / [ItemRequestEntry.canCancel]).
 class ItemRequestRow extends StatelessWidget {
   const ItemRequestRow({
     super.key,
@@ -39,129 +40,121 @@ class ItemRequestRow extends StatelessWidget {
     final showEdit = item.canEdit && onEdit != null;
     final showCancel = item.canCancel && onCancel != null;
     final rejected = item.status.code == ItemRequestStatus.codeRejected;
+    final hasMenu = showEdit || showCancel;
 
     return ItemRequestCard(
       onTap: onTap,
-      padding: const EdgeInsets.fromLTRB(14, 12, 6, 12),
+      padding: EdgeInsets.fromLTRB(18, 16, hasMenu ? 8 : 18, 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Zona 1: nama + kode, status (+ menu ⋮).
+          // Atas: kode | status (+ menu ⋮).
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      item.itemName,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppTextStyles.body.copyWith(
-                        fontSize: 13.5,
-                        fontWeight: FontWeight.w700,
-                        height: 1.3,
-                      ),
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      item.code,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppTextStyles.caption.copyWith(
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 0.2,
-                        color: AppColors.textMuted,
-                      ),
-                    ),
-                  ],
+                child: Text(
+                  item.code,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyles.caption.copyWith(
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 0.4,
+                    color: AppColors.textMuted,
+                  ),
                 ),
               ),
               const SizedBox(width: 8),
-              Padding(
-                padding: const EdgeInsets.only(top: 3),
-                child: ItemRequestStatusPill(status: item.status),
-              ),
-              if (showEdit || showCancel)
+              ItemRequestStatusPill(status: item.status),
+              if (hasMenu)
                 _ActionsMenu(
                   onEdit: showEdit ? onEdit : null,
                   onCancel: showCancel ? onCancel : null,
-                )
-              else
-                const SizedBox(width: 6),
+                ),
             ],
           ),
-          const SizedBox(height: 10),
-          Divider(height: 1, thickness: 1, color: AppColors.border),
-          const SizedBox(height: 10),
-          // Zona 2: peminta | jumlah.
           Padding(
-            padding: const EdgeInsets.only(right: 6),
-            child: Row(
-              children: [
-                ItemRequestAvatar(name: item.requesterName),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Row(
-                    children: [
-                      Flexible(
-                        child: Text(
-                          item.requesterName.isEmpty ? '-' : item.requesterName,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: AppTextStyles.caption.copyWith(
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.textMid,
-                          ),
-                        ),
-                      ),
-                      if (item.isMine) ...[
-                        const SizedBox(width: 6),
-                        const ItemRequestYouBadge(),
-                      ],
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 8),
-                ItemRequestQuantityChip(label: item.quantityLabel),
-              ],
-            ),
-          ),
-          // Zona 3: alasan; "-" bila tidak diisi.
-          const SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.only(right: 6),
-            child: Row(
+            padding: EdgeInsets.only(right: hasMenu ? 10 : 0),
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(
-                  Icons.notes_rounded,
-                  size: 14,
-                  color: AppColors.textMuted,
+                const SizedBox(height: 8),
+                // Tengah: nama barang, lalu alasan.
+                Text(
+                  item.itemName,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyles.body.copyWith(
+                    fontSize: 14.5,
+                    fontWeight: FontWeight.w700,
+                    height: 1.3,
+                  ),
                 ),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Text(
+                if (item.hasReason) ...[
+                  const SizedBox(height: 6),
+                  Text(
                     item.reasonLabel,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: AppTextStyles.caption.copyWith(
-                      height: 1.4,
-                      color: item.hasReason ? null : AppColors.textMuted,
-                    ),
+                    style: AppTextStyles.caption.copyWith(height: 1.45),
                   ),
+                ],
+                if (rejected && item.rejectReason != null) ...[
+                  const SizedBox(height: 10),
+                  _RejectReason(text: item.rejectReason!),
+                ],
+                const SizedBox(height: 16),
+                // Bawah: peminta + tanggal | jumlah.
+                Row(
+                  children: [
+                    ItemRequestAvatar(name: item.requesterName, size: 32),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  item.requesterName.isEmpty
+                                      ? '-'
+                                      : item.requesterName,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: AppTextStyles.caption.copyWith(
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.text,
+                                  ),
+                                ),
+                              ),
+                              if (item.isMine) ...[
+                                const SizedBox(width: 6),
+                                const ItemRequestYouBadge(),
+                              ],
+                            ],
+                          ),
+                          if (item.requestedAt != null) ...[
+                            const SizedBox(height: 1),
+                            Text(
+                              item.requestedAtLabel,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppTextStyles.caption.copyWith(
+                                fontSize: 11,
+                                color: AppColors.textMuted,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    ItemRequestQuantityChip(label: item.quantityLabel),
+                  ],
                 ),
               ],
             ),
           ),
-          if (rejected && item.rejectReason != null) ...[
-            const SizedBox(height: 8),
-            Padding(
-              padding: const EdgeInsets.only(right: 6),
-              child: _RejectReason(text: item.rejectReason!),
-            ),
-          ],
         ],
       ),
     );

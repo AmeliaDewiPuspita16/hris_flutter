@@ -50,7 +50,7 @@ class ItemRequestFilterBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 36,
+      height: 34,
       child: ListView(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -66,10 +66,20 @@ class ItemRequestFilterBar extends StatelessWidget {
               label: s.label,
               selected: status == s.code,
               onTap: () => onStatusChanged(s.code),
+              // Warna mengikuti badge status di kartu.
+              accent: s.color,
+              accentBg: s.background,
             ),
           ],
           if (onMineChanged != null) ...[
-            const SizedBox(width: 14),
+            // Pemisah tipis: "My requests" adalah penyaring lain (milik
+            // siapa), bukan salah satu status.
+            Container(
+              width: 1,
+              height: 18,
+              margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              color: AppColors.border,
+            ),
             _FilterChip(
               label: 'My requests',
               icon: Icons.person_outline_rounded,
@@ -90,6 +100,8 @@ class _FilterChip extends StatelessWidget {
     required this.selected,
     required this.onTap,
     this.icon,
+    this.accent,
+    this.accentBg,
   });
 
   final String label;
@@ -97,14 +109,24 @@ class _FilterChip extends StatelessWidget {
   final VoidCallback onTap;
   final IconData? icon;
 
+  /// Warna status (chip status saja), dipakai hanya saat chip dipilih.
+  /// Null = hijau lembut bawaan (All, My requests).
+  final Color? accent;
+  final Color? accentBg;
+
   @override
   Widget build(BuildContext context) {
-    final foreground = selected ? Colors.white : AppColors.textMid;
+    // Terpilih = warna lembut (tonal), bukan warna pekat, supaya tidak
+    // bersaing dengan tab di atasnya.
+    final foreground =
+        selected ? (accent ?? AppColors.primaryText) : AppColors.textMid;
 
     return Material(
-      color: selected ? AppColors.primary : AppColors.card,
+      color: selected ? (accentBg ?? AppColors.primaryLight) : AppColors.card,
       shape: StadiumBorder(
-        side: BorderSide(color: selected ? AppColors.primary : AppColors.border),
+        side: BorderSide(
+          color: selected ? (accent ?? AppColors.primaryMid) : AppColors.border,
+        ),
       ),
       child: InkWell(
         customBorder: const StadiumBorder(),
@@ -122,7 +144,7 @@ class _FilterChip extends StatelessWidget {
                 label,
                 style: AppTextStyles.caption.copyWith(
                   color: foreground,
-                  fontWeight: FontWeight.w600,
+                  fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
                 ),
               ),
             ],
