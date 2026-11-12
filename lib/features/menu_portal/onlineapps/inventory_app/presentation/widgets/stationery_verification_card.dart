@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../../../core/theme/app_colors.dart';
 import '../../../../../../core/theme/app_text_styles.dart';
+import '../../domain/stationery_item_option.dart';
 import '../../domain/stationery_request_item.dart';
 import 'stationery_action_button.dart';
 import 'stationery_request_parts.dart';
@@ -20,15 +21,20 @@ class StationeryVerificationCard extends StatelessWidget {
     required this.item,
     required this.onApprove,
     required this.onReject,
+    this.onTap,
   });
 
   final StationeryRequestItem item;
   final VoidCallback onApprove;
   final VoidCallback onReject;
 
+  /// Ketuk kartu: buka halaman detail.
+  final VoidCallback? onTap;
+
   @override
   Widget build(BuildContext context) {
     return StationeryCard(
+      onTap: onTap,
       padding: const EdgeInsets.all(14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -133,7 +139,7 @@ class _StockLabel extends StatelessWidget {
           const SizedBox(width: 3),
         ],
         Text(
-          'Stock $stock${item.unit.isEmpty ? '' : ' ${item.unit}'}',
+          'Stock ${formatInventoryQuantity(stock)}${item.unit.isEmpty ? '' : ' ${item.unit}'}',
           style: AppTextStyles.caption.copyWith(
             color: color,
             fontWeight: short ? FontWeight.w700 : FontWeight.w500,

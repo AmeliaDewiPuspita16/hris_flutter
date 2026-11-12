@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/logging/app_logger.dart';
 import '../../menu_portal/data_app/indent_vehicle/presentation/screens/indent_vehicle_screen.dart';
+import '../../menu_portal/data_app/observation_department/presentation/screens/observation_dept_screen.dart';
 import '../../menu_portal/onlineapps/hse_work_request/presentation/screens/hse_work_request_list_screen.dart';
 import '../../menu_portal/onlineapps/procurement/presentation/screens/procurement_page.dart';
 import '../../menu_portal/onlineapps/work_order/est_request/presentation/screens/est_request_screen.dart';
@@ -65,6 +66,12 @@ class NotificationRoutes {
             initialTabIndex: link.isApprover ? 1 : 0,
             highlightId: link.refId,
           ),
+        // Tab 0 = To Close (temuan open dept sendiri), 1 = All Observation.
+        // Kalau temuannya tidak ada di tab itu, layar pindah ke tab lain.
+        NotificationLink.moduleObservation => ObservationDeptScreen(
+          initialTabIndex: link.isApprover || link.isHandler ? 0 : 1,
+          highlightId: link.refId?.toString(),
+        ),
         _ => null,
       };
 

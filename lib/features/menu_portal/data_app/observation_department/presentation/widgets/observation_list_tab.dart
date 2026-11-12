@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../../../core/widgets/app_error_view.dart';
 import '../../../../../../core/widgets/app_shimmer.dart';
+import '../../../../../../core/widgets/flash_highlight.dart';
 import '../../domain/observation_item.dart';
 import '../bloc/observation_list_state.dart';
 import 'observation_card.dart';
@@ -21,6 +22,7 @@ class ObservationListTab extends StatelessWidget {
     this.onDelete,
     this.detailForOpen = false,
     this.showOwnership = false,
+    this.highlightId,
     required this.emptyTitle,
     required this.emptyMessage,
     this.emptyIcon,
@@ -46,6 +48,10 @@ class ObservationListTab extends StatelessWidget {
 
   /// Teruskan ke kartu: tampilkan penanda "Your report" / "For your dept".
   final bool showOwnership;
+
+  /// id temuan dari notifikasi: dinaikkan ke paling atas dan dikedipkan.
+  /// Null = tidak ada yang disorot di tab ini.
+  final String? highlightId;
   final String emptyTitle;
   final String emptyMessage;
 
@@ -54,6 +60,15 @@ class ObservationListTab extends StatelessWidget {
 
   /// Ruang di bawah daftar supaya kartu terakhir tidak tertutup FAB.
   static const _bottomPadding = 100.0;
+
+  /// Temuan dari notifikasi dinaikkan ke paling atas supaya langsung
+  /// terlihat, sama seperti EST Request dan HSE.
+  List<ObservationItem> _withHighlightFirst(List<ObservationItem> list) {
+    final id = highlightId;
+    final at = id == null ? -1 : list.indexWhere((i) => i.id == id);
+    if (at <= 0) return list;
+    return [list[at], ...list.take(at), ...list.skip(at + 1)];
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -69,6 +84,7 @@ class ObservationListTab extends StatelessWidget {
     }
 
     final searching = state.query.trim().isNotEmpty || state.filter.isActive;
+    final shown = _withHighlightFirst(items);
 
     return RefreshIndicator(
       onRefresh: onRefresh,
@@ -97,11 +113,11 @@ class ObservationListTab extends StatelessWidget {
           : ListView.separated(
               physics: const AlwaysScrollableScrollPhysics(),
               padding: const EdgeInsets.fromLTRB(16, 8, 16, _bottomPadding),
-              itemCount: items.length,
+              itemCount: shown.length,
               separatorBuilder: (_, __) => const SizedBox(height: 12),
               itemBuilder: (context, index) {
-                final item = items[index];
-                return ObservationCard(
+                final item = shown[index];
+                final card = ObservationCard(
                   item: item,
                   showOwnership: showOwnership,
                   onTap: item.isOpen && !detailForOpen
@@ -116,6 +132,11 @@ class ObservationListTab extends StatelessWidget {
                   onDelete: item.canDelete && onDelete != null
                       ? () => onDelete!(item)
                       : null,
+                );
+                return FlashHighlight(
+                  key: ValueKey('hl-${item.id}'),
+                  active: item.id == highlightId,
+                  child: card,
                 );
               },
             ),

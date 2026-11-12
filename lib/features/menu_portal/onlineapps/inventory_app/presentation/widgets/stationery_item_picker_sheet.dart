@@ -125,10 +125,7 @@ class _StationeryItemPickerSheetState extends State<StationeryItemPickerSheet> {
                               ),
                               child: Row(
                                 children: [
-                                  StationeryItemIcon(
-                                    itemName: option.name,
-                                    size: 36,
-                                  ),
+                                  _OptionThumb(option: option),
                                   const SizedBox(width: 12),
                                   Expanded(
                                     child: Column(
@@ -143,10 +140,16 @@ class _StationeryItemPickerSheetState extends State<StationeryItemPickerSheet> {
                                                 : FontWeight.w600,
                                           ),
                                         ),
-                                        if (option.stock != null) ...[
+                                        if (option.stock != null ||
+                                            option.category != null) ...[
                                           const SizedBox(height: 2),
                                           Text(
-                                            'Stock: ${option.stock}',
+                                            [
+                                              if (option.category != null)
+                                                option.category!,
+                                              if (option.stock != null)
+                                                'Stock: ${option.stockLabel}',
+                                            ].join(' · '),
                                             style: AppTextStyles.caption
                                                 .copyWith(
                                                     color:
@@ -169,6 +172,34 @@ class _StationeryItemPickerSheetState extends State<StationeryItemPickerSheet> {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Foto barang dari server; jatuh ke ikon tebakan bila tidak ada foto atau
+/// gagal dimuat.
+class _OptionThumb extends StatelessWidget {
+  const _OptionThumb({required this.option});
+
+  final StationeryItemOption option;
+
+  static const _size = 36.0;
+
+  @override
+  Widget build(BuildContext context) {
+    final fallback = StationeryItemIcon(itemName: option.name, size: _size);
+    final url = option.imageUrl;
+    if (url == null) return fallback;
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(8),
+      child: Image.network(
+        url,
+        width: _size,
+        height: _size,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => fallback,
       ),
     );
   }

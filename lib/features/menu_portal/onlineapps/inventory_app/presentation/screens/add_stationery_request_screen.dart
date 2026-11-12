@@ -82,7 +82,7 @@ class _AddStationeryRequestScreenState
     final initial = widget.initialItem;
     if (initial != null) {
       final line = _LineForm();
-      line.quantity.text = '${initial.quantity}';
+      line.quantity.text = formatInventoryQuantity(initial.quantity);
       line.description.text = initial.description;
       _lines.add(line);
     } else {
@@ -374,12 +374,12 @@ class _AddStationeryRequestScreenState
           if (_isEdit && widget.initialItem!.stock != null) ...[
             const SizedBox(height: 4),
             Text(
-              'Existing quantity: ${widget.initialItem!.stock}',
+              'Existing quantity: ${formatInventoryQuantity(widget.initialItem!.stock)}',
               style: AppTextStyles.caption,
             ),
           ] else if (item?.stock != null) ...[
             const SizedBox(height: 4),
-            Text('Stock: ${item!.stock}', style: AppTextStyles.caption),
+            Text('Stock: ${item!.stockLabel}', style: AppTextStyles.caption),
           ],
           const SizedBox(height: 16),
           const FieldLabelRow(label: 'Quantity', required: true),

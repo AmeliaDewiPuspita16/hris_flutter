@@ -15,6 +15,7 @@ class StationeryCard extends StatelessWidget {
     required this.child,
     this.borderColor,
     this.padding = const EdgeInsets.fromLTRB(14, 12, 12, 12),
+    this.onTap,
   });
 
   final Widget child;
@@ -24,10 +25,12 @@ class StationeryCard extends StatelessWidget {
   final Color? borderColor;
   final EdgeInsets padding;
 
+  /// Bila diisi, seluruh kartu bisa diketuk (dengan efek ripple).
+  final VoidCallback? onTap;
+
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: padding,
       decoration: BoxDecoration(
         color: AppColors.card,
         borderRadius: BorderRadius.circular(14),
@@ -40,7 +43,17 @@ class StationeryCard extends StatelessWidget {
           ),
         ],
       ),
-      child: child,
+      // Material + InkWell ditaruh DI DALAM Container supaya efek ripple
+      // digambar di atas warna kartu. Kalau di luar, ripple tertutup warna
+      // kartu dan tidak terlihat.
+      child: Material(
+        type: MaterialType.transparency,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: onTap,
+          child: Padding(padding: padding, child: child),
+        ),
+      ),
     );
   }
 }
@@ -219,6 +232,31 @@ class StationeryMetaLine extends StatelessWidget {
           ),
         ],
       ],
+    );
+  }
+}
+
+/// Penanda "You" untuk request milik sendiri.
+class StationeryYouBadge extends StatelessWidget {
+  const StationeryYouBadge({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 1),
+      decoration: BoxDecoration(
+        border: Border.all(color: AppColors.primaryMid),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        'You',
+        style: TextStyle(
+          fontFamily: AppTextStyles.fontFamily,
+          fontSize: 10,
+          fontWeight: FontWeight.w700,
+          color: AppColors.primaryMidText,
+        ),
+      ),
     );
   }
 }

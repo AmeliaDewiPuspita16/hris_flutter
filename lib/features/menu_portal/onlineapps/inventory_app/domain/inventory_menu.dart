@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 
-/// Pilihan di sheet "Choose App" setelah membuka tile Inventory.
+/// Pilihan di sheet "Inventory" setelah membuka tile Inventory.
 enum InventoryApp { request, management }
-
-/// Pilihan di sheet "Request" (product line yang bisa di-request).
-enum InventoryProductLine { stationery, estateBuilding }
 
 /// Satu baris pilihan di [InventoryOptionSheet].
 ///
@@ -26,7 +23,7 @@ class InventoryOption<T> {
   final bool ready;
 }
 
-/// Isi menu Inventory, mengikuti web (Home / Inventory / Request).
+/// Isi menu Inventory.
 class InventoryMenuData {
   InventoryMenuData._();
 
@@ -34,7 +31,7 @@ class InventoryMenuData {
     InventoryOption(
       value: InventoryApp.request,
       icon: Icons.assignment_outlined,
-      title: 'Request',
+      title: 'Item Request',
       subtitle: 'Request items from stock.',
     ),
     InventoryOption(
@@ -42,29 +39,6 @@ class InventoryMenuData {
       icon: Icons.settings_outlined,
       title: 'Management',
       subtitle: 'Manage items, stock in/out, and master data.',
-      ready: false,
-    ),
-  ];
-
-  static const productLines = <InventoryOption<InventoryProductLine>>[
-    InventoryOption(
-      value: InventoryProductLine.stationery,
-      icon: Icons.create_outlined,
-      title: 'Stationery',
-      subtitle: 'Office stationery items, stock, and requests.',
-    ),
-    // InventoryOption(
-    //   value: InventoryProductLine.uniform,
-    //   icon: Icons.checkroom_outlined,
-    //   title: 'Uniform',
-    //   subtitle: 'Uniform items, stock, and requests.',
-    //   ready: false,
-    // ),
-    InventoryOption(
-      value: InventoryProductLine.estateBuilding,
-      icon: Icons.apartment_outlined,
-      title: 'Estate Building',
-      subtitle: 'Estate building items, stock, and project material requests.',
       ready: false,
     ),
   ];

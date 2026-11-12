@@ -16,6 +16,7 @@ class StationeryVerificationTab extends StatelessWidget {
     required this.onApprove,
     required this.onReject,
     required this.onRefresh,
+    this.onOpen,
     this.busyIds = const {},
   });
 
@@ -28,6 +29,9 @@ class StationeryVerificationTab extends StatelessWidget {
   final ValueChanged<StationeryRequestItem> onApprove;
   final ValueChanged<StationeryRequestItem> onReject;
   final RefreshCallback onRefresh;
+
+  /// Ketuk kartu: buka halaman detail request itu.
+  final ValueChanged<StationeryRequestItem>? onOpen;
 
   /// id request yang keputusannya sedang dikirim; kartunya dikunci.
   final Set<int> busyIds;
@@ -77,6 +81,7 @@ class StationeryVerificationTab extends StatelessWidget {
                       item: item,
                       onApprove: () => onApprove(item),
                       onReject: () => onReject(item),
+                      onTap: onOpen == null ? null : () => onOpen!(item),
                     ),
                   ),
                 );

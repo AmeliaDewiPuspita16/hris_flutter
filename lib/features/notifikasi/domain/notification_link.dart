@@ -19,9 +19,10 @@ class NotificationLink {
   static const moduleEstWorkOrder = 'est_work_order';
   static const moduleIndentVehicle = 'indent_vehicle';
   static const moduleHsePermit = 'hse_permit';
+  static const moduleObservation = 'observation';
 
   /// `it_request` | `eprocurement` | `est_work_order` | `indent_vehicle` |
-  /// `hse_permit`.
+  /// `hse_permit` | `observation`.
   final String module;
 
   /// Apa yang terjadi, mis. `approval_needed`, `approved`, `new_task`.

@@ -133,6 +133,7 @@ class InventoryStationeryRepository {
         quantity: line.quantity,
         description: line.description.trim(),
         status: StationeryRequestStatus.codePending,
+        requestedAt: DateTime.now(),
       ));
     }
   }
@@ -232,6 +233,7 @@ class InventoryStationeryRepository {
       ),
       stock: _stock[item.id],
       rejectReason: r.rejectReason,
+      requestedAt: r.requestedAt,
       isMine: mine,
       canEdit: mine && r.isPending,
       canCancel: mine && r.isPending,
@@ -266,6 +268,10 @@ class InventoryStationeryRepository {
     _CatalogItem(201, 'STAT00001', 'MAGAZINE HOLDER', 'PCS', 22),
   ];
 
+  /// Waktu request terbaru pada data demo; request yang lebih lama mundur 9
+  /// jam per nomor, jadi jam dan tanggalnya bervariasi.
+  static final _seedBase = DateTime(2026, 11, 11, 11, 0);
+
   /// 27 request, terbaru di atas, meniru isi tabel di web.
   static List<_DemoRequest> _seed() {
     const p = StationeryRequestStatus.codePending;
@@ -282,6 +288,7 @@ class InventoryStationeryRepository {
           description: desc,
           status: status,
           rejectReason: reason,
+          requestedAt: _seedBase.subtract(Duration(hours: (558 - id) * 9)),
         );
 
     return [
@@ -340,10 +347,12 @@ class _DemoRequest {
     required this.quantity,
     required this.description,
     required this.status,
+    required this.requestedAt,
     this.rejectReason,
   });
 
   final int id;
+  final DateTime requestedAt;
   final String requester;
   final int itemId;
   int quantity;

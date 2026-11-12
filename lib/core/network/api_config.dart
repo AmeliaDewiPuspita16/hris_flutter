@@ -145,6 +145,25 @@ class ApiConfig {
   /// ('status: 5').
   static const String indentAdminApprove = '/api/admin_indent/approve';
 
+  /// ____________________________MENU INVENTORY____________________________
+  /// nventory > Item Request. Satu request (kode `REQ-…`) berisi satu atau
+  /// lebih LINE (satu barang per line); tiap line di-approve / reject / cancel
+  /// sendiri. GET di path ini mengembalikan daftar LINE (`?status=`,
+  /// `search`, `mine=1`, `page`, `per_page`), POST mengajukan request baru.
+  ///
+  /// Daftarnya menaruh `meta` bersebelahan dengan `data` (tanpa `summary`),
+  /// jadi diambil lewat [ApiClient.getEnvelope].
+  static const String itemRequest = '/api/portal/apps/inventory/item-request';
+
+  /// Bahan form: `items`, `status`, dan `permissions`
+  /// (`can_see_others`, `can_verify`). Query opsional: `search`.
+  static const String itemRequestOptions = '$itemRequest/options';
+
+  /// Badge: `data.count`
+  static const String itemRequestPendingCount = '$itemRequest/pending-count';
+
+
+
   /// ___________________________MENU OBSERVATION___________________________
   /// Observation Department — daftar semua temuan (`?month=YYYY-MM`,
   /// `category`, `id_dept`, `per_page`, `page`) dan buat temuan baru
@@ -158,8 +177,6 @@ class ApiConfig {
   /// Detail / edit (POST) / hapus (DELETE) satu temuan.
   static String observationDetail(int id) => '$observation/$id';
   static String observationClose(int id) => '$observation/$id/close';
-
-
 
   // --------------------------------- HRIS ----------------------------
 
@@ -184,7 +201,8 @@ class ApiConfig {
 
   /// Pengajuan lembur milik user yang login. GET: riwayat (`data` berupa list,
   /// diambil lewat [ApiClient.getList]). POST: ajukan lembur baru.
-  static const String overtimeRequest = '/api/portal/apps/hris/overtime/request';
+  static const String overtimeRequest =
+      '/api/portal/apps/hris/overtime/request';
 
   /// Prakiraan cuaca Teluk Lobam per 3 jam (sumber BMKG, di-cache server).
   /// `data`: location, slots[], updated_at; `meta`: source, source_url, stale.

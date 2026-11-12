@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -9,7 +11,9 @@ import '../../../../../../core/widgets/app_shimmer.dart';
 import '../../../../../../core/widgets/app_text_field.dart';
 import '../../../../shared/presentation/widgets/portal_category_page.dart';
 import '../../../work_order/est_request/presentation/widgets/est_request_tab_bar.dart';
+import '../../data/inventory_item_request_repository.dart';
 import '../../data/inventory_stationery_repository.dart';
+import '../../domain/stationery_request_status.dart';
 import '../../domain/stationery_request_item.dart';
 import '../bloc/list/stationery_request_list_bloc.dart';
 import '../bloc/list/stationery_request_list_event.dart';
@@ -19,15 +23,16 @@ import '../bloc/verification/stationery_verification_event.dart';
 import '../bloc/verification/stationery_verification_state.dart';
 import '../widgets/stationery_cancel_dialog.dart';
 import '../widgets/stationery_decision_dialog.dart';
+import '../widgets/stationery_detail_sheet.dart';
 import '../widgets/stationery_empty_state.dart';
+import '../widgets/stationery_filter_bar.dart';
 import '../widgets/stationery_filter_sheet.dart';
 import '../widgets/stationery_request_row.dart';
-import '../widgets/stationery_summary_strip.dart';
 import '../widgets/stationery_verification_tab.dart';
 import 'add_stationery_request_screen.dart';
 
-/// Layar Inventory > Request > Stationery. Padanan halaman web
-/// `inventory/item-request/stationery`:
+/// Layar Inventory > Item Request. Padanan halaman web
+/// `inventory/item-request`:
 ///
 /// - Tab **Request** ("Request Items"): daftar request SEMUA user, tombol
 ///   Add Request (FAB), dan Edit / Cancel pada request milik sendiri yang
@@ -39,10 +44,19 @@ import 'add_stationery_request_screen.dart';
 ///
 /// Tab "Management" dan "Report" di web belum dibuat di aplikasi.
 class StationeryRequestScreen extends StatefulWidget {
-  const StationeryRequestScreen({super.key, this.repository});
+  const StationeryRequestScreen({
+    super.key,
+    this.repository,
+    this.itemRequestRepository,
+  });
 
-  /// Diisi test; kalau kosong layar membuat sendiri repository demo.
+  /// Repository DEMO untuk bagian yang belum tersambung ke API (Add, Edit,
+  /// Cancel, dan tab Verification). Diisi test; kalau kosong layar membuat
+  /// sendiri.
   final InventoryStationeryRepository? repository;
+
+  /// Repository API. Kalau kosong diambil dari `RepositoryProvider`.
+  final InventoryItemRequestRepository? itemRequestRepository;
 
   @override
   State<StationeryRequestScreen> createState() =>
@@ -50,13 +64,22 @@ class StationeryRequestScreen extends StatefulWidget {
 }
 
 class _StationeryRequestScreenState extends State<StationeryRequestScreen> {
+  /// DEMO — hapus bersama file `inventory_stationery_repository.dart` bila
+  /// semua bagian sudah tersambung ke [_itemRequests].
   late final InventoryStationeryRepository _repository;
+  late final InventoryItemRequestRepository _itemRequests;
   late final StationeryRequestListBloc _listBloc;
   late final StationeryVerificationBloc _verifyBloc;
 
   final _searchController = TextEditingController();
   String _query = '';
   int _tabIndex = 0;
+
+  /// Menunda permintaan ke server sampai pengguna berhenti mengetik.
+  Timer? _searchDebounce;
+
+  /// Pilihan chip status; diganti isi `options.statuses` begitu termuat.
+  List<StationeryRequestStatus> _statuses = StationeryFilterBar.defaultStatuses;
 
   /// Penyaring daftar Request, dipilih lewat tombol filter di samping search.
   StationeryRequestFilter _requestFilter = StationeryRequestFilter.none;
@@ -71,8 +94,12 @@ class _StationeryRequestScreenState extends State<StationeryRequestScreen> {
     // perubahan yang dibuat di sana langsung tampak di daftar.
     _repository = widget.repository ?? InventoryStationeryRepository();
 
-    _listBloc = StationeryRequestListBloc(repository: _repository)
+    _itemRequests = widget.itemRequestRepository ??
+        context.read<InventoryItemRequestRepository>();
+
+    _listBloc = StationeryRequestListBloc(repository: _itemRequests)
       ..add(const StationeryRequestListStarted());
+    _loadStatusOptions();
 
     // Dimulai untuk semua user: server yang memutuskan siapa verifier
     // (401/403 -> tab disembunyikan).
@@ -82,14 +109,29 @@ class _StationeryRequestScreenState extends State<StationeryRequestScreen> {
 
   @override
   void dispose() {
+    _searchDebounce?.cancel();
     _listBloc.close();
     _verifyBloc.close();
     _searchController.dispose();
     super.dispose();
   }
 
-  /// Pencarian hanya menyaring request yang SUDAH dimuat (server belum punya
-  /// parameter pencarian).
+  /// Chip status mengikuti `options.statuses`. Gagal dimuat bukan masalah:
+  /// chip bawaan (Pending / Approved / Rejected) tetap dipakai.
+  Future<void> _loadStatusOptions() async {
+    try {
+      final options = await _itemRequests.fetchOptions();
+      if (!mounted || options.statuses.isEmpty) return;
+      setState(() => _statuses = options.statuses);
+    } on ApiException catch (e) {
+      AppLogger.info('Opsi status Item Request gagal dimuat: ${e.message}');
+    } catch (e, stack) {
+      AppLogger.error('Opsi status Item Request gagal tak terduga', e, stack);
+    }
+  }
+
+  /// Pencarian lokal, khusus antrean Verification (yang masih memakai data
+  /// demo). Daftar Request disaring oleh server lewat [_applyListFilter].
   List<StationeryRequestItem> _filter(List<StationeryRequestItem> items) {
     final q = _query.trim().toLowerCase();
     if (q.isEmpty) return items;
@@ -104,20 +146,35 @@ class _StationeryRequestScreenState extends State<StationeryRequestScreen> {
 
   bool get _filtering => _query.trim().isNotEmpty || _requestFilter.isActive;
 
-  /// Pencarian + chip penyaring untuk tab Request.
-  List<StationeryRequestItem> _filterRequests(
-    List<StationeryRequestItem> items,
-  ) {
-    return _filter(items).where((r) {
-      final status = _requestFilter.status;
-      if (status != null && r.status.code != status) return false;
-      if (_requestFilter.onlyMine && !r.isMine) return false;
-      return true;
-    }).toList();
+  /// Kirim status + kata kunci + "My requests" saat ini ke server.
+  void _applyListFilter() {
+    _listBloc.add(StationeryRequestListFilterChanged(
+      StationeryRequestListFilter(
+        status: _requestFilter.status,
+        search: _query.trim(),
+        mine: _requestFilter.onlyMine,
+      ),
+    ));
   }
 
-  /// Filter status sudah ada di kotak ringkasan; tombol di samping search
-  /// khusus untuk "My requests".
+  void _onSearchChanged(String value) {
+    setState(() => _query = value);
+    _searchDebounce?.cancel();
+    _searchDebounce = Timer(const Duration(milliseconds: 400), () {
+      if (mounted) _applyListFilter();
+    });
+  }
+
+  void _setStatus(String? code) {
+    setState(() {
+      _requestFilter = StationeryRequestFilter(
+        status: code,
+        onlyMine: _requestFilter.onlyMine,
+      );
+    });
+    _applyListFilter();
+  }
+
   void _toggleMine() {
     setState(() {
       _requestFilter = StationeryRequestFilter(
@@ -125,6 +182,17 @@ class _StationeryRequestScreenState extends State<StationeryRequestScreen> {
         onlyMine: !_requestFilter.onlyMine,
       );
     });
+    _applyListFilter();
+  }
+
+  void _clearFilters() {
+    _searchDebounce?.cancel();
+    setState(() {
+      _searchController.clear();
+      _query = '';
+      _requestFilter = StationeryRequestFilter.none;
+    });
+    _applyListFilter();
   }
 
   void _toast(String message) {
@@ -149,12 +217,8 @@ class _StationeryRequestScreenState extends State<StationeryRequestScreen> {
     if (saved != true || !mounted) return;
 
     _reloadAll();
-    setState(() {
-      // Kosongkan search & penyaring supaya request baru tidak tersaring.
-      _searchController.clear();
-      _query = '';
-      _requestFilter = StationeryRequestFilter.none;
-    });
+    // Kosongkan search & penyaring supaya request baru tidak tersaring.
+    _clearFilters();
     _toast('Request submitted');
   }
 
@@ -218,6 +282,27 @@ class _StationeryRequestScreenState extends State<StationeryRequestScreen> {
     ));
   }
 
+  /// Ketuk kartu di tab Request: buka detail. Edit / Cancel hanya muncul bila
+  /// server mengizinkan (request milik sendiri yang masih pending).
+  void _openDetail(StationeryRequestItem item) {
+    showStationeryDetailSheet(
+      context,
+      item,
+      onEdit: item.canEdit ? () => _edit(item) : null,
+      onCancel: item.canCancel ? () => _cancel(item) : null,
+    );
+  }
+
+  /// Ketuk kartu di tab Verification: detail dengan tombol Approve / Reject.
+  void _openVerificationDetail(StationeryRequestItem item) {
+    showStationeryDetailSheet(
+      context,
+      item,
+      onApprove: () => _decide(item, approved: true),
+      onReject: () => _decide(item, approved: false),
+    );
+  }
+
   Future<void> _refreshRequests() async {
     _listBloc.add(const StationeryRequestListRefreshed());
     await _listBloc.stream
@@ -247,8 +332,8 @@ class _StationeryRequestScreenState extends State<StationeryRequestScreen> {
   @override
   Widget build(BuildContext context) {
     return PortalModulePage(
-      title: 'Stationery',
-      subtitle: 'Request office stationery and track its approval.',
+      title: 'Item Request',
+      subtitle: 'Request items from stock and track their approval.',
       illustrationAsset: PortalCategoryPage.stationeryIllustration,
       // Add Request hanya relevan di tab Request; di tab Verification tombol
       // ini cuma menutupi kartu.
@@ -335,7 +420,7 @@ class _StationeryRequestScreenState extends State<StationeryRequestScreen> {
                   controller: _searchController,
                   hint: 'Search request...',
                   icon: Icons.search,
-                  onChanged: (v) => setState(() => _query = v),
+                  onChanged: _onSearchChanged,
                 ),
               ),
               if (showFilter) ...[
@@ -405,12 +490,31 @@ class _StationeryRequestScreenState extends State<StationeryRequestScreen> {
           onRefresh: _refreshVerifications,
           onApprove: (item) => _decide(item, approved: true),
           onReject: (item) => _decide(item, approved: false),
+          onOpen: _openVerificationDetail,
         );
       },
     );
   }
 
+  /// Chip status di atas daftar Request (penyaringan oleh server), lalu
+  /// daftarnya.
   Widget _buildRequestList() {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: StationeryFilterBar(
+            statuses: _statuses,
+            status: _requestFilter.status,
+            onStatusChanged: _setStatus,
+          ),
+        ),
+        Expanded(child: _buildRequestBody()),
+      ],
+    );
+  }
+
+  Widget _buildRequestBody() {
     return BlocBuilder<StationeryRequestListBloc, StationeryRequestListState>(
       bloc: _listBloc,
       builder: (context, state) {
@@ -423,37 +527,7 @@ class _StationeryRequestScreenState extends State<StationeryRequestScreen> {
           );
         }
 
-        final results = _filterRequests(state.items);
-
-        // Penyaringan hanya atas data yang sudah dimuat. Bila hasilnya sedikit
-        // padahal masih ada halaman lain, muat halaman berikutnya otomatis
-        // (daftar yang pendek tidak bisa digulir, jadi infinite scroll tidak
-        // akan terpicu sendiri).
-        if (_filtering &&
-            results.length < 8 &&
-            state.meta.hasMore &&
-            !state.loadingMore) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (mounted) {
-              _listBloc.add(const StationeryRequestListNextPageRequested());
-            }
-          });
-        }
-
-        final header = Padding(
-          padding: const EdgeInsets.only(bottom: 2),
-          child: StationerySummaryStrip(
-            counts: state.counts,
-            total: state.meta.total,
-            selectedStatus: _requestFilter.status,
-            onStatusSelected: (code) => setState(() {
-              _requestFilter = StationeryRequestFilter(
-                status: code,
-                onlyMine: _requestFilter.onlyMine,
-              );
-            }),
-          ),
-        );
+        final results = state.items;
 
         return RefreshIndicator(
           onRefresh: _refreshRequests,
@@ -466,7 +540,6 @@ class _StationeryRequestScreenState extends State<StationeryRequestScreen> {
                     physics: const AlwaysScrollableScrollPhysics(),
                     padding: const EdgeInsets.fromLTRB(16, 4, 16, 88),
                     children: [
-                      header,
                       if (_filtering)
                         StationeryEmptyState(
                           icon: Icons.search_off_rounded,
@@ -474,18 +547,14 @@ class _StationeryRequestScreenState extends State<StationeryRequestScreen> {
                           message:
                               'Try a different keyword or clear the filters.',
                           actionLabel: 'Clear filters',
-                          onAction: () => setState(() {
-                            _searchController.clear();
-                            _query = '';
-                            _requestFilter = StationeryRequestFilter.none;
-                          }),
+                          onAction: _clearFilters,
                         )
                       else
                         const StationeryEmptyState(
                           icon: Icons.inventory_2_outlined,
                           title: 'No requests yet',
                           message:
-                              'Tap + to request stationery. Your requests and '
+                              'Tap + to request an item. Your requests and '
                               'their approval status will show up here.',
                         ),
                     ],
@@ -495,19 +564,15 @@ class _StationeryRequestScreenState extends State<StationeryRequestScreen> {
                     // Padding bawah ekstra (88) supaya baris terakhir tidak
                     // tertutup FAB "Add Request".
                     padding: const EdgeInsets.fromLTRB(16, 4, 16, 88),
-                    // +1 header ringkasan di atas, +1 skeleton di dasar saat
-                    // halaman berikutnya sedang dimuat.
-                    itemCount: 1 + results.length + (state.loadingMore ? 1 : 0),
+                    // +1 skeleton di dasar saat halaman berikutnya dimuat.
+                    itemCount: results.length + (state.loadingMore ? 1 : 0),
                     separatorBuilder: (_, __) => const SizedBox(height: 10),
                     itemBuilder: (context, index) {
-                      if (index == 0) return header;
-
-                      final rowIndex = index - 1;
-                      if (rowIndex == results.length) {
+                      if (index == results.length) {
                         return const _RequestRowSkeleton();
                       }
 
-                      final item = results[rowIndex];
+                      final item = results[index];
                       final busy = _busyIds.contains(item.id);
                       return Opacity(
                         opacity: busy ? 0.5 : 1,
@@ -515,6 +580,7 @@ class _StationeryRequestScreenState extends State<StationeryRequestScreen> {
                           ignoring: busy,
                           child: StationeryRequestRow(
                             item: item,
+                            onTap: () => _openDetail(item),
                             onEdit: () => _edit(item),
                             onCancel: () => _cancel(item),
                           ),

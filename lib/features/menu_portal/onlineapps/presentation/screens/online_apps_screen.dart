@@ -48,37 +48,24 @@ class OnlineAppsScreen extends StatelessWidget {
   /// pilih app -> pilih product line -> layar.
   /// Yang sudah ada baru Request > Stationery; sisanya tampil "Coming soon".
   Future<void> _openInventory(BuildContext context) async {
-    final app = await InventoryOptionSheet.show<InventoryApp>(
-      context,
-      title: 'Choose App',
-      options: InventoryMenuData.apps,
-    );
+  final app = await InventoryOptionSheet.show<InventoryApp>(
+    context,
+    title: 'Inventory',
+    options: InventoryMenuData.apps,
+  );
 
-    if (app == null || !context.mounted) return;
+  if (app == null || !context.mounted) return;
 
-    switch (app) {
-      case InventoryApp.request:
-        final line = await InventoryOptionSheet.show<InventoryProductLine>(
-          context,
-          title: 'Request',
-          options: InventoryMenuData.productLines,
-        );
-
-        if (line == null || !context.mounted) return;
-
-        switch (line) {
-          case InventoryProductLine.stationery:
-            Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const StationeryRequestScreen()),
-            );
-          // case InventoryProductLine.uniform:
-          case InventoryProductLine.estateBuilding:
-            break; // belum siap, tidak bisa dipilih dari sheet
-        }
-      case InventoryApp.management:
-        break; // belum siap, tidak bisa dipilih dari sheet
-    }
+  switch (app) {
+    case InventoryApp.request:
+      // Langsung ke Item Request, tanpa sheet "pilih product line" lagi.
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const StationeryRequestScreen()),
+      );
+    case InventoryApp.management:
+      break; // belum siap, tidak bisa dipilih dari sheet
   }
+}
 
   @override
   Widget build(BuildContext context) {

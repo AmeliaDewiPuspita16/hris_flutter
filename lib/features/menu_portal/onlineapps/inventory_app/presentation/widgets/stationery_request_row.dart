@@ -24,11 +24,15 @@ class StationeryRequestRow extends StatelessWidget {
     required this.item,
     this.onEdit,
     this.onCancel,
+    this.onTap,
   });
 
   final StationeryRequestItem item;
   final VoidCallback? onEdit;
   final VoidCallback? onCancel;
+
+  /// Ketuk kartu: buka halaman detail.
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -37,6 +41,7 @@ class StationeryRequestRow extends StatelessWidget {
     final rejected = item.status.code == StationeryRequestStatus.codeRejected;
 
     return StationeryCard(
+      onTap: onTap,
       padding: const EdgeInsets.fromLTRB(14, 12, 6, 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -113,7 +118,7 @@ class StationeryRequestRow extends StatelessWidget {
                       ),
                       if (item.isMine) ...[
                         const SizedBox(width: 6),
-                        const _YouBadge(),
+                        const StationeryYouBadge(),
                       ],
                     ],
                   ),
@@ -158,31 +163,6 @@ class StationeryRequestRow extends StatelessWidget {
             ),
           ],
         ],
-      ),
-    );
-  }
-}
-
-/// Penanda "You" untuk request milik sendiri.
-class _YouBadge extends StatelessWidget {
-  const _YouBadge();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 1),
-      decoration: BoxDecoration(
-        border: Border.all(color: AppColors.primaryMid),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        'You',
-        style: TextStyle(
-          fontFamily: AppTextStyles.fontFamily,
-          fontSize: 10,
-          fontWeight: FontWeight.w700,
-          color: AppColors.primaryMidText,
-        ),
       ),
     );
   }

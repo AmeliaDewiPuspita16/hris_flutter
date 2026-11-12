@@ -2,7 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../../../../core/logging/app_logger.dart';
 import '../../../../../../../core/network/api_exception.dart';
-import '../../../data/inventory_stationery_repository.dart';
+import '../../../data/inventory_item_request_repository.dart';
 import 'stationery_request_list_event.dart';
 import 'stationery_request_list_state.dart';
 
@@ -13,19 +13,40 @@ import 'stationery_request_list_state.dart';
 /// `is_mine`, dan hak edit/cancel lewat `can_edit` / `can_cancel`.
 class StationeryRequestListBloc
     extends Bloc<StationeryRequestListEvent, StationeryRequestListState> {
-  StationeryRequestListBloc({required InventoryStationeryRepository repository})
+  StationeryRequestListBloc({required InventoryItemRequestRepository repository})
       : _repository = repository,
         super(const StationeryRequestListState()) {
     on<StationeryRequestListStarted>(_onLoad);
     on<StationeryRequestListRefreshed>(_onLoad);
+    on<StationeryRequestListFilterChanged>(_onFilterChanged);
     on<StationeryRequestListNextPageRequested>(_onNextPage);
   }
 
-  final InventoryStationeryRepository _repository;
+  final InventoryItemRequestRepository _repository;
 
   /// Permintaan yang tumpang tindih bisa membalas dengan urutan terbalik;
   /// hasil yang bukan permintaan terakhir dibuang.
   int _requestToken = 0;
+
+  /// Penyaring yang sedang berlaku; dipakai juga untuk refresh dan halaman
+  /// berikutnya.
+  StationeryRequestListFilter _filter = StationeryRequestListFilter.none;
+
+  Future<void> _onFilterChanged(
+    StationeryRequestListFilterChanged event,
+    Emitter<StationeryRequestListState> emit,
+  ) async {
+    if (event.filter == _filter &&
+        state.status != StationeryRequestListStatus.initial) {
+      return;
+    }
+    _filter = event.filter;
+
+    // Hasil lama tidak berlaku lagi untuk penyaring baru: kosongkan supaya
+    // layar menampilkan skeleton, bukan daftar yang salah.
+    emit(state.copyWith(items: const []));
+    await _onLoad(event, emit);
+  }
 
   Future<void> _onLoad(
     StationeryRequestListEvent event,
@@ -40,14 +61,18 @@ class StationeryRequestListBloc
     ));
 
     try {
-      final page = await _repository.fetchRequests(page: 1);
+      final page = await _repository.fetchRequests(
+        page: 1,
+        status: _filter.status,
+        search: _filter.search,
+        mine: _filter.mine,
+      );
       if (token != _requestToken) return;
 
       emit(state.copyWith(
         status: StationeryRequestListStatus.success,
         items: page.items,
         meta: page.meta,
-        counts: page.counts,
       ));
     } on ApiException catch (e) {
       if (token != _requestToken) return;
@@ -86,8 +111,12 @@ class StationeryRequestListBloc
     emit(state.copyWith(loadingMore: true));
 
     try {
-      final page =
-          await _repository.fetchRequests(page: state.meta.currentPage + 1);
+      final page = await _repository.fetchRequests(
+        page: state.meta.currentPage + 1,
+        status: _filter.status,
+        search: _filter.search,
+        mine: _filter.mine,
+      );
       if (token != _requestToken) return;
 
       // Request baru yang masuk di sela-sela halaman mendorong item lama ke

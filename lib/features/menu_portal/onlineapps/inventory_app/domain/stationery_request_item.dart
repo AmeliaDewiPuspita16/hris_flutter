@@ -1,12 +1,16 @@
 import '../../../../../core/utils/json_value.dart';
+import 'stationery_item_option.dart';
 import 'stationery_request_status.dart';
 
-/// Satu baris request stationery (satu barang per request), dipakai untuk
-/// daftar "Request Items" DAN antrean "Verification Requests".
+/// Satu LINE request (satu barang), dipakai untuk daftar "Request Items" DAN
+/// antrean "Verification Requests". [id] adalah id LINE (dipakai untuk edit,
+/// cancel, approve, reject), sedangkan [requestId] / [code] milik request
+/// induknya (satu request `REQ-..` bisa berisi beberapa line).
 ///
-/// Hak aksi ([canEdit], [canCancel]) dihitung SERVER — di web tombol Edit /
-/// Cancel hanya muncul pada request milik sendiri yang masih pending.
-/// Aplikasi hanya menampilkan tombol sesuai flag ini.
+/// Hak aksi ([canEdit], [canCancel], [canVerify]) dihitung SERVER. Aplikasi
+/// hanya menampilkan tombol sesuai flag ini.
+///
+/// Catatan penamaan: [description] adalah kolom `reason`.
 class StationeryRequestItem {
   const StationeryRequestItem({
     required this.id,
@@ -19,14 +23,26 @@ class StationeryRequestItem {
     required this.quantity,
     required this.description,
     required this.status,
+    this.requestId,
     this.stock,
     this.rejectReason,
+    this.requestedAt,
+    this.imageUrl,
+    this.category,
+    this.autoApproved = false,
+    this.approvedBy,
+    this.approvedAt,
     this.isMine = false,
     this.canEdit = false,
     this.canCancel = false,
+    this.canVerify = false,
   });
 
+  /// Id LINE
   final int id;
+
+  /// Id request induk (`request.id`); null pada data demo
+  final int? requestId;
 
   /// Kode request, mis. `REQ00554`.
   final String code;
@@ -42,21 +58,40 @@ class StationeryRequestItem {
 
   /// `PCS`, `RIM`, ...
   final String unit;
-  final int quantity;
+
+  /// Boleh desimal (sampai 4 angka di belakang koma).
+  final num quantity;
 
   /// Alasan / keterangan dari requester; kosong kalau tidak diisi.
   final String description;
   final StationeryRequestStatus status;
 
-  /// Stok barang saat ini ("Existing quantity" di form edit web).
-  final int? stock;
+  /// Stok total barang saat ini. Daftar tidak mengirimnya; hanya detail line
+  /// (`current_stock`) - null berarti "tidak diketahui".
+  final num? stock;
 
-  /// Alasan penolakan; terisi hanya bila ditolak dan verifier mengisinya.
+  /// Alasan penolakan.
   final String? rejectReason;
+
+  /// Kapan request diajukan. Null bila server tidak mengirimnya.
+  final DateTime? requestedAt;
+
+  /// Foto dan kategori barang (`item.image_url`, `item.category`).
+  final String? imageUrl;
+  final String? category;
+
+  /// True bila line langsung disetujui saat diajukan (requester adalah
+  /// Inventory Admin yang mengurus kategorinya dan stok cukup)
+  final bool autoApproved;
+  final String? approvedBy;
+  final DateTime? approvedAt;
 
   final bool isMine;
   final bool canEdit;
   final bool canCancel;
+
+  /// Boleh di-approve / reject oleh user ini
+  final bool canVerify;
 
   /// `ITE00107 - ISOLASI BENING`
   String get itemLabel => '$itemCode - $itemName';
@@ -73,42 +108,103 @@ class StationeryRequestItem {
   /// tidak diisi.
   String get reasonLabel => hasReason ? description.trim() : '-';
 
-  /// `1 PCS`
-  String get quantityLabel => unit.isEmpty ? '$quantity' : '$quantity $unit';
+  /// "11 Nov 2026 11:00" — "-" bila tanggalnya tidak diketahui.
+  String get requestedAtLabel {
+    final d = requestedAt;
+    if (d == null) return '-';
 
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
+    ];
+    String two(int n) => n.toString().padLeft(2, '0');
+
+    return '${two(d.day)} ${months[d.month - 1]} ${d.year} '
+        '${two(d.hour)}:${two(d.minute)}';
+  }
+
+  /// `1 PCS`
+  String get quantityLabel {
+    final q = formatInventoryQuantity(quantity);
+    return unit.isEmpty ? q : '$q $unit';
+  }
+
+  /// Membaca satu LINE dari `GET .../inventory/item-request` (atau
+  /// `/verifications`, `/{line}`):
+  ///
+  /// ```json
+  /// { "id": 31, "request": {"id": 12, "code": "REQ-0012",
+  ///     "requested_by": {"id": 5, "name": "Ani", "avatar_url": "..."},
+  ///     "requested_at": "2026-11-11T11:00:00+07:00", "is_mine": true},
+  ///   "item": {"id": 7, "code": "ITE00007", "name": "...", "unit": "PCS",
+  ///     "image_url": null, "category": "..."},
+  ///   "quantity": 2, "reason": "...", "status": {"code": "pending", ...},
+  ///   "auto_approved": false, "approved_by": null, "approved_at": null,
+  ///   "can_edit": true, "can_cancel": true, "can_verify": false,
+  ///   "current_stock": 40 }
+  /// ```
+  ///
   /// Melempar [FormatException] bila `id` tidak terbaca — tanpa id, aksi
   /// apa pun pada request ini tidak bisa dikirim.
   factory StationeryRequestItem.fromJson(Map<String, dynamic> json) {
     final id = json['id'];
     if (id is! int) {
-      throw const FormatException('Respons request stationery tidak memuat id');
+      throw const FormatException('Respons line request tidak memuat id');
     }
 
-    Map<String, dynamic> section(String key) =>
-        json[key] is Map<String, dynamic>
-            ? json[key] as Map<String, dynamic>
+    Map<String, dynamic> section(Map<String, dynamic> from, String key) =>
+        from[key] is Map<String, dynamic>
+            ? from[key] as Map<String, dynamic>
             : const <String, dynamic>{};
 
-    final requester = section('requester');
-    final item = section('item');
-    final quantity = json['quantity'];
+    final request = section(json, 'request');
+    final requester = section(request, 'requested_by');
+    final item = section(json, 'item');
+
+    num? number(Object? raw) {
+      if (raw is num) return raw;
+      final text = textOrNull(raw);
+      return text == null ? null : num.tryParse(text);
+    }
 
     return StationeryRequestItem(
       id: id,
-      code: '${json['code'] ?? ''}',
+      requestId: request['id'] is int ? request['id'] as int : null,
+      code: '${request['code'] ?? ''}',
       requesterName: '${requester['name'] ?? ''}',
       itemId: item['id'] is int ? item['id'] as int : null,
       itemCode: '${item['code'] ?? ''}',
       itemName: '${item['name'] ?? ''}',
       unit: '${item['unit'] ?? ''}',
-      quantity: quantity is num ? quantity.toInt() : intOr(quantity, 0),
-      description: textOrNull(json['description']) ?? '',
+      quantity: number(json['quantity']) ?? 0,
+      description: textOrNull(json['reason']) ?? '',
       status: StationeryRequestStatus.fromJson(json['status']),
-      stock: item['stock'] is num ? (item['stock'] as num).toInt() : null,
+      stock: number(json['current_stock']),
       rejectReason: textOrNull(json['reject_reason']),
-      isMine: json['is_mine'] == true,
+      requestedAt:
+          DateTime.tryParse('${request['requested_at'] ?? ''}')?.toLocal(),
+      imageUrl: textOrNull(item['image_url']),
+      category: textOrNull(item['category']),
+      autoApproved: json['auto_approved'] == true,
+      // Belum teramati: bisa teks nama atau objek {id, name}.
+      approvedBy: json['approved_by'] is Map<String, dynamic>
+          ? textOrNull((json['approved_by'] as Map<String, dynamic>)['name'])
+          : textOrNull(json['approved_by']),
+      approvedAt: DateTime.tryParse('${json['approved_at'] ?? ''}')?.toLocal(),
+      isMine: request['is_mine'] == true,
       canEdit: json['can_edit'] == true,
       canCancel: json['can_cancel'] == true,
+      canVerify: json['can_verify'] == true,
     );
   }
 }

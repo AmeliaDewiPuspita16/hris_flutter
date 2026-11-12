@@ -4,25 +4,48 @@ import '../../../../../../core/theme/app_colors.dart';
 import '../../../../../../core/theme/app_text_styles.dart';
 import '../../domain/stationery_request_status.dart';
 
-/// Baris chip penyaring di atas daftar "Request Items": All / Pending /
-/// Approved / Rejected, plus "My requests" untuk hanya menampilkan request
-/// milik sendiri. Bergulir mendatar bila layar sempit.
+/// Baris chip penyaring di atas daftar "Request Items": All + satu chip per
+/// status dari server (`options.statuses`), dan opsional "My requests".
+/// Bergulir mendatar bila layar sempit.
 ///
-/// Menyaring request yang SUDAH dimuat (sama seperti kolom search).
+/// Hanya menampilkan pilihan; penyaringannya dilakukan server lewat
+/// `?status=`.
 class StationeryFilterBar extends StatelessWidget {
   const StationeryFilterBar({
     super.key,
     required this.status,
-    required this.onlyMine,
     required this.onStatusChanged,
-    required this.onMineChanged,
+    this.statuses = defaultStatuses,
+    this.onlyMine = false,
+    this.onMineChanged,
   });
+
+  /// Dipakai sebelum `options` selesai dimuat, atau bila gagal dimuat.
+  static const defaultStatuses = <StationeryRequestStatus>[
+    StationeryRequestStatus(
+      code: StationeryRequestStatus.codePending,
+      label: 'Pending',
+    ),
+    StationeryRequestStatus(
+      code: StationeryRequestStatus.codeApproved,
+      label: 'Approved',
+    ),
+    StationeryRequestStatus(
+      code: StationeryRequestStatus.codeRejected,
+      label: 'Rejected',
+    ),
+  ];
+
+  /// Pilihan status, urut seperti dari server.
+  final List<StationeryRequestStatus> statuses;
 
   /// Kode status yang dipilih, atau null untuk "All".
   final String? status;
-  final bool onlyMine;
   final ValueChanged<String?> onStatusChanged;
-  final ValueChanged<bool> onMineChanged;
+
+  /// Chip "My requests" tampil hanya bila [onMineChanged] diisi.
+  final bool onlyMine;
+  final ValueChanged<bool>? onMineChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -37,31 +60,23 @@ class StationeryFilterBar extends StatelessWidget {
             selected: status == null,
             onTap: () => onStatusChanged(null),
           ),
-          const SizedBox(width: 8),
-          _FilterChip(
-            label: 'Pending',
-            selected: status == StationeryRequestStatus.codePending,
-            onTap: () => onStatusChanged(StationeryRequestStatus.codePending),
-          ),
-          const SizedBox(width: 8),
-          _FilterChip(
-            label: 'Approved',
-            selected: status == StationeryRequestStatus.codeApproved,
-            onTap: () => onStatusChanged(StationeryRequestStatus.codeApproved),
-          ),
-          const SizedBox(width: 8),
-          _FilterChip(
-            label: 'Rejected',
-            selected: status == StationeryRequestStatus.codeRejected,
-            onTap: () => onStatusChanged(StationeryRequestStatus.codeRejected),
-          ),
-          const SizedBox(width: 14),
-          _FilterChip(
-            label: 'My requests',
-            icon: Icons.person_outline_rounded,
-            selected: onlyMine,
-            onTap: () => onMineChanged(!onlyMine),
-          ),
+          for (final s in statuses) ...[
+            const SizedBox(width: 8),
+            _FilterChip(
+              label: s.label,
+              selected: status == s.code,
+              onTap: () => onStatusChanged(s.code),
+            ),
+          ],
+          if (onMineChanged != null) ...[
+            const SizedBox(width: 14),
+            _FilterChip(
+              label: 'My requests',
+              icon: Icons.person_outline_rounded,
+              selected: onlyMine,
+              onTap: () => onMineChanged!(!onlyMine),
+            ),
+          ],
           const SizedBox(width: 16),
         ],
       ),

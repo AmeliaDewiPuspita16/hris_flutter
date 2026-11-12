@@ -18,7 +18,17 @@ import 'observation_detail_screen.dart';
 
 /// Layar Observation Department. Kolom search di atas berlaku di kedua tab;
 class ObservationDeptScreen extends StatefulWidget {
-  const ObservationDeptScreen({super.key});
+  const ObservationDeptScreen({
+    super.key,
+    this.initialTabIndex = 0,
+    this.highlightId,
+  });
+
+  /// Tab yang dibuka: 0 = To Close, 1 = All Observations.
+  final int initialTabIndex;
+
+  /// id temuan dari notifikasi; kartunya dinaikkan ke atas dan dikedipkan.
+  final String? highlightId;
 
   @override
   State<ObservationDeptScreen> createState() => _ObservationDeptScreenState();
@@ -31,7 +41,11 @@ class _ObservationDeptScreenState extends State<ObservationDeptScreen> {
   late final ObservationRepository _repository;
   late final ObservationListCubit _cubit;
   final _searchController = TextEditingController();
-  int _tabIndex = _myOpenTab;
+  late int _tabIndex = widget.initialTabIndex.clamp(_myOpenTab, _allTab);
+
+  /// Tab tempat kartu dari notifikasi dikedipkan. Tetap setelah ditentukan,
+  /// supaya berpindah tab manual tidak memicu kedip ulang.
+  late int? _highlightTab = widget.highlightId == null ? null : _tabIndex;
 
   @override
   void initState() {
@@ -39,7 +53,28 @@ class _ObservationDeptScreenState extends State<ObservationDeptScreen> {
     // Satu instance (dari RepositoryProvider) dipakai bersama layar Add /
     // Close.
     _repository = context.read<ObservationRepository>();
-    _cubit = ObservationListCubit(repository: _repository)..load();
+    _cubit = ObservationListCubit(repository: _repository);
+    _cubit.load().then((_) => _resolveHighlightTab());
+  }
+
+  /// Setelah data termuat: kalau temuan dari notifikasi tidak ada di tab
+  /// tujuan tetapi ada di tab lain, pindah ke tab itu.
+  void _resolveHighlightTab() {
+    final id = widget.highlightId;
+    if (id == null || !mounted) return;
+
+    final state = _cubit.state;
+    bool has(List<ObservationItem> list) => list.any((i) => i.id == id);
+    final inMyOpen = has(state.myOpen);
+    final inAll = has(state.all);
+
+    final current = _tabIndex == _myOpenTab ? inMyOpen : inAll;
+    if (current) return;
+    if (inMyOpen) {
+      setState(() => _tabIndex = _highlightTab = _myOpenTab);
+    } else if (inAll) {
+      setState(() => _tabIndex = _highlightTab = _allTab);
+    }
   }
 
   @override
@@ -200,6 +235,7 @@ class _ObservationDeptScreenState extends State<ObservationDeptScreen> {
                       child: ObservationListTab(
                         state: state,
                         items: state.visibleMyOpen,
+                        highlightId: _highlightFor(_myOpenTab),
                         onRefresh: _cubit.load,
                         onOpen: _openDetail,
                         onClose: _closeItem,
@@ -217,6 +253,7 @@ class _ObservationDeptScreenState extends State<ObservationDeptScreen> {
                       child: ObservationListTab(
                         state: state,
                         items: state.visibleAll,
+                        highlightId: _highlightFor(_allTab),
                         onRefresh: _cubit.load,
                         onOpen: _openDetail,
                         // Di sini observasi open pun bisa dilihat detailnya,
@@ -238,6 +275,9 @@ class _ObservationDeptScreenState extends State<ObservationDeptScreen> {
       ),
     );
   }
+
+  String? _highlightFor(int tab) =>
+      _highlightTab == tab ? widget.highlightId : null;
 
   Widget _buildSearchRow(ObservationListState state) {
     final showFilter = _tabIndex == _allTab;
