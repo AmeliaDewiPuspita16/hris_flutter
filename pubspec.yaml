@@ -43,6 +43,8 @@ dev_dependencies:
   flutter_lints: ^6.0.0
   flutter_native_splash: ^2.4.4
   flutter_launcher_icons: ^0.14.4
+  mobile_scanner: ^7.4.2
+  equatable: ^3.0.0
 
 # Layar pembuka bawaan sistem, yang tampil sejak ikon diketuk sampai Flutter
 # menggambar frame pertamanya. Tanpa ini, layarnya putih dan pengguna melihat

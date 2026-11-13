@@ -186,6 +186,23 @@ class ApiConfig {
   static String itemRequestLineCancel(int lineId) =>
       '$itemRequest/$lineId/cancel';
 
+  /// ___________________________INVENTORY > STOCK OPNAME___________________________
+  /// Stock opname Estate Material. GET = riwayat opname (`status`, `page`,
+  /// `per_page`; `meta` bersebelahan dengan `data`, jadi lewat
+  /// [ApiClient.getEnvelope]); POST = kirim hasil hitung (draft atau langsung
+  /// confirm). `GET {opnameBase}/{id}` = isi satu opname beserta barisnya.
+  static const String opnameBase =
+      '/api/portal/apps/inventory/estate-building/stock-opname';
+
+  /// Gudang beserta rak-raknya (`data.stores[].putaways[]`), untuk mengenali
+  /// kode store / rak hasil scan.
+  static const String opnameOptions = '$opnameBase/options';
+
+  /// Daftar baris yang bisa dihitung (barang + lokasi + stok sistem).
+  static const String opnameCountableItems = '$opnameBase/countable-items';
+
+  /// Cari barang menurut kode label atau internal reference (`?code`).
+  static const String opnameLookup = '$opnameBase/lookup';
 
 
   /// ___________________________MENU OBSERVATION___________________________

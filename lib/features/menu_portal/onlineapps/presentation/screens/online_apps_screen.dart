@@ -6,6 +6,7 @@ import '../../domain/online_apps_demo_data.dart';
 import '../../procurement/presentation/screens/procurement_page.dart';
 import '../../hse_work_request/presentation/screens/hse_work_request_list_screen.dart';
 import '../../inventory_app/domain/inventory_menu.dart';
+import '../../inventory_app/presentation/screens/inventory_management_screen.dart';
 import '../../inventory_app/presentation/screens/item_request_screen.dart';
 import '../../inventory_app/presentation/widgets/inventory_option_sheet.dart';
 import '../../work_order/domain/request_type.dart';
@@ -44,28 +45,29 @@ class OnlineAppsScreen extends StatelessWidget {
     }
   }
 
-  /// "Inventory" punya alur bertingkat(Inventory / Request / Stationery):
-  /// pilih app -> pilih product line -> layar.
-  /// Yang sudah ada baru Request > Stationery; sisanya tampil "Coming soon".
+  /// "Inventory" punya 2 pilihan lewat bottom sheet: Item Request (langsung
+  /// ke layar daftar) dan Management (halaman kartu fitur pengelolaan).
   Future<void> _openInventory(BuildContext context) async {
-  final app = await InventoryOptionSheet.show<InventoryApp>(
-    context,
-    title: 'Inventory',
-    options: InventoryMenuData.apps,
-  );
+    final app = await InventoryOptionSheet.show<InventoryApp>(
+      context,
+      title: 'Inventory',
+      options: InventoryMenuData.apps,
+    );
 
-  if (app == null || !context.mounted) return;
+    if (app == null || !context.mounted) return;
 
-  switch (app) {
-    case InventoryApp.request:
-      // Langsung ke Item Request, tanpa sheet "pilih product line" lagi.
-      Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => const ItemRequestScreen()),
-      );
-    case InventoryApp.management:
-      break; // belum siap, tidak bisa dipilih dari sheet
+    switch (app) {
+      case InventoryApp.request:
+        // Langsung ke Item Request.
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const ItemRequestScreen()),
+        );
+      case InventoryApp.management:
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const InventoryManagementScreen()),
+        );
+    }
   }
-}
 
   @override
   Widget build(BuildContext context) {
