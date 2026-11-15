@@ -13,9 +13,12 @@ import '../widgets/opname_status_badge.dart';
 import '../widgets/opname_app_bar.dart';
 import '../widgets/opname_card.dart';
 import '../widgets/opname_text_styles.dart';
+import '../widgets/opname_theme.dart';
+import 'opname_count_screen.dart';
 
-/// Detail of a single opname (read-only): document info, a status note,
-/// then the counted items grouped by location.
+/// Detail of a single opname: document info, a status note, then the counted
+/// items grouped by location. A draft (`can_edit`) can be continued,
+/// confirmed or deleted from here; a confirmed opname is read-only.
 class OpnameHistoryDetailScreen extends StatefulWidget {
   final int id;
 
@@ -36,6 +39,7 @@ class OpnameHistoryDetailScreen extends StatefulWidget {
 class _OpnameHistoryDetailScreenState extends State<OpnameHistoryDetailScreen> {
   OpnameDetail? _detail;
   bool _loading = true;
+  bool _acting = false; // a confirm / delete request is running
   String? _error;
 
   @override
@@ -62,13 +66,157 @@ class _OpnameHistoryDetailScreenState extends State<OpnameHistoryDetailScreen> {
         _error = e.message;
         _loading = false;
       });
+    } catch (e, st) {
+      debugPrint('Stock opname detail failed: $e\n$st');
+      if (!mounted) return;
+      setState(() {
+        _error = 'Failed to load detail: $e';
+        _loading = false;
+      });
     }
+  }
+
+  void _showMessage(String text) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(text)));
+  }
+
+  Future<void> _continueCounting(OpnameDetail d) async {
+    final changed = await Navigator.push<bool>(
+      context,
+      opnameRoute<bool>(OpnameCountScreen(draft: d)),
+    );
+    if (changed == true && mounted) _load();
+  }
+
+  Future<void> _confirmDraft(OpnameDetail d) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Confirm this opname?'),
+        content: const Text(
+          'The stock of every counted location will be set to the counted '
+          'quantity and the differences will be booked as stock '
+          'transactions. This cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Confirm'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+
+    setState(() => _acting = true);
+    try {
+      final updated =
+          await context.read<InventoryStockOpnameRepository>().confirm(d.id);
+      if (!mounted) return;
+      setState(() {
+        _detail = updated;
+        _acting = false;
+      });
+      _showMessage('Stock opname confirmed. Stock has been adjusted.');
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() => _acting = false);
+      _showMessage(e.message);
+    }
+  }
+
+  Future<void> _deleteDraft(OpnameDetail d) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete this draft?'),
+        content: Text('${d.code} and its counted rows will be deleted.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+
+    setState(() => _acting = true);
+    try {
+      await context.read<InventoryStockOpnameRepository>().delete(d.id);
+      if (!mounted) return;
+      _showMessage('Draft deleted.');
+      Navigator.pop(context); // the history list reloads on return
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() => _acting = false);
+      _showMessage(e.message);
+    }
+  }
+
+  Widget? _actionBar(OpnameDetail? d) {
+    if (d == null || !d.canEdit) return null;
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        border: Border(top: BorderSide(color: AppColors.border)),
+      ),
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+          child: Row(
+            children: [
+              IconButton(
+                tooltip: 'Delete draft',
+                onPressed: _acting ? null : () => _deleteDraft(d),
+                icon: Icon(
+                  Icons.delete_outline,
+                  color: Theme.of(context).colorScheme.error,
+                ),
+              ),
+              const SizedBox(width: 4),
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: _acting ? null : () => _continueCounting(d),
+                  child: const Text('Continue'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: _acting ? null : () => _confirmDraft(d),
+                  child: _acting
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text('Confirm'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: OpnameAppBar(title: widget.code.isEmpty ? 'Detail Opname' : widget.code),
+      bottomNavigationBar: _actionBar(_detail),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
@@ -169,6 +317,7 @@ class _InfoCard extends StatelessWidget {
             ],
           ),
           Divider(height: 24, color: AppColors.border),
+          if (d.locationLabel.isNotEmpty) _row('Location', d.locationLabel),
           _row('Counted by', d.countedBy),
           if (d.createdAt != null)
             _row('Saved', formatShortDateTime(d.createdAt!)),
@@ -214,7 +363,8 @@ class _StatusNote extends StatelessWidget {
     final confirmed = detail.status == OpnameStatus.confirmed;
     final text = switch (detail.status) {
       OpnameStatus.draft =>
-        'Draft: awaiting admin confirmation on the website. Stock has not changed.',
+        'Draft: stock has not changed. System quantities may still change '
+            'until the draft is confirmed; the difference is final only then.',
       OpnameStatus.confirmed =>
         'Confirmed. Stock has been adjusted to match this count.',
       OpnameStatus.other => 'The app does not recognize this opname status.',

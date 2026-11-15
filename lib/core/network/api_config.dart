@@ -187,22 +187,32 @@ class ApiConfig {
       '$itemRequest/$lineId/cancel';
 
   /// ___________________________INVENTORY > STOCK OPNAME___________________________
-  /// Stock opname Estate Material. GET = riwayat opname (`status`, `page`,
-  /// `per_page`; `meta` bersebelahan dengan `data`, jadi lewat
-  /// [ApiClient.getEnvelope]); POST = kirim hasil hitung (draft atau langsung
-  /// confirm). `GET {opnameBase}/{id}` = isi satu opname beserta barisnya.
+  /// Stock opname Estate Building.
+  ///
+  /// GET = riwayat opname (`status`, `search`, `date_from`, `date_to`,
+  /// `page`, `per_page`; `meta` bersebelahan dengan `data`, jadi lewat
+  /// [ApiClient.getEnvelope]); POST = buat opname (draft, atau langsung
+  /// confirm). `GET/PUT/DELETE {opnameBase}/{id}` = detail, ganti isi draft,
+  /// hapus draft. Semuanya hanya untuk InventoryAdmin / Admin (selain itu 403).
   static const String opnameBase =
       '/api/portal/apps/inventory/estate-building/stock-opname';
 
-  /// Gudang beserta rak-raknya (`data.stores[].putaways[]`), untuk mengenali
-  /// kode store / rak hasil scan.
+  /// Store aktif beserta sub store (rak) aktifnya:
+  /// `data.stores[].subStores[]`, masing-masing `{id, text}`.
   static const String opnameOptions = '$opnameBase/options';
 
   /// Daftar baris yang bisa dihitung (barang + lokasi + stok sistem).
+  /// Query: `store_location_id`, `sub_store_id`, `search`, `opname_id`
+  /// (baris sebuah draft ikut disertakan lengkap dengan `counted_qty`).
   static const String opnameCountableItems = '$opnameBase/countable-items';
 
-  /// Cari barang menurut kode label atau internal reference (`?code`).
+  /// Cari barang menurut kode label QR / barcode (`?code=`).
   static const String opnameLookup = '$opnameBase/lookup';
+
+  static String opnameDetail(int id) => '$opnameBase/$id';
+
+  /// POST tanpa body: mengonfirmasi draft dan MENGUBAH STOK.
+  static String opnameConfirm(int id) => '$opnameBase/$id/confirm';
 
 
   /// ___________________________MENU OBSERVATION___________________________

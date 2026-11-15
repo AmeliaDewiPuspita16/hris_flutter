@@ -22,10 +22,7 @@ import '../widgets/opname_theme.dart';
 /// opens the camera.
 /// This screen only composes widgets; each part lives in widgets/home_*.dart.
 class OpnameHomeScreen extends StatefulWidget {
-  const OpnameHomeScreen({super.key, this.countedBy});
-
-  /// Name of the logged-in user, passed on to the count screen.
-  final String? countedBy;
+  const OpnameHomeScreen({super.key});
 
   @override
   State<OpnameHomeScreen> createState() => _OpnameHomeScreenState();
@@ -52,7 +49,7 @@ class _OpnameHomeScreenState extends State<OpnameHomeScreen> {
   Future<void> _start(BuildContext context) async {
     await Navigator.push(
       context,
-      opnameRoute(OpnameCountScreen(countedBy: widget.countedBy)),
+      opnameRoute(const OpnameCountScreen()),
     );
     // After returning, stock may have changed (a new count was submitted).
     if (mounted) _loadCounts();

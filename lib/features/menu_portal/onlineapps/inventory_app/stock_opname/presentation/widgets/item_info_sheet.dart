@@ -88,7 +88,7 @@ class ItemInfoSheet extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
                 child: Text(
-                  'Not placed in any store or rack yet.',
+                  'Not placed in any store or sub store yet.',
                   style: AppTextStyles.label,
                 ),
               )
@@ -106,11 +106,20 @@ class ItemInfoSheet extends StatelessWidget {
                         ),
                         title: Text(l.label, style: AppTextStyles.body),
                         subtitle: Text(
-                          'System: ${formatQty(l.systemQty)} ${info.unit}',
+                          l.isCountable
+                              ? 'System: ${formatQty(l.systemQty)} ${info.unit}'
+                              : 'System: ${formatQty(l.systemQty)} ${info.unit}'
+                                  '  ·  Not in a store: move it to a store '
+                                  'before counting',
                           style: AppTextStyles.caption,
                         ),
-                        trailing: const Icon(Icons.edit_outlined, size: 20),
-                        onTap: () => Navigator.pop(context, onCountAt(l)),
+                        trailing: l.isCountable
+                            ? const Icon(Icons.edit_outlined, size: 20)
+                            : null,
+                        enabled: l.isCountable,
+                        onTap: l.isCountable
+                            ? () => Navigator.pop(context, onCountAt(l))
+                            : null,
                       ),
                   ],
                 ),
@@ -120,8 +129,8 @@ class ItemInfoSheet extends StatelessWidget {
               child: scopeLabel == null
                   ? Text(
                       info.locations.isEmpty
-                          ? 'Scan a store or rack first to count this item there.'
-                          : 'Tap a location to count it there, or scan a store / rack first.',
+                          ? 'Scan a store or location first to count this item there.'
+                          : 'Tap a location to count it there, or scan a store / location first.',
                       style: AppTextStyles.caption,
                     )
                   : SizedBox(

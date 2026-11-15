@@ -25,6 +25,9 @@ class OpnameSummary {
   final DateTime? date;
   final OpnameStatus status;
   final String countedBy;
+  final int? countedById;
+  final int? storeLocationId;
+  final int? subStoreId;
   final String locationLabel;
   final int itemsCount;
 
@@ -39,6 +42,9 @@ class OpnameSummary {
     required this.countedBy,
     required this.locationLabel,
     required this.itemsCount,
+    this.countedById,
+    this.storeLocationId,
+    this.subStoreId,
     this.adjustedCount,
   });
 
@@ -51,6 +57,9 @@ class OpnameSummary {
       date: _asDate(json['opname_date']),
       status: OpnameStatus.parse(json['status']),
       countedBy: json['counted_by']?.toString() ?? '-',
+      countedById: _asInt(json['counted_by_id']),
+      storeLocationId: _asInt(json['store_location_id']),
+      subStoreId: _asInt(json['sub_store_id']),
       locationLabel: json['location_label']?.toString() ?? '',
       itemsCount: _asInt(json['items_count']) ?? 0,
       adjustedCount: _asInt(json['adjusted_count']),
@@ -80,11 +89,22 @@ class OpnameDetail {
   final DateTime? date;
   final OpnameStatus status;
   final String countedBy;
+  final int? countedById;
+
+  /// The scope of the header: null store = no scope; store with null sub
+  /// store = all sub stores of that store.
+  final int? storeLocationId;
+  final int? subStoreId;
+  final String locationLabel;
   final String? notes;
   final String? createdBy;
   final DateTime? createdAt;
   final String? confirmedBy;
   final DateTime? confirmedAt;
+
+  /// True while the opname is a draft: it can be continued, confirmed or
+  /// deleted. Confirmed opnames are locked.
+  final bool canEdit;
   final List<OpnameItem> items;
 
   const OpnameDetail({
@@ -94,6 +114,11 @@ class OpnameDetail {
     required this.status,
     required this.countedBy,
     required this.items,
+    this.countedById,
+    this.storeLocationId,
+    this.subStoreId,
+    this.locationLabel = '',
+    this.canEdit = false,
     this.notes,
     this.createdBy,
     this.createdAt,
@@ -114,13 +139,18 @@ class OpnameDetail {
       date: _asDate(json['opname_date']),
       status: OpnameStatus.parse(json['status']),
       countedBy: json['counted_by']?.toString() ?? '-',
+      countedById: _asInt(json['counted_by_id']),
+      storeLocationId: _asInt(json['store_location_id']),
+      subStoreId: _asInt(json['sub_store_id']),
+      locationLabel: json['location_label']?.toString() ?? '',
+      canEdit: json['can_edit'] == true,
       notes: (notes == null || notes.trim().isEmpty) ? null : notes,
       createdBy: json['created_by']?.toString(),
       createdAt: _asDate(json['created_at']),
       confirmedBy: json['confirmed_by']?.toString(),
       confirmedAt: _asDate(json['confirmed_at']),
-      // Detail rows have the same shape as countable-items
-      // (key, item, location_label, system_qty, counted_qty).
+      // Detail rows have the same shape as countable-items, plus
+      // `difference` (computed again on the app side from the two quantities).
       items: [
         for (final row in rawItems)
           OpnameItem.fromJson(Map<String, dynamic>.from(row as Map)),

@@ -2,8 +2,8 @@ import 'package:equatable/equatable.dart';
 
 /// A single count row: one item at one location.
 ///
-/// On the server a row is identified by item + warehouse + rack (the `key`
-/// field in the API, e.g. `138|0:0`). The same item on two racks is two
+/// On the server a row is identified by item + store + sub store (the `key`
+/// field in the API, e.g. `41|3:7`). The same item on two sub stores is two
 /// different rows, so [id] here uses that `key`, not the item id.
 class OpnameItem extends Equatable {
   /// The server's `key`. Unique per row, used as the id in the UI.
@@ -12,17 +12,18 @@ class OpnameItem extends Equatable {
   /// The item id on the server, sent back when saving the count.
   final int itemId;
 
-  /// Null = the item is not placed in any warehouse yet ("Unassigned").
+  /// Null = the stock is not placed in any store yet ("Unassigned"). Such a
+  /// row is shown but cannot be counted (see [isCountable]).
   final int? storeLocationId;
 
-  /// Null = the item is in a warehouse but not on a specific rack.
-  final int? putawayId;
+  /// Null = the row is the store itself, not a specific sub store (shelf).
+  final int? subStoreId;
 
-  /// The item code printed on its QR / barcode label (e.g. `ESTM00284`).
+  /// The item code printed on its QR / barcode label (e.g. `BIIE-ATK-0002`).
   final String code;
 
-  /// The item's own reference (e.g. `ABKA001`); scanning it also finds the
-  /// item. Null if the item has none.
+  /// Optional second code that also finds the item. The current API does not
+  /// send it; kept so older data still parses.
   final String? internalReference;
 
   final String name;
@@ -35,6 +36,10 @@ class OpnameItem extends Equatable {
   /// The physically counted quantity; null if not counted yet.
   final double? countedQty;
 
+  /// Per-row note (max 255 characters). Kept so a draft that is edited and
+  /// saved again does not lose the notes it already had.
+  final String? notes;
+
   const OpnameItem({
     required this.id,
     required this.itemId,
@@ -45,8 +50,9 @@ class OpnameItem extends Equatable {
     required this.systemQty,
     this.internalReference,
     this.storeLocationId,
-    this.putawayId,
+    this.subStoreId,
     this.countedQty,
+    this.notes,
   });
 
   /// Whether a scanned / typed code is this item's code or reference.
@@ -58,6 +64,10 @@ class OpnameItem extends Equatable {
 
   bool get isCounted => countedQty != null;
 
+  /// Stock without a store cannot be counted: the server rejects it. Move the
+  /// stock into a store in the portal first.
+  bool get isCountable => storeLocationId != null;
+
   /// Difference of counted - system. Positive = surplus, negative =
   /// shortage. Null if not counted yet.
   double? get difference => countedQty == null ? null : countedQty! - systemQty;
@@ -66,7 +76,7 @@ class OpnameItem extends Equatable {
     id: id,
     itemId: itemId,
     storeLocationId: storeLocationId,
-    putawayId: putawayId,
+    subStoreId: subStoreId,
     code: code,
     internalReference: internalReference,
     name: name,
@@ -74,9 +84,11 @@ class OpnameItem extends Equatable {
     location: location,
     systemQty: systemQty,
     countedQty: qty,
+    notes: notes,
   );
 
-  /// From one `data` element of `GET .../stock-opname/countable-items`.
+  /// From one `data` element of `GET .../stock-opname/countable-items`, or
+  /// one element of `items` in an opname detail.
   ///
   /// Throws [FormatException] if the shape is not recognized, so the
   /// repository can turn it into a clear error message.
@@ -94,7 +106,7 @@ class OpnameItem extends Equatable {
       id: key,
       itemId: itemId,
       storeLocationId: _asInt(json['store_location_id']),
-      putawayId: _asInt(json['putaway_id']),
+      subStoreId: _asInt(json['sub_store_id']),
       code: item['code']?.toString() ?? '',
       internalReference: _nonEmpty(item['internal_reference']),
       name: item['name']?.toString() ?? '',
@@ -102,15 +114,19 @@ class OpnameItem extends Equatable {
       location: json['location_label']?.toString() ?? 'Unassigned',
       systemQty: _asDouble(json['system_qty']) ?? 0,
       countedQty: _asDouble(json['counted_qty']),
+      notes: _nonEmpty(json['notes']),
     );
   }
 
-  /// The shape `POST .../stock-opname` expects for a single row.
+  /// The shape `POST` / `PUT .../stock-opname` expects for a single row.
+  /// `sub_store_id: null` means "the store itself". Quantities take at most
+  /// 4 decimals.
   Map<String, dynamic> toSubmitJson() => {
     'item_id': itemId,
     'store_location_id': storeLocationId,
-    'putaway_id': putawayId,
-    'counted_qty': countedQty,
+    'sub_store_id': subStoreId,
+    'counted_qty': double.parse(countedQty!.toStringAsFixed(4)),
+    if (notes != null) 'notes': notes,
   };
 
   static int? _asInt(dynamic v) {
@@ -136,7 +152,7 @@ class OpnameItem extends Equatable {
         id,
         itemId,
         storeLocationId,
-        putawayId,
+        subStoreId,
         code,
         internalReference,
         name,
@@ -144,67 +160,49 @@ class OpnameItem extends Equatable {
         location,
         systemQty,
         countedQty,
+        notes,
       ];
 }
 
-/// A rack from `GET .../stock-opname/options`. [text] looks like
-/// `PUT00003 - Test Rak`; [code] is the part before " - ".
-class OpnameRack extends Equatable {
+/// A sub store (shelf) from `GET .../stock-opname/options`
+/// (`stores[].subStores[]`). Unlike the old API its [text] carries no code.
+class OpnameSubStore extends Equatable {
   final int id;
   final int storeId;
   final String text;
 
-  const OpnameRack({
+  const OpnameSubStore({
     required this.id,
     required this.storeId,
     required this.text,
   });
 
-  String get code => _codeOf(text);
-
-  String get name => _nameOf(text);
-
   @override
   List<Object?> get props => [id, storeId, text];
 }
 
-/// A store (warehouse) from `GET .../stock-opname/options`. [text] looks like
-/// `STR00001 - Gudang Utama Estate`; [code] is the part before " - ".
+/// A store from `GET .../stock-opname/options`. [text] is the plain store
+/// name (e.g. `Lantai 2 Wisma`), the same as in the location labels.
 class OpnameStore extends Equatable {
   final int id;
   final String text;
 
   const OpnameStore({required this.id, required this.text});
 
-  String get code => _codeOf(text);
-
-  /// The store name as the server writes it in location labels.
-  String get name => _nameOf(text).replaceAll(' (inactive)', '');
-
   @override
   List<Object?> get props => [id, text];
 }
 
-/// The stores and racks that can be scanned, from one options call.
+/// The stores and sub stores the user may count, from one options call.
 class OpnameLocations {
   final List<OpnameStore> stores;
-  final List<OpnameRack> racks;
+  final List<OpnameSubStore> subStores;
 
-  const OpnameLocations({this.stores = const [], this.racks = const []});
-}
-
-String _codeOf(String text) {
-  final i = text.indexOf(' - ');
-  return (i < 0 ? text : text.substring(0, i)).trim();
-}
-
-String _nameOf(String text) {
-  final i = text.indexOf(' - ');
-  return (i < 0 ? text : text.substring(i + 3)).trim();
+  const OpnameLocations({this.stores = const [], this.subStores = const []});
 }
 
 /// `GET .../stock-opname/lookup?code=`: one item found by the code on its
-/// label (or its internal reference), with every location holding it.
+/// label, with every location holding it.
 class OpnameLookup extends Equatable {
   final int itemId;
   final String code;
@@ -212,6 +210,7 @@ class OpnameLookup extends Equatable {
   final String name;
   final String unit;
   final String? category;
+  final double? minStock;
   final double totalQty;
   final List<OpnameLookupLocation> locations;
 
@@ -224,6 +223,7 @@ class OpnameLookup extends Equatable {
     required this.locations,
     this.internalReference,
     this.category,
+    this.minStock,
   });
 
   factory OpnameLookup.fromJson(Map<String, dynamic> json) {
@@ -239,6 +239,7 @@ class OpnameLookup extends Equatable {
       name: item['name']?.toString() ?? '',
       unit: item['unit']?.toString() ?? '',
       category: OpnameItem._nonEmpty(item['category']),
+      minStock: OpnameItem._asDouble(item['min_stock']),
       totalQty: OpnameItem._asDouble(json['total_qty']) ?? 0,
       locations: [
         if (locations is List)
@@ -246,7 +247,7 @@ class OpnameLookup extends Equatable {
             OpnameLookupLocation(
               key: l['key']?.toString() ?? '',
               storeLocationId: OpnameItem._asInt(l['store_location_id']),
-              putawayId: OpnameItem._asInt(l['putaway_id']),
+              subStoreId: OpnameItem._asInt(l['sub_store_id']),
               label: l['location_label']?.toString() ?? 'Unassigned',
               systemQty: OpnameItem._asDouble(l['system_qty']) ?? 0,
             ),
@@ -258,18 +259,18 @@ class OpnameLookup extends Equatable {
   /// item has no stock row at that location yet).
   OpnameItem rowAt({
     required int? storeLocationId,
-    required int? putawayId,
+    required int? subStoreId,
     required String label,
   }) {
     final existing = locations
         .where((l) =>
-            l.storeLocationId == storeLocationId && l.putawayId == putawayId)
+            l.storeLocationId == storeLocationId && l.subStoreId == subStoreId)
         .firstOrNull;
     return OpnameItem(
-      id: '$itemId|${storeLocationId ?? 0}:${putawayId ?? 0}',
+      id: '$itemId|${storeLocationId ?? 0}:${subStoreId ?? 0}',
       itemId: itemId,
       storeLocationId: storeLocationId,
-      putawayId: putawayId,
+      subStoreId: subStoreId,
       code: code,
       internalReference: internalReference,
       name: name,
@@ -280,14 +281,23 @@ class OpnameLookup extends Equatable {
   }
 
   @override
-  List<Object?> get props =>
-      [itemId, code, internalReference, name, unit, category, totalQty, locations];
+  List<Object?> get props => [
+        itemId,
+        code,
+        internalReference,
+        name,
+        unit,
+        category,
+        minStock,
+        totalQty,
+        locations,
+      ];
 }
 
 class OpnameLookupLocation extends Equatable {
   final String key;
   final int? storeLocationId;
-  final int? putawayId;
+  final int? subStoreId;
   final String label;
   final double systemQty;
 
@@ -296,9 +306,12 @@ class OpnameLookupLocation extends Equatable {
     required this.label,
     required this.systemQty,
     this.storeLocationId,
-    this.putawayId,
+    this.subStoreId,
   });
 
+  /// Stock without a store cannot be counted.
+  bool get isCountable => storeLocationId != null;
+
   @override
-  List<Object?> get props => [key, storeLocationId, putawayId, label, systemQty];
+  List<Object?> get props => [key, storeLocationId, subStoreId, label, systemQty];
 }

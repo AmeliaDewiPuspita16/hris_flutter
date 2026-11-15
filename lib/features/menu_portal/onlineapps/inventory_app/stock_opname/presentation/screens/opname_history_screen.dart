@@ -91,6 +91,15 @@ class _OpnameHistoryScreenState extends State<OpnameHistoryScreen> {
         _error = e.message;
         _loading = false;
       });
+    } catch (e, st) {
+      // Anything that is not an ApiException (missing RepositoryProvider,
+      // parsing error, ...) must not leave the spinner running forever.
+      debugPrint('Stock opname history failed: $e\n$st');
+      if (!mounted || gen != _generation) return;
+      setState(() {
+        _error = 'Failed to load history: $e';
+        _loading = false;
+      });
     }
   }
 
@@ -240,6 +249,10 @@ class _HistoryCard extends StatelessWidget {
                   '${row.itemsCount == 1 ? 'item' : 'items'}',
                   style: AppTextStyles.label,
                 ),
+                if (row.locationLabel.isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(row.locationLabel, style: AppTextStyles.caption),
+                ],
               ],
             ),
           ),

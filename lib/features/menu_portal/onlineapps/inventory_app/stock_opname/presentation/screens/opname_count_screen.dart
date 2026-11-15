@@ -8,6 +8,7 @@ import '../../../../../../../core/theme/app_colors.dart';
 import '../../../../../../../core/theme/app_text_styles.dart';
 import '../../data/inventory_stock_opname_repository.dart';
 import '../../domain/opname_item.dart';
+import '../../domain/opname_record.dart';
 import '../widgets/opname_line_tile.dart';
 import '../widgets/scanner_panel.dart';
 import '../widgets/code_search_sheet.dart';
@@ -21,19 +22,20 @@ import '../widgets/opname_theme.dart';
 /// Camera + item list screen. Labels carry the same code as a QR code
 /// (square) and a Code 128 barcode (bars); both are read.
 ///
-/// - Scan a STORE (`STR...`) -> the list shows only the items in that store.
-/// - Scan a RACK (`PUT...`)  -> the list shows only the items on that rack.
-/// - Scan an ITEM (`ESTM...` or its internal reference) -> opens the item
+/// - Scan a STORE (its name) -> the list shows only the items in that store.
+/// - Scan a location label (`Store / Sub store`) -> only the items there.
+/// - Scan an ITEM (its label code, e.g. `BIIE-ATK-0002`) -> opens the item
 ///   detail directly. An item that is not in the list is looked up on the
 ///   server: its data and stock per location are shown, and it can be counted
 ///   at the scanned store / rack.
 /// - Edit button in the list -> opens the item detail.
 class OpnameCountScreen extends StatefulWidget {
-  const OpnameCountScreen({super.key, this.countedBy});
+  const OpnameCountScreen({super.key, this.draft});
 
-  /// Name of the logged-in user, sent as `counted_by` when the count is
-  /// submitted. Falls back to "Mobile" when null.
-  final String? countedBy;
+  /// A draft to continue. Its saved counts are loaded into the list and
+  /// saving replaces the draft (`PUT`) instead of creating a new opname.
+  /// The counter is always the logged-in user; the server sets it.
+  final OpnameDetail? draft;
 
   @override
   State<OpnameCountScreen> createState() => _OpnameCountScreenState();
@@ -62,6 +64,8 @@ class _OpnameCountScreenState extends State<OpnameCountScreen>
       BarcodeFormat.codabar,
     ],
   );
+
+  bool get _editingDraft => widget.draft != null;
 
   /// If true, the count is confirmed on the server right away and CHANGES
   /// STOCK (cannot be undone). If false, it is only saved as a draft and
@@ -93,9 +97,11 @@ class _OpnameCountScreenState extends State<OpnameCountScreen>
       _loading = true;
       _loadError = null;
     });
-    final repo = context.read<InventoryStockOpnameRepository>();
     try {
-      final items = await repo.fetchCountableItems();
+      // Read inside the try: if the repository is not provided above this
+      // route, the error is shown instead of an endless spinner.
+      final repo = context.read<InventoryStockOpnameRepository>();
+      final items = await repo.fetchCountableItems(opnameId: widget.draft?.id);
       // The store / rack list is only supplementary (to recognize store and
       // rack codes). If it fails, scanning still works via location labels.
       final locations = await repo
@@ -114,6 +120,15 @@ class _OpnameCountScreenState extends State<OpnameCountScreen>
         _loadError = e.message;
         _loading = false;
       });
+    } catch (e, st) {
+      // Non-API errors (parsing, cast, ...) must not leave the spinner
+      // running forever.
+      debugPrint('Stock opname load failed: $e\n$st');
+      if (!mounted) return;
+      setState(() {
+        _loadError = 'Failed to load items: $e';
+        _loading = false;
+      });
     }
   }
 
@@ -127,6 +142,9 @@ class _OpnameCountScreenState extends State<OpnameCountScreen>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (!_cameraOn || _busy) return;
+    // While the permission dialog is showing, the app goes inactive; stopping
+    // the camera then would cancel the start that is waiting for the answer.
+    if (!_controller.value.hasCameraPermission) return;
     if (state == AppLifecycleState.resumed) {
       _startCamera();
     } else if (state == AppLifecycleState.inactive ||
@@ -138,8 +156,9 @@ class _OpnameCountScreenState extends State<OpnameCountScreen>
   Future<void> _startCamera() async {
     try {
       await _controller.start();
-    } catch (_) {
-      // Camera errors are shown by the errorBuilder in ScannerPanel.
+    } catch (e) {
+      // Also shown by the errorBuilder in ScannerPanel; logged for the console.
+      debugPrint('Camera start failed: $e');
     }
   }
 
@@ -216,43 +235,37 @@ class _OpnameCountScreenState extends State<OpnameCountScreen>
     await _openDetail(item);
   }
 
-  /// The store / rack a scanned or typed code stands for: a location label
-  /// from the list, a rack code (`PUT...`) or a store code (`STR...`).
+  /// The store / location a scanned or typed code stands for: a location
+  /// label from the list (`Store / Sub store`) or a store name.
+  ///
+  /// The API sends no codes for stores and sub stores, and a sub store name
+  /// alone (e.g. `Rak A`) can exist in several stores, so a sub store is only
+  /// recognized by its full label.
   _Scope? _scopeForCode(String code) {
     final byLabel = _scopeForLabel(code);
     if (byLabel != null) return byLabel;
 
-    final rack = _locations.racks
-        .where((r) => r.code.toLowerCase() == code)
-        .firstOrNull;
-    if (rack != null) {
-      final store =
-          _locations.stores.where((s) => s.id == rack.storeId).firstOrNull;
-      return _Scope.location(
-        storeId: rack.storeId,
-        putawayId: rack.id,
-        label: store == null ? rack.name : '${store.name} / ${rack.name}',
-      );
-    }
-
     final store = _locations.stores
-        .where((s) => s.code.toLowerCase() == code)
+        .where((s) => s.text.trim().toLowerCase() == code)
         .firstOrNull;
     if (store != null) {
-      return _Scope.store(storeId: store.id, label: store.name);
+      return _Scope.store(storeId: store.id, label: store.text);
     }
     return null;
   }
 
   /// The exact location of the list whose label is [label] (case-insensitive).
+  /// Unassigned rows are ignored: they have no store to filter on.
   _Scope? _scopeForLabel(String label) {
     final l = label.trim().toLowerCase();
-    final row = _items.where((e) => e.location.toLowerCase() == l).firstOrNull;
+    final row = _items
+        .where((e) => e.isCountable && e.location.toLowerCase() == l)
+        .firstOrNull;
     return row == null
         ? null
         : _Scope.location(
             storeId: row.storeLocationId,
-            putawayId: row.putawayId,
+            subStoreId: row.subStoreId,
             label: row.location,
           );
   }
@@ -317,7 +330,7 @@ class _OpnameCountScreenState extends State<OpnameCountScreen>
             ? _scope!.rowFromLookup(info)
             : info.rowAt(
                 storeLocationId: location.storeLocationId,
-                putawayId: location.putawayId,
+                subStoreId: location.subStoreId,
                 label: location.label,
               ),
       ),
@@ -336,6 +349,13 @@ class _OpnameCountScreenState extends State<OpnameCountScreen>
   }
 
   Future<void> _openDetail(OpnameItem item) async {
+    if (!item.isCountable) {
+      _showMessage(
+        '${item.code} is not placed in any store yet, so it cannot be '
+        'counted. Move its stock to a store first.',
+      );
+      return;
+    }
     final wasBusy = _busy;
     _busy = true; // block new scans while the detail is open
     if (_cameraOn) await _stopCamera();
@@ -421,23 +441,31 @@ class _OpnameCountScreenState extends State<OpnameCountScreen>
 
   // ------------------------------------------------------------- confirm
 
-  int get _countedTotal => _items.where((e) => e.isCounted).length;
+  int get _countedTotal =>
+      _items.where((e) => e.isCounted && e.isCountable).length;
 
   Future<void> _confirm() async {
-    final counted = _items.where((e) => e.isCounted).toList();
+    final counted =
+        _items.where((e) => e.isCounted && e.isCountable).toList();
     if (counted.isEmpty || _submitting) return;
 
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(_confirmOnSubmit ? 'Confirm count?' : 'Save count?'),
+        title: Text(
+          _confirmOnSubmit
+              ? 'Confirm count?'
+              : _editingDraft
+                  ? 'Update draft?'
+                  : 'Save count?',
+        ),
         content: Text(
           _confirmOnSubmit
               ? '${_itemsLabel(counted.length)} will be confirmed. System '
                   'stock will be updated to match the count, and this cannot '
                   'be undone.'
               : '${_itemsLabel(counted.length)} will be saved as a draft. '
-                  'System stock will not change until confirmed in the portal.',
+                  'System stock will not change until the draft is confirmed.',
         ),
         actions: [
           TextButton(
@@ -446,7 +474,13 @@ class _OpnameCountScreenState extends State<OpnameCountScreen>
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: Text(_confirmOnSubmit ? 'Confirm' : 'Save'),
+            child: Text(
+              _confirmOnSubmit
+                  ? 'Confirm'
+                  : _editingDraft
+                      ? 'Update'
+                      : 'Save',
+            ),
           ),
         ],
       ),
@@ -454,15 +488,28 @@ class _OpnameCountScreenState extends State<OpnameCountScreen>
     if (ok != true || !mounted) return;
 
     final repo = context.read<InventoryStockOpnameRepository>();
-    final countedBy = widget.countedBy ?? 'Mobile';
+
+    // The header scope is only sent when the user picked a store / location
+    // filter AND every counted row lies inside it; otherwise the server
+    // would reject the rows outside it.
+    final scope = _scope;
+    int? headerStore;
+    int? headerSubStore;
+    if (scope != null && scope.storeId != null && counted.every(scope.contains)) {
+      headerStore = scope.storeId;
+      headerSubStore = scope.wholeStore ? null : scope.subStoreId;
+    }
 
     setState(() => _submitting = true);
     try {
-      await repo.submit(
+      await repo.saveCount(
         counted: counted,
-        countedBy: countedBy,
         confirm: _confirmOnSubmit,
-        notes: 'From the mobile app',
+        opnameId: widget.draft?.id,
+        date: widget.draft?.date,
+        notes: widget.draft?.notes ?? 'From the mobile app',
+        storeLocationId: headerStore,
+        subStoreId: headerSubStore,
       );
       if (!mounted) return;
       _showMessage(
@@ -470,6 +517,11 @@ class _OpnameCountScreenState extends State<OpnameCountScreen>
             ? '${_itemsLabel(counted.length)} confirmed.'
             : '${_itemsLabel(counted.length)} saved as a draft.',
       );
+      if (_editingDraft) {
+        // The draft changed: go back so the caller reloads it.
+        Navigator.pop(context, true);
+        return;
+      }
       setState(() => _submitting = false);
       await _load(); // reload: the count has been submitted
     } on ApiException catch (e) {
@@ -537,7 +589,7 @@ class _OpnameCountScreenState extends State<OpnameCountScreen>
 
     return Scaffold(
       appBar: OpnameAppBar(
-        title: 'Stock Opname',
+        title: _editingDraft ? widget.draft!.code : 'Stock Opname',
         actions: [
           IconButton(
             tooltip: _cameraOn ? 'Close camera' : 'Open camera',
@@ -645,7 +697,9 @@ class _OpnameCountScreenState extends State<OpnameCountScreen>
                                     padding: const EdgeInsets.only(bottom: 10),
                                     child: OpnameLineTile(
                                       item: item,
-                                      onEdit: () => _openDetail(item),
+                                      onEdit: item.isCountable
+                                          ? () => _openDetail(item)
+                                          : null,
                                     ),
                                   );
                                 },
@@ -684,7 +738,9 @@ class _OpnameCountScreenState extends State<OpnameCountScreen>
                         : Text(
                             _confirmOnSubmit
                                 ? 'Confirm ($_countedTotal)'
-                                : 'Save ($_countedTotal)',
+                                : _editingDraft
+                                    ? 'Update ($_countedTotal)'
+                                    : 'Save ($_countedTotal)',
                           ),
                   ),
                 ),
@@ -701,34 +757,34 @@ enum _OtherLocation { countHere, openThere }
 
 /// The store or rack the list is filtered to, from a store / rack scan.
 class _Scope {
-  /// One exact location: a rack, or a store without a rack.
+  /// One exact location: a sub store, or a store itself (no sub store).
   const _Scope.location({
     required this.storeId,
-    required this.putawayId,
+    required this.subStoreId,
     required this.label,
   }) : wholeStore = false;
 
-  /// A whole store: every location in it, racks included.
+  /// A whole store: every location in it, sub stores included.
   const _Scope.store({required int this.storeId, required this.label})
-      : putawayId = null,
+      : subStoreId = null,
         wholeStore = true;
 
   final int? storeId;
-  final int? putawayId;
+  final int? subStoreId;
   final bool wholeStore;
   final String label;
 
   bool contains(OpnameItem e) =>
-      e.storeLocationId == storeId && (wholeStore || e.putawayId == putawayId);
+      e.storeLocationId == storeId && (wholeStore || e.subStoreId == subStoreId);
 
   /// [base]'s item counted here: on the rack, or in the store itself (no
   /// rack) for a whole store. The system has nothing here yet, so its
   /// quantity is 0 and the whole count is a surplus.
   OpnameItem rowFor(OpnameItem base) => OpnameItem(
-        id: '${base.itemId}|${storeId ?? 0}:${putawayId ?? 0}',
+        id: '${base.itemId}|${storeId ?? 0}:${subStoreId ?? 0}',
         itemId: base.itemId,
         storeLocationId: storeId,
-        putawayId: putawayId,
+        subStoreId: subStoreId,
         code: base.code,
         internalReference: base.internalReference,
         name: base.name,
@@ -738,7 +794,7 @@ class _Scope {
       );
 
   OpnameItem rowFromLookup(OpnameLookup info) =>
-      info.rowAt(storeLocationId: storeId, putawayId: putawayId, label: label);
+      info.rowAt(storeLocationId: storeId, subStoreId: subStoreId, label: label);
 }
 
 /// Step hint: "Scan a rack" first (optional), then "Scan an item", with a
@@ -915,8 +971,9 @@ class _LoadError extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Scrollable so a long message can never overflow the screen.
     return Center(
-      child: Padding(
+      child: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,

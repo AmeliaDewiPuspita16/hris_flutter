@@ -60,6 +60,14 @@ class OpnameLineTile extends StatelessWidget {
                               .copyWith(letterSpacing: 0.6)),
                       const SizedBox(height: 2),
                       Text(item.name, style: OpnameTextStyles.bodyBold),
+                      if (!item.isCountable)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 2),
+                          child: Text(
+                            'Not in a store yet, so it cannot be counted',
+                            style: AppTextStyles.caption,
+                          ),
+                        ),
                     ],
                   ),
                 ),

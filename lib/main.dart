@@ -28,6 +28,7 @@ import 'features/menu_portal/onlineapps/procurement/data/procurement_repository.
 import 'features/menu_portal/onlineapps/work_order/est_request/data/est_request_repository.dart';
 import 'features/menu_portal/onlineapps/work_order/it_request/data/it_request_repository.dart';
 import 'features/menu_portal/onlineapps/inventory_app/data/inventory_item_request_repository.dart';
+import 'features/menu_portal/onlineapps/inventory_app/stock_opname/data/inventory_stock_opname_repository.dart';
 import 'features/notifikasi/data/device_token_repository.dart';
 import 'features/notifikasi/data/notification_inbox_repository.dart';
 import 'features/overtime_request/data/overtime_repository.dart';
@@ -102,6 +103,8 @@ Future<void> main() async {
       hseWorkRequestRepository: HseWorkRequestRepository(apiClient: apiClient),
       inventoryItemRequestRepository:
           InventoryItemRequestRepository(apiClient: apiClient),
+      inventoryStockOpnameRepository:
+          InventoryStockOpnameRepository(apiClient: apiClient),
       weatherRepository: WeatherRepository(apiClient: apiClient),
     ),
   );
@@ -136,6 +139,7 @@ class MyApp extends StatelessWidget {
     MasterDocumentRepository? masterDocumentRepository,
     HseWorkRequestRepository? hseWorkRequestRepository,
     InventoryItemRequestRepository? inventoryItemRequestRepository,
+    InventoryStockOpnameRepository? inventoryStockOpnameRepository,
     WeatherRepository? weatherRepository,
   })  : themeCubit = themeCubit ?? ThemeCubit(),
         departmentRepository = departmentRepository ??
@@ -172,6 +176,8 @@ class MyApp extends StatelessWidget {
             HseWorkRequestRepository(apiClient: ApiClient()),
         inventoryItemRequestRepository = inventoryItemRequestRepository ??
             InventoryItemRequestRepository(apiClient: ApiClient()),
+        inventoryStockOpnameRepository = inventoryStockOpnameRepository ??
+            InventoryStockOpnameRepository(apiClient: ApiClient()),
         weatherRepository =
             weatherRepository ?? WeatherRepository(apiClient: ApiClient());
 
@@ -194,6 +200,7 @@ class MyApp extends StatelessWidget {
   final MasterDocumentRepository masterDocumentRepository;
   final HseWorkRequestRepository hseWorkRequestRepository;
   final InventoryItemRequestRepository inventoryItemRequestRepository;
+  final InventoryStockOpnameRepository inventoryStockOpnameRepository;
   final WeatherRepository weatherRepository;
 
   @override
@@ -222,6 +229,7 @@ class MyApp extends StatelessWidget {
         RepositoryProvider.value(value: masterDocumentRepository),
         RepositoryProvider.value(value: hseWorkRequestRepository),
         RepositoryProvider.value(value: inventoryItemRequestRepository),
+        RepositoryProvider.value(value: inventoryStockOpnameRepository),
         RepositoryProvider.value(value: weatherRepository),
       ],
       child: BlocProvider.value(
