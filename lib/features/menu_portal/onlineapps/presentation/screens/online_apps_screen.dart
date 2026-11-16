@@ -47,11 +47,23 @@ class OnlineAppsScreen extends StatelessWidget {
 
   /// "Inventory" punya 2 pilihan lewat bottom sheet: Item Request (langsung
   /// ke layar daftar) dan Management (halaman kartu fitur pengelolaan).
-  Future<void> _openInventory(BuildContext context) async {
+    Future<void> _openInventory(BuildContext context) async {
+    // Management hanya untuk Inventory Admin / Reviewer / Admin.
+    final canManage = context
+            .read<AuthBloc>()
+            .state
+            .session
+            ?.user
+            .canAccessInventoryManagement ??
+        false;
+
     final app = await InventoryOptionSheet.show<InventoryApp>(
       context,
       title: 'Inventory',
-      options: InventoryMenuData.apps,
+      options: [
+        for (final o in InventoryMenuData.apps)
+          if (o.value != InventoryApp.management || canManage) o,
+      ],
     );
 
     if (app == null || !context.mounted) return;

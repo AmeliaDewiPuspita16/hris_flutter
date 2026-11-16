@@ -48,8 +48,6 @@ class _OpnameCountScreenState extends State<OpnameCountScreen>
     detectionSpeed: DetectionSpeed.normal,
     detectionTimeoutMs: 1000,
     facing: CameraFacing.back,
-    // Square codes (QR, Data Matrix) and bar codes. Inventory labels print
-    // a QR code and a Code 128 barcode of the same code.
     formats: const [
       BarcodeFormat.qrCode,
       BarcodeFormat.dataMatrix,
@@ -67,23 +65,17 @@ class _OpnameCountScreenState extends State<OpnameCountScreen>
 
   bool get _editingDraft => widget.draft != null;
 
-  /// If true, the count is confirmed on the server right away and CHANGES
-  /// STOCK (cannot be undone). If false, it is only saved as a draft and
-  /// confirmed via the portal. Switch to true once this flow is tested.
   static const bool _confirmOnSubmit = false;
-
-  /// The note saved when the user types none, so the portal shows where the
-  /// opname came from.
   static const String _defaultNotes = 'From the mobile app';
 
   List<OpnameItem> _items = const [];
   OpnameLocations _locations = const OpnameLocations();
-  _Scope? _scope; // the active store / rack (from a store or rack scan)
+  _Scope? _scope;
   bool _cameraOn = true;
-  bool _busy = false; // true while a code is processed / the detail is open
+  bool _busy = false;
   bool _loading = true;
   bool _submitting = false;
-  int _filter = 0; // 0 all, 1 not counted, 2 counted
+  int _filter = 0;
   String? _loadError;
 
   @override
@@ -94,20 +86,14 @@ class _OpnameCountScreenState extends State<OpnameCountScreen>
     _load();
   }
 
-  // ---------------------------------------------------------------- data
-
   Future<void> _load() async {
     setState(() {
       _loading = true;
       _loadError = null;
     });
     try {
-      // Read inside the try: if the repository is not provided above this
-      // route, the error is shown instead of an endless spinner.
       final repo = context.read<InventoryStockOpnameRepository>();
       final items = await repo.fetchCountableItems(opnameId: widget.draft?.id);
-      // The store / rack list is only supplementary (to recognize store and
-      // rack codes). If it fails, scanning still works via location labels.
       final locations = await repo
           .fetchLocations()
           .catchError((_) => const OpnameLocations());
@@ -125,8 +111,6 @@ class _OpnameCountScreenState extends State<OpnameCountScreen>
         _loading = false;
       });
     } catch (e, st) {
-      // Non-API errors (parsing, cast, ...) must not leave the spinner
-      // running forever.
       debugPrint('Stock opname load failed: $e\n$st');
       if (!mounted) return;
       setState(() {
@@ -146,8 +130,6 @@ class _OpnameCountScreenState extends State<OpnameCountScreen>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (!_cameraOn || _busy) return;
-    // While the permission dialog is showing, the app goes inactive; stopping
-    // the camera then would cancel the start that is waiting for the answer.
     if (!_controller.value.hasCameraPermission) return;
     if (state == AppLifecycleState.resumed) {
       _startCamera();
@@ -161,7 +143,6 @@ class _OpnameCountScreenState extends State<OpnameCountScreen>
     try {
       await _controller.start();
     } catch (e) {
-      // Also shown by the errorBuilder in ScannerPanel; logged for the console.
       debugPrint('Camera start failed: $e');
     }
   }
@@ -177,8 +158,6 @@ class _OpnameCountScreenState extends State<OpnameCountScreen>
     _cameraOn ? _startCamera() : _stopCamera();
   }
 
-  // ---------------------------------------------------------------- scan
-
   Future<void> _onCode(String raw) async {
     if (_busy || _loading || _submitting || _loadError != null) return;
     _busy = true;
@@ -193,7 +172,6 @@ class _OpnameCountScreenState extends State<OpnameCountScreen>
   Future<void> _handleCode(String raw) async {
     final code = raw.trim().toLowerCase();
 
-    // 1) Store / rack code -> filter the list to that store / rack.
     final scope = _scopeForCode(code);
     if (scope != null) {
       setState(() => _scope = scope);
@@ -206,18 +184,12 @@ class _OpnameCountScreenState extends State<OpnameCountScreen>
       return;
     }
 
-    // 2) Item code (or internal reference) -> go straight to the detail.
     var matches = _items.where((e) => e.matchesCode(code)).toList();
     if (matches.isEmpty) {
-      // Not in the list (e.g. no stock row anywhere yet): ask the server.
       await _lookUp(raw.trim());
       return;
     }
 
-    // Stock without a store ("Unassigned") cannot be counted. When the item
-    // also has countable rows, ignore the Unassigned ones so a scan does not
-    // ask the user to choose between a row that can be counted and one that
-    // cannot.
     final countable = matches.where((e) => e.isCountable).toList();
     if (countable.isNotEmpty) matches = countable;
 
@@ -227,15 +199,13 @@ class _OpnameCountScreenState extends State<OpnameCountScreen>
       if (inScope.isNotEmpty) {
         matches = inScope;
       } else {
-        // The item exists, but somewhere else: count it here, or open it
-        // where the system has it.
         final choice = await _askOtherLocation(matches, active);
         if (choice == null || !mounted) return;
         if (choice == _OtherLocation.countHere) {
           await _addAndOpen(active.rowFor(matches.first));
           return;
         }
-        setState(() => _scope = null); // clear the store / rack filter
+        setState(() => _scope = null);
       }
     }
 
@@ -246,12 +216,6 @@ class _OpnameCountScreenState extends State<OpnameCountScreen>
     await _openDetail(item);
   }
 
-  /// The store / location a scanned or typed code stands for: a location
-  /// label from the list (`Store / Sub store`) or a store name.
-  ///
-  /// The API sends no codes for stores and sub stores, and a sub store name
-  /// alone (e.g. `Rak A`) can exist in several stores, so a sub store is only
-  /// recognized by its full label.
   _Scope? _scopeForCode(String code) {
     final byLabel = _scopeForLabel(code);
     if (byLabel != null) return byLabel;
@@ -265,8 +229,6 @@ class _OpnameCountScreenState extends State<OpnameCountScreen>
     return null;
   }
 
-  /// The exact location of the list whose label is [label] (case-insensitive).
-  /// Unassigned rows are ignored: they have no store to filter on.
   _Scope? _scopeForLabel(String label) {
     final l = label.trim().toLowerCase();
     final row = _items
@@ -312,9 +274,6 @@ class _OpnameCountScreenState extends State<OpnameCountScreen>
     );
   }
 
-  /// Looks an item up by its code on the server and shows its data. The
-  /// user can then count it at one of its locations, or at the scanned
-  /// store / rack.
   Future<void> _lookUp(String code) async {
     final repo = context.read<InventoryStockOpnameRepository>();
     final OpnameLookup info;
@@ -350,7 +309,6 @@ class _OpnameCountScreenState extends State<OpnameCountScreen>
     await _addAndOpen(row);
   }
 
-  /// Opens [row], adding it to the list first if it is a new location.
   Future<void> _addAndOpen(OpnameItem row) async {
     final existing = _items.where((e) => e.id == row.id).firstOrNull;
     if (existing == null) {
@@ -368,20 +326,26 @@ class _OpnameCountScreenState extends State<OpnameCountScreen>
       return;
     }
     final wasBusy = _busy;
-    _busy = true; // block new scans while the detail is open
+    _busy = true;
     if (_cameraOn) await _stopCamera();
 
     if (!mounted) return;
-    final result = await Navigator.push<double>(
+    final result = await Navigator.push<OpnameCountResult>(
       context,
-      opnameRoute<double>(OpnameDetailScreen(item: item)),
+      opnameRoute<OpnameCountResult>(OpnameDetailScreen(item: item)),
     );
 
     if (!mounted) return;
     if (result != null) {
       setState(() {
         _items = _items
-            .map((e) => e.id == item.id ? e.withCount(result) : e)
+            .map(
+              (e) => e.id != item.id
+                  ? e
+                  : result.isRemoval
+                      ? e.withoutCount()
+                      : e.withCount(result.qty!, notes: result.notes),
+            )
             .toList();
       });
     }
@@ -429,9 +393,7 @@ class _OpnameCountScreenState extends State<OpnameCountScreen>
     );
   }
 
-  /// The "Enter code" button: opens the rack/item search.
   Future<void> _manualInput() async {
-    // Keep camera scans from triggering other actions while the sheet is open.
     _busy = true;
     final result = await showCodeSearchSheet(context, items: _items);
     _busy = false;
@@ -439,18 +401,13 @@ class _OpnameCountScreenState extends State<OpnameCountScreen>
     if (result == null || !mounted) return;
 
     if (result.rack != null) {
-      // Rack picked: filter the list to that rack (same as a rack scan).
       setState(() => _scope = _scopeForLabel(result.rack!));
     } else if (result.item != null) {
-      // Item picked: open the detail of that exact item.
       await _openDetail(result.item!);
     } else if (result.rawCode != null) {
-      // Enter on the keyboard: process like a scan result.
       _onCode(result.rawCode!);
     }
   }
-
-  // ------------------------------------------------------------- confirm
 
   int get _countedTotal =>
       _items.where((e) => e.isCounted && e.isCountable).length;
@@ -460,7 +417,6 @@ class _OpnameCountScreenState extends State<OpnameCountScreen>
         _items.where((e) => e.isCounted && e.isCountable).toList();
     if (counted.isEmpty || _submitting) return;
 
-    // The dialog returns the note (possibly empty), or null when cancelled.
     final typedNotes = await showDialog<String>(
       context: context,
       builder: (ctx) => _SaveDialog(
@@ -489,9 +445,6 @@ class _OpnameCountScreenState extends State<OpnameCountScreen>
 
     final repo = context.read<InventoryStockOpnameRepository>();
 
-    // The header scope is only sent when the user picked a store / location
-    // filter AND every counted row lies inside it; otherwise the server
-    // would reject the rows outside it.
     final scope = _scope;
     int? headerStore;
     int? headerSubStore;
@@ -518,16 +471,14 @@ class _OpnameCountScreenState extends State<OpnameCountScreen>
             : '${_itemsLabel(counted.length)} saved as a draft.',
       );
       if (_editingDraft) {
-        // The draft changed: go back so the caller reloads it.
         Navigator.pop(context, true);
         return;
       }
       setState(() => _submitting = false);
-      await _load(); // reload: the count has been submitted
+      await _load();
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() => _submitting = false);
-      // The counts on screen are kept so the submission can be retried.
       _showMessage(e.message);
     }
   }
@@ -540,8 +491,6 @@ class _OpnameCountScreenState extends State<OpnameCountScreen>
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(content: Text(text)));
   }
-
-  // --------------------------------------------------------------- build
 
   @override
   Widget build(BuildContext context) {
@@ -556,7 +505,6 @@ class _OpnameCountScreenState extends State<OpnameCountScreen>
       _ => visible,
     };
 
-    // Per-location totals (ignoring the filter) for the group headers.
     final groupTotal = <String, int>{};
     final groupDone = <String, int>{};
     for (final e in visible) {
@@ -566,8 +514,6 @@ class _OpnameCountScreenState extends State<OpnameCountScreen>
       }
     }
 
-    // Flatten into one list (location header + items) so the ListView only
-    // builds the cards on screen. The order of appearance is preserved.
     final rows = <Object>[];
     String? lastLocation;
     for (final e in shown) {
@@ -582,10 +528,9 @@ class _OpnameCountScreenState extends State<OpnameCountScreen>
       rows.add(e);
     }
 
-    // The camera takes about a quarter of the screen: enough to aim on a
-    // compact phone, without pushing the list off screen on a tall one.
+    // Tinggi kamera sedikit dikurangi agar list lebih lapang
     final cameraHeight =
-        (MediaQuery.sizeOf(context).height * 0.27).clamp(170.0, 280.0);
+        (MediaQuery.sizeOf(context).height * 0.24).clamp(160.0, 240.0);
 
     return Scaffold(
       appBar: OpnameAppBar(
@@ -595,9 +540,8 @@ class _OpnameCountScreenState extends State<OpnameCountScreen>
             tooltip: _cameraOn ? 'Close camera' : 'Open camera',
             onPressed: _toggleCamera,
             style: IconButton.styleFrom(
-              backgroundColor: _cameraOn
-                  ? AppColors.primary
-                  : AppColors.primaryLight,
+              backgroundColor:
+                  _cameraOn ? AppColors.primary : AppColors.primaryLight,
             ),
             icon: Icon(
               Icons.qr_code_scanner,
@@ -613,7 +557,7 @@ class _OpnameCountScreenState extends State<OpnameCountScreen>
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(20),
                 child: SizedBox(
                   height: cameraHeight,
                   width: double.infinity,
@@ -621,22 +565,47 @@ class _OpnameCountScreenState extends State<OpnameCountScreen>
                     fit: StackFit.expand,
                     children: [
                       ScannerPanel(controller: _controller, onCode: _onCode),
+                      // Overlay gelap tipis agar frame lebih kontras
+                      Container(color: Colors.black.withValues(alpha: 0.15)),
+                      // Scan frame (corner brackets)
+                      Center(
+                        child: _ScanFrameOverlay(
+                          size: cameraHeight * 0.55,
+                        ),
+                      ),
+                      // Chip progress di kiri atas
                       Positioned(
-                        left: 10,
-                        top: 10,
+                        left: 12,
+                        top: 12,
                         child: _CameraChip(
                           icon: Icons.fact_check_outlined,
                           label: '$_countedTotal/${_items.length} counted',
                         ),
                       ),
-                      const Positioned(
+                      // Hint di bawah, tanpa background kotak penuh
+                      Positioned(
                         left: 0,
                         right: 0,
-                        bottom: 10,
+                        bottom: 12,
                         child: IgnorePointer(
                           child: Center(
-                            child: _CameraChip(
-                              label: 'Point at a barcode or QR code',
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withValues(alpha: 0.55),
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: const Text(
+                                'Point at a barcode or QR code',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
                             ),
                           ),
                         ),
@@ -646,6 +615,7 @@ class _OpnameCountScreenState extends State<OpnameCountScreen>
                 ),
               ),
             ),
+          // Banner status yang lebih compact
           _ScanStepBanner(
             location: scope?.label,
             counted: visibleCounted,
@@ -707,6 +677,7 @@ class _OpnameCountScreenState extends State<OpnameCountScreen>
           ),
         ],
       ),
+      // Bottom bar: "Save" sebagai aksi primer, "Enter code" jadi sekunder
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: AppColors.card,
@@ -714,14 +685,31 @@ class _OpnameCountScreenState extends State<OpnameCountScreen>
         ),
         child: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 10, 16, 24),
+            padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
             child: Row(
               children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: _loading || _loadError != null ? null : _manualInput,
-                    icon: const Icon(Icons.keyboard_outlined, size: 20),
-                    label: const Text('Enter code'),
+                OutlinedButton.icon(
+                  onPressed:
+                      _loading || _loadError != null ? null : _manualInput,
+                  icon: const Icon(Icons.keyboard_outlined, size: 20),
+                  label: const Text('Enter code'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.primaryText,
+                    side: BorderSide(color: AppColors.border),
+                    // Wajib: tema app bisa memberi lebar minimum tak hingga,
+                    // yang bentrok dengan Row dan membuat layar kosong.
+                    minimumSize: const Size(0, 48),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 14,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    textStyle: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -729,6 +717,12 @@ class _OpnameCountScreenState extends State<OpnameCountScreen>
                   child: ElevatedButton(
                     onPressed:
                         _countedTotal == 0 || _submitting ? null : _confirm,
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
                     child: _submitting
                         ? const SizedBox(
                             width: 20,
@@ -741,6 +735,10 @@ class _OpnameCountScreenState extends State<OpnameCountScreen>
                                 : _editingDraft
                                     ? 'Update ($_countedTotal)'
                                     : 'Save ($_countedTotal)',
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
                   ),
                 ),
@@ -755,16 +753,13 @@ class _OpnameCountScreenState extends State<OpnameCountScreen>
 
 enum _OtherLocation { countHere, openThere }
 
-/// The store or rack the list is filtered to, from a store / rack scan.
 class _Scope {
-  /// One exact location: a sub store, or a store itself (no sub store).
   const _Scope.location({
     required this.storeId,
     required this.subStoreId,
     required this.label,
   }) : wholeStore = false;
 
-  /// A whole store: every location in it, sub stores included.
   const _Scope.store({required int this.storeId, required this.label})
       : subStoreId = null,
         wholeStore = true;
@@ -777,9 +772,6 @@ class _Scope {
   bool contains(OpnameItem e) =>
       e.storeLocationId == storeId && (wholeStore || e.subStoreId == subStoreId);
 
-  /// [base]'s item counted here: on the rack, or in the store itself (no
-  /// rack) for a whole store. The system has nothing here yet, so its
-  /// quantity is 0 and the whole count is a surplus.
   OpnameItem rowFor(OpnameItem base) => OpnameItem(
         id: '${base.itemId}|${storeId ?? 0}:${subStoreId ?? 0}',
         itemId: base.itemId,
@@ -797,8 +789,8 @@ class _Scope {
       info.rowAt(storeLocationId: storeId, subStoreId: subStoreId, label: label);
 }
 
-/// Step hint: "Scan a rack" first (optional), then "Scan an item", with a
-/// progress bar of how many of the visible items have been counted.
+/// Status banner: a neutral white card so the list below carries the colour.
+/// The progress bar is the only strong green here.
 class _ScanStepBanner extends StatelessWidget {
   final String? location;
   final int counted;
@@ -816,78 +808,97 @@ class _ScanStepBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     final hasRack = location != null;
     final progress = total == 0 ? 0.0 : counted / total;
+
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-      padding: const EdgeInsets.fromLTRB(14, 10, 8, 12),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: AppColors.primaryLight,
+        color: AppColors.card,
         borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(
-                hasRack ? Icons.sell_outlined : Icons.warehouse_outlined,
-                color: AppColors.primaryText,
-                size: 22,
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: AppColors.primaryLight,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  hasRack ? Icons.sell_outlined : Icons.warehouse_outlined,
+                  color: AppColors.primaryText,
+                  size: 18,
+                ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      hasRack ? 'Scan items here' : 'Scan a store, rack or item',
+                      hasRack ? location! : 'Scan a store, rack or item',
                       style: OpnameTextStyles.bodyBold.copyWith(
                         color: AppColors.primaryText,
+                        fontSize: 14,
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
+                    const SizedBox(height: 2),
                     Text(
                       hasRack
-                          ? location!
-                          : 'Scan a store or rack (QR or barcode) to see its items, or an item to count it right away',
+                          ? 'Scan items here to count them'
+                          : 'QR code or barcode',
                       style: AppTextStyles.caption.copyWith(
                         color: AppColors.textMid,
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
               ),
               if (hasRack)
-                TextButton(
+                IconButton(
                   onPressed: onClearLocation,
-                  child: const Text('Show all'),
+                  tooltip: 'Show all locations',
+                  icon: const Icon(Icons.close, size: 18),
+                  style: IconButton.styleFrom(
+                    backgroundColor: AppColors.bg,
+                    foregroundColor: AppColors.primaryText,
+                    minimumSize: const Size(36, 36),
+                  ),
                 ),
             ],
           ),
           const SizedBox(height: 10),
-          Padding(
-            padding: const EdgeInsets.only(right: 6),
-            child: Row(
-              children: [
-                Expanded(
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(4),
-                    child: LinearProgressIndicator(
-                      value: progress,
-                      minHeight: 6,
-                      backgroundColor: Colors.white,
-                      color: AppColors.primaryText,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Text(
-                  '$counted/$total counted',
-                  style: AppTextStyles.caption.copyWith(
+          Row(
+            children: [
+              Expanded(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: LinearProgressIndicator(
+                    value: progress,
+                    minHeight: 6,
+                    backgroundColor: AppColors.bg,
                     color: AppColors.primaryText,
-                    fontWeight: FontWeight.w500,
                   ),
                 ),
-              ],
-            ),
+              ),
+              const SizedBox(width: 10),
+              Text(
+                '$counted/$total',
+                style: OpnameTextStyles.bodyBold.copyWith(
+                  color: AppColors.primaryText,
+                  fontSize: 12,
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -895,7 +906,6 @@ class _ScanStepBanner extends StatelessWidget {
   }
 }
 
-/// One location group marker in the flattened list.
 class _GroupRow {
   final String name;
   final int counted;
@@ -931,7 +941,6 @@ class _LocationHeader extends StatelessWidget {
   }
 }
 
-/// A small semi-transparent label over the camera preview.
 class _CameraChip extends StatelessWidget {
   final IconData? icon;
   final String label;
@@ -971,7 +980,6 @@ class _LoadError extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Scrollable so a long message can never overflow the screen.
     return Center(
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
@@ -991,9 +999,6 @@ class _LoadError extends StatelessWidget {
   }
 }
 
-/// The Save / Update / Confirm dialog with an optional note field. It owns
-/// its text controller, so the controller is disposed together with the
-/// dialog (not while the dialog is still animating out).
 class _SaveDialog extends StatefulWidget {
   final String title;
   final String message;
@@ -1036,7 +1041,7 @@ class _SaveDialogState extends State<_SaveDialog> {
               controller: _notes,
               minLines: 2,
               maxLines: 4,
-              maxLength: 2000, // the API accepts up to 2000 characters
+              maxLength: 2000,
               textCapitalization: TextCapitalization.sentences,
               decoration: const InputDecoration(
                 labelText: 'Notes (optional)',
@@ -1060,4 +1065,76 @@ class _SaveDialogState extends State<_SaveDialog> {
       ],
     );
   }
+}
+
+/// 4 sudut scan (corner brackets) untuk overlay kamera.
+class _ScanFrameOverlay extends StatelessWidget {
+  final double size;
+
+  const _ScanFrameOverlay({required this.size});
+
+  @override
+  Widget build(BuildContext context) {
+    const bracketLength = 28.0;
+    const bracketWidth = 3.0;
+    final color = AppColors.primary.withValues(alpha: 0.9);
+
+    return SizedBox(
+      width: size,
+      height: size,
+      child: CustomPaint(
+        painter: _CornerBracketsPainter(
+          color: color,
+          bracketLength: bracketLength,
+          bracketWidth: bracketWidth,
+        ),
+      ),
+    );
+  }
+}
+
+class _CornerBracketsPainter extends CustomPainter {
+  final Color color;
+  final double bracketLength;
+  final double bracketWidth;
+
+  _CornerBracketsPainter({
+    required this.color,
+    required this.bracketLength,
+    required this.bracketWidth,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = bracketWidth
+      ..strokeCap = StrokeCap.round
+      ..style = PaintingStyle.stroke;
+
+    final w = size.width;
+    final h = size.height;
+
+    // Top-left
+    canvas.drawLine(Offset.zero, Offset(bracketLength, 0), paint);
+    canvas.drawLine(Offset.zero, Offset(0, bracketLength), paint);
+
+    // Top-right
+    canvas.drawLine(Offset(w - bracketLength, 0), Offset(w, 0), paint);
+    canvas.drawLine(Offset(w, 0), Offset(w, bracketLength), paint);
+
+    // Bottom-left
+    canvas.drawLine(Offset(0, h - bracketLength), Offset(0, h), paint);
+    canvas.drawLine(Offset(0, h), Offset(bracketLength, h), paint);
+
+    // Bottom-right
+    canvas.drawLine(Offset(w - bracketLength, h), Offset(w, h), paint);
+    canvas.drawLine(Offset(w, h - bracketLength), Offset(w, h), paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _CornerBracketsPainter oldDelegate) =>
+      oldDelegate.color != color ||
+      oldDelegate.bracketLength != bracketLength ||
+      oldDelegate.bracketWidth != bracketWidth;
 }

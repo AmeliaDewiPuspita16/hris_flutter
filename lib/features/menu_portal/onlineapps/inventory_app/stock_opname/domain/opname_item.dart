@@ -36,8 +36,9 @@ class OpnameItem extends Equatable {
   /// The physically counted quantity; null if not counted yet.
   final double? countedQty;
 
-  /// Per-row note (max 255 characters). Kept so a draft that is edited and
-  /// saved again does not lose the notes it already had.
+  /// Per-row note (optional, max 255 characters), entered on the item detail
+  /// screen. Kept so a draft that is edited and saved again does not lose the
+  /// notes it already had.
   final String? notes;
 
   const OpnameItem({
@@ -72,7 +73,8 @@ class OpnameItem extends Equatable {
   /// shortage. Null if not counted yet.
   double? get difference => countedQty == null ? null : countedQty! - systemQty;
 
-  OpnameItem withCount(double qty) => OpnameItem(
+  /// This row with [qty] counted and [notes] as its note (null = no note).
+  OpnameItem withCount(double qty, {String? notes}) => OpnameItem(
     id: id,
     itemId: itemId,
     storeLocationId: storeLocationId,
@@ -85,6 +87,21 @@ class OpnameItem extends Equatable {
     systemQty: systemQty,
     countedQty: qty,
     notes: notes,
+  );
+
+  /// This row back to "not counted" (count and note cleared), so it is not
+  /// sent when saving.
+  OpnameItem withoutCount() => OpnameItem(
+    id: id,
+    itemId: itemId,
+    storeLocationId: storeLocationId,
+    subStoreId: subStoreId,
+    code: code,
+    internalReference: internalReference,
+    name: name,
+    unit: unit,
+    location: location,
+    systemQty: systemQty,
   );
 
   /// From one `data` element of `GET .../stock-opname/countable-items`, or

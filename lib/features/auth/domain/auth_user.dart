@@ -201,6 +201,10 @@ class AuthUser {
   bool get canAccessEstProjectMonitoring =>
       hasRole('admin') || hasRole('est building');
 
+  /// yang mendapat menu Inventory > Management
+  bool get canAccessInventoryManagement =>
+      hasRole('admin') || hasRole('inventory-admin') || hasRole('inventory-reviewer');
+
   /// yang mendapat menu Inventory > Management > Stock Opname
   bool get canAccessStockOpname =>
       hasRole('admin') || hasRole('inventory-admin');
