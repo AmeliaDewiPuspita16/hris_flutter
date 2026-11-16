@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../../../../core/theme/app_colors.dart';
 import '../../../../../../../core/theme/app_text_styles.dart';
 
 /// Text styles the stock opname screens need on top of the portal's
@@ -7,6 +8,13 @@ import '../../../../../../../core/theme/app_text_styles.dart';
 /// light / dark mode.
 class OpnameTextStyles {
   OpnameTextStyles._();
+
+  /// Green for "done / surplus / confirmed" text and icons. The portal's
+  /// `AppColors.present` is an olive green that looks pale on the mint
+  /// backgrounds in light mode, so light mode uses the deep emerald of
+  /// `primaryText`; dark mode keeps `present`.
+  static Color get success =>
+      AppColors.isDark ? AppColors.present : AppColors.primaryText;
 
   static TextStyle get title =>
       AppTextStyles.body.copyWith(fontSize: 18, fontWeight: FontWeight.w600);

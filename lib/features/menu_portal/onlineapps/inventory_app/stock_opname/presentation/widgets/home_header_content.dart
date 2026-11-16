@@ -8,13 +8,13 @@ import 'opname_text_styles.dart';
 /// on top, then title, subtitle, and item/rack count chips.
 class HomeHeaderContent extends StatelessWidget {
   final int itemCount;
-  final int rackCount;
+  final int locationCount;
   final VoidCallback onHistoryTap;
 
   const HomeHeaderContent({
     super.key,
     required this.itemCount,
-    required this.rackCount,
+    required this.locationCount,
     required this.onHistoryTap,
   });
 
@@ -34,7 +34,7 @@ class HomeHeaderContent extends StatelessWidget {
             ),
             const Spacer(),
             IconButton(
-              tooltip: 'Opname history',
+              tooltip: 'Opname list',
               onPressed: onHistoryTap,
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(),
@@ -71,7 +71,9 @@ class HomeHeaderContent extends StatelessWidget {
             ),
             _StatChip(
               icon: Icons.place_outlined,
-              label: rackCount == 1 ? '1 rack' : '$rackCount racks',
+              label: locationCount == 1
+                  ? '1 location'
+                  : '$locationCount locations',
             ),
           ],
         ),
@@ -80,7 +82,7 @@ class HomeHeaderContent extends StatelessWidget {
   }
 }
 
-/// A small chip in the header, e.g. "5 items" or "5 racks".
+/// A small chip in the header, e.g. "5 items" or "5 locations".
 class _StatChip extends StatelessWidget {
   final IconData icon;
   final String label;

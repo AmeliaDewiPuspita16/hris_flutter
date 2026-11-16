@@ -64,8 +64,15 @@ class _OpnameHomeScreenState extends State<OpnameHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final itemCount = _items.length;
-    final rackCount = _items.map((e) => e.location).toSet().length;
+    // Distinct items (one item can sit in several locations) and distinct
+    // locations. Rows without a store ("Unassigned") cannot be counted, so
+    // they are not counted as a location.
+    final itemCount = _items.map((e) => e.itemId).toSet().length;
+    final locationCount = _items
+        .where((e) => e.isCountable)
+        .map((e) => e.location)
+        .toSet()
+        .length;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: OpnameHeroHeader.overlayStyle,
@@ -83,7 +90,7 @@ class _OpnameHomeScreenState extends State<OpnameHomeScreen> {
                       padding: const EdgeInsets.fromLTRB(24, 28, 24, 64),
                       child: HomeHeaderContent(
                         itemCount: itemCount,
-                        rackCount: rackCount,
+                        locationCount: locationCount,
                         onHistoryTap: () => _openHistory(context),
                       ),
                     ),

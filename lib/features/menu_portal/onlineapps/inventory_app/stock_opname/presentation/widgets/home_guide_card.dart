@@ -12,7 +12,7 @@ class HomeGuideCard extends StatelessWidget {
   static const _steps = <_GuideStep>[
     _GuideStep(
       icon: Icons.warehouse_outlined,
-      title: 'Scan a rack',
+      title: 'Scan a store or rack',
       desc: 'The items on that rack appear right away.',
     ),
     _GuideStep(
@@ -27,8 +27,8 @@ class HomeGuideCard extends StatelessWidget {
     ),
     _GuideStep(
       icon: Icons.check_circle_outline,
-      title: 'Confirm',
-      desc: 'Tap Confirm once everything has been counted.',
+      title: 'Save as draft',
+      desc: 'Tap Save when done. Stock changes only after the draft is confirmed in History.',
     ),
   ];
 

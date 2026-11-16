@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../../../../core/theme/app_colors.dart';
 import '../../domain/opname_formatters.dart';
+import 'opname_text_styles.dart';
 
 /// Badge showing the counted vs. system difference (with a colored
 /// background): green "+8 bags" (surplus), red "-8 bags" (shortage),
@@ -25,7 +26,7 @@ class DifferenceLabel extends StatelessWidget {
       icon = Icons.hourglass_empty_rounded;
       text = 'Not counted';
     } else if (d > 0) {
-      fg = AppColors.present;
+      fg = OpnameTextStyles.success;
       bg = AppColors.presentBg;
       icon = Icons.arrow_upward_rounded;
       text = '+${formatQty(d)} $unit';

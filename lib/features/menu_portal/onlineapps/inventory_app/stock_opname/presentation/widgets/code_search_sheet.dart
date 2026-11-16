@@ -111,7 +111,7 @@ class _CodeSearchSheetState extends State<_CodeSearchSheet> {
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
-            child: Text('Search racks or items', style: OpnameTextStyles.bodyBold),
+            child: Text('Search items or locations', style: OpnameTextStyles.bodyBold),
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
@@ -122,7 +122,7 @@ class _CodeSearchSheetState extends State<_CodeSearchSheet> {
               onChanged: (v) => setState(() => _query = v),
               onSubmitted: _submit,
               decoration: InputDecoration(
-                hintText: 'Item code / name, or rack code',
+                hintText: 'Item code, item name, or location',
                 prefixIcon: const Icon(Icons.search),
                 suffixIcon: _query.isEmpty
                     ? null
@@ -146,8 +146,8 @@ class _CodeSearchSheetState extends State<_CodeSearchSheet> {
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
                     child: Text(
-                      'Type just part of it, e.g. "004/03", "semen", '
-                      'or "MLKPL".',
+                      'Type just part of it, e.g. "ATK-0002", "amplop", '
+                      'Lantai 2 / Rak A".',
                       style: AppTextStyles.caption,
                     ),
                   ),
@@ -155,12 +155,12 @@ class _CodeSearchSheetState extends State<_CodeSearchSheet> {
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
                     child: Text(
-                      'No racks or items match "$_query".',
+                      'No items or locations match "$_query".',
                       style: AppTextStyles.caption,
                     ),
                   ),
                 if (racks.isNotEmpty) ...[
-                  const _SectionLabel('Racks'),
+                  const _SectionLabel('Locations'),
                   for (final r in racks)
                     ListTile(
                       leading: Icon(Icons.place_outlined,

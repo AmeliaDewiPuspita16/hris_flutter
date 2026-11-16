@@ -72,6 +72,10 @@ class _OpnameCountScreenState extends State<OpnameCountScreen>
   /// confirmed via the portal. Switch to true once this flow is tested.
   static const bool _confirmOnSubmit = false;
 
+  /// The note saved when the user types none, so the portal shows where the
+  /// opname came from.
+  static const String _defaultNotes = 'From the mobile app';
+
   List<OpnameItem> _items = const [];
   OpnameLocations _locations = const OpnameLocations();
   _Scope? _scope; // the active store / rack (from a store or rack scan)
@@ -456,44 +460,32 @@ class _OpnameCountScreenState extends State<OpnameCountScreen>
         _items.where((e) => e.isCounted && e.isCountable).toList();
     if (counted.isEmpty || _submitting) return;
 
-    final ok = await showDialog<bool>(
+    // The dialog returns the note (possibly empty), or null when cancelled.
+    final typedNotes = await showDialog<String>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(
-          _confirmOnSubmit
-              ? 'Confirm count?'
-              : _editingDraft
-                  ? 'Update draft?'
-                  : 'Save count?',
-        ),
-        content: Text(
-          _confirmOnSubmit
-              ? '${_itemsLabel(counted.length)} will be confirmed. System '
-                  'stock will be updated to match the count, and this cannot '
-                  'be undone.'
-              : '${_itemsLabel(counted.length)} will be saved as a draft. '
-                  'System stock will not change until the draft is confirmed in '
-                  'History.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text(
-              _confirmOnSubmit
-                  ? 'Confirm'
-                  : _editingDraft
-                      ? 'Update'
-                      : 'Save',
-            ),
-          ),
-        ],
+      builder: (ctx) => _SaveDialog(
+        title: _confirmOnSubmit
+            ? 'Confirm count?'
+            : _editingDraft
+                ? 'Update draft?'
+                : 'Save count?',
+        message: _confirmOnSubmit
+            ? '${_itemsLabel(counted.length)} will be confirmed. System '
+                'stock will be updated to match the count, and this cannot '
+                'be undone.'
+            : '${_itemsLabel(counted.length)} will be saved as a draft. '
+                'System stock will not change until the draft is confirmed '
+                'in History.',
+        actionLabel: _confirmOnSubmit
+            ? 'Confirm'
+            : _editingDraft
+                ? 'Update'
+                : 'Save',
+        initialNotes: widget.draft?.notes ?? '',
       ),
     );
-    if (ok != true || !mounted) return;
+    if (typedNotes == null || !mounted) return;
+    final notes = typedNotes.trim().isEmpty ? _defaultNotes : typedNotes.trim();
 
     final repo = context.read<InventoryStockOpnameRepository>();
 
@@ -515,7 +507,7 @@ class _OpnameCountScreenState extends State<OpnameCountScreen>
         confirm: _confirmOnSubmit,
         opnameId: widget.draft?.id,
         date: widget.draft?.date,
-        notes: widget.draft?.notes ?? 'From the mobile app',
+        notes: notes,
         storeLocationId: headerStore,
         subStoreId: headerSubStore,
       );
@@ -995,6 +987,77 @@ class _LoadError extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// The Save / Update / Confirm dialog with an optional note field. It owns
+/// its text controller, so the controller is disposed together with the
+/// dialog (not while the dialog is still animating out).
+class _SaveDialog extends StatefulWidget {
+  final String title;
+  final String message;
+  final String actionLabel;
+  final String initialNotes;
+
+  const _SaveDialog({
+    required this.title,
+    required this.message,
+    required this.actionLabel,
+    required this.initialNotes,
+  });
+
+  @override
+  State<_SaveDialog> createState() => _SaveDialogState();
+}
+
+class _SaveDialogState extends State<_SaveDialog> {
+  late final TextEditingController _notes =
+      TextEditingController(text: widget.initialNotes);
+
+  @override
+  void dispose() {
+    _notes.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(widget.title),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(widget.message),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _notes,
+              minLines: 2,
+              maxLines: 4,
+              maxLength: 2000, // the API accepts up to 2000 characters
+              textCapitalization: TextCapitalization.sentences,
+              decoration: const InputDecoration(
+                labelText: 'Notes (optional)',
+                hintText: 'e.g. Monthly count, warehouse A',
+                counterText: '',
+                alignLabelWithHint: true,
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        TextButton(
+          onPressed: () => Navigator.pop(context, _notes.text),
+          child: Text(widget.actionLabel),
+        ),
+      ],
     );
   }
 }

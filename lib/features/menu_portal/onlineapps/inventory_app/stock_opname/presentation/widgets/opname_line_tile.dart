@@ -93,7 +93,7 @@ class OpnameLineTile extends StatelessWidget {
   }
 }
 
-/// Bottom of a COUNTED card: large Total + difference, and the system
+/// Bottom of a COUNTED card: large Counted + difference, and the system
 /// stock on the right.
 class _CountedBottom extends StatelessWidget {
   final OpnameItem item;
@@ -109,7 +109,7 @@ class _CountedBottom extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Total', style: AppTextStyles.caption),
+              Text('Counted', style: AppTextStyles.caption),
               const SizedBox(height: 2),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.baseline,

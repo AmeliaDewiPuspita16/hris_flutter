@@ -3,8 +3,9 @@ import 'package:flutter/material.dart';
 import '../../../../../../../core/theme/app_colors.dart';
 import '../../../../../../../core/widgets/status_badge.dart';
 import '../../domain/opname_record.dart';
+import 'opname_text_styles.dart';
 
-/// Opname status badge: Draft (grey), Confirmed (green).
+/// Opname status badge: Draft (amber, like the web), Confirmed (green).
 class OpnameStatusBadge extends StatelessWidget {
   final OpnameStatus status;
 
@@ -16,14 +17,14 @@ class OpnameStatusBadge extends StatelessWidget {
       case OpnameStatus.confirmed:
         return StatusBadge.custom(
           label: 'Confirmed',
-          color: AppColors.present,
+          color: OpnameTextStyles.success,
           background: AppColors.presentBg,
         );
       case OpnameStatus.draft:
         return StatusBadge.custom(
           label: 'Draft',
-          color: AppColors.textMid,
-          background: AppColors.neutralBg,
+          color: AppColors.pending,
+          background: AppColors.pendingBg,
         );
       case OpnameStatus.other:
         return StatusBadge.custom(

@@ -15,9 +15,10 @@ import '../widgets/opname_chip_row.dart';
 import '../widgets/opname_text_styles.dart';
 import '../widgets/opname_theme.dart';
 
-/// Opname history (read-only): a list of documents with a status filter.
-/// Loaded page by page; the next page is fetched when the list is scrolled
-/// near the end.
+/// Opname list: every opname document (drafts and confirmed) with a status
+/// filter. Tapping one opens its detail, where a draft can be edited,
+/// confirmed or deleted. Loaded page by page; the next page is fetched when
+/// the list is scrolled near the end.
 class OpnameHistoryScreen extends StatefulWidget {
   const OpnameHistoryScreen({super.key});
 
@@ -147,7 +148,7 @@ class _OpnameHistoryScreenState extends State<OpnameHistoryScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const OpnameAppBar(title: 'Opname History'),
+      appBar: const OpnameAppBar(title: 'Opname List'),
       body: Column(
         children: [
           Padding(
@@ -185,7 +186,7 @@ class _OpnameHistoryScreenState extends State<OpnameHistoryScreen> {
             SizedBox(height: 120),
             _Message(
               icon: Icons.history,
-              text: 'No opname history yet.',
+              text: 'No stock opname yet.',
             ),
           ],
         ),
@@ -230,39 +231,185 @@ class _HistoryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final date = row.date == null ? '-' : formatShortDate(row.date!);
+    final accent = switch (row.status) {
+      OpnameStatus.draft => AppColors.pending,
+      OpnameStatus.confirmed => OpnameTextStyles.success,
+      OpnameStatus.other => AppColors.textMuted,
+    };
+
     return OpnameCard(
       onTap: onTap,
-      padding: const EdgeInsets.all(14),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(row.code,
-                    style: AppTextStyles.caption.copyWith(letterSpacing: 0.6)),
-                const SizedBox(height: 2),
-                Text(date, style: OpnameTextStyles.bodyBold),
-                const SizedBox(height: 6),
-                Text(
-                  '${row.countedBy} · ${row.itemsCount} '
-                  '${row.itemsCount == 1 ? 'item' : 'items'}',
-                  style: AppTextStyles.label,
+      padding: EdgeInsets.zero,
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Status colour strip on the left edge.
+            Container(width: 4, color: accent),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(14, 14, 10, 14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                row.code,
+                                style: AppTextStyles.caption
+                                    .copyWith(letterSpacing: 0.6),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(date, style: OpnameTextStyles.bodyBold),
+                            ],
+                          ),
+                        ),
+                        OpnameStatusBadge(status: row.status),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    _MetaLine(
+                      icon: Icons.person_outline,
+                      text: row.countedBy,
+                    ),
+                    if (row.locationLabel.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      _MetaLine(
+                        icon: Icons.place_outlined,
+                        text: row.locationLabel,
+                      ),
+                    ],
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Wrap(
+                            spacing: 6,
+                            runSpacing: 6,
+                            children: [
+                              _InfoChip(
+                                icon: Icons.inventory_2_outlined,
+                                label: row.itemsCount == 1
+                                    ? '1 item'
+                                    : '${row.itemsCount} items',
+                              ),
+                              ..._statusChips(),
+                            ],
+                          ),
+                        ),
+                        Icon(Icons.chevron_right, color: AppColors.textMuted),
+                      ],
+                    ),
+                  ],
                 ),
-                if (row.locationLabel.isNotEmpty) ...[
-                  const SizedBox(height: 2),
-                  Text(row.locationLabel, style: AppTextStyles.caption),
-                ],
-              ],
+              ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// What matters about the status: a draft has not touched the stock yet; a
+  /// confirmed opname says how many rows were actually adjusted.
+  List<Widget> _statusChips() {
+    switch (row.status) {
+      case OpnameStatus.draft:
+        return [
+          _InfoChip(
+            icon: Icons.info_outline,
+            label: 'Stock not changed yet',
+            color: AppColors.pending,
+            background: AppColors.pendingBg,
           ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              OpnameStatusBadge(status: row.status),
-              const SizedBox(height: 10),
-              Icon(Icons.chevron_right, color: AppColors.textMuted),
-            ],
+        ];
+      case OpnameStatus.confirmed:
+        final n = row.adjustedCount;
+        if (n == null) return const [];
+        return [
+          _InfoChip(
+            icon: n == 0 ? Icons.check_rounded : Icons.sync_alt_rounded,
+            label: n == 0
+                ? 'No adjustment'
+                : n == 1
+                    ? '1 adjusted'
+                    : '$n adjusted',
+            color: OpnameTextStyles.success,
+            background: AppColors.presentBg,
+          ),
+        ];
+      case OpnameStatus.other:
+        return const [];
+    }
+  }
+}
+
+/// One line of card info: a small icon and a single-line text.
+class _MetaLine extends StatelessWidget {
+  final IconData icon;
+  final String text;
+
+  const _MetaLine({required this.icon, required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, size: 16, color: AppColors.textMuted),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Text(
+            text,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppTextStyles.label,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// A small pill with an icon and a label.
+class _InfoChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color? color;
+  final Color? background;
+
+  const _InfoChip({
+    required this.icon,
+    required this.label,
+    this.color,
+    this.background,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final fg = color ?? AppColors.textMid;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: background ?? AppColors.bg,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 13, color: fg),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11.5,
+              fontWeight: FontWeight.w600,
+              color: fg,
+            ),
           ),
         ],
       ),
