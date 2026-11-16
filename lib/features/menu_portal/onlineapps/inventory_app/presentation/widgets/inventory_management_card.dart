@@ -89,13 +89,26 @@ class InventoryManagementCard<T> extends StatelessWidget {
     final tileSize = dense ? 46.0 : 52.0;
     final iconSize = dense ? 23.0 : 26.0;
 
+    // Mode gelap: palet terang di atas (putih memudar ke tint pastel) terlalu
+    // kontras dengan latar. Panel dan garis tepi diturunkan dari warna kartu
+    // yang gelap, dengan sedikit rona tint supaya identitas warnanya tetap.
+    final dark = AppColors.isDark;
+    // Mode gelap: panel memudar dari tint di atas ke warna kartu di bawah,
+    // jadi tidak ada garis tegas dengan bagian teks.
+    final panelStart = dark
+        ? Color.lerp(AppColors.card, t.tileTo, 0.30)!
+        : Color.lerp(Colors.white, t.panel, 0.4)!;
+    final panelEnd = dark ? AppColors.card : t.panel;
+    // Mode gelap: garis tepi seragam untuk semua kartu (tidak ikut tint).
+    final borderColor = dark ? AppColors.border : t.border;
+
     return Container(
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: AppColors.card,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: t.border),
-        boxShadow: ready
+        border: Border.all(color: borderColor),
+        boxShadow: ready && !dark
             ? [
                 BoxShadow(
                   color: t.tileTo.withAlpha(36),
@@ -120,12 +133,11 @@ class InventoryManagementCard<T> extends StatelessWidget {
                     clipBehavior: Clip.hardEdge,
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          Color.lerp(Colors.white, t.panel, 0.4)!,
-                          t.panel,
-                        ],
+                        begin: dark ? Alignment.topCenter : Alignment.topLeft,
+                        end: dark
+                            ? Alignment.bottomCenter
+                            : Alignment.bottomRight,
+                        colors: [panelStart, panelEnd],
                       ),
                     ),
                     child: SizedBox.expand(
@@ -134,22 +146,40 @@ class InventoryManagementCard<T> extends StatelessWidget {
                         children: [
                           // Lingkaran besar samar di balik kotak ikon, ikut
                           // warna tint kartu.
-                          Positioned(
-                            top: -36,
-                            right: -28,
-                            child: _Circle(
-                              size: 112,
-                              color: Colors.white.withAlpha(110),
+                          if (dark) ...[
+                            // Mode gelap: cahaya radial di balik kotak ikon,
+                            // memudar ke transparan di tepinya.
+                            Positioned.fill(
+                              child: DecoratedBox(
+                                decoration: BoxDecoration(
+                                  gradient: RadialGradient(
+                                    radius: 0.95,
+                                    colors: [
+                                      t.tileFrom.withAlpha(95),
+                                      t.tileFrom.withAlpha(0),
+                                    ],
+                                  ),
+                                ),
+                              ),
                             ),
-                          ),
-                          Positioned(
-                            bottom: -30,
-                            left: -22,
-                            child: _Circle(
-                              size: 78,
-                              color: Colors.white.withAlpha(80),
+                          ] else ...[
+                            Positioned(
+                              top: -36,
+                              right: -28,
+                              child: _Circle(
+                                size: 112,
+                                color: Colors.white.withAlpha(110),
+                              ),
                             ),
-                          ),
+                            Positioned(
+                              bottom: -30,
+                              left: -22,
+                              child: _Circle(
+                                size: 78,
+                                color: Colors.white.withAlpha(80),
+                              ),
+                            ),
+                          ],
                           _IconTile(
                             icon: option.icon,
                             tone: t,
@@ -254,6 +284,9 @@ class _IconTile extends StatelessWidget {
       height: size,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(radius),
+        border: AppColors.isDark
+            ? Border.all(color: Colors.white.withAlpha(40))
+            : null,
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -272,22 +305,40 @@ class _IconTile extends StatelessWidget {
         child: Stack(
           alignment: Alignment.center,
           children: [
-            Positioned(
-              top: -size * 0.25,
-              right: -size * 0.25,
-              child: _Circle(
-                size: size * 0.78,
-                color: Colors.white.withAlpha(40),
+            // Mode gelap: kilau halus dari pojok kiri-atas, bukan lingkaran.
+            if (AppColors.isDark)
+              Positioned.fill(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.center,
+                      colors: [
+                        Colors.white.withAlpha(52),
+                        Colors.white.withAlpha(0),
+                      ],
+                    ),
+                  ),
+                ),
+              )
+            else ...[
+              Positioned(
+                top: -size * 0.25,
+                right: -size * 0.25,
+                child: _Circle(
+                  size: size * 0.78,
+                  color: Colors.white.withAlpha(40),
+                ),
               ),
-            ),
-            Positioned(
-              bottom: -size * 0.31,
-              left: -size * 0.22,
-              child: _Circle(
-                size: size * 0.66,
-                color: Colors.white.withAlpha(28),
+              Positioned(
+                bottom: -size * 0.31,
+                left: -size * 0.22,
+                child: _Circle(
+                  size: size * 0.66,
+                  color: Colors.white.withAlpha(28),
+                ),
               ),
-            ),
+            ],
             Icon(icon, size: iconSize, color: Colors.white),
           ],
         ),

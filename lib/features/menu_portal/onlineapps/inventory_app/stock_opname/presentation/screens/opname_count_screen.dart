@@ -210,6 +210,13 @@ class _OpnameCountScreenState extends State<OpnameCountScreen>
       return;
     }
 
+    // Stock without a store ("Unassigned") cannot be counted. When the item
+    // also has countable rows, ignore the Unassigned ones so a scan does not
+    // ask the user to choose between a row that can be counted and one that
+    // cannot.
+    final countable = matches.where((e) => e.isCountable).toList();
+    if (countable.isNotEmpty) matches = countable;
+
     final active = _scope;
     if (active != null) {
       final inScope = matches.where(active.contains).toList();
@@ -352,7 +359,7 @@ class _OpnameCountScreenState extends State<OpnameCountScreen>
     if (!item.isCountable) {
       _showMessage(
         '${item.code} is not placed in any store yet, so it cannot be '
-        'counted. Move its stock to a store first.',
+        'counted. Move its stock to a store in the portal first.',
       );
       return;
     }
@@ -397,8 +404,8 @@ class _OpnameCountScreenState extends State<OpnameCountScreen>
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
               child: Text(
-                '${options.first.code} is on several racks. Scan the rack '
-                'first to go straight to the right item.',
+                '${options.first.code} is in several locations. Scan the '
+                'store or rack first to go straight to the right item.',
                 style: AppTextStyles.caption,
               ),
             ),
@@ -465,7 +472,8 @@ class _OpnameCountScreenState extends State<OpnameCountScreen>
                   'stock will be updated to match the count, and this cannot '
                   'be undone.'
               : '${_itemsLabel(counted.length)} will be saved as a draft. '
-                  'System stock will not change until the draft is confirmed.',
+                  'System stock will not change until the draft is confirmed in '
+                  'History.',
         ),
         actions: [
           TextButton(

@@ -1,19 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../../../../../core/theme/app_colors.dart';
 import '../../../../../../core/theme/app_text_styles.dart';
+import '../../../../../auth/presentation/bloc/auth/auth_bloc.dart';
 import '../../domain/inventory_menu.dart';
 import '../../stock_opname/presentation/screens/opname_home_screen.dart';
 import '../widgets/inventory_management_card.dart';
 
-/// Halaman "Management" di modul Inventory: kartu fitur pengelolaan
-/// (`InventoryMenuData.management`) dalam grid dua kolom. Dibuka dari sheet
-/// Inventory saat memilih Management.
-///
-/// Tampilannya mengikuti layar HSE Work Permit: top bar kecil (tombol kembali
-/// dan judul di tengah) di atas gambar latar, tanpa ilustrasi.
+/// Halaman "Management" di modul Inventory
 ///
 /// Layar tujuan tiap kartu belum dibuat, jadi ketukan sementara hanya
 /// menampilkan snackbar. Sambungkan di [_open] begitu layarnya siap.
@@ -85,7 +82,15 @@ class InventoryManagementScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const options = InventoryMenuData.management;
+    // Stock Opname hanya untuk role inventoru-admin / admin
+    final canStockOpname = context.select(
+      (AuthBloc bloc) =>
+          bloc.state.session?.user.canAccessStockOpname ?? false
+    );
+    final options = [
+      for (final o in InventoryMenuData.management)
+        if (o.value != InventoryManagement.stockOpname || canStockOpname) o,
+    ];
     final topInset = MediaQuery.paddingOf(context).top;
 
     // [_columns] kartu per baris; IntrinsicHeight + stretch menyamakan tinggi
