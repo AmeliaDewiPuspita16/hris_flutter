@@ -20,6 +20,7 @@ import 'features/auth/presentation/bloc/auth/auth_event.dart';
 import 'features/auth/presentation/widgets/auth_gate.dart';
 import 'features/home/data/announcement_repository.dart';
 import 'features/home/data/approvals_waiting_repository.dart';
+import 'features/leave_approval/data/leave_approval_repository.dart';
 import 'features/menu_portal/data_app/est_project_monitoring/data/est_project_repository.dart';
 import 'features/menu_portal/data_app/indent_vehicle/data/indent_vehicle_repository.dart';
 import 'features/menu_portal/data_app/observation_department/data/observation_repository.dart';
@@ -95,6 +96,7 @@ Future<void> main() async {
       overtimeRepository: OvertimeRepository(apiClient: apiClient),
       approvalsWaitingRepository:
           ApprovalsWaitingRepository(apiClient: apiClient),
+      leaveApprovalRepository: LeaveApprovalRepository(apiClient: apiClient),
       notificationInboxRepository:
           NotificationInboxRepository(apiClient: apiClient),
       masterDocumentRepository: MasterDocumentRepository(apiClient: apiClient),
@@ -129,6 +131,7 @@ class MyApp extends StatelessWidget {
     PengajuanRepository? pengajuanRepository,
     OvertimeRepository? overtimeRepository,
     ApprovalsWaitingRepository? approvalsWaitingRepository,
+    LeaveApprovalRepository? leaveApprovalRepository,
     NotificationInboxRepository? notificationInboxRepository,
     MasterDocumentRepository? masterDocumentRepository,
     HseWorkRequestRepository? hseWorkRequestRepository,
@@ -160,6 +163,8 @@ class MyApp extends StatelessWidget {
             overtimeRepository ?? OvertimeRepository(apiClient: ApiClient()),
         approvalsWaitingRepository = approvalsWaitingRepository ??
             ApprovalsWaitingRepository(apiClient: ApiClient()),
+        leaveApprovalRepository = leaveApprovalRepository ??
+            LeaveApprovalRepository(apiClient: ApiClient()),
         notificationInboxRepository = notificationInboxRepository ??
             NotificationInboxRepository(apiClient: ApiClient()),
         masterDocumentRepository = masterDocumentRepository ??
@@ -184,6 +189,7 @@ class MyApp extends StatelessWidget {
   final PengajuanRepository pengajuanRepository;
   final OvertimeRepository overtimeRepository;
   final ApprovalsWaitingRepository approvalsWaitingRepository;
+  final LeaveApprovalRepository leaveApprovalRepository;
   final NotificationInboxRepository notificationInboxRepository;
   final MasterDocumentRepository masterDocumentRepository;
   final HseWorkRequestRepository hseWorkRequestRepository;
@@ -211,6 +217,7 @@ class MyApp extends StatelessWidget {
         RepositoryProvider.value(value: pengajuanRepository),
         RepositoryProvider.value(value: overtimeRepository),
         RepositoryProvider.value(value: approvalsWaitingRepository),
+        RepositoryProvider.value(value: leaveApprovalRepository),
         RepositoryProvider.value(value: notificationInboxRepository),
         RepositoryProvider.value(value: masterDocumentRepository),
         RepositoryProvider.value(value: hseWorkRequestRepository),

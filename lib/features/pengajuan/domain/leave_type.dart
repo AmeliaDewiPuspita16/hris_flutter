@@ -127,6 +127,7 @@ extension LeaveTypeX on LeaveType {
 
       case 'cuti pengganti':
       case 'off in lieu':
+      case 'oil':
         return LeaveType.cutiPengganti;
 
       case 'cek kesehatan':

@@ -196,8 +196,7 @@ class LeaveApprovalCard extends StatelessWidget {
   Widget _buildDecisionFooter() {
     final decidedAt = request.decidedAt;
     final by = request.decidedBy ?? 'Approver';
-    final verb =
-        request.status == LeaveApprovalStatus.approved ? 'Approved' : 'Rejected';
+    final verb = request.status.label;
     final when =
         decidedAt == null ? '' : ' · ${DateFormatter.shortDateID(decidedAt)}';
 

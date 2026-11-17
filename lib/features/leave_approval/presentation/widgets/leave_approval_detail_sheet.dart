@@ -244,8 +244,7 @@ class _LeaveApprovalDetailSheet extends StatelessWidget {
 
   List<Widget> _buildDecision() {
     final decidedAt = request.decidedAt;
-    final verb =
-        request.status == LeaveApprovalStatus.approved ? 'Approved' : 'Rejected';
+    final verb = request.status.label;
     final when =
         decidedAt == null ? '' : ' · ${DateFormatter.shortDateID(decidedAt)}';
 

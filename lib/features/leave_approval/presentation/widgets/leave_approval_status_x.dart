@@ -8,5 +8,6 @@ extension LeaveApprovalStatusUi on LeaveApprovalStatus {
         LeaveApprovalStatus.pending => AppStatus.pending,
         LeaveApprovalStatus.approved => AppStatus.present,
         LeaveApprovalStatus.rejected => AppStatus.rejected,
+        LeaveApprovalStatus.voided => AppStatus.rejected,
       };
 }

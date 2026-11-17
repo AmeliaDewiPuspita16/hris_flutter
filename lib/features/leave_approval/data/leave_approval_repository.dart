@@ -1,87 +1,56 @@
 import '../../../core/network/api_client.dart';
+import '../../../core/network/api_config.dart';
 import '../../../core/network/api_exception.dart';
-import '../domain/leave_approval_demo_data.dart';
 import '../domain/leave_approval_request.dart';
 import '../domain/leave_approval_status.dart';
 
-/// Sumber data halaman Leave Approvals: daftar pengajuan bawahan yang masuk
-/// ke HOD, dan keputusan approve/reject atasnya.
+/// Data source of the Leave Approvals screen: the leave requests of the
+/// HOD's department, read from HRIS through the portal
+/// (`GET /api/portal/apps/hris/leave/approvals`).
 ///
-/// BELUM ada endpoint approval HRIS — method di bawah bekerja di atas daftar
-/// dummy yang disimpan di memori. Karena itu HARUS ada satu instance yang
-/// dipakai bersama (dipegang `BerandaScreen`): keputusan yang diambil di
-/// halaman approval jadi tercermin di angka badge Beranda dan menu HRIS.
+/// One instance is shared (held by `BerandaScreen`) so the Home badge and
+/// the menu show the same count as the screen.
 ///
-/// [ApiClient] sudah disuntik lebih dulu (pola sama dengan
-/// `PengajuanRepository`) supaya saat endpoint siap, hanya isi method ini
-/// yang diganti jadi `_apiClient.get(...)` / `.post(...)` — bloc, screen,
-/// dan widget tidak perlu ikut berubah.
+/// Approve/reject is NOT available yet: the HRIS vendor has not delivered the
+/// endpoint that changes a leave request's status. [decide] says so instead
+/// of pretending, so nothing looks approved in the app while HRIS still has
+/// it pending.
 class LeaveApprovalRepository {
-  LeaveApprovalRepository({
-    required ApiClient apiClient,
-    List<LeaveApprovalRequest>? initial,
-  })  : _apiClient = apiClient,
-        _items = List.of(initial ?? LeaveApprovalDemoData.requests());
+  LeaveApprovalRepository({required ApiClient apiClient})
+      : _apiClient = apiClient;
 
-  // ignore: unused_field
   final ApiClient _apiClient;
 
-  final List<LeaveApprovalRequest> _items;
-
-  static const _simulatedLatency = Duration(milliseconds: 500);
-
-  /// Semua pengajuan yang menjadi tanggung jawab approver ini — yang masih
-  /// pending maupun yang sudah diputuskan. Pemisahan tab Pending/History
-  /// dilakukan di layar.
+  /// Pending requests plus the decided ones of the last 90 days. The
+  /// screen splits them into the Pending and History tabs.
   Future<List<LeaveApprovalRequest>> fetchRequests() async {
-    await Future.delayed(_simulatedLatency);
-    return List.unmodifiable(_items);
+    final envelope = await _apiClient.getEnvelope(ApiConfig.leaveApprovals);
+    final rows = envelope['data'];
+    if (rows is! List) throw const ApiException.server();
+
+    return List.unmodifiable([
+      for (final row in rows)
+        if (row is Map<String, dynamic>) LeaveApprovalRequest.fromJson(row),
+    ]);
   }
 
-  /// Jumlah yang masih pending, untuk badge di Beranda dan menu HRIS tanpa
-  /// perlu memuat seluruh daftar.
+  /// Pending count for the Home banner and the HRIS menu badge.
   Future<int> fetchPendingCount() async {
-    await Future.delayed(const Duration(milliseconds: 150));
-    return _items.where((r) => r.isPending).length;
+    final envelope = await _apiClient.getEnvelope(ApiConfig.leaveApprovals);
+    final meta = envelope['meta'];
+    final count = meta is Map<String, dynamic> ? meta['pending_count'] : null;
+    return count is num ? count.toInt() : 0;
   }
 
-  /// Menyetujui atau menolak satu pengajuan, mengembalikan versi terbarunya.
-  ///
-  /// [note] catatan approver; untuk penolakan layar mewajibkannya supaya
-  /// pemohon tahu alasannya.
-  ///
-  /// Melempar [ApiException] bila pengajuan tidak ditemukan atau sudah
-  /// diputuskan (mis. oleh approver lain).
+  /// Approve or reject one request. Always throws for now (see class doc).
   Future<LeaveApprovalRequest> decide(
     String id, {
     required LeaveApprovalDecision decision,
     String? note,
   }) async {
-    await Future.delayed(_simulatedLatency);
-
-    final index = _items.indexWhere((r) => r.id == id);
-    if (index == -1) {
-      throw const ApiException.server('Request not found.');
-    }
-
-    final current = _items[index];
-    if (!current.isPending) {
-      throw const ApiException.server(
-        'This request has already been processed.',
-      );
-    }
-
-    final trimmed = note?.trim();
-    final updated = current.copyWith(
-      status: decision == LeaveApprovalDecision.approve
-          ? LeaveApprovalStatus.approved
-          : LeaveApprovalStatus.rejected,
-      decidedBy: 'You',
-      decidedAt: DateTime.now(),
-      decisionNote: (trimmed == null || trimmed.isEmpty) ? null : trimmed,
+    throw const ApiException.server(
+      'Approving or rejecting from the app is not available yet. '
+      'Please use HRIS for now.',
     );
-
-    _items[index] = updated;
-    return updated;
   }
 }

@@ -155,9 +155,13 @@ class _BerandaScreenState extends State<BerandaScreen> {
   String? _attendanceError;
 
   /// Repository approval Leave — satu instance untuk seluruh Beranda.
+  ///
+  /// From the provider, never `LeaveApprovalRepository(apiClient: ApiClient())`:
+  /// a new ApiClient has no login token, so every call came back 401
+  /// (same trap as [_approvalsWaitingRepository] below).
   late final LeaveApprovalRepository _leaveApprovalRepository =
       widget.leaveApprovalRepository ??
-          LeaveApprovalRepository(apiClient: ApiClient());
+          context.read<LeaveApprovalRepository>();
 
   /// Jumlah pengajuan Leave yang menunggu keputusan HOD, dibaca dari
   /// [_leaveApprovalRepository] (BUKAN dihitung dari notifikasi).
@@ -346,6 +350,8 @@ class _BerandaScreenState extends State<BerandaScreen> {
     // Belum ada endpoint Leave Approvals: jumlahnya tetap 0 supaya banner
     // dan badge tidak menampilkan data dummy (FeatureFlags.leaveApproval).
     if (!FeatureFlags.leaveApproval) return;
+    // The endpoint is for role `hod` only; anyone else would just get a 403.
+    if (!(widget.user?.isHod ?? false)) return;
 
     try {
       final count = await _leaveApprovalRepository.fetchPendingCount();

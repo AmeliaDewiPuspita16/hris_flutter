@@ -11,8 +11,8 @@ class ApiConfig {
 
   static const String baseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'https://biieportal.co.id',
-    // defaultValue: 'http://127.0.0.1:8000',
+    // defaultValue: 'https://biieportal.co.id',
+    defaultValue: 'http://127.0.0.1:8000',
   );
 
   /// Batas tunggu satu request sebelum dianggap gagal.
@@ -159,8 +159,6 @@ class ApiConfig {
   static String observationDetail(int id) => '$observation/$id';
   static String observationClose(int id) => '$observation/$id/close';
 
-
-
   // --------------------------------- HRIS ----------------------------
 
   /// HRIS attendance. satu endpoint dua pemakai: 'today_schedule' untuk
@@ -177,6 +175,10 @@ class ApiConfig {
   /// Pengajuan). `data` berupa list, jadi diambil lewat [ApiClient.getList].
   static const String leaveStatus = '/api/portal/apps/hris/leave/status';
 
+  /// Leave requests of the HOD's department (pending + last 90 days),
+  /// with `meta.pending_count`. Role `hod` only.
+  static const String leaveApprovals = '/api/portal/apps/hris/leave/approvals';
+
   /// Realisasi lembur per bulan (`?month=YYYY-MM`): total jam + menit lembur
   /// per tanggal, dihitung dari check-in/out absensi. Dipakai Log Absensi
   /// dan, nanti, tab Summary di Overtime Request.
@@ -184,7 +186,8 @@ class ApiConfig {
 
   /// Pengajuan lembur milik user yang login. GET: riwayat (`data` berupa list,
   /// diambil lewat [ApiClient.getList]). POST: ajukan lembur baru.
-  static const String overtimeRequest = '/api/portal/apps/hris/overtime/request';
+  static const String overtimeRequest =
+      '/api/portal/apps/hris/overtime/request';
 
   /// Prakiraan cuaca Teluk Lobam per 3 jam (sumber BMKG, di-cache server).
   /// `data`: location, slots[], updated_at; `meta`: source, source_url, stale.
