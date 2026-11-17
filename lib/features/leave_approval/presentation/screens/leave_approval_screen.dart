@@ -27,8 +27,8 @@ enum _ApprovalCategory { leave, overtime }
 /// beserta riwayat keputusan yang sudah diambil.
 ///
 /// Melayani dua kategori: Leave (Annual Leave, Permission, Medical Check,
-/// Off in Lieu) dan Overtime. Di atas daftar ada dua tombol filter "Leave"
-/// dan "Overtime" (ketuk lagi untuk melepas). Tombol ini baru tampil kalau
+/// Off in Lieu) dan Overtime. Di atas daftar ada chip filter "All", "Leave",
+/// dan "Overtime" beserta jumlahnya. Chip ini baru tampil kalau
 /// memang ada pengajuan overtime, jadi tampilan tidak berubah selama
 /// approval overtime belum tersedia. Tidak ada search: daftar pending satu
 /// HOD biasanya hanya beberapa item.
@@ -356,7 +356,7 @@ class _LeaveApprovalViewState extends State<_LeaveApprovalView> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (showFilters) ...[
-          _buildFilterBar(category),
+          _buildFilterBar(category, source),
           const SizedBox(height: 12),
         ] else
           const SizedBox(height: 16),
@@ -376,71 +376,127 @@ class _LeaveApprovalViewState extends State<_LeaveApprovalView> {
     );
   }
 
-  /// Dua tombol filter selebar sama: Leave dan Overtime.
-  Widget _buildFilterBar(_ApprovalCategory? category) {
+  /// Chip filter kategori: All, Leave, Overtime, masing-masing dengan
+  /// jumlah pengajuan di tab yang sedang dibuka ([source]).
+  Widget _buildFilterBar(
+    _ApprovalCategory? category,
+    List<LeaveApprovalRequest> source,
+  ) {
+    final overtimeCount = source.where((r) => r.isOvertime).length;
+    final leaveCount = source.length - overtimeCount;
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
       child: Row(
         children: [
-          _buildFilterButton(
-            value: _ApprovalCategory.leave,
+          _buildFilterChip(
+            label: 'All',
+            count: source.length,
+            color: AppColors.primaryMidText,
+            active: category == null,
+            onTap: () => setState(() => _category = null),
+          ),
+          const SizedBox(width: 8),
+          _buildFilterChip(
             label: 'Leave',
+            count: leaveCount,
             icon: Icons.event_available_outlined,
             // Sama dengan warna menu Leave Request (bukan hijau primary).
             color: AppColors.accent,
-            selected: category,
+            active: category == _ApprovalCategory.leave,
+            onTap: () => _toggleCategory(_ApprovalCategory.leave),
           ),
-          const SizedBox(width: 10),
-          _buildFilterButton(
-            value: _ApprovalCategory.overtime,
+          const SizedBox(width: 8),
+          _buildFilterChip(
             label: 'Overtime',
+            count: overtimeCount,
             icon: Icons.more_time_outlined,
             color: AppColors.violet,
-            selected: category,
+            active: category == _ApprovalCategory.overtime,
+            onTap: () => _toggleCategory(_ApprovalCategory.overtime),
           ),
         ],
       ),
     );
   }
 
-  /// Tombol filter: putih dengan ikon berwarna saat tidak aktif, terisi
-  /// warna kategorinya saat aktif. Ketuk lagi untuk melepas. Ikon dan warna
-  /// sama dengan menu Leave Request dan Overtime Request.
-  Widget _buildFilterButton({
-    required _ApprovalCategory value,
-    required String label,
-    required IconData icon,
-    required Color color,
-    required _ApprovalCategory? selected,
-  }) {
-    final active = selected == value;
+  /// Mengetuk chip yang sedang aktif mengembalikan filter ke All.
+  void _toggleCategory(_ApprovalCategory value) =>
+      setState(() => _category = _category == value ? null : value);
 
-    return Expanded(
-      child: InkWell(
-        onTap: () => setState(() => _category = active ? null : value),
-        borderRadius: BorderRadius.circular(20),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 150),
-          height: 38,
-          decoration: BoxDecoration(
-            color: active ? AppColors.solid(color) : AppColors.card,
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, size: 16, color: active ? Colors.white : color),
-              const SizedBox(width: 6),
-              Text(
-                label,
-                style: TextStyle(
-                  fontFamily: AppTextStyles.fontFamily,
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w700,
-                  color: active ? Colors.white : AppColors.textMuted,
-                ),
+  /// Chip filter: garis tepi tipis saat tidak aktif; saat aktif berlatar
+  /// tint dan bertepi warna kategorinya. Ikon dan warna sama dengan menu
+  /// Leave Request dan Overtime Request.
+  Widget _buildFilterChip({
+    required String label,
+    required int count,
+    required Color color,
+    required bool active,
+    required VoidCallback onTap,
+    IconData? icon,
+  }) {
+    final fg = AppColors.isDark ? AppColors.onDark(color) : color;
+
+    return Semantics(
+      button: true,
+      selected: active,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(18),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            height: 36,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            decoration: BoxDecoration(
+              color: active ? AppColors.tintOnCard(color) : AppColors.card,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(
+                color: active ? fg : AppColors.border,
+                width: active ? 1.4 : 1,
               ),
-            ],
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (icon != null) ...[
+                  Icon(icon, size: 16, color: fg),
+                  const SizedBox(width: 6),
+                ],
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontFamily: AppTextStyles.fontFamily,
+                    fontSize: 12.5,
+                    fontWeight: active ? FontWeight.w700 : FontWeight.w600,
+                    color: active ? fg : AppColors.textMid,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Container(
+                  constraints: const BoxConstraints(minWidth: 20),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                  decoration: BoxDecoration(
+                    color: active
+                        ? AppColors.solid(color)
+                        : AppColors.border.withValues(alpha: 0.6),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    '$count',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontFamily: AppTextStyles.fontFamily,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: active ? Colors.white : AppColors.textMuted,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

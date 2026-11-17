@@ -11,15 +11,19 @@ import '../domain/leave_approval_status.dart';
 /// One instance is shared (held by `BerandaScreen`) so the Home badge and
 /// the menu show the same count as the screen.
 ///
-/// Approve/reject is NOT available yet: the HRIS vendor has not delivered the
-/// endpoint that changes a leave request's status. [decide] says so instead
-/// of pretending, so nothing looks approved in the app while HRIS still has
-/// it pending.
+/// Approve goes to HRIS through the portal
+/// (`POST .../leave/approvals/{id}/decision`, ERP Document Routing). Reject
+/// is refused by the portal for now: HRIS has no rejection action yet, and
+/// the portal's message says so.
 class LeaveApprovalRepository {
   LeaveApprovalRepository({required ApiClient apiClient})
       : _apiClient = apiClient;
 
   final ApiClient _apiClient;
+
+  /// `category` (leave|overtime) of each loaded request, which the decision
+  /// endpoint needs to pick the HRIS service.
+  final Map<String, String> _categories = {};
 
   /// Pending requests plus the decided ones of the last 90 days. The
   /// screen splits them into the Pending and History tabs.
@@ -28,10 +32,14 @@ class LeaveApprovalRepository {
     final rows = envelope['data'];
     if (rows is! List) throw const ApiException.server();
 
-    return List.unmodifiable([
-      for (final row in rows)
-        if (row is Map<String, dynamic>) LeaveApprovalRequest.fromJson(row),
-    ]);
+    final items = <LeaveApprovalRequest>[];
+    for (final row in rows) {
+      if (row is! Map<String, dynamic>) continue;
+      final item = LeaveApprovalRequest.fromJson(row);
+      _categories[item.id] = (row['category'] as String?) ?? 'leave';
+      items.add(item);
+    }
+    return List.unmodifiable(items);
   }
 
   /// Pending count for the Home banner and the HRIS menu badge.
@@ -42,15 +50,26 @@ class LeaveApprovalRepository {
     return count is num ? count.toInt() : 0;
   }
 
-  /// Approve or reject one request. Always throws for now (see class doc).
+  /// Approve or reject one request and return its new version from HRIS.
+  ///
+  /// Throws [ApiException] with the portal's message when it is refused
+  /// (already processed, own request, reject not available, HRIS down).
   Future<LeaveApprovalRequest> decide(
     String id, {
     required LeaveApprovalDecision decision,
     String? note,
   }) async {
-    throw const ApiException.server(
-      'Approving or rejecting from the app is not available yet. '
-      'Please use HRIS for now.',
+    final trimmed = note?.trim();
+    final data = await _apiClient.post(
+      ApiConfig.leaveApprovalDecision(id),
+      body: {
+        'category': _categories[id] ?? 'leave',
+        'decision':
+            decision == LeaveApprovalDecision.approve ? 'approve' : 'reject',
+        if (trimmed != null && trimmed.isNotEmpty) 'note': trimmed,
+      },
     );
+
+    return LeaveApprovalRequest.fromJson(data);
   }
 }

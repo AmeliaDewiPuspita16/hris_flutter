@@ -11,8 +11,8 @@ class ApiConfig {
 
   static const String baseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    // defaultValue: 'https://biieportal.co.id',
-    defaultValue: 'http://127.0.0.1:8000',
+    defaultValue: 'https://biieportal.co.id',
+    // defaultValue: 'http://127.0.0.1:8000',
   );
 
   /// Batas tunggu satu request sebelum dianggap gagal.
@@ -178,6 +178,11 @@ class ApiConfig {
   /// Leave requests of the HOD's department (pending + last 90 days),
   /// with `meta.pending_count`. Role `hod` only.
   static const String leaveApprovals = '/api/portal/apps/hris/leave/approvals';
+
+  /// Approve one request of [leaveApprovals] in HRIS (ERP Document Routing).
+  /// Body: category (leave|overtime), decision (approve|reject), note.
+  static String leaveApprovalDecision(String id) =>
+      '$leaveApprovals/${Uri.encodeComponent(id)}/decision';
 
   /// Realisasi lembur per bulan (`?month=YYYY-MM`): total jam + menit lembur
   /// per tanggal, dihitung dari check-in/out absensi. Dipakai Log Absensi
