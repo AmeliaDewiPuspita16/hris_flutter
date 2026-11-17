@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hris_mobile/features/home/domain/published_announcement.dart';
 import 'package:hris_mobile/features/home/presentation/widgets/announcement_section.dart';

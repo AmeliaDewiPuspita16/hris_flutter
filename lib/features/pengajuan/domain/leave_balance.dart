@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Ringkasan saldo satu jenis cuti/izin/lembur untuk pegawai yang login.
 ///

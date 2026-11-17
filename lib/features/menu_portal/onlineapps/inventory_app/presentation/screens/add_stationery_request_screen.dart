@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 
 import '../../../../../../core/logging/app_logger.dart';
@@ -46,7 +46,7 @@ class AddStationeryRequestScreen extends StatefulWidget {
 
 /// Satu baris isian: barang + jumlah + keterangan.
 class _LineForm {
-  _LineForm({this.item});
+  _LineForm() : item = null;
 
   StationeryItemOption? item;
   final quantity = TextEditingController();

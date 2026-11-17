@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../../shared/presentation/widgets/portal_category_card.dart';
 import '../../domain/record_item.dart';

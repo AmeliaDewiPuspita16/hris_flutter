@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Satu set warna lengkap untuk satu mode tampilan (terang / gelap).
 ///
