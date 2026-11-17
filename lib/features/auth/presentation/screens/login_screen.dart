@@ -116,7 +116,8 @@ class _LoginViewState extends State<_LoginView> {
                     // dan gampang meleset (teks yang membungkus, TextField,
                     // font besar) sehingga Column meluap ("RenderFlex
                     // overflowed by ... pixels").
-                    constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                    constraints:
+                        BoxConstraints(minHeight: constraints.maxHeight),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -174,8 +175,17 @@ class _LoginForm extends StatelessWidget {
   final LoginState state;
   final VoidCallback onSignIn;
 
+  /// Tampil saat AuthBloc mengeluarkan pengguna karena token-nya ditolak
+  /// server, supaya tidak terkesan logout sendiri tanpa sebab.
+  static const sessionExpiredMessage =
+      'Your session has expired. Please sign in again.';
+
   @override
   Widget build(BuildContext context) {
+    final sessionExpired = context.select<AuthBloc, bool>(
+      (bloc) => bloc.state.sessionExpired,
+    );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -222,6 +232,9 @@ class _LoginForm extends StatelessWidget {
         if (state.errorMessage != null) ...[
           const SizedBox(height: 16),
           _ServerErrorMessage(message: state.errorMessage!),
+        ] else if (sessionExpired) ...[
+          const SizedBox(height: 16),
+          const _ServerErrorMessage(message: sessionExpiredMessage),
         ],
         const SizedBox(height: 20),
         AppButton(
