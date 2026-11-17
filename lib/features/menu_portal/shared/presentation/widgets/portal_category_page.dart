@@ -36,6 +36,8 @@ class PortalCategoryPage extends StatelessWidget {
       'assets/icons/header-edit-document-illustration.svg';
   static const databaseIllustration =
       'assets/icons/header-database-illustration.svg';
+  static const meterIllustration =
+      'assets/icons/header-meter-illustration.svg';
 
   final String title;
   final String subtitle;

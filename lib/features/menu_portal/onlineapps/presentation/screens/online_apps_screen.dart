@@ -9,6 +9,7 @@ import '../../inventory_app/domain/inventory_menu.dart';
 import '../../inventory_app/presentation/screens/inventory_management_screen.dart';
 import '../../inventory_app/presentation/screens/item_request_screen.dart';
 import '../../inventory_app/presentation/widgets/inventory_option_sheet.dart';
+import '../../meter_reading/presentation/screens/meter_reading_screen.dart';
 import '../../work_order/domain/request_type.dart';
 import '../../work_order/est_request/presentation/screens/est_request_screen.dart';
 import '../../work_order/it_request/presentation/screens/it_request_screen.dart';
@@ -91,7 +92,9 @@ class OnlineAppsScreen extends StatelessWidget {
       showProcurement: user?.canAccessProcurement ?? false,
       // null = belum siap: tile tampil redup & tidak bisa diketuk.
       onInventory: () => _openInventory(context),
-      onMeterReading: null,
+      onMeterReading: () => Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const MeterReadingScreen()),
+      ),
       onReservation: null,
       onProcurement: () => Navigator.of(context).push(
         MaterialPageRoute(builder: (_) => const ProcurementPage()),
