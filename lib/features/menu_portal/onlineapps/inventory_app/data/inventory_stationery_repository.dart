@@ -23,7 +23,7 @@ import '../domain/stationery_request_status.dart';
 class InventoryStationeryRepository {
   InventoryStationeryRepository() {
     for (final item in _catalog) {
-      _stock[item.id] = item.stock ?? 0;
+      _stock[item.id] = item.stock;
     }
     _requests.addAll(_seed());
   }
@@ -148,7 +148,8 @@ class InventoryStationeryRepository {
     final request = _ownPending(id, 'edited');
     final stock = _stock[request.itemId] ?? 0;
     if (quantity > stock) {
-      throw ApiException.server('Quantity exceeds the available stock ($stock).');
+      throw ApiException.server(
+          'Quantity exceeds the available stock ($stock).');
     }
 
     request
@@ -188,8 +189,7 @@ class InventoryStationeryRepository {
   List<_DemoRequest> _sorted() =>
       [..._requests]..sort((a, b) => b.id.compareTo(a.id));
 
-  int _nextId() =>
-      _requests.fold<int>(0, (m, r) => r.id > m ? r.id : m) + 1;
+  int _nextId() => _requests.fold<int>(0, (m, r) => r.id > m ? r.id : m) + 1;
 
   _CatalogItem _itemById(int id) => _catalog.firstWhere((i) => i.id == id);
 
@@ -199,7 +199,8 @@ class InventoryStationeryRepository {
       throw const ApiException.server('Request not found.');
     }
     if (!request.isPending) {
-      throw const ApiException.server('This request has already been processed.');
+      throw const ApiException.server(
+          'This request has already been processed.');
     }
     return request;
   }
@@ -254,7 +255,8 @@ class InventoryStationeryRepository {
     _CatalogItem(8, 'ITE00008', 'BATERAI AAA', 'PCS', 40),
     _CatalogItem(97, 'ITE00097', 'BENDERA BIIE (90 cm x 135 cm)', 'PCS', 6),
     _CatalogItem(98, 'ITE00098', 'BENDERA K3 90 cm x 135 cm', 'PCS', 4),
-    _CatalogItem(96, 'ITE00096', 'BENDERA MERAH PUTIH 120 cm x 180 cm', 'PCS', 5),
+    _CatalogItem(
+        96, 'ITE00096', 'BENDERA MERAH PUTIH 120 cm x 180 cm', 'PCS', 5),
     _CatalogItem(9, 'ITE00009', 'BINDER CLIP 15 MM', 'BOX', 25),
     _CatalogItem(10, 'ITE00010', 'BINDER CLIP 19 MM', 'BOX', 30),
     _CatalogItem(38, 'ITE00038', 'GOBY 8401 HITAM', 'PCS', 36),
@@ -272,8 +274,9 @@ class InventoryStationeryRepository {
     const a = StationeryRequestStatus.codeApproved;
     const r = StationeryRequestStatus.codeRejected;
 
-    _DemoRequest row(int id, String who, int item, int qty, String desc,
-            String status, {String? reason}) =>
+    _DemoRequest row(
+            int id, String who, int item, int qty, String desc, String status,
+            {String? reason}) =>
         _DemoRequest(
           id: id,
           requester: who,
@@ -287,10 +290,20 @@ class InventoryStationeryRepository {
     return [
       row(558, 'Adi Mufti Pradana', 70, 1, '', p),
       row(557, 'Imelda Ayu Kinanti', 70, 2, 'Operational FIN', p),
-      row(556, 'Sauki Likar Arabi', 61, 10,
-          'dear team HR , saya mau minta pena 1 kotak ,untuk kebutuhan fire safey (mencatat kegiatan dijurnal) terima kasih.', p),
-      row(555, 'M. Gumri', 95, 11,
-          'dear team HR , saya mau minta pena 1 kotak untuk kebutuhan operasional (tulis jurnal) fire safety terima kasih', r,
+      row(
+          556,
+          'Sauki Likar Arabi',
+          61,
+          10,
+          'dear team HR , saya mau minta pena 1 kotak ,untuk kebutuhan fire safey (mencatat kegiatan dijurnal) terima kasih.',
+          p),
+      row(
+          555,
+          'M. Gumri',
+          95,
+          11,
+          'dear team HR , saya mau minta pena 1 kotak untuk kebutuhan operasional (tulis jurnal) fire safety terima kasih',
+          r,
           reason: 'Minta per box tidak tersedia, silakan request per pcs.'),
       row(554, _me, 107, 1, 'Untuk operasional IT', p),
       row(553, 'Admin IMS', 46, 1, 'Operasional Departemen', p),
