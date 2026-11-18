@@ -46,7 +46,7 @@ class InventoryMenuData {
     ),
   ];
 
-  /// Isi halaman Management, urutannya sama dengan di web.
+  /// Isi halaman Management
   ///
   /// Menonaktifkan sebuah fitur: ubah `ready` jadi false (kartu jadi redup
   /// dengan label "Coming soon" dan tidak bisa diketuk), atau hapus barisnya
@@ -63,12 +63,14 @@ class InventoryMenuData {
       icon: Icons.sell_outlined,
       title: 'My Categories',
       subtitle: 'Who handles each category',
+      ready: false,
     ),
     InventoryOption(
       value: InventoryManagement.myItems,
       icon: Icons.inventory_2_outlined,
       title: 'My Items',
       subtitle: 'Items, stock and operations',
+      ready: false
     ),
   ];
 }

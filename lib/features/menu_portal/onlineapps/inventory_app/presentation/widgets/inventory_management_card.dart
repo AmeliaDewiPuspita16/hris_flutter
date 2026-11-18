@@ -49,21 +49,14 @@ class InventoryManagementTone {
     tileFrom: Color(0xFFE28566),
     tileTo: Color(0xFFDA623A),
   );
-
-  /// Kartu yang belum siap (redup, seperti Meter Reading di Online Apps).
-  static const disabled = InventoryManagementTone(
-    panel: Color(0xFFEFF0F2),
-    border: Color(0xFFE2E4E8),
-    tileFrom: Color(0xFFC9CFD8),
-    tileTo: Color(0xFFB3BAC6),
-  );
 }
 
 /// Satu kartu di halaman Management: panel tint di atas dengan ikon besar di
 /// kotak gradien, lalu judul dan keterangan singkat di bagian putih bawahnya.
 ///
-/// Bila `option.ready` false kartu memakai [InventoryManagementTone.disabled]
-/// dengan label "Coming soon" dan tidak bisa diketuk, sama seperti di web.
+/// Bila `option.ready` false kartu dipudarkan (warna aslinya tetap, hanya
+/// transparansinya turun), diberi teks kecil "Coming soon" di bawah
+/// keterangan, dan tidak bisa diketuk.
 ///
 /// [dense] true untuk grid tiga kolom: panel, ikon, dan teks dikecilkan.
 class InventoryManagementCard<T> extends StatelessWidget {
@@ -83,7 +76,7 @@ class InventoryManagementCard<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ready = option.ready;
-    final t = ready ? tone : InventoryManagementTone.disabled;
+    final t = tone;
 
     final panelHeight = dense ? 72.0 : 84.0;
     final tileSize = dense ? 46.0 : 52.0;
@@ -102,7 +95,7 @@ class InventoryManagementCard<T> extends StatelessWidget {
     // Mode gelap: garis tepi seragam untuk semua kartu (tidak ikut tint).
     final borderColor = dark ? AppColors.border : t.border;
 
-    return Container(
+    final card = Container(
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: AppColors.card,
@@ -126,128 +119,109 @@ class InventoryManagementCard<T> extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Stack(
-                children: [
-                  Container(
-                    height: panelHeight,
-                    clipBehavior: Clip.hardEdge,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: dark ? Alignment.topCenter : Alignment.topLeft,
-                        end: dark
-                            ? Alignment.bottomCenter
-                            : Alignment.bottomRight,
-                        colors: [panelStart, panelEnd],
-                      ),
-                    ),
-                    child: SizedBox.expand(
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          // Lingkaran besar samar di balik kotak ikon, ikut
-                          // warna tint kartu.
-                          if (dark) ...[
-                            // Mode gelap: cahaya radial di balik kotak ikon,
-                            // memudar ke transparan di tepinya.
-                            Positioned.fill(
-                              child: DecoratedBox(
-                                decoration: BoxDecoration(
-                                  gradient: RadialGradient(
-                                    radius: 0.95,
-                                    colors: [
-                                      t.tileFrom.withAlpha(95),
-                                      t.tileFrom.withAlpha(0),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ] else ...[
-                            Positioned(
-                              top: -36,
-                              right: -28,
-                              child: _Circle(
-                                size: 112,
-                                color: Colors.white.withAlpha(110),
-                              ),
-                            ),
-                            Positioned(
-                              bottom: -30,
-                              left: -22,
-                              child: _Circle(
-                                size: 78,
-                                color: Colors.white.withAlpha(80),
-                              ),
-                            ),
-                          ],
-                          _IconTile(
-                            icon: option.icon,
-                            tone: t,
-                            ready: ready,
-                            size: tileSize,
-                            iconSize: iconSize,
-                          ),
-                        ],
-                      ),
-                    ),
+              Container(
+                height: panelHeight,
+                clipBehavior: Clip.hardEdge,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: dark ? Alignment.topCenter : Alignment.topLeft,
+                    end: dark
+                        ? Alignment.bottomCenter
+                        : Alignment.bottomRight,
+                    colors: [panelStart, panelEnd],
                   ),
-                  if (!ready)
-                    Positioned(
-                      top: 8,
-                      right: 8,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.card,
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          'Coming soon',
-                          style: AppTextStyles.caption.copyWith(
-                            fontSize: 10,
-                            color: AppColors.textMuted,
-                            fontWeight: FontWeight.w700,
+                ),
+                child: SizedBox.expand(
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      // Lingkaran besar samar di balik kotak ikon, ikut
+                      // warna tint kartu.
+                      if (dark) ...[
+                        // Mode gelap: cahaya radial di balik kotak ikon,
+                        // memudar ke transparan di tepinya.
+                        Positioned.fill(
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              gradient: RadialGradient(
+                                radius: 0.95,
+                                colors: [
+                                  t.tileFrom.withAlpha(95),
+                                  t.tileFrom.withAlpha(0),
+                                ],
+                              ),
+                            ),
                           ),
                         ),
+                      ] else ...[
+                        Positioned(
+                          top: -36,
+                          right: -28,
+                          child: _Circle(
+                            size: 112,
+                            color: Colors.white.withAlpha(110),
+                          ),
+                        ),
+                        Positioned(
+                          bottom: -30,
+                          left: -22,
+                          child: _Circle(
+                            size: 78,
+                            color: Colors.white.withAlpha(80),
+                          ),
+                        ),
+                      ],
+                      _IconTile(
+                        icon: option.icon,
+                        tone: t,
+                        ready: ready,
+                        size: tileSize,
+                        iconSize: iconSize,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              Padding(
+                padding: dense
+                    ? const EdgeInsets.fromLTRB(10, 8, 10, 10)
+                    : const EdgeInsets.fromLTRB(12, 10, 12, 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      option.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTextStyles.body.copyWith(
+                        fontSize: dense ? 12 : 13.5,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
-                ],
-              ),
-              Opacity(
-                opacity: ready ? 1 : 0.6,
-                child: Padding(
-                  padding: dense
-                      ? const EdgeInsets.fromLTRB(10, 8, 10, 10)
-                      : const EdgeInsets.fromLTRB(12, 10, 12, 12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        option.title,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppTextStyles.body.copyWith(
-                          fontSize: dense ? 12 : 13.5,
-                          fontWeight: FontWeight.w700,
-                        ),
+                    const SizedBox(height: 2),
+                    Text(
+                      option.subtitle,
+                      maxLines: dense ? 2 : 3,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTextStyles.caption.copyWith(
+                        fontSize: dense ? 10 : 11,
+                        height: 1.35,
+                        color: AppColors.textMuted,
                       ),
-                      const SizedBox(height: 2),
+                    ),
+                    if (!ready) ...[
+                      const SizedBox(height: 4),
                       Text(
-                        option.subtitle,
-                        maxLines: dense ? 2 : 3,
-                        overflow: TextOverflow.ellipsis,
+                        'Coming soon',
                         style: AppTextStyles.caption.copyWith(
                           fontSize: dense ? 10 : 11,
-                          height: 1.35,
+                          fontWeight: FontWeight.w600,
                           color: AppColors.textMuted,
                         ),
                       ),
                     ],
-                  ),
+                  ],
                 ),
               ),
             ],
@@ -255,6 +229,8 @@ class InventoryManagementCard<T> extends StatelessWidget {
         ),
       ),
     );
+
+    return ready ? card : Opacity(opacity: 0.5, child: card);
   }
 }
 
