@@ -22,7 +22,8 @@ class MeterProgressSummary extends StatelessWidget {
 
     final progress = (counts.recorded / total).clamp(0.0, 1.0);
     final done = counts.pending == 0;
-    final color = done ? AppColors.present : AppColors.primary;
+    // primaryText, bukan primary: primary hijau tua nyaris hilang di tema gelap.
+    final color = done ? AppColors.present : AppColors.primaryText;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),

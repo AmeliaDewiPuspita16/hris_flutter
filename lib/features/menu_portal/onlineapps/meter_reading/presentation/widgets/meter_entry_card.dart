@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -344,6 +345,11 @@ class _PhotoRow extends StatelessWidget {
   final VoidCallback onPick;
   final VoidCallback onRemove;
 
+  Widget _brokenImage() => Container(
+        color: AppColors.neutralBg,
+        child: Icon(Icons.broken_image_outlined, color: AppColors.textMuted),
+      );
+
   @override
   Widget build(BuildContext context) {
     final current = photo;
@@ -378,14 +384,19 @@ class _PhotoRow extends StatelessWidget {
           child: SizedBox(
             width: 52,
             height: 52,
-            child: Image.file(
-              File(current.path),
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(
-                color: AppColors.neutralBg,
-                child: Icon(Icons.broken_image_outlined, color: AppColors.textMuted),
-              ),
-            ),
+            // Di web, image_picker memberi URL blob — Image.file tidak
+            // didukung di sana, jadi pakai Image.network.
+            child: kIsWeb
+                ? Image.network(
+                    current.path,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => _brokenImage(),
+                  )
+                : Image.file(
+                    File(current.path),
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => _brokenImage(),
+                  ),
           ),
         ),
         const SizedBox(width: 12),

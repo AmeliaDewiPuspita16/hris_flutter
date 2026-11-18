@@ -31,7 +31,7 @@ class MeterCategoryButton extends StatelessWidget {
             color: active ? AppColors.primary.withValues(alpha: 0.08) : AppColors.card,
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
-              color: active ? AppColors.primary : AppColors.border,
+              color: active ? AppColors.primaryText : AppColors.border,
               width: active ? 1.5 : 1,
             ),
           ),
@@ -51,7 +51,7 @@ class MeterCategoryButton extends StatelessWidget {
                     width: 8,
                     height: 8,
                     decoration: BoxDecoration(
-                      color: AppColors.primary,
+                      color: AppColors.primaryText,
                       shape: BoxShape.circle,
                       border: Border.all(color: AppColors.card, width: 1.5),
                     ),

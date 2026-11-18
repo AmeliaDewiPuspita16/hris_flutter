@@ -124,7 +124,9 @@ class _FilterChip extends StatelessWidget {
         decoration: BoxDecoration(
           color: active ? AppColors.primary : AppColors.card,
           borderRadius: BorderRadius.circular(20),
-          border: active ? null : Border.all(color: AppColors.border),
+          border: Border.all(
+            color: active ? AppColors.primaryText.withValues(alpha: 0.45) : AppColors.border,
+          ),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,

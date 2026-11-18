@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 
 import '../../../../../../core/theme/app_colors.dart';
@@ -54,7 +55,7 @@ class _Thumb extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final image = source.startsWith('http')
+    final image = kIsWeb || source.startsWith('http') || source.startsWith('blob:')
         ? Image.network(
             source,
             fit: BoxFit.cover,
