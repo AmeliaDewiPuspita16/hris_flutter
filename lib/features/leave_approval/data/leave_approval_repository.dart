@@ -25,7 +25,7 @@ class LeaveApprovalRepository {
   /// endpoint needs to pick the HRIS service.
   final Map<String, String> _categories = {};
 
-  /// Pending requests plus the decided ones of the last 90 days. The
+  /// Pending requests plus the decided ones of the last 2 years. The
   /// screen splits them into the Pending and History tabs.
   Future<List<LeaveApprovalRequest>> fetchRequests() async {
     final envelope = await _apiClient.getEnvelope(ApiConfig.leaveApprovals);

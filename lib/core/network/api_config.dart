@@ -175,7 +175,7 @@ class ApiConfig {
   /// Pengajuan). `data` berupa list, jadi diambil lewat [ApiClient.getList].
   static const String leaveStatus = '/api/portal/apps/hris/leave/status';
 
-  /// Leave requests of the HOD's department (pending + last 90 days),
+  /// Leave requests of the HOD's department (pending + last 2 years),
   /// with `meta.pending_count`. Role `hod` only.
   static const String leaveApprovals = '/api/portal/apps/hris/leave/approvals';
 
