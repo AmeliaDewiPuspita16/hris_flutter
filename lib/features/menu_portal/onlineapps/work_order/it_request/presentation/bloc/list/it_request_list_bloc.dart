@@ -12,6 +12,10 @@ import 'it_request_list_state.dart';
 /// berikutnya, dan menyisipkan hasil aksi yang sudah dieksekusi layar/sheet
 /// pemanggil sendiri (tambah request, beri feedback) — bloc ini cuma
 /// menyatukan hasilnya ke state, bukan yang memanggil API-nya.
+///
+/// Pencarian ([ItRequestListSearchChanged]) menyaring di sisi klien, dan
+/// selama pencarian aktif bloc memuat semua halaman yang tersisa supaya
+/// request lama ikut ditemukan.
 class ItRequestListBloc extends Bloc<ItRequestListEvent, ItRequestListState> {
   ItRequestListBloc({
     required ItRequestRepository repository,
@@ -24,6 +28,7 @@ class ItRequestListBloc extends Bloc<ItRequestListEvent, ItRequestListState> {
     on<ItRequestLocalItemAdded>(_onLocalItemAdded);
     on<ItRequestLocalItemUpdated>(_onLocalItemUpdated);
     on<ItRequestFeedbackGiven>(_onFeedbackGiven);
+    on<ItRequestListSearchChanged>(_onSearchChanged);
   }
 
   final ItRequestRepository _repository;
@@ -62,6 +67,13 @@ class ItRequestListBloc extends Bloc<ItRequestListEvent, ItRequestListState> {
         meta: page.meta,
         loadingMore: false,
       ));
+
+      // Refresh/muat ulang saat pencarian masih aktif: halaman 1 saja belum
+      // cukup untuk menemukan request lama, jadi lanjutkan memuat sisanya.
+      if (state.isSearching && state.meta.hasMore) {
+        await _loadMore(emit);
+        return;
+      }
 
       // Daftar tersaring status waiting/progress tidak akan pernah memuat
       // item yang bisa dirating (baru bisa setelah selesai), jadi perburuan
@@ -164,19 +176,69 @@ class ItRequestListBloc extends Bloc<ItRequestListEvent, ItRequestListState> {
     if (state.loadingMore || !state.meta.hasMore) return;
     if (state.status != ItRequestListStatus.success) return;
 
+    await _loadMore(emit);
+  }
+
+  /// Kata kunci berubah. Penyaringannya sendiri murni getter di state
+  /// ([ItRequestListState.visibleItems]) — di sini bloc cuma menyimpan kata
+  /// kuncinya, lalu memastikan request yang belum termuat ikut terjangkau.
+  ///
+  /// Tidak ada debounce dan tidak ada pembatalan per ketikan: memuat
+  /// halaman berikutnya cukup memeriksa `state.searchQuery` TERBARU di tiap
+  /// putaran, jadi mengetik cepat tidak melahirkan banyak pemuat sekaligus
+  /// (yang kedua tertahan oleh `loadingMore`).
+  ///
+  /// Kalau daftar masih memuat (muat awal/refresh), cukup simpan kata
+  /// kuncinya — `_onReload` yang akan melanjutkan memuat begitu selesai.
+  Future<void> _onSearchChanged(
+    ItRequestListSearchChanged event,
+    Emitter<ItRequestListState> emit,
+  ) async {
+    final query = event.query.trim();
+    if (query == state.searchQuery) return;
+
+    emit(state.copyWith(searchQuery: query));
+
+    if (query.isEmpty) return;
+    if (state.status != ItRequestListStatus.success) return;
+    if (state.loadingMore || !state.meta.hasMore) return;
+
+    await _loadMore(emit);
+  }
+
+  /// Memuat halaman berikutnya. Selama pencarian aktif, terus memuat sampai
+  /// halaman terakhir (atau pencarian dikosongkan) — pencarian di sisi klien
+  /// cuma bisa menemukan apa yang sudah ada di memori, dan request lama
+  /// justru ada di halaman-halaman belakang.
+  ///
+  /// Tanpa pencarian, hanya satu halaman per panggilan (infinite scroll
+  /// biasa). Bila gagal, daftar yang sudah tampil dibiarkan utuh.
+  Future<void> _loadMore(Emitter<ItRequestListState> emit) async {
     final token = _requestToken;
     emit(state.copyWith(loadingMore: true));
 
     try {
-      final page = await _repository.fetchList(page: state.meta.currentPage + 1, status: status);
-      if (token != _requestToken) return;
+      while (true) {
+        final previousPage = state.meta.currentPage;
+        final page = await _repository.fetchList(
+          page: previousPage + 1,
+          status: status,
+        );
+        if (token != _requestToken) return;
 
-      emit(state.copyWith(
-        items: _appendWithoutDuplicates(state.items, page.items),
-        summary: page.summary,
-        meta: page.meta,
-        loadingMore: false,
-      ));
+        emit(state.copyWith(
+          items: _appendWithoutDuplicates(state.items, page.items),
+          summary: page.summary,
+          meta: page.meta,
+        ));
+
+        // Pengaman: respons yang halamannya tidak maju akan membuat loop ini
+        // berputar selamanya.
+        if (page.meta.currentPage <= previousPage) break;
+        if (!state.isSearching || !state.meta.hasMore) break;
+      }
+
+      emit(state.copyWith(loadingMore: false));
     } on ApiException catch (e) {
       if (token != _requestToken) return;
 

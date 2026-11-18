@@ -57,3 +57,15 @@ class ItRequestFeedbackGiven extends ItRequestListEvent {
 
   final ItRequestDetail detail;
 }
+
+/// User mengetik (atau mengosongkan) kolom pencarian.
+///
+/// Pencarian dilakukan di sisi klien atas SEMUA request yang termuat, dan
+/// selama [query] tidak kosong bloc terus memuat halaman berikutnya sampai
+/// habis — supaya request lama yang ada jauh di halaman belakang ikut
+/// ditemukan, bukan cuma yang kebetulan sudah tergulir.
+class ItRequestListSearchChanged extends ItRequestListEvent {
+  const ItRequestListSearchChanged(this.query);
+
+  final String query;
+}
