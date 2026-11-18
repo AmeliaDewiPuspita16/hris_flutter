@@ -90,6 +90,13 @@ class NotificationCategory {
     background: AppColors.hseRequestBg,
   );
 
+  static NotificationCategory get observation => NotificationCategory(
+    label: 'Observation',
+    icon: Icons.visibility_outlined,
+    color: AppColors.pink,
+    background: AppColors.pinkBg,
+  );
+
   static NotificationCategory get announcement => NotificationCategory(
     label: 'Announcement',
     icon: Icons.campaign_outlined,

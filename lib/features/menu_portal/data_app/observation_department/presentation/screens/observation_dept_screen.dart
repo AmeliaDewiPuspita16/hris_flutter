@@ -18,7 +18,12 @@ import 'observation_detail_screen.dart';
 
 /// Layar Observation Department. Kolom search di atas berlaku di kedua tab;
 class ObservationDeptScreen extends StatefulWidget {
-  const ObservationDeptScreen({super.key});
+  const ObservationDeptScreen({super.key, this.highlightId});
+
+  /// id observasi dari notifikasi yang di-tap; kartunya dinaikkan ke atas dan
+  /// dikedipkan. Dicari di To Close dulu, lalu All Observations. Null =
+  /// tanpa penanda.
+  final String? highlightId;
 
   @override
   State<ObservationDeptScreen> createState() => _ObservationDeptScreenState();
@@ -32,6 +37,34 @@ class _ObservationDeptScreenState extends State<ObservationDeptScreen> {
   late final ObservationListCubit _cubit;
   final _searchController = TextEditingController();
   int _tabIndex = _myOpenTab;
+
+  /// Tab tempat kartu dari notifikasi dikedipkan; null sampai data pertama
+  /// selesai dimuat (atau bila tidak ada [ObservationDeptScreen.highlightId]).
+  int? _highlightTab;
+  bool _highlightResolved = false;
+
+  /// Setelah muat pertama, pilih tab yang memuat observasi dari notifikasi.
+  void _resolveHighlight(ObservationListState state) {
+    final id = widget.highlightId;
+    if (_highlightResolved || id == null) return;
+    if (state.status != ObservationListStatus.success) return;
+    _highlightResolved = true;
+
+    bool has(List<ObservationItem> items) => items.any((o) => o.id == id);
+    final tab = has(state.myOpen)
+        ? _myOpenTab
+        : has(state.all)
+            ? _allTab
+            : null;
+    if (tab == null) return;
+    setState(() {
+      _tabIndex = tab;
+      _highlightTab = tab;
+    });
+  }
+
+  String? _highlightFor(int tab) =>
+      _highlightTab == tab ? widget.highlightId : null;
 
   @override
   void initState() {
@@ -166,8 +199,9 @@ class _ObservationDeptScreenState extends State<ObservationDeptScreen> {
       ),
       body: SafeArea(
         top: false,
-        child: BlocBuilder<ObservationListCubit, ObservationListState>(
+        child: BlocConsumer<ObservationListCubit, ObservationListState>(
           bloc: _cubit,
+          listener: (context, state) => _resolveHighlight(state),
           builder: (context, state) => Column(
             children: [
               // Search + tab bar fixed di luar area scroll, sama dengan
@@ -204,6 +238,7 @@ class _ObservationDeptScreenState extends State<ObservationDeptScreen> {
                         onOpen: _openDetail,
                         onClose: _closeItem,
                         showOwnership: true,
+                        highlightId: _highlightFor(_myOpenTab),
                         // Kosong di sini kabar baik (tidak ada yang perlu
                         // ditindaklanjuti), jadi pakai ikon centang.
                         emptyIcon: Icons.task_alt_rounded,
@@ -222,6 +257,7 @@ class _ObservationDeptScreenState extends State<ObservationDeptScreen> {
                         // Di sini observasi open pun bisa dilihat detailnya,
                         // dan milik sendiri bisa di-edit / dihapus.
                         detailForOpen: true,
+                        highlightId: _highlightFor(_allTab),
                         onEdit: _edit,
                         onDelete: _delete,
                         emptyTitle: 'No observations yet',

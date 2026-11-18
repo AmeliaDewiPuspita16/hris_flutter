@@ -90,6 +90,8 @@ class NotificationInboxRepository {
           NotificationCategory.indentVehicle,
         NotificationLink.moduleEprocurement => NotificationCategory.procurement,
         NotificationLink.moduleHsePermit => NotificationCategory.hsePermit,
+        _ when NotificationLink.isObservationModule(module) =>
+          NotificationCategory.observation,
         _ => NotificationCategory.approval,
       };
 }
