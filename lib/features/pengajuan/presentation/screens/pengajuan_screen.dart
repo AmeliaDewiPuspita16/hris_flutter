@@ -3,7 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/widgets/hris_sub_header.dart';
+import '../../../../core/widgets/header_background.dart';
+import '../../../../core/widgets/header_title_row.dart';
 import '../../../shared/domain/role.dart';
 
 import '../../data/pengajuan_repository.dart';
@@ -61,16 +62,20 @@ class PengajuanScreen extends StatelessWidget {
               ..add(const LeaveHistoryStarted()),
           ),
         ],
-        // Header mint (terang) sampai ke balik status bar → ikon status bar
-        // gelap. Diset di sini karena layar ini dibuka lewat push, di luar
+        // Header hijau sampai ke balik status bar → ikon status bar terang.
+        // Diset di sini karena layar ini dibuka lewat push, di luar
         // AnnotatedRegion milik BerandaScreen.
         child: AnnotatedRegion<SystemUiOverlayStyle>(
-          value: HrisSubHeader.overlayStyle,
+          value: const SystemUiOverlayStyle(
+            statusBarColor: Colors.transparent,
+            statusBarIconBrightness: Brightness.light,
+            statusBarBrightness: Brightness.dark,
+          ),
           // Scaffold dibutuhkan sebagai ancestor Material (InkWell, dst.):
           // layar ini di-push sebagai route sendiri, tidak lagi berada di
           // dalam Scaffold milik BerandaScreen.
           child: Scaffold(
-            backgroundColor: HrisSubHeader.background,
+            backgroundColor: AppColors.bg,
             body: _PengajuanView(role: role, showBack: showBack),
           ),
         ),
@@ -94,51 +99,100 @@ class _PengajuanViewState extends State<_PengajuanView> {
 
   @override
   Widget build(BuildContext context) {
-    // Strip status bar memakai warna header (mint), bukan warna halaman —
-    // kalau tidak, ada garis beda warna tepat di atas header. Badan halaman
-    // memakai AppColors.bg supaya sama dengan Home.
+    // Tidak ada SafeArea atas: HeaderGradient sudah menambahkan jarak
+    // status bar sendiri dan warnanya naik sampai ke balik status bar.
     return ColoredBox(
-      color: HrisSubHeader.background,
-      child: SafeArea(
-        bottom: false,
-        child: ColoredBox(
-          color: AppColors.bg,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _buildHeader(),
-              Expanded(
-                child: switch (_tab) {
-                  _SubmitTab.ringkasan => RingkasanTab(
-                      onSeeAll: () => setState(() => _tab = _SubmitTab.status),
-                    ),
-                  _SubmitTab.ajukan => AjukanTab(
-                      role: widget.role,
-                      onSubmitted: () =>
-                          setState(() => _tab = _SubmitTab.status),
-                    ),
-                  _SubmitTab.status => StatusTab(role: widget.role),
-                },
-              ),
-            ],
+      color: AppColors.bg,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _buildHeader(),
+          Expanded(
+            child: switch (_tab) {
+              _SubmitTab.ringkasan => RingkasanTab(
+                  onSeeAll: () => setState(() => _tab = _SubmitTab.status),
+                ),
+              _SubmitTab.ajukan => AjukanTab(
+                  role: widget.role,
+                  onSubmitted: () => setState(() => _tab = _SubmitTab.status),
+                ),
+              _SubmitTab.status => StatusTab(role: widget.role),
+            },
           ),
-        ),
+        ],
       ),
     );
   }
 
   Widget _buildHeader() {
-    return HrisSubHeader(
-      title: 'Leave Request',
-      subtitle: 'Balance, requests and status',
-      showBack: widget.showBack,
-      tabs: const [
-        HrisHeaderTab('Summary', Icons.pie_chart_outline_rounded),
-        HrisHeaderTab('Submit', Icons.edit_outlined),
-        HrisHeaderTab('Status', Icons.calendar_month_outlined),
-      ],
-      selectedIndex: _tab.index,
-      onTabChanged: (i) => setState(() => _tab = _SubmitTab.values[i]),
+    Widget tabButton(_SubmitTab tab, String label, IconData icon) {
+      final active = _tab == tab;
+
+      return Expanded(
+        child: InkWell(
+          onTap: () => setState(() => _tab = tab),
+          borderRadius: BorderRadius.circular(20),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            padding: const EdgeInsets.symmetric(vertical: 9),
+            decoration: BoxDecoration(
+              // Aktif: pil putih dengan teks primary. Tidak aktif: transparan
+              // di atas header hijau dengan teks putih pudar.
+              color: active ? AppColors.card : Colors.transparent,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  icon,
+                  size: 14,
+                  color: active
+                      ? AppColors.primaryText
+                      : Colors.white.withValues(alpha: 0.75),
+                ),
+                const SizedBox(width: 5),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w700,
+                    color: active
+                        ? AppColors.primaryText
+                        : Colors.white.withValues(alpha: 0.75),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    return HeaderGradient(
+      bottomPadding: 18,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          HeaderTitleRow(title: 'Leave Request', showBack: widget.showBack),
+          Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.16),
+              borderRadius: BorderRadius.circular(24),
+            ),
+            child: Row(
+              children: [
+                tabButton(_SubmitTab.ringkasan, 'Summary',
+                    Icons.pie_chart_outline_rounded),
+                tabButton(_SubmitTab.ajukan, 'Submit', Icons.edit_outlined),
+                tabButton(
+                    _SubmitTab.status, 'Status', Icons.calendar_month_outlined),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
