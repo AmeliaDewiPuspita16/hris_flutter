@@ -270,7 +270,6 @@ class _DetailBackdrop extends StatelessWidget {
   final Widget? bottomNavigationBar;
 
   const _DetailBackdrop({
-    super.key,
     required this.child,
     this.bottomNavigationBar,
   });
@@ -342,7 +341,7 @@ class _DetailBackdrop extends StatelessWidget {
 class _DetailTopBar extends StatelessWidget {
   final VoidCallback onBack;
 
-  const _DetailTopBar({super.key, required this.onBack});
+  const _DetailTopBar({required this.onBack});
 
   @override
   Widget build(BuildContext context) {
