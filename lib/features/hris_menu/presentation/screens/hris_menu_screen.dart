@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../../core/widgets/header_background.dart';
 import '../../domain/hris_menu_item.dart';
 
 enum _ViewMode { grid, list }
@@ -90,40 +91,34 @@ class _HrisMenuScreenState extends State<HrisMenuScreen> {
     // — mengikuti referensi, yang menu-nya polos di atas latar putih,
     // bukan beige seperti tab lain.
     return ColoredBox(
-      color: AppColors.primary,
-      child: SafeArea(
-        bottom: false,
-        child: ColoredBox(
-          color: AppColors.card,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const _Header(),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
-                child: _SearchField(
-                  controller: _searchController,
-                  onChanged: (value) => setState(() => _query = value),
-                ),
-              ),
-              _MenuFeaturesBar(
-                mode: _mode,
-                onModeChanged: (mode) => setState(() => _mode = mode),
-              ),
-              Expanded(
-                child: visible.isEmpty
-                    ? const _EmptyState()
-                    : ListView(
-                        padding: const EdgeInsets.only(bottom: 24),
-                        children: [
-                          for (final group in HrisMenuGroup.values)
-                            ..._buildSection(group, visible),
-                        ],
-                      ),
-              ),
-            ],
+      color: AppColors.card,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const _Header(),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
+            child: _SearchField(
+              controller: _searchController,
+              onChanged: (value) => setState(() => _query = value),
+            ),
           ),
-        ),
+          _MenuFeaturesBar(
+            mode: _mode,
+            onModeChanged: (mode) => setState(() => _mode = mode),
+          ),
+          Expanded(
+            child: visible.isEmpty
+                ? const _EmptyState()
+                : ListView(
+                    padding: const EdgeInsets.only(bottom: 24),
+                    children: [
+                      for (final group in HrisMenuGroup.values)
+                        ..._buildSection(group, visible),
+                    ],
+                  ),
+          ),
+        ],
       ),
     );
   }
@@ -139,7 +134,8 @@ class _HrisMenuScreenState extends State<HrisMenuScreen> {
     if (groupItems.isEmpty) return const [];
 
     return [
-      _SectionBar(label: group.label, group: group, style: widget.sectionBarStyle),
+      _SectionBar(
+          label: group.label, group: group, style: widget.sectionBarStyle),
       Padding(
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
         child: _mode == _ViewMode.grid
@@ -155,14 +151,8 @@ class _Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
-      // Solid primary, sudut bawah bulat — sama dengan header Leave Request
-      // dan Log Absensi.
-      decoration: BoxDecoration(
-        color: AppColors.primary,
-        borderRadius: BorderRadius.vertical(bottom: Radius.circular(28)),
-      ),
+    return HeaderBackground(
+      bottomPadding: 20,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -348,10 +338,16 @@ class _SectionBar extends StatelessWidget {
     // sebelah "Menu Features" (AppColors.bg + garis AppColors.border),
     // supaya keduanya terasa satu warna abu, bukan dua abu yang beda tipis.
     final (background, foreground, border) = switch (style) {
-      HrisSectionBarStyle.emerald =>
-        (AppColors.primaryLight, AppColors.primaryText, null),
-      HrisSectionBarStyle.neutral =>
-        (AppColors.bg, AppColors.textMid, AppColors.border),
+      HrisSectionBarStyle.emerald => (
+          AppColors.primaryLight,
+          AppColors.primaryText,
+          null
+        ),
+      HrisSectionBarStyle.neutral => (
+          AppColors.bg,
+          AppColors.textMid,
+          AppColors.border
+        ),
       HrisSectionBarStyle.categorized => (
           _categorizedColors(group).$1,
           _categorizedColors(group).$2,

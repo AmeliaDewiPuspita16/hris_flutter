@@ -3,6 +3,7 @@ import '../../../../core/theme/app_colors.dart';
 
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/user_avatar.dart';
+import '../../../../core/widgets/header_background.dart';
 import '../../../auth/domain/auth_user.dart';
 import '../../../shared/domain/role.dart';
 import '../../../weather/domain/weather_forecast.dart';
@@ -34,73 +35,52 @@ class HomeTopHeader extends StatelessWidget {
   final VoidCallback? onWeatherTap;
 
   @override
-  Widget build(BuildContext context) {
-    final topInset = MediaQuery.paddingOf(context).top;
+Widget build(BuildContext context) {
+  final initials = user?.initials ?? role.initials;
+  final greetingName = user?.firstName ?? role.firstName;
+  final subtitle = user?.section ?? role.demoUserTitle;
 
-    // API tidak mengirim jabatan; `section` adalah keterangan unit kerja
-    // terdekat yang tersedia. Kalau itu pun kosong, pakai jabatan demo.
-    final initials = user?.initials ?? role.initials;
-    final greetingName = user?.firstName ?? role.firstName;
-    final subtitle = user?.section ?? role.demoUserTitle;
-
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.fromLTRB(20, topInset + 14, 20, 22),
-      decoration: BoxDecoration(
-        image: DecorationImage(
-          image: const AssetImage('assets/images/header_bg.png'),
-          fit: BoxFit.cover,
-          // Bitmap header dibuat untuk mode terang; di mode gelap diredupkan
-          // supaya hijaunya pekat seperti mockup.
-          colorFilter: AppColors.isDark
-              ? ColorFilter.mode(Colors.black.withValues(alpha: 0.42), BlendMode.srcATop)
-              : null,
+  return HeaderBackground(
+    child: Row(
+      children: [
+        UserAvatar(
+          initials: initials,
+          photoUrl: user?.photoUrl,
+          radius: 22,
+          backgroundColor: Colors.white.withValues(alpha: 0.18),
+          fontSize: 15,
         ),
-        borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(24),
-          bottomRight: Radius.circular(24),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Hi, $greetingName',
+                style: AppTextStyles.h3,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 2),
+              Text(
+                subtitle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontFamily: AppTextStyles.fontFamily,
+                  color: Colors.white.withValues(alpha: 0.75),
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
-      child: Row(
-        children: [
-          UserAvatar(
-            initials: initials,
-            photoUrl: user?.photoUrl,
-            radius: 22,
-            backgroundColor: Colors.white.withValues(alpha: 0.18),
-            fontSize: 15,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Hi, $greetingName',
-                  style: AppTextStyles.h3,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  subtitle,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontFamily: AppTextStyles.fontFamily,
-                    color: Colors.white.withValues(alpha: 0.75),
-                    fontSize: 12,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          if (weather != null) ...[
-            const SizedBox(width: 10),
-            WeatherHeaderChip(slot: weather!, onTap: onWeatherTap),
-          ],
+        if (weather != null) ...[
+          const SizedBox(width: 10),
+          WeatherHeaderChip(slot: weather!, onTap: onWeatherTap),
         ],
-      ),
-    );
-  }
+      ],
+    ),
+  );
+}
 }

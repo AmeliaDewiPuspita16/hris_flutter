@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/widgets/header_title_row.dart';
+import '../../../../core/widgets/hris_sub_header.dart';
 import '../../../shared/domain/role.dart';
 
 import '../../data/pengajuan_repository.dart';
@@ -61,20 +61,16 @@ class PengajuanScreen extends StatelessWidget {
               ..add(const LeaveHistoryStarted()),
           ),
         ],
-        // Header hijau sampai ke balik status bar → ikon status bar terang.
-        // Diset di sini karena layar ini dibuka lewat push, di luar
+        // Header mint (terang) sampai ke balik status bar → ikon status bar
+        // gelap. Diset di sini karena layar ini dibuka lewat push, di luar
         // AnnotatedRegion milik BerandaScreen.
         child: AnnotatedRegion<SystemUiOverlayStyle>(
-          value: const SystemUiOverlayStyle(
-            statusBarColor: Colors.transparent,
-            statusBarIconBrightness: Brightness.light,
-            statusBarBrightness: Brightness.dark,
-          ),
+          value: HrisSubHeader.overlayStyle,
           // Scaffold dibutuhkan sebagai ancestor Material (InkWell, dst.):
           // layar ini di-push sebagai route sendiri, tidak lagi berada di
           // dalam Scaffold milik BerandaScreen.
           child: Scaffold(
-            backgroundColor: AppColors.primary,
+            backgroundColor: HrisSubHeader.background,
             body: _PengajuanView(role: role, showBack: showBack),
           ),
         ),
@@ -98,11 +94,11 @@ class _PengajuanViewState extends State<_PengajuanView> {
 
   @override
   Widget build(BuildContext context) {
-    // Strip status bar memakai warna header (primary), bukan warna halaman —
+    // Strip status bar memakai warna header (mint), bukan warna halaman —
     // kalau tidak, ada garis beda warna tepat di atas header. Badan halaman
     // memakai AppColors.bg supaya sama dengan Home.
     return ColoredBox(
-      color: AppColors.primary,
+      color: HrisSubHeader.background,
       child: SafeArea(
         bottom: false,
         child: ColoredBox(
@@ -132,81 +128,17 @@ class _PengajuanViewState extends State<_PengajuanView> {
   }
 
   Widget _buildHeader() {
-    Widget tabButton(_SubmitTab tab, String label, IconData icon) {
-      final active = _tab == tab;
-      // final pillColor = AppColors.isDark ? AppColors.primaryText : AppColors.card;
-      // final activeContent = AppColors.isDark ? AppColors.primary : AppColors.primaryText;
-
-      return Expanded(
-        child: InkWell(
-          onTap: () => setState(() => _tab = tab),
-          borderRadius: BorderRadius.circular(20),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 150),
-            padding: const EdgeInsets.symmetric(vertical: 9),
-            decoration: BoxDecoration(
-              // Aktif: pil putih dengan teks primary. Tidak aktif: transparan
-              // di atas header hijau dengan teks putih pudar.
-              color: active ? AppColors.card : Colors.transparent,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  icon,
-                  size: 14,
-                  color: active
-                      ? AppColors.primaryText
-                      : Colors.white.withValues(alpha: 0.75),
-                ),
-                const SizedBox(width: 5),
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w700,
-                    color: active
-                        ? AppColors.primaryText
-                        : Colors.white.withValues(alpha: 0.75),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    }
-
-    return Container(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 18),
-      // Solid primary, sudut bawah bulat — sama dengan header Log Absensi.
-      decoration: BoxDecoration(
-        color: AppColors.primary,
-        borderRadius: BorderRadius.vertical(bottom: Radius.circular(28)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          HeaderTitleRow(title: 'Leave Request', showBack: widget.showBack),
-          Container(
-            padding: const EdgeInsets.all(4),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.16),
-              borderRadius: BorderRadius.circular(24),
-            ),
-            child: Row(
-              children: [
-                tabButton(_SubmitTab.ringkasan, 'Summary',
-                    Icons.pie_chart_outline_rounded),
-                tabButton(_SubmitTab.ajukan, 'Submit', Icons.edit_outlined),
-                tabButton(
-                    _SubmitTab.status, 'Status', Icons.calendar_month_outlined),
-              ],
-            ),
-          ),
-        ],
-      ),
+    return HrisSubHeader(
+      title: 'Leave Request',
+      subtitle: 'Balance, requests and status',
+      showBack: widget.showBack,
+      tabs: const [
+        HrisHeaderTab('Summary', Icons.pie_chart_outline_rounded),
+        HrisHeaderTab('Submit', Icons.edit_outlined),
+        HrisHeaderTab('Status', Icons.calendar_month_outlined),
+      ],
+      selectedIndex: _tab.index,
+      onTabChanged: (i) => setState(() => _tab = _SubmitTab.values[i]),
     );
   }
 }
