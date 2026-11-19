@@ -70,6 +70,76 @@ class LeaveApprovalRequest {
   final DateTime? decidedAt;
   final String? decisionNote;
 
+  /// One row of `GET /api/portal/apps/hris/leave/approvals` — a leave
+  /// request or, with `category: overtime` and type "Overtime", an overtime
+  /// request.
+  ///
+  /// HRIS has no "approved by": for a decided request [decidedBy] and
+  /// [decidedAt] are whoever changed it last, often HR staff.
+  factory LeaveApprovalRequest.fromJson(Map<String, dynamic> json) {
+    final status = switch (json['status']) {
+      'approved' => LeaveApprovalStatus.approved,
+      'voided' => LeaveApprovalStatus.voided,
+      _ => LeaveApprovalStatus.pending,
+    };
+    final start = DateTime.parse(json['start_date'] as String);
+    final endRaw = json['end_date'] as String?;
+    final nik = json['nik'] as String?;
+    final updatedAt = json['updated_at'] as String?;
+    final description = (json['description'] as String?)?.trim();
+    final startTime = json['start_time'] as String?;
+    final endTime = json['end_time'] as String?;
+    final hours = (json['hours'] as num?)?.toDouble();
+
+    return LeaveApprovalRequest(
+      id: json['id'] as String,
+      requesterName: (json['requester_name'] as String?) ?? '-',
+      department: (json['department'] as String?) ?? '-',
+      // HRIS leave rows carry no job title; the NIK identifies the person.
+      position: nik == null ? '-' : 'NIK $nik',
+      // Unknown HRIS leave names fall back to Permission rather than failing.
+      type: LeaveTypeX.fromApiName((json['type'] as String?) ?? '') ??
+          LeaveType.izin,
+      startDate: start,
+      endDate: endRaw == null ? null : DateTime.parse(endRaw),
+      timeLabel: startTime == null || endTime == null
+          ? null
+          : '$startTime–$endTime',
+      // Overtime is claimed in hours, leave in days.
+      durationLabel: hours != null
+          ? _hoursLabel(hours)
+          : _durationLabel((json['days'] as num?)?.toDouble()),
+      reason: (description == null || description.isEmpty) ? null : description,
+      submittedAt: DateTime.parse(json['submitted_at'] as String).toLocal(),
+      status: status,
+      decidedBy: status == LeaveApprovalStatus.pending
+          ? null
+          : json['updated_by'] as String?,
+      decidedAt: status == LeaveApprovalStatus.pending || updatedAt == null
+          ? null
+          : DateTime.parse(updatedAt).toLocal(),
+    );
+  }
+
+  /// 3 -> "3h", 3.5 -> "3h 30m".
+  static String _hoursLabel(double hours) {
+    final minutes = (hours * 60).round();
+    final h = minutes ~/ 60;
+    final m = minutes % 60;
+    if (h == 0) return '${m}m';
+    return m == 0 ? '${h}h' : '${h}h ${m}m';
+  }
+
+  static String _durationLabel(double? days) {
+    if (days == null) return '-';
+    if (days == 0.5) return 'Half day';
+    if (days == 1) return '1 day';
+    final text = days == days.roundToDouble()
+        ? days.toInt().toString()
+        : days.toString();
+    return '$text days';
+  }
+
   bool get isPending => status == LeaveApprovalStatus.pending;
 
   /// Kategori approval: overtime vs semua jenis cuti/izin lainnya.

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../../core/logging/app_logger.dart';
@@ -19,9 +21,24 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AuthUserRefreshed>(_onUserRefreshed);
     on<AuthLogoutRequested>(_onLogoutRequested);
     on<AuthSessionExpired>(_onSessionExpired);
+
+    _expirations = _repository.sessionExpirations.listen((_) {
+      // Beranda memuat banyak endpoint sekaligus, jadi 401 bisa datang
+      // beruntun; cukup ditangani sekali selama sesinya masih berlaku.
+      if (state.status == AuthStatus.authenticated) {
+        add(const AuthSessionExpired());
+      }
+    });
   }
 
   final AuthRepository _repository;
+  late final StreamSubscription<void> _expirations;
+
+  @override
+  Future<void> close() async {
+    await _expirations.cancel();
+    return super.close();
+  }
 
   Future<void> _onStarted(AuthStarted event, Emitter<AuthState> emit) async {
     AuthSession? session;
@@ -81,7 +98,16 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     AuthSessionExpired event,
     Emitter<AuthState> emit,
   ) async {
-    await _clearSession(emit);
+    // Event yang sudah antre saat sesi sudah dibersihkan diabaikan.
+    if (state.status != AuthStatus.authenticated) return;
+
+    try {
+      await _repository.discardExpiredSession();
+    } catch (e, stack) {
+      AppLogger.error('Gagal menghapus sesi yang kedaluwarsa', e, stack);
+    } finally {
+      emit(const AuthState.sessionExpired());
+    }
   }
 
   /// Pengguna harus tetap sampai ke layar login walaupun pembersihan

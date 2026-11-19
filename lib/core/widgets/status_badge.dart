@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import '../theme/app_colors.dart';
 
 enum AppStatus { present, pending, rejected, neutral, onProgress }
@@ -14,9 +14,8 @@ enum AppStatus { present, pending, rejected, neutral, onProgress }
 ///   [AppStatus]. Dipakai supaya tag-tag begini tidak masing-masing bikin
 ///   `Container` sendiri dengan padding/radius yang pelan-pelan beda-beda.
 class StatusBadge extends StatelessWidget {
-  const StatusBadge({super.key, required AppStatus status, this.label})
-      : status = status,
-        _color = null,
+  const StatusBadge({super.key, required AppStatus this.status, this.label})
+      : _color = null,
         _background = null;
 
   const StatusBadge.custom({

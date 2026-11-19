@@ -1,4 +1,7 @@
+import 'dart:convert';
+
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
 import 'package:hris_mobile/core/logging/app_logger.dart';
 import 'package:hris_mobile/features/auth/domain/auth_session.dart';
 import 'package:hris_mobile/features/auth/presentation/bloc/auth/auth_bloc.dart';
@@ -159,5 +162,77 @@ void main() {
       expect(harness.storage.session, isNull);
       expect(harness.apiClient.authorizationHeader, isNull);
     });
+
+    test('menandai state sebagai sessionExpired', () async {
+      final harness = AuthHarness();
+      harness.storage.session = savedSession();
+      final bloc = AuthBloc(repository: harness.repository);
+      bloc.add(const AuthStarted());
+      await bloc.stream.first;
+
+      bloc.add(const AuthSessionExpired());
+      final state = await bloc.stream.first;
+
+      expect(state.sessionExpired, isTrue);
+    });
+
+    test('tidak menghubungi server (logout / cabut FCM)', () async {
+      final requests = <http.Request>[];
+      final harness = AuthHarness(handler: (request) async {
+        requests.add(request);
+        return AuthHarness.successfulLoginResponse();
+      });
+      harness.storage.session = savedSession();
+      final bloc = AuthBloc(repository: harness.repository);
+      bloc.add(const AuthStarted());
+      await bloc.stream.first;
+
+      bloc.add(const AuthSessionExpired());
+      await bloc.stream.first;
+
+      expect(requests, isEmpty);
+    });
+
+    test('401 dari API mana pun mengeluarkan pengguna, sekali saja', () async {
+      final harness = AuthHarness(
+        handler: (_) async => http.Response(
+          jsonEncode({'message': 'Unauthenticated.'}),
+          401,
+        ),
+      );
+      harness.storage.session = savedSession();
+      final bloc = AuthBloc(repository: harness.repository);
+      bloc.add(const AuthStarted());
+      await bloc.stream.first;
+
+      final states = <AuthState>[];
+      final sub = bloc.stream.listen(states.add);
+
+      // Seperti Beranda: beberapa request gagal hampir bersamaan.
+      await Future.wait([
+        for (var i = 0; i < 3; i++)
+          harness.apiClient.get('/api/x').then((_) {}, onError: (_) {}),
+      ]);
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+      await sub.cancel();
+
+      expect(states, hasLength(1));
+      expect(states.single.status, AuthStatus.unauthenticated);
+      expect(states.single.sessionExpired, isTrue);
+      expect(harness.storage.session, isNull);
+    });
+  });
+
+  test('logout biasa tidak menandai sessionExpired', () async {
+    final harness = AuthHarness();
+    harness.storage.session = savedSession();
+    final bloc = AuthBloc(repository: harness.repository);
+    bloc.add(const AuthStarted());
+    await bloc.stream.first;
+
+    bloc.add(const AuthLogoutRequested());
+    final state = await bloc.stream.first;
+
+    expect(state.sessionExpired, isFalse);
   });
 }

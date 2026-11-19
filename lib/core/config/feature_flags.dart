@@ -18,7 +18,7 @@ class FeatureFlags {
   /// badge menu HRIS tidak menampilkan data dummy
   /// ([LeaveApprovalRepository] masih memakai daftar contoh di memori).
   /// Ubah ke `true` setelah repository-nya memakai endpoint sungguhan.
-  static const leaveApproval = false;
+  static const leaveApproval = true;
 
   /// Kartu "Leave Balance" (saldo cuti/izin/lembur) di tab Summary pada
   /// Leave Request. Biarkan `false` sampai API saldo tersedia: isinya sekarang

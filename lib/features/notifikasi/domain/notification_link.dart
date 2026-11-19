@@ -22,7 +22,7 @@ class NotificationLink {
   static const moduleObservation = 'observation';
 
   /// `it_request` | `eprocurement` | `est_work_order` | `indent_vehicle` |
-  /// `hse_permit` | `observation`.
+  /// `hse_permit` | `observation*`.
   final String module;
 
   /// Apa yang terjadi, mis. `approval_needed`, `approved`, `new_task`.
@@ -44,6 +44,12 @@ class NotificationLink {
 
   bool get isApprover => audience == 'approver';
   bool get isHandler => audience == 'handler';
+
+  /// Observation Department. Dicocokkan dengan awalan karena nama persis
+  /// modulnya dari backend belum dipastikan (`observation`,
+  /// `observation_department`, ...).
+  static bool isObservationModule(String? module) =>
+      module?.startsWith(moduleObservation) ?? false;
 
   /// Null kalau payload bukan dari notifikasi portal (tanpa `module`), mis.
   /// pesan uji dari Firebase console.

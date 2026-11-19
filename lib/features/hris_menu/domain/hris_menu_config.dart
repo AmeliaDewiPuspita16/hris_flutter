@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../shared/domain/role.dart';
@@ -150,9 +150,12 @@ class HrisMenuConfig {
           color: AppColors.primaryText,
           background: AppColors.primaryLight,
           onTap: onApprovals,
-          // Belum terhubung API (masih data contoh).
-          isReady: false,
-          isVisible: _isHod,
+          // List comes from HRIS; approve/reject waits for the vendor's
+          // write endpoint (see LeaveApprovalRepository.decide).
+          isReady: true,
+          // The server's `hod` role, not the hard-coded demo role: the
+          // endpoint answers 403 to everyone else.
+          isVisible: (c) => c.user?.isHod ?? _isHod(c),
           badgeCount: approvalCount,
         ),
         HrisMenuItem(

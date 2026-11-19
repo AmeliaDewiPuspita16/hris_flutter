@@ -25,9 +25,6 @@ class ObservationRepository {
   static const _perPage = 100;
   static const _maxPages = 50;
 
-  static const _notConnected =
-      'This feature is not connected to the server yet.';
-
   /// Pilihan form (kategori, sub-kategori, department, aturan foto) dari
   /// `GET /api/data/observation/options`. Dipanggil tiap form dibuka, tanpa
   /// cache, supaya perubahan di server langsung terbaca.
@@ -220,14 +217,12 @@ class ObservationRepository {
     required String reason,
     String? imagePath,
   }) async {
-    await _apiClient.postMultipart(
-      ApiConfig.observationClose(int.parse(id)),
-      fields: {'reason_close': reason},
-      files: imagePath == null
-          ? null
-          : {
-            'image_close': [imagePath],
-          }
-    );
+    await _apiClient.postMultipart(ApiConfig.observationClose(int.parse(id)),
+        fields: {'reason_close': reason},
+        files: imagePath == null
+            ? null
+            : {
+                'image_close': [imagePath],
+              });
   }
 }

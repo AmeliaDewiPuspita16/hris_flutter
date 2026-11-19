@@ -245,6 +245,15 @@ class ApiConfig {
   /// Pengajuan). `data` berupa list, jadi diambil lewat [ApiClient.getList].
   static const String leaveStatus = '/api/portal/apps/hris/leave/status';
 
+  /// Leave requests of the HOD's department (pending + last 2 years),
+  /// with `meta.pending_count`. Role `hod` only.
+  static const String leaveApprovals = '/api/portal/apps/hris/leave/approvals';
+
+  /// Approve one request of [leaveApprovals] in HRIS (ERP Document Routing).
+  /// Body: category (leave|overtime), decision (approve|reject), note.
+  static String leaveApprovalDecision(String id) =>
+      '$leaveApprovals/${Uri.encodeComponent(id)}/decision';
+
   /// Realisasi lembur per bulan (`?month=YYYY-MM`): total jam + menit lembur
   /// per tanggal, dihitung dari check-in/out absensi. Dipakai Log Absensi
   /// dan, nanti, tab Summary di Overtime Request.

@@ -36,7 +36,11 @@ class LeaveApprovalBloc extends Bloc<LeaveApprovalEvent, LeaveApprovalState> {
     } catch (e, stack) {
       AppLogger.error('Daftar leave approval gagal dimuat', e, stack);
 
-      const message = 'Failed to load approvals. Try again.';
+      // The server's own message says what went wrong (not a HOD, department
+      // not found in HRIS, HRIS down), which the generic text hid.
+      final message = e is ApiException
+          ? e.message
+          : 'Failed to load approvals. Try again.';
       emit(state.copyWith(
         status: LeaveApprovalLoadStatus.failure,
         errorMessage: message,
@@ -44,7 +48,7 @@ class LeaveApprovalBloc extends Bloc<LeaveApprovalEvent, LeaveApprovalState> {
         // kegagalan cukup diberitahukan lewat SnackBar.
         feedback: state.items.isEmpty
             ? null
-            : const LeaveApprovalFeedback(message, isError: true),
+            : LeaveApprovalFeedback(message, isError: true),
       ));
     }
   }

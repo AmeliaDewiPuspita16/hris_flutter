@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Bungkus elemen yang bisa ditekan dengan animasi fade (opacity) sebagai
 /// umpan balik visual — memudar saat dihover (desktop/web) dan memudar

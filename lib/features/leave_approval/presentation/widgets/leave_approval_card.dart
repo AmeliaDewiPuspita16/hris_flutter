@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
@@ -196,8 +196,7 @@ class LeaveApprovalCard extends StatelessWidget {
   Widget _buildDecisionFooter() {
     final decidedAt = request.decidedAt;
     final by = request.decidedBy ?? 'Approver';
-    final verb =
-        request.status == LeaveApprovalStatus.approved ? 'Approved' : 'Rejected';
+    final verb = request.status.label;
     final when =
         decidedAt == null ? '' : ' · ${DateFormatter.shortDateID(decidedAt)}';
 

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import '../../../core/theme/app_colors.dart';
 
 import '../../shared/domain/role.dart';
@@ -127,6 +127,7 @@ extension LeaveTypeX on LeaveType {
 
       case 'cuti pengganti':
       case 'off in lieu':
+      case 'oil':
         return LeaveType.cutiPengganti;
 
       case 'cek kesehatan':

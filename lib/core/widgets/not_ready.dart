@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 /// Menandai item menu yang fiturnya belum siap: tampil redup dan tidak bisa
 /// disentuh, tanpa label apa pun.

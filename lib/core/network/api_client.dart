@@ -40,6 +40,24 @@ class ApiClient {
 
   String? get authorizationHeader => _authorizationHeader;
 
+  final StreamController<void> _sessionExpired =
+      StreamController<void>.broadcast();
+
+  /// Berbunyi setiap kali server membalas 401 untuk request yang dikirim
+  /// dengan token yang masih terpasang — tanda token sudah kedaluwarsa atau
+  /// dicabut. AuthBloc mendengarkannya untuk mengembalikan pengguna ke layar
+  /// login. Bisa berbunyi beberapa kali berturut-turut (mis. Beranda memuat
+  /// banyak endpoint sekaligus); pendengar yang harus menyaringnya.
+  ///
+  /// Pemanggil tetap menerima [ApiException] seperti biasa.
+  Stream<void> get onSessionExpired => _sessionExpired.stream;
+
+  /// Melepas [onSessionExpired] dan HTTP client. Hanya perlu di test.
+  void close() {
+    _sessionExpired.close();
+    _httpClient.close();
+  }
+
   /// Mengirim POST dan mengembalikan isi `data` dari amplop respons.
   ///
   /// Melempar [ApiException] untuk semua kegagalan — jaringan, kredensial,
@@ -55,6 +73,7 @@ class ApiClient {
     return _send(
       'POST',
       uri,
+      authenticated: authenticated,
       () => _httpClient.post(
         uri,
         headers: _headers(authenticated: authenticated),
@@ -138,6 +157,7 @@ class ApiClient {
     return _send(
       'GET',
       uri,
+      authenticated: authenticated,
       () => _httpClient.get(
         uri,
         headers: _headers(authenticated: authenticated),
@@ -163,6 +183,7 @@ class ApiClient {
     return _send(
       'GET',
       uri,
+      authenticated: authenticated,
       () => _httpClient.get(
         uri,
         headers: _headers(authenticated: authenticated),
@@ -184,6 +205,7 @@ class ApiClient {
     return _send(
       'GET',
       uri,
+      authenticated: authenticated,
       () => _httpClient.get(
         uri,
         headers: _headers(authenticated: authenticated),
@@ -204,6 +226,7 @@ class ApiClient {
     final response = await _sendRaw(
       'GET',
       uri,
+      authenticated: authenticated,
       () => _httpClient.get(
         uri,
         headers: _headers(authenticated: authenticated),
@@ -251,6 +274,7 @@ class ApiClient {
     final response = await _sendRaw(
       'POST',
       uri,
+      authenticated: authenticated,
       () => _httpClient.post(
         uri,
         headers: _headers(authenticated: authenticated),
@@ -282,6 +306,7 @@ class ApiClient {
     final response = await _sendRaw(
       'POST',
       uri,
+      authenticated: authenticated,
       () => _httpClient.post(
         uri,
         headers: _headers(authenticated: authenticated),
@@ -327,6 +352,7 @@ class ApiClient {
     final response = await _sendRaw(
       'DELETE',
       uri,
+      authenticated: authenticated,
       () => _httpClient.delete(
         uri,
         headers: _headers(authenticated: authenticated),
@@ -523,11 +549,20 @@ class ApiClient {
 
   /// Menjalankan request lalu menerjemahkan setiap cara gagalnya menjadi
   /// [ApiException].
+  ///
+  /// [authenticated] menandai request yang memang dikirim dengan token, yang
+  /// 401-nya berarti sesi berakhir (lihat [onSessionExpired]).
   Future<http.Response> _sendRaw(
     String method,
     Uri uri,
-    Future<http.Response> Function() request,
-  ) async {
+    Future<http.Response> Function() request, {
+    bool authenticated = true,
+  }) async {
+    // Dicatat sebelum request: kalau selagi menunggu respons pengguna sudah
+    // logout atau login ulang, 401 dari token lama tidak boleh membuang sesi
+    // yang baru.
+    final sentAuthorization = authenticated ? _authorizationHeader : null;
+
     final http.Response response;
     try {
       response = await request().timeout(_timeout);
@@ -551,6 +586,16 @@ class ApiClient {
       AppLogger.info('$method $uri -> $status ${_truncate(response.body)}');
     }
 
+    // Hanya 401. 403 dipakai sebagian modul untuk "akun ini tidak punya
+    // akses" (approval HSE/EST, dashboard executive), bukan token mati.
+    if (status == 401 &&
+        sentAuthorization != null &&
+        sentAuthorization == _authorizationHeader &&
+        !_sessionExpired.isClosed) {
+      AppLogger.info('Token ditolak server (401) — sesi dianggap berakhir');
+      _sessionExpired.add(null);
+    }
+
     return response;
   }
 
@@ -558,9 +603,12 @@ class ApiClient {
   Future<Map<String, dynamic>> _send(
     String method,
     Uri uri,
-    Future<http.Response> Function() request,
-  ) async =>
-      _unwrap(await _sendRaw(method, uri, request));
+    Future<http.Response> Function() request, {
+    bool authenticated = true,
+  }) async =>
+      _unwrap(
+        await _sendRaw(method, uri, request, authenticated: authenticated),
+      );
 
   String _truncate(String body, [int max = 500]) =>
       body.length <= max ? body : '${body.substring(0, max)}…';

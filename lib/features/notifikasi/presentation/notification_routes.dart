@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../../core/logging/app_logger.dart';
 import '../../menu_portal/data_app/indent_vehicle/presentation/screens/indent_vehicle_screen.dart';
@@ -37,7 +37,21 @@ class NotificationRoutes {
 
   /// Null kalau modulnya tidak dikenal (mis. pesan uji dari Firebase
   /// console) — cukup ditandai sudah dibaca.
-  static Widget? screenFor(NotificationLink link) => switch (link.module) {
+  static Widget? screenFor(NotificationLink link) {
+    // Dicocokkan dengan awalan: nama modul observation dari backend bisa
+    // `observation`, `observation_department`, dst.
+    if (NotificationLink.isObservationModule(link.module)) {
+      // Tab 0 = To Close (temuan open dept sendiri), 1 = All Observation.
+      // Kalau temuannya tidak ada di tab itu, layar pindah ke tab lain.
+      return ObservationDeptScreen(
+        initialTabIndex: link.isApprover || link.isHandler ? 0 : 1,
+        highlightId: link.refId?.toString(),
+      );
+    }
+    return _moduleScreen(link);
+  }
+
+  static Widget? _moduleScreen(NotificationLink link) => switch (link.module) {
         NotificationLink.moduleItRequest => ItRequestScreen(
             initialTab: link.isApprover
                 ? ItRequestTab.approve
@@ -66,12 +80,6 @@ class NotificationRoutes {
             initialTabIndex: link.isApprover ? 1 : 0,
             highlightId: link.refId,
           ),
-        // Tab 0 = To Close (temuan open dept sendiri), 1 = All Observation.
-        // Kalau temuannya tidak ada di tab itu, layar pindah ke tab lain.
-        NotificationLink.moduleObservation => ObservationDeptScreen(
-          initialTabIndex: link.isApprover || link.isHandler ? 0 : 1,
-          highlightId: link.refId?.toString(),
-        ),
         _ => null,
       };
 

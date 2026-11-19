@@ -1,5 +1,6 @@
 /// Teks lembur untuk layar Log Absensi (satuan: "h" = jam,
 /// "m" = menit).
+library;
 
 /// Jam desimal untuk kartu ringkasan. Contoh: 4.5 → "4.5h", 3.0 → "3h".
 String overtimeHoursText(double hours) {

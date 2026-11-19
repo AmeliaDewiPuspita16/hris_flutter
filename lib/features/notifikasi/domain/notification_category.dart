@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../../core/theme/app_colors.dart';
 
@@ -88,6 +88,13 @@ class NotificationCategory {
     icon: Icons.health_and_safety_outlined,
     color: AppColors.hseRequest,
     background: AppColors.hseRequestBg,
+  );
+
+  static NotificationCategory get observation => NotificationCategory(
+    label: 'Observation',
+    icon: Icons.visibility_outlined,
+    color: AppColors.pink,
+    background: AppColors.pinkBg,
   );
 
   static NotificationCategory get announcement => NotificationCategory(

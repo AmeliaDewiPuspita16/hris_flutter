@@ -115,6 +115,19 @@ class AuthRepository {
     return session;
   }
 
+  /// Berbunyi saat server menolak token sesi (401), lihat
+  /// [ApiClient.onSessionExpired].
+  Stream<void> get sessionExpirations => _apiClient.onSessionExpired;
+
+  /// Membuang sesi yang token-nya sudah ditolak server, tanpa menghubungi
+  /// server: `POST /api/logout` dan pencabutan FCM token hanya akan dibalas
+  /// 401 lagi. Device token akan didaftarkan ulang saat login berikutnya.
+  Future<void> discardExpiredSession() async {
+    _apiClient.setToken(null);
+    _registeredToken = null;
+    await _storage.clear();
+  }
+
   /// Mencabut token di server, lalu menghapus sesi tersimpan dan melepas
   /// token dari [ApiClient].
   ///
