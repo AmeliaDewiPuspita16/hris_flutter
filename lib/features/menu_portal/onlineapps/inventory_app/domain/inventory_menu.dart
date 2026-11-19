@@ -1,10 +1,11 @@
 import 'package:material_ui/material_ui.dart';
 
-/// Pilihan di sheet "Choose App" setelah membuka tile Inventory.
+/// Pilihan di sheet "Inventory" setelah membuka tile Inventory.
 enum InventoryApp { request, management }
 
-/// Pilihan di sheet "Request" (product line yang bisa di-request).
-enum InventoryProductLine { stationery, estateBuilding }
+/// Kartu di halaman "Management". Baru tiga; yang lain (Master Data, User
+/// Access, My Stores, Project Plans, Scrap, Audit Log) menyusul.
+enum InventoryManagement { stockOpname, myCategories, myItems }
 
 /// Satu baris pilihan di [InventoryOptionSheet].
 ///
@@ -26,7 +27,7 @@ class InventoryOption<T> {
   final bool ready;
 }
 
-/// Isi menu Inventory, mengikuti web (Home / Inventory / Request).
+/// Isi menu Inventory.
 class InventoryMenuData {
   InventoryMenuData._();
 
@@ -34,7 +35,7 @@ class InventoryMenuData {
     InventoryOption(
       value: InventoryApp.request,
       icon: Icons.assignment_outlined,
-      title: 'Request',
+      title: 'Item Request',
       subtitle: 'Request items from stock.',
     ),
     InventoryOption(
@@ -42,30 +43,34 @@ class InventoryMenuData {
       icon: Icons.settings_outlined,
       title: 'Management',
       subtitle: 'Manage items, stock in/out, and master data.',
-      ready: false,
     ),
   ];
 
-  static const productLines = <InventoryOption<InventoryProductLine>>[
+  /// Isi halaman Management
+  ///
+  /// Menonaktifkan sebuah fitur: ubah `ready` jadi false (kartu jadi redup
+  /// dengan label "Coming soon" dan tidak bisa diketuk), atau hapus barisnya
+  /// kalau mau disembunyikan sama sekali.
+  static const management = <InventoryOption<InventoryManagement>>[
     InventoryOption(
-      value: InventoryProductLine.stationery,
-      icon: Icons.create_outlined,
-      title: 'Stationery',
-      subtitle: 'Office stationery items, stock, and requests.',
+      value: InventoryManagement.stockOpname,
+      icon: Icons.fact_check_outlined,
+      title: 'Stock Opname',
+      subtitle: 'Count and adjust stock',
     ),
-    // InventoryOption(
-    //   value: InventoryProductLine.uniform,
-    //   icon: Icons.checkroom_outlined,
-    //   title: 'Uniform',
-    //   subtitle: 'Uniform items, stock, and requests.',
-    //   ready: false,
-    // ),
     InventoryOption(
-      value: InventoryProductLine.estateBuilding,
-      icon: Icons.apartment_outlined,
-      title: 'Estate Building',
-      subtitle: 'Estate building items, stock, and project material requests.',
+      value: InventoryManagement.myCategories,
+      icon: Icons.sell_outlined,
+      title: 'My Categories',
+      subtitle: 'Who handles each category',
       ready: false,
+    ),
+    InventoryOption(
+      value: InventoryManagement.myItems,
+      icon: Icons.inventory_2_outlined,
+      title: 'My Items',
+      subtitle: 'Items, stock and operations',
+      ready: false
     ),
   ];
 }

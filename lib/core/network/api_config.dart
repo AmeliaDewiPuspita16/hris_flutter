@@ -145,6 +145,76 @@ class ApiConfig {
   /// ('status: 5').
   static const String indentAdminApprove = '/api/admin_indent/approve';
 
+  /// ____________________________MENU INVENTORY____________________________
+  /// nventory > Item Request. Satu request (kode `REQ-…`) berisi satu atau
+  /// lebih LINE (satu barang per line); tiap line di-approve / reject / cancel
+  /// sendiri. GET di path ini mengembalikan daftar LINE (`?status=`,
+  /// `search`, `mine=1`, `page`, `per_page`), POST mengajukan request baru.
+  ///
+  /// Daftarnya menaruh `meta` bersebelahan dengan `data` (tanpa `summary`),
+  /// jadi diambil lewat [ApiClient.getEnvelope].
+  static const String itemRequest = '/api/portal/apps/inventory/item-request';
+
+  /// Bahan form: `items`, `status`, dan `permissions`
+  /// (`can_see_others`, `can_verify`). Query opsional: `search`.
+  static const String itemRequestOptions = '$itemRequest/options';
+
+  /// Badge: `data.count`
+  static const String itemRequestPendingCount = '$itemRequest/pending-count';
+
+  /// Antrean verifikasi: LINE pending pada kategori yang boleh dikelola user
+  /// (`search`, `page`, `per_page`). Seperti [itemRequest], `meta` bersebelahan
+  /// dengan `data` (tanpa `summary`), jadi diambil lewat
+  /// [ApiClient.getEnvelope]. 403 untuk akun biasa.
+  static const String itemRequestVerifications = '$itemRequest/verifications';
+
+  /// Satu REQUEST berikut semua line yang boleh dilihat user.
+  static String itemRequestDetail(int requestId) =>
+      '$itemRequest/requests/$requestId';
+
+  /// Satu LINE: GET detail, PUT edit (selagi pending).
+  static String itemRequestLine(int lineId) => '$itemRequest/$lineId';
+
+  /// Aksi atas satu line (POST, tanpa body). Cancel: requester membatalkan
+  /// line pending miliknya, statusnya menjadi `rejected`. Approve / reject:
+  /// InventoryAdmin / Admin; approve mengurangi stok dan gagal (422) bila
+  /// stok tidak cukup.
+  static String itemRequestLineApprove(int lineId) =>
+      '$itemRequest/$lineId/approve';
+  static String itemRequestLineReject(int lineId) =>
+      '$itemRequest/$lineId/reject';
+  static String itemRequestLineCancel(int lineId) =>
+      '$itemRequest/$lineId/cancel';
+
+  /// ___________________________INVENTORY > STOCK OPNAME___________________________
+  /// Stock opname Estate Building.
+  ///
+  /// GET = riwayat opname (`status`, `search`, `date_from`, `date_to`,
+  /// `page`, `per_page`; `meta` bersebelahan dengan `data`, jadi lewat
+  /// [ApiClient.getEnvelope]); POST = buat opname (draft, atau langsung
+  /// confirm). `GET/PUT/DELETE {opnameBase}/{id}` = detail, ganti isi draft,
+  /// hapus draft. Semuanya hanya untuk InventoryAdmin / Admin (selain itu 403).
+  static const String opnameBase =
+      '/api/portal/apps/inventory/estate-building/stock-opname';
+
+  /// Store aktif beserta sub store (rak) aktifnya:
+  /// `data.stores[].subStores[]`, masing-masing `{id, text}`.
+  static const String opnameOptions = '$opnameBase/options';
+
+  /// Daftar baris yang bisa dihitung (barang + lokasi + stok sistem).
+  /// Query: `store_location_id`, `sub_store_id`, `search`, `opname_id`
+  /// (baris sebuah draft ikut disertakan lengkap dengan `counted_qty`).
+  static const String opnameCountableItems = '$opnameBase/countable-items';
+
+  /// Cari barang menurut kode label QR / barcode (`?code=`).
+  static const String opnameLookup = '$opnameBase/lookup';
+
+  static String opnameDetail(int id) => '$opnameBase/$id';
+
+  /// POST tanpa body: mengonfirmasi draft dan MENGUBAH STOK.
+  static String opnameConfirm(int id) => '$opnameBase/$id/confirm';
+
+
   /// ___________________________MENU OBSERVATION___________________________
   /// Observation Department — daftar semua temuan (`?month=YYYY-MM`,
   /// `category`, `id_dept`, `per_page`, `page`) dan buat temuan baru

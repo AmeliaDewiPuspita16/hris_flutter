@@ -248,7 +248,7 @@ class _MenuFeaturesBar extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text('Menu Features', style: AppTextStyles.h2),
+          Text('Menu Features', style: AppTextStyles.h2.copyWith(fontSize: 18)),
           Container(
             padding: const EdgeInsets.all(3),
             decoration: BoxDecoration(
@@ -536,7 +536,7 @@ class _ListTile extends StatelessWidget {
                   item.label.replaceAll('\n', ' '),
                   style: TextStyle(
                     fontFamily: AppTextStyles.fontFamily,
-                    fontSize: 13.5,
+                    fontSize: 12.5,
                     fontWeight: FontWeight.w600,
                     color: AppColors.text,
                   ),

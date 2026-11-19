@@ -38,11 +38,15 @@ class NotificationRoutes {
   /// Null kalau modulnya tidak dikenal (mis. pesan uji dari Firebase
   /// console) — cukup ditandai sudah dibaca.
   static Widget? screenFor(NotificationLink link) {
+    // Dicocokkan dengan awalan: nama modul observation dari backend bisa
+    // `observation`, `observation_department`, dst.
     if (NotificationLink.isObservationModule(link.module)) {
-      // Notifikasi observation umumnya "ada temuan untuk dept-mu": buka tab
-      // To Close. Kalau temuannya tidak ada di sana (mis. sudah ditutup),
-      // layar pindah sendiri ke All Observations.
-      return ObservationDeptScreen(highlightId: link.refId?.toString());
+      // Tab 0 = To Close (temuan open dept sendiri), 1 = All Observation.
+      // Kalau temuannya tidak ada di tab itu, layar pindah ke tab lain.
+      return ObservationDeptScreen(
+        initialTabIndex: link.isApprover || link.isHandler ? 0 : 1,
+        highlightId: link.refId?.toString(),
+      );
     }
     return _moduleScreen(link);
   }

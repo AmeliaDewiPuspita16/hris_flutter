@@ -82,6 +82,28 @@ class ApiClient {
     ).then((envelope) => _expectMap(envelope['data'], 'POST', uri));
   }
 
+  /// Mengirim PUT dan mengembalikan isi `data` dari amplop respons.
+  /// Pola yang sama dengan [post]; dipakai mis. untuk mengganti isi draft
+  /// stock opname (`PUT .../stock-opname/{id}`).
+  Future<Map<String, dynamic>> put(
+    String path, {
+    Map<String, dynamic>? body,
+    bool authenticated = true,
+  }) {
+    final uri = _uriFor(path);
+    AppLogger.info('PUT $uri ${_redactedBody(body)}');
+
+    return _send(
+      'PUT',
+      uri,
+      () => _httpClient.put(
+        uri,
+        headers: _headers(authenticated: authenticated),
+        body: jsonEncode(body ?? const <String, dynamic>{}),
+      ),
+    ).then((envelope) => _expectMap(envelope['data'], 'PUT', uri));
+  }
+
   /// Mengirim `multipart/form-data` — dipakai endpoint yang menerima berkas,
   /// mis. `POST /api/portal/hr_announcement` dengan `photos[]`.
   ///
@@ -678,7 +700,7 @@ class ApiClient {
   bool _isSuccessStatus(dynamic status) =>
       status == 'success' || (status is num && status >= 200 && status < 300);
 
-  /// Memastikan `data` berbentuk objek, untuk [post] dan [get].
+  /// Memastikan `data` berbentuk objek, untuk [post], [put] dan [get].
   Map<String, dynamic> _expectMap(dynamic data, String method, Uri uri) {
     if (data is! Map<String, dynamic>) {
       _logShapeMismatch(method, uri, 'objek', data);

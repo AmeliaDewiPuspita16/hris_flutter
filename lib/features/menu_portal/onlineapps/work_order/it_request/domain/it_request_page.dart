@@ -20,11 +20,24 @@ class ItRequestPage {
   final ItRequestSummary summary;
   final PageMeta meta;
 
+  /// Baris "cangkang kosong": tanpa kategori DAN tanpa deskripsi. Request
+  /// yang sah selalu punya keduanya (keduanya wajib di form Add Request),
+  /// jadi baris seperti ini hanya sisa data rusak/tes di server yang ikut
+  /// terkirim oleh API tapi sudah disaring di web. Aturannya sengaja sempit
+  /// supaya request asli tidak ikut terbuang.
+  static bool _isEmptyShell(Map<String, dynamic> row) =>
+      row['category'] == null && '${row['description'] ?? ''}'.trim().isEmpty;
+
   factory ItRequestPage.fromEnvelope(Map<String, dynamic> envelope) {
     final rows = envelope['data'] as List<dynamic>? ?? const [];
 
     final items = <ItRequestItem>[];
     for (final row in rows.whereType<Map<String, dynamic>>()) {
+      if (_isEmptyShell(row)) {
+        AppLogger.info('Melewati IT Request kosong (id ${row['id']})');
+        continue;
+      }
+
       try {
         items.add(ItRequestItem.fromJson(row));
       } on FormatException catch (e) {

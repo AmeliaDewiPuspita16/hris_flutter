@@ -132,24 +132,23 @@ class AuthUser {
   /// Beda dari lampiran pengumuman/PR yang server-nya sudah mengirim URL
   /// penuh: di sini prefix foldernya (`storage/profile/`) belum pernah
   /// dikirim server, jadi klien yang menyusunnya sendiri.
-  String? get photoUrl =>
-      image == null || image!.isEmpty ? null : '${ApiConfig.baseUrl}/storage/profile/$image';
+  String? get photoUrl => image == null || image!.isEmpty
+      ? null
+      : '${ApiConfig.baseUrl}/storage/profile/$image';
 
   /// Boleh menerbitkan pengumuman HR — izin `hr-announcement-post`, yang
   /// menurut dokumentasi API dimiliki role `hrga` dan `admin`.
   ///
   /// Pemeriksaan di sini hanya untuk menyembunyikan tombol; server tetap
   /// penentu terakhir dan akan membalas 403 bila tidak berhak.
-  bool get canPublishAnnouncement =>
-      hasRole('hrga') || hasRole('admin');
+  bool get canPublishAnnouncement => hasRole('hrga') || hasRole('admin');
 
   /// Boleh mengakses tab tim IT (List Request/Report) di IT Request —
   /// dimiliki role `it media` dan `admin`.
   ///
   /// Sama seperti [canPublishAnnouncement]: cuma untuk menyembunyikan tab,
   /// server tetap penentu terakhir.
-  bool get canManageItRequest =>
-      hasRole('it media') || hasRole('admin');
+  bool get canManageItRequest => hasRole('it media') || hasRole('admin');
 
   /// Admin driver (`driver-admin`) dan admin umum (`admin`) — berhak melihat
   /// tab Pending Vehicle Assignment di Indent Vehicle (menetapkan plat &
@@ -201,6 +200,14 @@ class AuthUser {
   /// server tetap penentu terakhir.
   bool get canAccessEstProjectMonitoring =>
       hasRole('admin') || hasRole('est building');
+
+  /// yang mendapat menu Inventory > Management
+  bool get canAccessInventoryManagement =>
+      hasRole('admin') || hasRole('inventory-admin') || hasRole('inventory-reviewer');
+
+  /// yang mendapat menu Inventory > Management > Stock Opname
+  bool get canAccessStockOpname =>
+      hasRole('admin') || hasRole('inventory-admin');
 
   bool hasRole(String role) {
     final target = role.toLowerCase();

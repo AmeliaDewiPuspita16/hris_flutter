@@ -6,8 +6,10 @@ import '../../domain/online_apps_demo_data.dart';
 import '../../procurement/presentation/screens/procurement_page.dart';
 import '../../hse_work_request/presentation/screens/hse_work_request_list_screen.dart';
 import '../../inventory_app/domain/inventory_menu.dart';
-import '../../inventory_app/presentation/screens/stationery_request_screen.dart';
+import '../../inventory_app/presentation/screens/inventory_management_screen.dart';
+import '../../inventory_app/presentation/screens/item_request_screen.dart';
 import '../../inventory_app/presentation/widgets/inventory_option_sheet.dart';
+import '../../meter_reading/presentation/screens/meter_reading_screen.dart';
 import '../../work_order/domain/request_type.dart';
 import '../../work_order/est_request/presentation/screens/est_request_screen.dart';
 import '../../work_order/it_request/presentation/screens/it_request_screen.dart';
@@ -44,39 +46,39 @@ class OnlineAppsScreen extends StatelessWidget {
     }
   }
 
-  /// "Inventory" punya alur bertingkat(Inventory / Request / Stationery):
-  /// pilih app -> pilih product line -> layar.
-  /// Yang sudah ada baru Request > Stationery; sisanya tampil "Coming soon".
-  Future<void> _openInventory(BuildContext context) async {
+  /// "Inventory" punya 2 pilihan lewat bottom sheet: Item Request (langsung
+  /// ke layar daftar) dan Management (halaman kartu fitur pengelolaan).
+    Future<void> _openInventory(BuildContext context) async {
+    // Management hanya untuk Inventory Admin / Reviewer / Admin.
+    final canManage = context
+            .read<AuthBloc>()
+            .state
+            .session
+            ?.user
+            .canAccessInventoryManagement ??
+        false;
+
     final app = await InventoryOptionSheet.show<InventoryApp>(
       context,
-      title: 'Choose App',
-      options: InventoryMenuData.apps,
+      title: 'Inventory',
+      options: [
+        for (final o in InventoryMenuData.apps)
+          if (o.value != InventoryApp.management || canManage) o,
+      ],
     );
 
     if (app == null || !context.mounted) return;
 
     switch (app) {
       case InventoryApp.request:
-        final line = await InventoryOptionSheet.show<InventoryProductLine>(
-          context,
-          title: 'Request',
-          options: InventoryMenuData.productLines,
+        // Langsung ke Item Request.
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const ItemRequestScreen()),
         );
-
-        if (line == null || !context.mounted) return;
-
-        switch (line) {
-          case InventoryProductLine.stationery:
-            Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const StationeryRequestScreen()),
-            );
-          // case InventoryProductLine.uniform:
-          case InventoryProductLine.estateBuilding:
-            break; // belum siap, tidak bisa dipilih dari sheet
-        }
       case InventoryApp.management:
-        break; // belum siap, tidak bisa dipilih dari sheet
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const InventoryManagementScreen()),
+        );
     }
   }
 
@@ -90,7 +92,9 @@ class OnlineAppsScreen extends StatelessWidget {
       showProcurement: user?.canAccessProcurement ?? false,
       // null = belum siap: tile tampil redup & tidak bisa diketuk.
       onInventory: () => _openInventory(context),
-      onMeterReading: null,
+      onMeterReading: () => Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const MeterReadingScreen()),
+      ),
       onReservation: null,
       onProcurement: () => Navigator.of(context).push(
         MaterialPageRoute(builder: (_) => const ProcurementPage()),

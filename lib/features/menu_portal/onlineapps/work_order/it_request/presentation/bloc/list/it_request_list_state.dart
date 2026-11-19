@@ -1,5 +1,6 @@
 import '../../../../../../../../core/network/page_meta.dart';
 import '../../../domain/it_request_item.dart';
+import '../../../domain/it_request_search.dart';
 import '../../../domain/it_request_summary.dart';
 
 enum ItRequestListStatus { initial, loading, success, failure }
@@ -18,6 +19,7 @@ class ItRequestListState {
     this.meta = const PageMeta(currentPage: 1, lastPage: 1, perPage: 20, total: 0),
     this.loadingMore = false,
     this.errorMessage,
+    this.searchQuery = '',
   });
 
   final ItRequestListStatus status;
@@ -36,10 +38,22 @@ class ItRequestListState {
 
   final String? errorMessage;
 
+  /// Kata kunci pencarian yang sedang aktif (sudah di-trim), kosong bila
+  /// tidak sedang mencari.
+  final String searchQuery;
+
   /// Tombol "+ Add Request" hanya boleh terbuka kalau server bilang tidak
   /// ada request yang menunggu rating — bukan hasil tebakan klien dari
   /// status/rating item yang kebetulan sedang termuat.
   bool get canAddRequest => summary.awaitingRating == 0;
+
+  bool get isSearching => searchQuery.isNotEmpty;
+
+  /// [items] yang lolos [searchQuery]. Tanpa pencarian aktif, sama dengan
+  /// [items]. UI WAJIB menampilkan ini, bukan [items] mentah.
+  List<ItRequestItem> get visibleItems => isSearching
+      ? items.where((item) => item.matchesSearch(searchQuery)).toList()
+      : items;
 
   bool get isEmpty => status == ItRequestListStatus.success && items.isEmpty;
 
@@ -52,6 +66,7 @@ class ItRequestListState {
     PageMeta? meta,
     bool? loadingMore,
     Object? errorMessage = _unset,
+    String? searchQuery,
   }) {
     return ItRequestListState(
       status: status ?? this.status,
@@ -61,6 +76,7 @@ class ItRequestListState {
       loadingMore: loadingMore ?? this.loadingMore,
       errorMessage:
           errorMessage == _unset ? this.errorMessage : errorMessage as String?,
+      searchQuery: searchQuery ?? this.searchQuery,
     );
   }
 
@@ -73,14 +89,23 @@ class ItRequestListState {
           identical(other.summary, summary) &&
           identical(other.meta, meta) &&
           other.loadingMore == loadingMore &&
-          other.errorMessage == errorMessage;
+          other.errorMessage == errorMessage &&
+          other.searchQuery == searchQuery;
 
   @override
   int get hashCode =>
-      Object.hash(status, items, summary, meta, loadingMore, errorMessage);
+      Object.hash(
+        status,
+        items,
+        summary,
+        meta,
+        loadingMore,
+        errorMessage,
+        searchQuery,
+      );
 
   @override
   String toString() => 'ItRequestListState(${status.name}, '
       '${items.length} request, awaitingRating: ${summary.awaitingRating}, '
-      'error: $errorMessage)';
+      'search: "$searchQuery", error: $errorMessage)';
 }
