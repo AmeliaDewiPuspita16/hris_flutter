@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../../../../../core/theme/app_colors.dart';
 import '../../../../../../core/theme/app_text_styles.dart';
@@ -79,11 +79,13 @@ class MeterReadingCard extends StatelessWidget {
                               Row(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  MeterTypeAvatar(type: reading.type, size: 44, soft: true),
+                                  MeterTypeAvatar(
+                                      type: reading.type, size: 44, soft: true),
                                   const SizedBox(width: 12),
                                   Expanded(
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Text(
                                           reading.company,
@@ -119,15 +121,22 @@ class MeterReadingCard extends StatelessWidget {
                                     ),
                                   ),
                                   const SizedBox(width: 12),
-                                  _LastValue(value: value, unit: unit, reading: reading),
+                                  _LastValue(
+                                      value: value,
+                                      unit: unit,
+                                      reading: reading),
                                 ],
                               ),
                               const SizedBox(height: 14),
-                              Divider(height: 1, thickness: 1, color: AppColors.border),
+                              Divider(
+                                  height: 1,
+                                  thickness: 1,
+                                  color: AppColors.border),
                               const SizedBox(height: 12),
                               Row(
                                 children: [
-                                  Icon(Icons.event_outlined, size: 15, color: AppColors.textMuted),
+                                  Icon(Icons.event_outlined,
+                                      size: 15, color: AppColors.textMuted),
                                   const SizedBox(width: 6),
                                   Expanded(
                                     child: Text(
@@ -160,7 +169,8 @@ class MeterReadingCard extends StatelessWidget {
 
 /// Angka terakhir + satuan, rata kanan. Satuan memakai warna jenis meter.
 class _LastValue extends StatelessWidget {
-  const _LastValue({required this.value, required this.unit, required this.reading});
+  const _LastValue(
+      {required this.value, required this.unit, required this.reading});
 
   final num? value;
   final String unit;
@@ -230,7 +240,8 @@ class _RecordButton extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.edit_note_rounded, size: 20, color: AppColors.primaryText),
+                Icon(Icons.edit_note_rounded,
+                    size: 20, color: AppColors.primaryText),
                 const SizedBox(width: 8),
                 Text(
                   'Record reading',
