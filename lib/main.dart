@@ -112,7 +112,7 @@ Future<void> main() async {
           InventoryItemRequestRepository(apiClient: apiClient),
       inventoryStockOpnameRepository:
           InventoryStockOpnameRepository(apiClient: apiClient),
-      meterReadingRepository: MeterReadingRepository(),
+      meterReadingRepository: MeterReadingRepository(apiClient: apiClient),
       weatherRepository: WeatherRepository(apiClient: apiClient),
     ),
   );
@@ -191,7 +191,7 @@ class MyApp extends StatelessWidget {
         inventoryStockOpnameRepository = inventoryStockOpnameRepository ??
             InventoryStockOpnameRepository(apiClient: ApiClient()),
         meterReadingRepository = meterReadingRepository ??
-            MeterReadingRepository(),
+            MeterReadingRepository(apiClient: ApiClient()),
         weatherRepository =
             weatherRepository ?? WeatherRepository(apiClient: ApiClient());
 
