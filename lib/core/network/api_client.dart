@@ -474,6 +474,10 @@ class ApiClient {
     String path, {
     Map<String, String>? fields,
     Map<String, List<String>>? files,
+
+    /// Batas tunggu khusus request ini; null memakai batas bawaan client.
+    /// Unggah foto di sinyal lemah butuh lebih lama dari 20 detik.
+    Duration? timeout,
   }) async {
     final uri = _uriFor(path);
     final fileCount =
@@ -502,6 +506,7 @@ class ApiClient {
 
         return http.Response.fromStream(await _httpClient.send(request));
       },
+      timeout: timeout,
     );
     return _rawJson(response);
   }
@@ -557,6 +562,7 @@ class ApiClient {
     Uri uri,
     Future<http.Response> Function() request, {
     bool authenticated = true,
+    Duration? timeout,
   }) async {
     // Dicatat sebelum request: kalau selagi menunggu respons pengguna sudah
     // logout atau login ulang, 401 dari token lama tidak boleh membuang sesi
@@ -565,7 +571,7 @@ class ApiClient {
 
     final http.Response response;
     try {
-      response = await request().timeout(_timeout);
+      response = await request().timeout(timeout ?? _timeout);
     } on TimeoutException catch (e, stack) {
       AppLogger.error('$method $uri melewati batas waktu', e, stack);
       throw const ApiException.timeout();
