@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter/services.dart';
 
 import '../../../../../../core/logging/app_logger.dart';
@@ -301,13 +301,15 @@ class _AddItemRequestScreenState extends State<AddItemRequestScreen> {
         hintText: hint,
         hintStyle: AppTextStyles.body.copyWith(color: AppColors.textMuted),
         suffixText: suffixText,
-        suffixStyle: AppTextStyles.caption.copyWith(fontWeight: FontWeight.w700),
+        suffixStyle:
+            AppTextStyles.caption.copyWith(fontWeight: FontWeight.w700),
         errorText: errorText,
         errorStyle: AppTextStyles.caption.copyWith(color: AppColors.rejected),
         filled: true,
         fillColor: AppColors.bg,
         counterText: '',
-        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         border: _border(AppColors.border),
         enabledBorder: _border(AppColors.border),
         disabledBorder: _border(AppColors.border),
@@ -335,8 +337,7 @@ class _AddItemRequestScreenState extends State<AddItemRequestScreen> {
           Expanded(
             child: ListView(
               controller: _scrollController,
-              keyboardDismissBehavior:
-                  ScrollViewKeyboardDismissBehavior.onDrag,
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
               children: [
                 if (_itemsError != null) _buildItemsError(),
