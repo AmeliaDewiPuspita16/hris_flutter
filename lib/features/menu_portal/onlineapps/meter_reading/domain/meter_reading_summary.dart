@@ -19,6 +19,7 @@ class MeterReadingSummary {
     required this.recordedInActivePeriod,
     required this.approval,
     required this.action,
+    this.categoryLabel,
     this.previousValue,
     this.currentValue,
     this.lastValue,
@@ -51,6 +52,9 @@ class MeterReadingSummary {
 
   /// Aksi yang boleh dilakukan user — sumber kebenaran untuk tombol.
   final MeterRecordAction action;
+
+  /// Kategori lokasi dari server. null bisa server tidak mengirimnya
+  final String? categoryLabel;
 
   /// Angka sebelumnya.
   final num? previousValue;

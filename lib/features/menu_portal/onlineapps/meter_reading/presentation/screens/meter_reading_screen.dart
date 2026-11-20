@@ -16,6 +16,7 @@ import '../bloc/list/meter_reading_list_bloc.dart';
 import '../bloc/list/meter_reading_list_event.dart';
 import '../bloc/list/meter_reading_list_state.dart';
 import 'meter_reading_detail_screen.dart';
+import '../widgets/meter_category_filter.dart';
 import '../widgets/meter_load_more_retry.dart';
 import '../widgets/meter_period_banner.dart';
 import '../widgets/meter_progress_summary.dart';
@@ -28,7 +29,8 @@ import '../widgets/meter_type_filter.dart';
 ///
 /// Versi mobile dari tabel di web, dirancang ulang untuk kerja lapangan:
 /// kartu per meter dengan angka terakhir sebagai fokus, filter status
-/// pencatatan (terutama "Not recorded"), jenis meter lewat bottom sheet, dan
+/// pencatatan (terutama "Not recorded"), jenis meter dan kategori lewat
+/// bottom sheet, dan
 /// pencarian (perusahaan, lokasi, nomor seri, catatan). Filter, pencarian, dan paginasi dikerjakan sisi server.
 class MeterReadingScreen extends StatelessWidget {
   const MeterReadingScreen({
@@ -121,6 +123,19 @@ class _MeterReadingViewState extends State<_MeterReadingView> {
         .add(MeterReadingListTypeSelected(picked.code));
   }
 
+  Future<void> _pickCategory(MeterReadingListState state) async {
+    final picked = await showMeterCategorySheet(
+      context,
+      categories: state.categories,
+      selectedLabel: state.category,
+    );
+    if (picked == null || !mounted) return;
+
+    context
+        .read<MeterReadingListBloc>()
+        .add(MeterReadingListCategorySelected(picked.label));
+  }
+
   void _resetFilters() {
     _debounce?.cancel();
     _searchController.clear();
@@ -169,10 +184,12 @@ class _MeterReadingViewState extends State<_MeterReadingView> {
       body: BlocBuilder<MeterReadingListBloc, MeterReadingListState>(
         builder: (context, state) {
           // `summary` server menghitung seluruh meter periode ini dan tidak
-          // ikut menyempit oleh filter jenis / pencarian; angka chip hanya
-          // ditampilkan saat daftar memang tidak disaring oleh keduanya.
-          final countsMatchList =
-              state.typeCode == null && state.query.trim().isEmpty;
+          // ikut menyempit oleh filter jenis / kategori / pencarian; angka
+          // chip hanya ditampilkan saat daftar memang tidak disaring oleh
+          // ketiganya.
+          final countsMatchList = state.typeCode == null &&
+              state.category == null &&
+              state.query.trim().isEmpty;
           final type = state.typeCode == null
               ? null
               : MeterType.fromCode(state.typeCode);
@@ -207,6 +224,15 @@ class _MeterReadingViewState extends State<_MeterReadingView> {
                       active: state.typeCode != null,
                       onTap: () => _pickType(state),
                     ),
+                    // Pilihan kategori datang dari server; tanpa daftar,
+                    // tombolnya disembunyikan.
+                    if (state.categories.isNotEmpty) ...[
+                      const SizedBox(width: 10),
+                      MeterCategoryButton(
+                        active: state.category != null,
+                        onTap: () => _pickCategory(state),
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -218,16 +244,30 @@ class _MeterReadingViewState extends State<_MeterReadingView> {
                     .read<MeterReadingListBloc>()
                     .add(MeterReadingListStateSelected(code)),
               ),
-              if (type != null)
+              if (type != null || state.category != null)
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
                   child: Align(
                     alignment: Alignment.centerLeft,
-                    child: MeterActiveTypeChip(
-                      type: type,
-                      onClear: () => context
-                          .read<MeterReadingListBloc>()
-                          .add(const MeterReadingListTypeSelected(null)),
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        if (type != null)
+                          MeterActiveTypeChip(
+                            type: type,
+                            onClear: () => context
+                                .read<MeterReadingListBloc>()
+                                .add(const MeterReadingListTypeSelected(null)),
+                          ),
+                        if (state.category != null)
+                          MeterActiveCategoryChip(
+                            label: state.category!,
+                            onClear: () => context
+                                .read<MeterReadingListBloc>()
+                                .add(const MeterReadingListCategorySelected(null)),
+                          ),
+                      ],
                     ),
                   ),
                 ),
@@ -286,7 +326,8 @@ class _MeterReadingViewState extends State<_MeterReadingView> {
               hasActiveFilter: state.hasActiveFilter,
               allRecorded: state.stateCode == MeterReadingState.pending.code &&
                   state.query.trim().isEmpty &&
-                  state.typeCode == null,
+                  state.typeCode == null &&
+                  state.category == null,
               onReset: _resetFilters,
             ),
           ],

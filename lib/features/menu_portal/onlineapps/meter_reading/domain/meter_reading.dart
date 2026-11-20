@@ -28,7 +28,7 @@ class MeterReading extends MeterReadingSummary {
     super.imageProofUrl,
     super.recordedBy,
     super.recordedAt,
-    this.categoryLabel,
+    super.categoryLabel,
     this.meterTypeLabel,
     this.buildingType,
     this.typeWater,
@@ -39,9 +39,6 @@ class MeterReading extends MeterReadingSummary {
     this.activePeriod,
     this.canWrite = false,
   });
-
-  /// Ex: "Tenant" (teks siap tampil).
-  final String? categoryLabel;
 
   /// Ex: "Water" (teks siap tampil).
   final String? meterTypeLabel;

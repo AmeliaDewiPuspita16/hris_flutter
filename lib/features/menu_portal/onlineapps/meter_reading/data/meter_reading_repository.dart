@@ -26,11 +26,14 @@ class MeterReadingRepository {
   ///
   /// [typeCode]: `kwh` / `m3` ([MeterType.code]). [stateCode]: `recorded` /
   /// `pending` ([MeterReadingState.code]), dipetakan ke `recorded=1/0`.
+  /// [category]: teks kategori (ex: "Dormitory", pilihannya dari `categories` di respons),
+  /// dikirim apa adanya sebagai query `category`.
   /// [search] dipotong 100 karakter (batas server).
   Future<MeterReadingPage> fetchList({
     int page = 1,
     int perPage = 20,
     String? typeCode,
+    String? category,
     String? stateCode,
     String? search,
   }) async {
@@ -39,6 +42,7 @@ class MeterReadingRepository {
         page: page,
         perPage: perPage,
         typeCode: typeCode,
+        category: category,
         recorded: _recordedFlag(stateCode),
         search: _cleanSearch(search),
       ),
@@ -145,6 +149,7 @@ class MeterReadingRepository {
     required int page,
     required int perPage,
     String? typeCode,
+    String? category,
     String? recorded,
     String? search,
   }) {
@@ -152,6 +157,7 @@ class MeterReadingRepository {
       'page': '$page',
       'per_page': '$perPage',
       if (typeCode != null && typeCode.isNotEmpty) 'type': typeCode,
+      if (category != null && category.isNotEmpty) 'category': category,
       if (recorded != null) 'recorded': recorded,
       if (search != null && search.isNotEmpty) 'search': search,
     };
@@ -196,7 +202,7 @@ class MeterReadingRepository {
       imageProofUrl: saved.imageProofUrl,
       recordedBy: saved.recordedBy,
       recordedAt: saved.recordedAt,
-      categoryLabel: previous.categoryLabel,
+      categoryLabel: saved.categoryLabel ?? previous.categoryLabel,
       meterTypeLabel: previous.meterTypeLabel,
       buildingType: previous.buildingType,
       typeWater: previous.typeWater,

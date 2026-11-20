@@ -23,7 +23,9 @@ class MeterReadingListState {
     ),
     this.activePeriod,
     this.canWrite = false,
+    this.categories = const [],
     this.typeCode,
+    this.category,
     this.stateCode,
     this.query = '',
     this.loadingMore = false,
@@ -47,8 +49,17 @@ class MeterReadingListState {
   /// Hak tulis user; false = tampilan hanya-baca.
   final bool canWrite;
 
+  /// Pilihan untuk filter kategori, dari `categories` di respons list.
+  /// Kosong selagi belum termuat, atau bila server tidak mengirimnya —
+  /// tombol kategori disembunyikan, daftarnya tetap jalan.
+  final List<String> categories;
+
   /// Filter jenis meter yang aktif (`kwh`/`m3`). Null berarti semua jenis.
   final String? typeCode;
+
+  /// Filter kategori yang aktif, ex: "Dormitory". Null berarti semua
+  /// kategori.
+  final String? category;
 
   /// Filter status pencatatan yang aktif (`pending`/`recorded`). Null
   /// berarti "Semua".
@@ -77,9 +88,13 @@ class MeterReadingListState {
   bool get isFirstLoad =>
       status == MeterReadingListStatus.loading && items.isEmpty;
 
-  /// True bila ada jenis, status, atau kata kunci yang sedang menyaring.
+  /// True bila ada jenis, kategori, status, atau kata kunci yang sedang
+  /// menyaring.
   bool get hasActiveFilter =>
-      typeCode != null || stateCode != null || query.trim().isNotEmpty;
+      typeCode != null ||
+      category != null ||
+      stateCode != null ||
+      query.trim().isNotEmpty;
 
   MeterReadingListState copyWith({
     MeterReadingListStatus? status,
@@ -88,7 +103,9 @@ class MeterReadingListState {
     PageMeta? meta,
     Object? activePeriod = _unset,
     bool? canWrite,
+    List<String>? categories,
     Object? typeCode = _unset,
+    Object? category = _unset,
     Object? stateCode = _unset,
     String? query,
     bool? loadingMore,
@@ -104,7 +121,9 @@ class MeterReadingListState {
           ? this.activePeriod
           : activePeriod as MeterPeriod?,
       canWrite: canWrite ?? this.canWrite,
+      categories: categories ?? this.categories,
       typeCode: typeCode == _unset ? this.typeCode : typeCode as String?,
+      category: category == _unset ? this.category : category as String?,
       stateCode: stateCode == _unset ? this.stateCode : stateCode as String?,
       query: query ?? this.query,
       loadingMore: loadingMore ?? this.loadingMore,
@@ -126,7 +145,9 @@ class MeterReadingListState {
           identical(other.meta, meta) &&
           identical(other.activePeriod, activePeriod) &&
           other.canWrite == canWrite &&
+          identical(other.categories, categories) &&
           other.typeCode == typeCode &&
+          other.category == category &&
           other.stateCode == stateCode &&
           other.query == query &&
           other.loadingMore == loadingMore &&
@@ -141,7 +162,9 @@ class MeterReadingListState {
         meta,
         activePeriod,
         canWrite,
+        categories,
         typeCode,
+        category,
         stateCode,
         query,
         loadingMore,
@@ -151,6 +174,6 @@ class MeterReadingListState {
 
   @override
   String toString() => 'MeterReadingListState(${status.name}, '
-      '${items.length} meter, type: $typeCode, state: $stateCode, '
+      '${items.length} meter, type: $typeCode, category: $category, state: $stateCode, '
       'error: $errorMessage)';
 }
