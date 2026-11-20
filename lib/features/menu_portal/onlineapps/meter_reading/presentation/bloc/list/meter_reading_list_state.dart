@@ -1,12 +1,12 @@
 import '../../../../../../../core/network/page_meta.dart';
-import '../../../domain/meter_category.dart';
+import '../../../domain/meter_period.dart';
 import '../../../domain/meter_reading_page.dart';
 import '../../../domain/meter_reading_summary.dart';
 
 enum MeterReadingListStatus { initial, loading, success, failure }
 
 /// Penanda "tidak diisi" untuk [MeterReadingListState.copyWith], supaya
-/// `categoryCode: null` bisa berarti "lepas filternya" alih-alih "biarkan".
+/// `typeCode: null` bisa berarti "lepas filternya" alih-alih "biarkan".
 const _unset = Object();
 
 /// Keadaan daftar Meter Reading.
@@ -21,8 +21,9 @@ class MeterReadingListState {
       perPage: 20,
       total: 0,
     ),
-    this.categories = const [],
-    this.categoryCode,
+    this.activePeriod,
+    this.canWrite = false,
+    this.typeCode,
     this.stateCode,
     this.query = '',
     this.loadingMore = false,
@@ -33,18 +34,21 @@ class MeterReadingListState {
   final MeterReadingListStatus status;
   final List<MeterReadingSummary> items;
 
-  /// Jumlah meter per status pencatatan untuk chip filter. Dihitung server
-  /// atas seluruh data yang cocok dengan kategori dan pencarian aktif.
+  /// Jumlah meter per status pencatatan untuk chip filter dan progress bar,
+  /// dari `summary` server.
   final MeterReadingCounts counts;
 
   final PageMeta meta;
 
-  /// Pilihan untuk filter kategori. Kosong selagi belum termuat, atau bila
-  /// gagal — filter kategori disembunyikan, daftarnya tetap jalan.
-  final List<MeterCategory> categories;
+  /// Periode aktif. Null = tidak ada periode aktif, jadi tidak ada yang bisa
+  /// dicatat.
+  final MeterPeriod? activePeriod;
 
-  /// Filter kategori yang aktif. Null berarti "All Categories".
-  final String? categoryCode;
+  /// Hak tulis user; false = tampilan hanya-baca.
+  final bool canWrite;
+
+  /// Filter jenis meter yang aktif (`kwh`/`m3`). Null berarti semua jenis.
+  final String? typeCode;
 
   /// Filter status pencatatan yang aktif (`pending`/`recorded`). Null
   /// berarti "Semua".
@@ -73,17 +77,18 @@ class MeterReadingListState {
   bool get isFirstLoad =>
       status == MeterReadingListStatus.loading && items.isEmpty;
 
-  /// True bila ada kategori, status, atau kata kunci yang sedang menyaring.
+  /// True bila ada jenis, status, atau kata kunci yang sedang menyaring.
   bool get hasActiveFilter =>
-      categoryCode != null || stateCode != null || query.trim().isNotEmpty;
+      typeCode != null || stateCode != null || query.trim().isNotEmpty;
 
   MeterReadingListState copyWith({
     MeterReadingListStatus? status,
     List<MeterReadingSummary>? items,
     MeterReadingCounts? counts,
     PageMeta? meta,
-    List<MeterCategory>? categories,
-    Object? categoryCode = _unset,
+    Object? activePeriod = _unset,
+    bool? canWrite,
+    Object? typeCode = _unset,
     Object? stateCode = _unset,
     String? query,
     bool? loadingMore,
@@ -95,9 +100,11 @@ class MeterReadingListState {
       items: items ?? this.items,
       counts: counts ?? this.counts,
       meta: meta ?? this.meta,
-      categories: categories ?? this.categories,
-      categoryCode:
-          categoryCode == _unset ? this.categoryCode : categoryCode as String?,
+      activePeriod: activePeriod == _unset
+          ? this.activePeriod
+          : activePeriod as MeterPeriod?,
+      canWrite: canWrite ?? this.canWrite,
+      typeCode: typeCode == _unset ? this.typeCode : typeCode as String?,
       stateCode: stateCode == _unset ? this.stateCode : stateCode as String?,
       query: query ?? this.query,
       loadingMore: loadingMore ?? this.loadingMore,
@@ -109,7 +116,7 @@ class MeterReadingListState {
     );
   }
 
-   @override
+  @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       other is MeterReadingListState &&
@@ -117,8 +124,9 @@ class MeterReadingListState {
           identical(other.items, items) &&
           identical(other.counts, counts) &&
           identical(other.meta, meta) &&
-          identical(other.categories, categories) &&
-          other.categoryCode == categoryCode &&
+          identical(other.activePeriod, activePeriod) &&
+          other.canWrite == canWrite &&
+          other.typeCode == typeCode &&
           other.stateCode == stateCode &&
           other.query == query &&
           other.loadingMore == loadingMore &&
@@ -131,8 +139,9 @@ class MeterReadingListState {
         items,
         counts,
         meta,
-        categories,
-        categoryCode,
+        activePeriod,
+        canWrite,
+        typeCode,
         stateCode,
         query,
         loadingMore,
@@ -142,6 +151,6 @@ class MeterReadingListState {
 
   @override
   String toString() => 'MeterReadingListState(${status.name}, '
-      '${items.length} meter, category: $categoryCode, state: $stateCode, '
+      '${items.length} meter, type: $typeCode, state: $stateCode, '
       'error: $errorMessage)';
 }

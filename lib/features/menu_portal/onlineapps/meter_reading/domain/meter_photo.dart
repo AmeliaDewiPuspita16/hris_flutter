@@ -23,11 +23,10 @@ class MeterPhoto {
   final String fileName;
   final int sizeBytes;
 
-  // Batas dan ekstensi di bawah ini meminjam aturan lampiran IT Request —
-  // belum ada ketentuan dari server untuk Meter Reading. Sesuaikan saat
-  // kontrak API dibuat.
-  static const int maxSizeBytes = 10 * 1024 * 1024;
-  static const Set<String> allowedExtensions = {'jpg', 'jpeg', 'png', 'gif', 'webp'};
+  // Server: "file gambar, maks. 5 MB" (`image_proof`). Ekstensi yang
+  // diizinkan belum dikonfirmasi backend, jadi dibatasi ke yang paling aman.
+  static const int maxSizeBytes = 5 * 1024 * 1024;
+  static const Set<String> allowedExtensions = {'jpg', 'jpeg', 'png'};
 
   /// Ekstensi berkas dalam huruf kecil, tanpa titik. Kosong bila tidak ada.
   String get extension {
@@ -39,10 +38,10 @@ class MeterPhoto {
   /// Alasan foto ini ditolak, atau null bila memenuhi syarat.
   String? get validationError {
     if (!allowedExtensions.contains(extension)) {
-      return '$fileName must be a JPG, JPEG, PNG, GIF, or WEBP file.';
+      return '$fileName must be a JPG, JPEG, or PNG file.';
     }
     if (sizeBytes <= 0) return '$fileName is empty or cannot be read.';
-    if (sizeBytes > maxSizeBytes) return '$fileName is larger than 10 MB.';
+    if (sizeBytes > maxSizeBytes) return '$fileName is larger than 5 MB.';
     return null;
   }
 }

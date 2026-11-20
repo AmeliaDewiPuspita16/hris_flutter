@@ -32,8 +32,8 @@ String formatMeterValue(num value) {
 /// yang sah (kosong, huruf, negatif, atau lebih dari satu pemisah).
 ///
 /// Kalau petugas menyalin gaya tampilan ("34.650"), hasilnya terbaca 34,65 —
-/// dan [validateMeterInput] menolaknya karena lebih kecil dari angka
-/// sebelumnya, jadi salah ketik jenis ini tidak lolos diam-diam.
+/// dan [lowerThanPreviousWarning] memperingatkannya karena lebih kecil dari
+/// angka sebelumnya, jadi salah ketik jenis ini tidak lolos diam-diam.
 num? parseMeterInput(String text) {
   var cleaned = text.trim().replaceAll(',', '.');
   if (cleaned.endsWith('.')) cleaned = cleaned.substring(0, cleaned.length - 1);
@@ -43,18 +43,24 @@ num? parseMeterInput(String text) {
 
 /// Alasan isian [text] ditolak, atau null bila sah.
 ///
-/// [previous] adalah angka terakhir yang tercatat; pembacaan baru tidak
-/// boleh lebih kecil darinya. (Aturan ini tebakan dari tampilan web — perlu
-/// dikonfirmasi saat kontrak API dibuat, karena meter yang diganti atau
-/// di-reset bisa saja sah.)
-String? validateMeterInput(String text, {num? previous}) {
+/// Hanya soal BENTUK: wajib diisi dan harus angka. Aturan "tidak boleh lebih
+/// kecil dari angka sebelumnya" tidak ada di dokumen API, dan meter yang
+/// diganti atau di-reset bisa sah — itu ditangani [lowerThanPreviousWarning]
+/// sebagai peringatan, bukan penolakan.
+String? validateMeterInput(String text) {
   if (text.trim().isEmpty) return 'Current value is required.';
-
-  final value = parseMeterInput(text);
-  if (value == null) return 'Enter a valid number.';
-
-  if (previous != null && value < previous) {
-    return 'Cannot be lower than the previous value (${formatMeterValue(previous)}).';
-  }
+  if (parseMeterInput(text) == null) return 'Enter a valid number.';
   return null;
+}
+
+/// Peringatan (BUKAN penolakan) bila angka di [text] lebih kecil dari
+/// [previous]; null bila tidak ada yang perlu diperingatkan.
+///
+/// Menangkap salah ketik seperti "34.650" yang terbaca 34,65 — petugas
+/// diminta memeriksa, dan boleh lanjut bila meternya memang diganti/di-reset.
+String? lowerThanPreviousWarning(String text, {num? previous}) {
+  final value = parseMeterInput(text);
+  if (value == null || previous == null || value >= previous) return null;
+  return 'Lower than the previous value (${formatMeterValue(previous)}). '
+      'Check the digits, or continue if the meter was replaced or reset.';
 }

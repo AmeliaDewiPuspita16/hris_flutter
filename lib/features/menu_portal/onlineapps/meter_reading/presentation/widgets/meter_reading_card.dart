@@ -2,21 +2,20 @@ import 'package:flutter/material.dart';
 
 import '../../../../../../core/theme/app_colors.dart';
 import '../../../../../../core/theme/app_text_styles.dart';
-import '../../../../../../core/utils/date_formatter.dart';
 import '../../../../../../core/widgets/app_shimmer.dart';
-import '../../domain/meter_reading_state.dart';
 import '../../domain/meter_reading_summary.dart';
+import '../../domain/meter_record_action.dart';
 import '../../domain/meter_value_format.dart';
-import 'meter_reading_state_badge.dart';
+import 'meter_approval_badge.dart';
 import 'meter_type_avatar.dart';
 
-/// Satu meter di daftar — angka terakhir sebagai fokus.
+/// Satu record (satu meter) di daftar — angka terakhir sebagai fokus.
 ///
-/// Hierarki kartu: identitas (perusahaan + lokasi) di kiri, angka terakhir
-/// besar di kanan, lalu satu baris meta (periode + status). Meter yang BELUM
-/// dicatat diberi garis aksen kuning di tepi kiri dan tombol "Record reading"
-/// penuh-lebar, supaya pekerjaan yang tersisa terbaca sekilas saat menggulir.
-/// Yang sudah dicatat tampil tenang di kartu putih.
+/// Hierarki kartu: identitas (perusahaan, lokasi, nomor seri) di kiri, angka
+/// terakhir besar di kanan, lalu satu baris meta (periode + status). Tombol
+/// aksi penuh-lebar hanya muncul untuk pekerjaan yang MENUNGGU petugas
+/// (`record` dan `new_reading`); mengedit cukup lewat detail, supaya kartu
+/// yang sudah dicatat tampil tenang.
 class MeterReadingCard extends StatelessWidget {
   const MeterReadingCard({
     super.key,
@@ -28,21 +27,23 @@ class MeterReadingCard extends StatelessWidget {
   final MeterReadingSummary reading;
   final VoidCallback? onTap;
 
-  /// Hanya dipakai bila [MeterReadingSummary.canRecord].
+  /// Dipanggil tombol aksi di dasar kartu (hanya untuk `record` / `new_reading`).
   final VoidCallback? onRecord;
+
+  bool get _showAction =>
+      onRecord != null &&
+      (reading.action == MeterRecordAction.record ||
+          reading.action == MeterRecordAction.newReading);
 
   @override
   Widget build(BuildContext context) {
-    final pending = reading.state == MeterReadingState.pending;
     final value = reading.lastValue;
     final unit = reading.type.unit;
-    final period = '${DateFormatter.shortDate(reading.period.start)} – '
-        '${DateFormatter.shortDate(reading.period.end)}';
-    final showRecord = reading.canRecord && onRecord != null;
 
     return Semantics(
       container: true,
-      label: '${reading.company}, ${reading.location}, ${reading.state.label}',
+      label: '${reading.company}, ${reading.location}, '
+          'S/N ${reading.serialNumber}, ${reading.approval.label}',
       child: DecoratedBox(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(18),
@@ -66,89 +67,73 @@ class MeterReadingCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                IntrinsicHeight(
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                Padding(
+                  padding: const EdgeInsets.all(14),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  MeterTypeAvatar(type: reading.type, size: 44, soft: true),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          reading.company,
-                                          maxLines: 2,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: AppTextStyles.body.copyWith(
-                                            fontSize: 15,
-                                            height: 1.25,
-                                            fontWeight: FontWeight.w700,
-                                            color: AppColors.text,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Row(
-                                          children: [
-                                            Icon(
-                                              Icons.place_outlined,
-                                              size: 14,
-                                              color: AppColors.textMuted,
-                                            ),
-                                            const SizedBox(width: 4),
-                                            Expanded(
-                                              child: Text(
-                                                reading.location,
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                                style: AppTextStyles.caption,
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          MeterTypeAvatar(type: reading.type, size: 44, soft: true),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  reading.company,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: AppTextStyles.body.copyWith(
+                                    fontSize: 15,
+                                    height: 1.25,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.text,
                                   ),
-                                  const SizedBox(width: 12),
-                                  _LastValue(value: value, unit: unit, reading: reading),
-                                ],
-                              ),
-                              const SizedBox(height: 14),
-                              Divider(height: 1, thickness: 1, color: AppColors.border),
-                              const SizedBox(height: 12),
-                              Row(
-                                children: [
-                                  Icon(Icons.event_outlined, size: 15, color: AppColors.textMuted),
-                                  const SizedBox(width: 6),
-                                  Expanded(
-                                    child: Text(
-                                      period,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: AppTextStyles.caption,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  MeterReadingStateBadge(state: reading.state),
-                                ],
-                              ),
-                            ],
+                                ),
+                                const SizedBox(height: 4),
+                                _MetaLine(
+                                  icon: Icons.place_outlined,
+                                  text: reading.location,
+                                ),
+                                const SizedBox(height: 3),
+                                // Nomor seri bisa berupa teks panjang
+                                // ("Solar Panel Puja Sera - Electrical").
+                                _MetaLine(
+                                  icon: Icons.tag_rounded,
+                                  text: 'S/N ${reading.serialNumber}',
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
+                          const SizedBox(width: 12),
+                          _LastValue(value: value, unit: unit),
+                        ],
+                      ),
+                      const SizedBox(height: 14),
+                      Divider(height: 1, thickness: 1, color: AppColors.border),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Icon(Icons.event_outlined, size: 15, color: AppColors.textMuted),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              reading.period.label,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppTextStyles.caption,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          MeterStatusBadge(reading: reading),
+                        ],
                       ),
                     ],
                   ),
                 ),
-                if (showRecord) _RecordButton(onTap: onRecord!),
+                if (_showAction) _ActionButton(action: reading.action, onTap: onRecord!),
               ],
             ),
           ),
@@ -158,13 +143,37 @@ class MeterReadingCard extends StatelessWidget {
   }
 }
 
+class _MetaLine extends StatelessWidget {
+  const _MetaLine({required this.icon, required this.text});
+
+  final IconData icon;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, size: 14, color: AppColors.textMuted),
+        const SizedBox(width: 4),
+        Expanded(
+          child: Text(
+            text,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppTextStyles.caption,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 /// Angka terakhir + satuan, rata kanan. Satuan memakai warna jenis meter.
 class _LastValue extends StatelessWidget {
-  const _LastValue({required this.value, required this.unit, required this.reading});
+  const _LastValue({required this.value, required this.unit});
 
   final num? value;
   final String unit;
-  final MeterReadingSummary reading;
 
   @override
   Widget build(BuildContext context) {
@@ -207,16 +216,21 @@ class _LastValue extends StatelessWidget {
   }
 }
 
-/// Aksi di dasar kartu yang belum dicatat: tonal (hijau pucat + teks hijau),
-/// bukan blok hijau penuh — dengan banyak kartu belum dicatat, blok penuh
-/// yang berulang terlalu berat. Tombol utama yang tegas ada di form.
-class _RecordButton extends StatelessWidget {
-  const _RecordButton({required this.onTap});
+/// Aksi di dasar kartu: tonal (hijau pucat + teks hijau), bukan blok hijau
+/// penuh — dengan banyak kartu menunggu, blok penuh yang berulang terlalu
+/// berat. Tombol utama yang tegas ada di form.
+class _ActionButton extends StatelessWidget {
+  const _ActionButton({required this.action, required this.onTap});
 
+  final MeterRecordAction action;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
+    final icon = action == MeterRecordAction.newReading
+        ? Icons.add_circle_outline_rounded
+        : Icons.edit_note_rounded;
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
       child: Material(
@@ -230,10 +244,10 @@ class _RecordButton extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.edit_note_rounded, size: 20, color: AppColors.primaryText),
+                Icon(icon, size: 20, color: AppColors.primaryText),
                 const SizedBox(width: 8),
                 Text(
-                  'Record reading',
+                  action.buttonLabel,
                   style: TextStyle(
                     fontFamily: AppTextStyles.fontFamily,
                     fontSize: 13.5,
@@ -250,7 +264,7 @@ class _RecordButton extends StatelessWidget {
   }
 }
 
-/// Skeleton satu [MeterReadingCard]: ikon, dua baris keterangan, angka di
+/// Skeleton satu [MeterReadingCard]: ikon, tiga baris keterangan, angka di
 /// kanan, lalu baris periode + status.
 class MeterReadingCardSkeleton extends StatelessWidget {
   const MeterReadingCardSkeleton({super.key});
@@ -272,6 +286,8 @@ class MeterReadingCardSkeleton extends StatelessWidget {
                     ShimmerLine(width: 140, height: 14),
                     SizedBox(height: 8),
                     ShimmerLine(width: 90, height: 10),
+                    SizedBox(height: 6),
+                    ShimmerLine(width: 110, height: 10),
                   ],
                 ),
               ),

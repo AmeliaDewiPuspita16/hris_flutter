@@ -1,46 +1,91 @@
-import 'meter_category.dart';
+import 'meter_approval_status.dart';
 import 'meter_period.dart';
 import 'meter_reading_state.dart';
+import 'meter_record_action.dart';
 import 'meter_type.dart';
 
-/// Satu baris di daftar Meter Reading — padanan satu baris tabel di web
-/// (Location, Company, Type, Last Value, Period, Action).
+/// Satu baris di daftar Meter Reading = satu record = SATU meter pada satu
+/// periode. Lokasi yang punya listrik dan air muncul sebagai dua record.
 ///
-/// Sengaja terpisah dari `MeterReading`: daftar tidak membawa rincian meter,
-/// kontrak, atau foto, jadi model daftar tidak boleh berpura-pura punya
-/// itu. Pola sama dengan `PurchaseRequisitionSummary`.
+/// `id` berubah setiap kali dibuat bacaan baru untuk periode berikutnya.
 class MeterReadingSummary {
   const MeterReadingSummary({
     required this.id,
-    required this.location,
     required this.company,
-    required this.category,
+    required this.location,
     required this.type,
+    required this.serialNumber,
     required this.period,
-    required this.state,
+    required this.recordedInActivePeriod,
+    required this.approval,
+    required this.action,
+    this.previousValue,
+    this.currentValue,
     this.lastValue,
-    this.canRecord = false,
+    this.notes,
+    this.imageProofUrl,
+    this.recordedBy,
+    this.recordedAt,
   });
 
   final int id;
 
-  /// Ex: "Town Centre", "BIEV #03-03".
-  final String location;
-
-  /// Ex: "AC Sentral ATM", "BIEV".
+  /// Ex: "PT CONTOH JAYA".
   final String company;
 
-  final MeterCategory category;
+  /// Ex: "Block A-12".
+  final String location;
+
   final MeterType type;
 
-  /// Angka terakhir yang tercatat. Null bila belum pernah dicatat.
-  final num? lastValue;
+  /// Nomor seri meter, ex: "KWH-001". Pembeda dua record di lokasi yang sama.
+  final String serialNumber;
 
   final MeterPeriod period;
-  final MeterReadingState state;
 
-  /// Sumber kebenaran untuk tombol "+" / "Record New Data" — bukan tebakan
-  /// klien dari [state]. Nantinya server yang menentukan, termasuk soal hak
-  /// akses (pola sama dengan `ItRequestItem.canRate`).
-  final bool canRecord;
+  /// True bila record ini sudah berisi bacaan di periode AKTIF.
+  final bool recordedInActivePeriod;
+
+  /// Nasib bacaan setelah dicatat: pending / approved / rejected.
+  final MeterApprovalStatus approval;
+
+  /// Aksi yang boleh dilakukan user — sumber kebenaran untuk tombol.
+  final MeterRecordAction action;
+
+  /// Angka sebelumnya.
+  final num? previousValue;
+
+  /// Angka periode ini. Null bila belum dicatat.
+  final num? currentValue;
+
+  /// Angka terakhir yang tercatat. Ini yang jadi fokus kartu.
+  final num? lastValue;
+
+  final String? notes;
+  final String? imageProofUrl;
+
+  /// Nama pencatat (`recorded_by.name`) dan waktunya. Null selama belum dicatat.
+  final String? recordedBy;
+  final DateTime? recordedAt;
+
+  /// Sudah / belum dicatat di periode aktif — dipakai badge dan chip filter.
+  MeterReadingState get state => recordedInActivePeriod
+      ? MeterReadingState.recorded
+      : MeterReadingState.pending;
+
+  /// Pemakaian periode ini: selisih mentah [currentValue] - [previousValue].
+  /// Belum dikalikan `multiplier` karena fungsinya belum dikonfirmasi backend.
+  num? get consumption {
+    final current = currentValue;
+    final previous = previousValue;
+    return current == null || previous == null ? null : current - previous;
+  }
+
+  /// Dipertahankan sementara supaya widget lama tetap kompilasi; widget
+  /// baru memakai [action] langsung.
+  bool get canRecord => action.isAvailable;
+
+  /// Foto bukti sebagai daftar, untuk `MeterPhotoGrid`.
+  List<String> get photoUrls =>
+      imageProofUrl == null ? const [] : [imageProofUrl!];
 }

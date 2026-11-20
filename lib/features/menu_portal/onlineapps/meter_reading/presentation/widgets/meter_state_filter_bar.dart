@@ -7,16 +7,17 @@ import '../../domain/meter_reading_state.dart';
 
 /// Deret chip filter status pencatatan: All / Not recorded / Recorded.
 ///
-/// Warnanya mengikuti statusnya — hijau tua untuk semua, kuning untuk yang
-/// belum dicatat, hijau untuk yang sudah — penuh saat aktif, berlatar
-/// lembut saat tidak. Angkanya dari `counts` server, jadi benar untuk
-/// seluruh meter walau baru satu halaman yang termuat.
+/// Angkanya dari `summary` server, yang menghitung SELURUH meter periode ini
+/// dan TIDAK ikut menyempit saat filter jenis meter atau pencarian dipakai.
+/// Karena itu layar mematikan angka ([showCounts] = false) selagi filter
+/// jenis / pencarian aktif, supaya angka di chip tidak berbeda dari daftar.
 class MeterStateFilterBar extends StatelessWidget {
   const MeterStateFilterBar({
     super.key,
     required this.counts,
     required this.selected,
     required this.onChanged,
+    this.showCounts = true,
   });
 
   final MeterReadingCounts counts;
@@ -26,15 +27,17 @@ class MeterStateFilterBar extends StatelessWidget {
 
   final ValueChanged<String?> onChanged;
 
+  /// False menyembunyikan angka di semua chip.
+  final bool showCounts;
+
   @override
   Widget build(BuildContext context) {
-    final options = <({String? code, String label, int count, Color color, Color tint, IconData icon})>[
+    final options = <({String? code, String label, int count, Color color, IconData icon})>[
       (
         code: null,
         label: 'All',
         count: counts.all,
         color: AppColors.primary,
-        tint: AppColors.card,
         icon: Icons.apps_rounded,
       ),
       (
@@ -42,7 +45,6 @@ class MeterStateFilterBar extends StatelessWidget {
         label: MeterReadingState.pending.label,
         count: counts.pending,
         color: MeterReadingState.pending.color,
-        tint: MeterReadingState.pending.background,
         icon: MeterReadingState.pending.icon,
       ),
       (
@@ -50,7 +52,6 @@ class MeterStateFilterBar extends StatelessWidget {
         label: MeterReadingState.recorded.label,
         count: counts.recorded,
         color: MeterReadingState.recorded.color,
-        tint: MeterReadingState.recorded.background,
         icon: MeterReadingState.recorded.icon,
       ),
     ];
@@ -64,9 +65,8 @@ class MeterStateFilterBar extends StatelessWidget {
             if (i > 0) const SizedBox(width: 8),
             _FilterChip(
               label: options[i].label,
-              count: options[i].count,
+              count: showCounts ? options[i].count : null,
               color: options[i].color,
-              tint: options[i].tint,
               neutral: options[i].code == null,
               icon: options[i].icon,
               active: selected == options[i].code,
@@ -84,22 +84,21 @@ class _FilterChip extends StatelessWidget {
     required this.label,
     required this.count,
     required this.color,
-    required this.tint,
     required this.neutral,
     required this.active,
     required this.onTap,
-    this.icon,
+    required this.icon,
   });
 
-  final IconData? icon;
-
+  final IconData icon;
   final String label;
-  final int count;
-  final Color color;
-  final Color tint;
 
-  /// Chip "All": berlatar kartu dan berteks biasa saat tidak aktif, bukan
-  /// berwarna seperti dua chip status.
+  /// Null = angka disembunyikan.
+  final int? count;
+  final Color color;
+
+  /// Chip "All": ikonnya abu-abu saat tidak aktif, bukan berwarna seperti
+  /// dua chip status.
   final bool neutral;
 
   final bool active;
@@ -110,9 +109,8 @@ class _FilterChip extends StatelessWidget {
     // Satu gaya untuk semua chip: aktif = hijau utama penuh, tidak aktif =
     // kartu putih. Makna status sudah dibawa ikon, bukan warna latar.
     final labelColor = active ? Colors.white : AppColors.text;
-    final iconColor = active
-        ? Colors.white
-        : (neutral ? AppColors.textMid : color);
+    final iconColor =
+        active ? Colors.white : (neutral ? AppColors.textMid : color);
 
     return InkWell(
       onTap: onTap,
@@ -131,10 +129,8 @@ class _FilterChip extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (icon != null) ...[
-              Icon(icon, size: 15, color: iconColor),
-              const SizedBox(width: 6),
-            ],
+            Icon(icon, size: 15, color: iconColor),
+            const SizedBox(width: 6),
             Text(
               label,
               style: TextStyle(
@@ -144,25 +140,27 @@ class _FilterChip extends StatelessWidget {
                 color: labelColor,
               ),
             ),
-            const SizedBox(width: 7),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 1.5),
-              decoration: BoxDecoration(
-                color: active
-                    ? Colors.white.withValues(alpha: 0.22)
-                    : AppColors.neutralBg,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text(
-                '$count',
-                style: TextStyle(
-                  fontFamily: AppTextStyles.fontFamily,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: active ? Colors.white : AppColors.textMid,
+            if (count != null) ...[
+              const SizedBox(width: 7),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 1.5),
+                decoration: BoxDecoration(
+                  color: active
+                      ? Colors.white.withValues(alpha: 0.22)
+                      : AppColors.neutralBg,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  '$count',
+                  style: TextStyle(
+                    fontFamily: AppTextStyles.fontFamily,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: active ? Colors.white : AppColors.textMid,
+                  ),
                 ),
               ),
-            ),
+            ],
           ],
         ),
       ),

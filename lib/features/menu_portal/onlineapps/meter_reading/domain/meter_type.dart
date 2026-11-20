@@ -1,14 +1,18 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 
 import '../../../../../core/theme/app_colors.dart';
 
 /// Jenis meter: listrik (kWh) atau air (m³)
 ///
+/// [code] sama dengan kode di API (`kwh` / `m3`), jadi bisa langsung dipakai
+/// sebagai nilai filter `type` pada daftar. [fromCode] juga mengenali
+/// `electricity` / `water`.
+///
 /// Kode tak dikenal jatuh ke [other] - tetap tampil, dengan warna netral,
 /// alih-alih menggugurkan barisnya.
 enum MeterType {
-  electricity('electricity', 'kWh'),
-  water('water', 'm³'),
+  electricity('kwh', 'kWh'),
+  water('m3', 'm³'),
   other('other', '');
 
   const MeterType(this.code, this.unit);
@@ -18,9 +22,9 @@ enum MeterType {
   /// Satuan siap tampil. Kosong untuk [other].
   final String unit;
 
-  static MeterType fromCode(String code) => switch (code) {
-        'electricity' => MeterType.electricity,
-        'water' => MeterType.water,
+  static MeterType fromCode(String? code) => switch (code?.toLowerCase()) {
+        'kwh' || 'electricity' => MeterType.electricity,
+        'm3' || 'water' => MeterType.water,
         _ => MeterType.other,
       };
 
@@ -31,7 +35,7 @@ enum MeterType {
         MeterType.water => Icons.water_drop_rounded,
         MeterType.other => Icons.speed_rounded,
       };
-      
+
   Color get color => switch (this) {
         MeterType.electricity => AppColors.accent,
         MeterType.water => AppColors.inProgress,

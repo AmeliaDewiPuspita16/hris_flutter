@@ -2,12 +2,15 @@ import 'package:flutter/material.dart';
 
 import '../../../../../../core/theme/app_colors.dart';
 import '../../../../../../core/theme/app_text_styles.dart';
-import '../../domain/meter_category.dart';
+import '../../domain/meter_type.dart';
 
-/// Tombol persegi di samping kolom cari untuk membuka pilihan kategori.
-/// Bertitik dan berbingkai hijau selama ada kategori yang aktif.
-class MeterCategoryButton extends StatelessWidget {
-  const MeterCategoryButton({
+/// Tombol persegi di samping kolom cari untuk membuka pilihan jenis meter
+/// (listrik / air). Bertitik dan berbingkai hijau selama ada jenis yang aktif.
+///
+/// Pengganti filter kategori: API Meter Reading hanya punya filter `type`
+/// (kwh / m3), belum ada endpoint kategori.
+class MeterTypeButton extends StatelessWidget {
+  const MeterTypeButton({
     super.key,
     required this.active,
     required this.onTap,
@@ -20,7 +23,7 @@ class MeterCategoryButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Semantics(
       button: true,
-      label: 'Filter by Category',
+      label: 'Filter by meter type',
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(14),
@@ -65,16 +68,15 @@ class MeterCategoryButton extends StatelessWidget {
   }
 }
 
-/// Pil kecil "Town Centre ✕" yang menunjukkan kategori aktif dan melepasnya
-/// sekali ketuk.
-class MeterActiveCategoryChip extends StatelessWidget {
-  const MeterActiveCategoryChip({
+/// Pil kecil "kWh ✕" yang menunjukkan jenis aktif dan melepasnya sekali ketuk.
+class MeterActiveTypeChip extends StatelessWidget {
+  const MeterActiveTypeChip({
     super.key,
-    required this.label,
-    required this.onClear
+    required this.type,
+    required this.onClear,
   });
 
-  final String label;
+  final MeterType type;
   final VoidCallback onClear;
 
   @override
@@ -91,10 +93,10 @@ class MeterActiveCategoryChip extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.category_outlined, size: 14, color: AppColors.primaryText),
+            Icon(type.icon, size: 14, color: AppColors.primaryText),
             const SizedBox(width: 6),
             Text(
-              label,
+              type.label,
               style: TextStyle(
                 fontFamily: AppTextStyles.fontFamily,
                 fontSize: 12.5,
@@ -111,31 +113,25 @@ class MeterActiveCategoryChip extends StatelessWidget {
   }
 }
 
-/// Bottom sheet pilihan kategori
+/// Bottom sheet pilihan jenis meter.
 ///
 /// Mengembalikan `(code: ...)` saat user memilih — `code` null berarti "All
-/// Categories" — atau null bila sheet ditutup tanpa memilih. Record
-/// dipakai supaya "pilih Semua" bisa dibedakan dari "batal".
-Future<({String? code})?> showMeterCategorySheet(
+/// types" — atau null bila sheet ditutup tanpa memilih. Record dipakai supaya
+/// "pilih Semua" bisa dibedakan dari "batal".
+Future<({String? code})?> showMeterTypeSheet(
   BuildContext context, {
-  required List<MeterCategory> categories,
   required String? selectedCode,
 }) {
   return showModalBottomSheet<({String? code})>(
     context: context,
-    isScrollControlled: true,
     backgroundColor: Colors.transparent,
-    builder: (_) => _CategorySheet(
-      categories: categories,
-      selectedCode: selectedCode,
-    ),
+    builder: (_) => _TypeSheet(selectedCode: selectedCode),
   );
 }
 
-class _CategorySheet extends StatelessWidget {
-  const _CategorySheet({required this.categories, required this.selectedCode});
+class _TypeSheet extends StatelessWidget {
+  const _TypeSheet({required this.selectedCode});
 
-  final List<MeterCategory> categories;
   final String? selectedCode;
 
   @override
@@ -143,7 +139,6 @@ class _CategorySheet extends StatelessWidget {
     final media = MediaQuery.of(context);
 
     return Container(
-      constraints: BoxConstraints(maxHeight: media.size.height * 0.7),
       decoration: BoxDecoration(
         color: AppColors.card,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
@@ -165,7 +160,7 @@ class _CategorySheet extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            'Category',
+            'Meter type',
             style: TextStyle(
               fontFamily: AppTextStyles.fontFamily,
               fontSize: 17,
@@ -174,23 +169,23 @@ class _CategorySheet extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
-          Flexible(
-            child: ListView(
-              shrinkWrap: true,
-              children: [
-                _CategoryOption(
-                  label: 'All Categories',
-                  selected: selectedCode == null,
-                  onTap: () => Navigator.pop(context, (code: null)),
-                ),
-                for (final category in categories)
-                  _CategoryOption(
-                    label: category.label,
-                    selected: selectedCode == category.code,
-                    onTap: () => Navigator.pop(context, (code: category.code)),
-                  ),
-              ],
-            ),
+          _TypeOption(
+            icon: Icons.apps_rounded,
+            label: 'All types',
+            selected: selectedCode == null,
+            onTap: () => Navigator.pop(context, (code: null)),
+          ),
+          _TypeOption(
+            icon: MeterType.electricity.icon,
+            label: 'Electricity (${MeterType.electricity.unit})',
+            selected: selectedCode == MeterType.electricity.code,
+            onTap: () => Navigator.pop(context, (code: MeterType.electricity.code)),
+          ),
+          _TypeOption(
+            icon: MeterType.water.icon,
+            label: 'Water (${MeterType.water.unit})',
+            selected: selectedCode == MeterType.water.code,
+            onTap: () => Navigator.pop(context, (code: MeterType.water.code)),
           ),
         ],
       ),
@@ -198,13 +193,15 @@ class _CategorySheet extends StatelessWidget {
   }
 }
 
-class _CategoryOption extends StatelessWidget {
-  const _CategoryOption({
+class _TypeOption extends StatelessWidget {
+  const _TypeOption({
+    required this.icon,
     required this.label,
     required this.selected,
     required this.onTap,
   });
 
+  final IconData icon;
   final String label;
   final bool selected;
   final VoidCallback onTap;
@@ -214,33 +211,35 @@ class _CategoryOption extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 4),
       child: Material(
-      color: selected ? AppColors.primary.withValues(alpha: 0.08) : Colors.transparent,
-      borderRadius: BorderRadius.circular(12),
-      child: InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-        child: Row(
-          children: [
-            Expanded(
-              child: Text(
-                label,
-                style: TextStyle(
-                  fontFamily: AppTextStyles.fontFamily,
-                  fontSize: 14,
-                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                  color: selected ? AppColors.primaryText : AppColors.text,
+        color: selected ? AppColors.primary.withValues(alpha: 0.08) : Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+            child: Row(
+              children: [
+                Icon(icon, size: 20, color: selected ? AppColors.primaryText : AppColors.textMid),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    label,
+                    style: TextStyle(
+                      fontFamily: AppTextStyles.fontFamily,
+                      fontSize: 14,
+                      fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                      color: selected ? AppColors.primaryText : AppColors.text,
+                    ),
+                  ),
                 ),
-              ),
+                if (selected)
+                  Icon(Icons.check_circle_rounded, size: 20, color: AppColors.primary),
+              ],
             ),
-            if (selected)
-              Icon(Icons.check_circle_rounded, size: 20, color: AppColors.primary),
-          ],
+          ),
         ),
       ),
-    ),
-    ),
     );
   }
 }

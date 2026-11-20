@@ -18,6 +18,9 @@ class ApiConfig {
   /// Batas tunggu satu request sebelum dianggap gagal.
   static const Duration timeout = Duration(seconds: 20);
 
+  /// Batas tunggu khusus unggah foto (sinyal lapangan sering lemah).
+  static const Duration uploadTimeout = Duration(seconds: 90);
+
   static const String login = '/api/login';
   static const String logout = '/api/logout';
 
@@ -214,6 +217,22 @@ class ApiConfig {
   /// POST tanpa body: mengonfirmasi draft dan MENGUBAH STOK.
   static String opnameConfirm(int id) => '$opnameBase/$id/confirm';
 
+  /// __________________________MENU METER READING__________________________
+  /// Satu record = satu meter pada satu periode. GET: daftar (`search` maks
+  /// 100 karakter, `type` kwh|m3, `status` pending|approved|rejected,
+  /// `recorded` 1|0, `page`, `per_page` maks 100); `meta` bersebelahan dengan
+  /// `data`, jadi diambil lewat [ApiClient.getEnvelope].
+  static const String meterReadingRecords =
+      '/api/portal/apps/meter_reading/records';
+
+  /// GET detail (`active_period` dan `can_write` ada di luar `data`, jadi
+  /// pakai getEnvelope). POST di path yang sama = catat atau edit.
+  static String meterReadingRecord(int id) => '$meterReadingRecords/$id';
+
+  /// POST: bacaan baru periode berikutnya dari record yang sudah approved.
+  /// `data.id` di balasan adalah ID baris BARU.
+  static String meterReadingNewReading(int id) =>
+      '$meterReadingRecords/$id/new_reading';
 
   /// ___________________________MENU OBSERVATION___________________________
   /// Observation Department — daftar semua temuan (`?month=YYYY-MM`,

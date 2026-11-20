@@ -7,13 +7,12 @@ import '../../../domain/meter_reading_summary.dart';
 import 'meter_reading_list_event.dart';
 import 'meter_reading_list_state.dart';
 
-/// Mengurus daftar Meter Reading: memuat halaman, mengganti filter kategori
-/// dan status pencatatan, mencari, dan menambah halaman berikutnya.
+/// Mengurus daftar Meter Reading: memuat halaman, mengganti filter jenis
+/// meter dan status pencatatan, mencari, dan menambah halaman berikutnya.
 ///
-/// Filter, pencarian, dan paginasi semuanya dikerjakan sisi server (untuk
-/// sementara ditiru `MeterReadingRepository` dummy) — chip memakai `counts`
-/// dari respons, jadi angkanya benar untuk seluruh meter walau baru satu
-/// halaman yang termuat.
+/// Filter, pencarian, dan paginasi semuanya dikerjakan sisi server. Chip dan
+/// progress bar memakai `summary` dari respons, jadi angkanya benar untuk
+/// seluruh meter walau baru satu halaman yang termuat.
 ///
 /// Setelah petugas mencatat pembacaan, layar menutup detail lalu mengirim
 /// [MeterReadingListRefreshed]: angka chip dan status baris ikut benar tanpa
@@ -30,7 +29,7 @@ class MeterReadingListBloc
     on<MeterReadingListStarted>(_onStarted);
     on<MeterReadingListRefreshed>(_onRefreshed);
     on<MeterReadingListStateSelected>(_onStateSelected);
-    on<MeterReadingListCategorySelected>(_onCategorySelected);
+    on<MeterReadingListTypeSelected>(_onTypeSelected);
     on<MeterReadingListSearched>(_onSearched);
     on<MeterReadingListFiltersCleared>(_onFiltersCleared);
     on<MeterReadingListNextPageRequested>(_onNextPage);
@@ -51,7 +50,7 @@ class MeterReadingListBloc
     MeterReadingListStarted event,
     Emitter<MeterReadingListState> emit,
   ) =>
-      Future.wait([_loadFirstPage(emit), _loadCategories(emit)]);
+      _loadFirstPage(emit);
 
   Future<void> _onRefreshed(
     MeterReadingListRefreshed event,
@@ -67,11 +66,11 @@ class MeterReadingListBloc
     return _loadFirstPage(emit);
   }
 
-  Future<void> _onCategorySelected(
-    MeterReadingListCategorySelected event,
+  Future<void> _onTypeSelected(
+    MeterReadingListTypeSelected event,
     Emitter<MeterReadingListState> emit,
   ) {
-    emit(state.copyWith(categoryCode: event.categoryCode));
+    emit(state.copyWith(typeCode: event.typeCode));
     return _loadFirstPage(emit);
   }
 
@@ -87,19 +86,8 @@ class MeterReadingListBloc
     MeterReadingListFiltersCleared event,
     Emitter<MeterReadingListState> emit,
   ) {
-    emit(state.copyWith(categoryCode: null, stateCode: null, query: ''));
+    emit(state.copyWith(typeCode: null, stateCode: null, query: ''));
     return _loadFirstPage(emit);
-  }
-
-  /// Gagal memuat kategori tidak menghalangi daftar: filter kategorinya
-  /// saja yang tidak tampil.
-  Future<void> _loadCategories(Emitter<MeterReadingListState> emit) async {
-    try {
-      final categories = await _repository.fetchCategories();
-      emit(state.copyWith(categories: categories));
-    } catch (e, stack) {
-      AppLogger.error('Kategori Meter Reading gagal dimuat', e, stack);
-    }
   }
 
   Future<void> _loadFirstPage(Emitter<MeterReadingListState> emit) async {
@@ -117,7 +105,7 @@ class MeterReadingListBloc
     try {
       final page = await _repository.fetchList(
         page: 1,
-        categoryCode: state.categoryCode,
+        typeCode: state.typeCode,
         stateCode: state.stateCode,
         search: state.query,
       );
@@ -129,6 +117,8 @@ class MeterReadingListBloc
         items: page.items,
         counts: page.counts,
         meta: page.meta,
+        activePeriod: page.activePeriod,
+        canWrite: page.canWrite,
         loadingMore: false,
       ));
     } on ApiException catch (e) {
@@ -189,7 +179,7 @@ class MeterReadingListBloc
     try {
       final page = await _repository.fetchList(
         page: state.meta.currentPage + 1,
-        categoryCode: state.categoryCode,
+        typeCode: state.typeCode,
         stateCode: state.stateCode,
         search: state.query,
       );

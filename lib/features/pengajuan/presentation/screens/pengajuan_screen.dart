@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/widgets/header_background.dart';
 import '../../../../core/widgets/header_title_row.dart';
 import '../../../shared/domain/role.dart';
 
@@ -75,7 +74,7 @@ class PengajuanScreen extends StatelessWidget {
           // layar ini di-push sebagai route sendiri, tidak lagi berada di
           // dalam Scaffold milik BerandaScreen.
           child: Scaffold(
-            backgroundColor: AppColors.bg,
+            backgroundColor: AppColors.primary,
             body: _PengajuanView(role: role, showBack: showBack),
           ),
         ),
@@ -99,27 +98,35 @@ class _PengajuanViewState extends State<_PengajuanView> {
 
   @override
   Widget build(BuildContext context) {
-    // Tidak ada SafeArea atas: HeaderGradient sudah menambahkan jarak
-    // status bar sendiri dan warnanya naik sampai ke balik status bar.
+    // Strip status bar memakai warna header (primary), bukan warna halaman —
+    // kalau tidak, ada garis beda warna tepat di atas header. Badan halaman
+    // memakai AppColors.bg supaya sama dengan Home.
     return ColoredBox(
-      color: AppColors.bg,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _buildHeader(),
-          Expanded(
-            child: switch (_tab) {
-              _SubmitTab.ringkasan => RingkasanTab(
-                  onSeeAll: () => setState(() => _tab = _SubmitTab.status),
-                ),
-              _SubmitTab.ajukan => AjukanTab(
-                  role: widget.role,
-                  onSubmitted: () => setState(() => _tab = _SubmitTab.status),
-                ),
-              _SubmitTab.status => StatusTab(role: widget.role),
-            },
+      color: AppColors.primary,
+      child: SafeArea(
+        bottom: false,
+        child: ColoredBox(
+          color: AppColors.bg,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _buildHeader(),
+              Expanded(
+                child: switch (_tab) {
+                  _SubmitTab.ringkasan => RingkasanTab(
+                      onSeeAll: () => setState(() => _tab = _SubmitTab.status),
+                    ),
+                  _SubmitTab.ajukan => AjukanTab(
+                      role: widget.role,
+                      onSubmitted: () =>
+                          setState(() => _tab = _SubmitTab.status),
+                    ),
+                  _SubmitTab.status => StatusTab(role: widget.role),
+                },
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -127,6 +134,8 @@ class _PengajuanViewState extends State<_PengajuanView> {
   Widget _buildHeader() {
     Widget tabButton(_SubmitTab tab, String label, IconData icon) {
       final active = _tab == tab;
+      // final pillColor = AppColors.isDark ? AppColors.primaryText : AppColors.card;
+      // final activeContent = AppColors.isDark ? AppColors.primary : AppColors.primaryText;
 
       return Expanded(
         child: InkWell(
@@ -169,8 +178,13 @@ class _PengajuanViewState extends State<_PengajuanView> {
       );
     }
 
-    return HeaderGradient(
-      bottomPadding: 18,
+    return Container(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 18),
+      // Solid primary, sudut bawah bulat — sama dengan header Log Absensi.
+      decoration: BoxDecoration(
+        color: AppColors.primary,
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(28)),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

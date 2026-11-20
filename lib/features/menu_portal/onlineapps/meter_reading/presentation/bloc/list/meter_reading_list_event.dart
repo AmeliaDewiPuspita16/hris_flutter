@@ -3,7 +3,7 @@ sealed class MeterReadingListEvent {
   const MeterReadingListEvent();
 }
 
-/// Layar baru terbuka - muat halaman pertama dan daftar kategori.
+/// Layar baru terbuka - muat halaman pertama.
 class MeterReadingListStarted extends MeterReadingListEvent {
   const MeterReadingListStarted();
 }
@@ -22,11 +22,12 @@ class MeterReadingListStateSelected extends MeterReadingListEvent {
   final String? stateCode;
 }
 
-/// Kategori dipilih. Null berarti "All Categories".
-class MeterReadingListCategorySelected extends MeterReadingListEvent {
-  const MeterReadingListCategorySelected(this.categoryCode);
+/// Jenis meter dipilih. [typeCode] adalah `MeterType.code` (`kwh`/`m3`);
+/// null berarti semua jenis.
+class MeterReadingListTypeSelected extends MeterReadingListEvent {
+  const MeterReadingListTypeSelected(this.typeCode);
 
-  final String? categoryCode;
+  final String? typeCode;
 }
 
 /// Kata kunci pencarian berubah.
@@ -39,8 +40,8 @@ class MeterReadingListSearched extends MeterReadingListEvent {
   final String query;
 }
 
-/// Kategori, status, dan kata kunci dilepas sekaligus (tombol "Reset
-/// filter" di tampilan kosong).
+/// Jenis, status, dan kata kunci dilepas sekaligus (tombol "Reset filter"
+/// di tampilan kosong).
 class MeterReadingListFiltersCleared extends MeterReadingListEvent {
   const MeterReadingListFiltersCleared();
 }

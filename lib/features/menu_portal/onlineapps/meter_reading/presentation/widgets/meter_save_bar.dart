@@ -3,29 +3,22 @@ import 'package:flutter/material.dart';
 import '../../../../../../core/theme/app_colors.dart';
 import '../../../../../../core/theme/app_text_styles.dart';
 
-/// Bilah simpan di dasar form. Menampilkan kemajuan pengisian
-/// ("2 of 3 meters filled") di atas tombol bila [total] diberikan.
+/// Bilah simpan di dasar form. Teks tombol mengikuti aksi (mis. "Save Data",
+/// "Save Changes", "Save New Reading").
 class MeterSaveBar extends StatelessWidget {
   const MeterSaveBar({
     super.key,
     required this.submitting,
     required this.onSave,
-    this.filled,
-    this.total,
+    this.label = 'Save Data',
   });
 
   final bool submitting;
   final VoidCallback onSave;
-
-  /// Jumlah meter yang angkanya sudah diisi, dan jumlah seluruhnya.
-  final int? filled;
-  final int? total;
+  final String label;
 
   @override
   Widget build(BuildContext context) {
-    final showProgress = filled != null && total != null && total! > 0;
-    final complete = showProgress && filled == total;
-
     return Container(
       decoration: BoxDecoration(
         color: AppColors.card,
@@ -42,65 +35,40 @@ class MeterSaveBar extends StatelessWidget {
         top: false,
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (showProgress) ...[
-                Row(
-                  children: [
-                    Icon(
-                      complete ? Icons.check_circle_rounded : Icons.pending_outlined,
-                      size: 16,
-                      color: complete ? AppColors.present : AppColors.textMuted,
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      '$filled of $total meters filled',
-                      style: AppTextStyles.caption.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: complete ? AppColors.present : AppColors.textMid,
-                      ),
-                    ),
-                  ],
+          child: SizedBox(
+            height: 52,
+            width: double.infinity,
+            child: FilledButton(
+              onPressed: submitting ? null : onSave,
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+                textStyle: TextStyle(
+                  fontFamily: AppTextStyles.fontFamily,
+                  fontSize: 14.5,
+                  fontWeight: FontWeight.w700,
                 ),
-                const SizedBox(height: 10),
-              ],
-              SizedBox(
-                height: 52,
-                width: double.infinity,
-                child: FilledButton(
-                  onPressed: submitting ? null : onSave,
-                  child: submitting
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2.2,
-                            color: Colors.white,
-                          ),
-                        )
-                      : const Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.save_outlined, size: 20),
-                            SizedBox(width: 8),
-                            Text('Save Data'),
-                          ],
-                        ),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                    textStyle: TextStyle(
-                      fontFamily: AppTextStyles.fontFamily,
-                      fontSize: 14.5,
-                      fontWeight: FontWeight.w700,
-                    ),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                  ),
-                ),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
               ),
-            ],
+              child: submitting
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.save_outlined, size: 20),
+                        const SizedBox(width: 8),
+                        Text(label),
+                      ],
+                    ),
+            ),
           ),
         ),
       ),

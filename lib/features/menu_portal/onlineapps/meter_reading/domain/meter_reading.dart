@@ -1,101 +1,78 @@
-import 'installed_meter.dart';
 import 'meter_period.dart';
-import 'meter_reading_state.dart';
+import 'meter_record_action.dart';
 import 'meter_reading_summary.dart';
 
-/// Satu kontrak/lokasi lengkap beserta meter-meternya — isi layar detail
-/// dan form Record New Data.
+/// Rincian satu record — isi layar detail dan form catat/edit.
 ///
 /// Mewarisi [MeterReadingSummary] supaya layar detail bisa menggambar kepala
-/// halaman dari baris daftar sambil menunggu rinciannya. Pola sama dengan
-/// `PurchaseRequisition` dan `ItRequestDetail`.
+/// halaman dari baris daftar sambil menunggu rinciannya.
+///
+/// Bentuk respons POST (catat / edit / new_reading) TIDAK membawa field
+/// tambahan di bawah ini, jadi setelah menyimpan, repository memanggil
+/// `GET /records/{id}` lagi.
 class MeterReading extends MeterReadingSummary {
   const MeterReading({
     required super.id,
-    required super.location,
     required super.company,
-    required super.category,
+    required super.location,
     required super.type,
+    required super.serialNumber,
     required super.period,
-    required super.state,
+    required super.recordedInActivePeriod,
+    required super.approval,
+    required super.action,
+    super.previousValue,
+    super.currentValue,
     super.lastValue,
-    super.canRecord,
-    required this.contractNumber,
-    this.tenantRepresentative,
-    this.recordedBy,
-    this.recordedAt,
-    this.biieRepresentative,
-    this.meters = const [],
+    super.notes,
+    super.imageProofUrl,
+    super.recordedBy,
+    super.recordedAt,
+    this.categoryLabel,
+    this.meterTypeLabel,
+    this.buildingType,
+    this.typeWater,
+    this.multiplier,
+    this.meterDigits,
+    this.nextPreviousValue,
+    this.meterRecordedInActivePeriod = false,
+    this.activePeriod,
+    this.canWrite = false,
   });
 
-  /// Ex: "EST-02-003/RF-I-0". Tampil di subjudul form.
-  final String contractNumber;
+  /// Ex: "Tenant" (teks siap tampil).
+  final String? categoryLabel;
 
-  final String? tenantRepresentative;
+  /// Ex: "Water" (teks siap tampil).
+  final String? meterTypeLabel;
 
-  /// Siapa dan kapan pembacaan terakhir dicatat.
-  final String? recordedBy;
-  final DateTime? recordedAt;
+  // Arti tiga field ini belum dikonfirmasi backend — jangan ditampilkan
+  // atau dipakai untuk logika dulu.
+  final String? buildingType;
+  final String? typeWater;
+  final bool meterRecordedInActivePeriod;
 
-  /// Ex: "Ari Putra".
-  final String? biieRepresentative;
+  /// Pengali dan jumlah digit meter. Fungsinya belum dikonfirmasi.
+  final num? multiplier;
+  final int? meterDigits;
 
-  final List<InstalledMeter> meters;
+  /// Angka awal untuk bacaan baru; ditampilkan di samping input saat
+  /// `action == new_reading`.
+  final num? nextPreviousValue;
 
-  /// Foto yang terlampir pada meter-meternya, untuk bagian "Uploaded Photo".
-  List<String> get photoUrls => [
-        for (final meter in meters)
-          if (meter.photoUrl != null) meter.photoUrl!,
-      ];
+  /// Periode aktif saat ini (di luar `data`). Null = tidak ada periode aktif.
+  final MeterPeriod? activePeriod;
 
-  /// Pemakaian periode ini: jumlah pemakaian meter yang jenisnya sama dengan
-  /// [type] (kWh tidak dijumlah dengan m³). Null bila belum bisa dihitung.
-  num? get totalConsumption {
-    final values = [
-      for (final meter in meters)
-        if (meter.type == type && meter.consumption != null) meter.consumption!,
-    ];
-    return values.isEmpty ? null : values.fold<num>(0, (a, b) => a + b);
-  }
+  /// Hak tulis user (di luar `data`).
+  final bool canWrite;
 
-  /// Versi ringkas, persis seperti yang dikirim endpoint daftar.
-  MeterReadingSummary toSummary() => MeterReadingSummary(
-        id: id,
-        location: location,
-        company: company,
-        category: category,
-        type: type,
-        lastValue: lastValue,
-        period: period,
-        state: state,
-        canRecord: canRecord,
-      );
+  bool get hasActivePeriod => activePeriod != null;
 
-  MeterReading copyWith({
-    MeterReadingState? state,
-    bool? canRecord,
-    MeterPeriod? period,
-    num? lastValue,
-    String? recordedBy,
-    DateTime? recordedAt,
-    List<InstalledMeter>? meters,
-  }) {
-    return MeterReading(
-      id: id,
-      location: location,
-      company: company,
-      category: category,
-      type: type,
-      period: period ?? this.period,
-      state: state ?? this.state,
-      lastValue: lastValue ?? this.lastValue,
-      canRecord: canRecord ?? this.canRecord,
-      contractNumber: contractNumber,
-      tenantRepresentative: tenantRepresentative,
-      recordedBy: recordedBy ?? this.recordedBy,
-      recordedAt: recordedAt ?? this.recordedAt,
-      biieRepresentative: biieRepresentative,
-      meters: meters ?? this.meters,
-    );
-  }
+  /// Angka pembanding di form: `next_previous_value` untuk bacaan baru,
+  /// `previous_value` untuk catat / edit.
+  num? get formBaseline =>
+      action == MeterRecordAction.newReading ? nextPreviousValue : previousValue;
+
+  @override
+  bool get canRecord => canWrite && action.isAvailable;
 }

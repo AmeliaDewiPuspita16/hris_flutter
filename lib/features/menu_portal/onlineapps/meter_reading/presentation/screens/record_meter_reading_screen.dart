@@ -9,23 +9,29 @@ import '../../../../../../core/theme/app_text_styles.dart';
 import '../../../../../../core/widgets/app_card.dart';
 import '../../../../../../core/widgets/back_header.dart';
 import '../../data/meter_reading_repository.dart';
-import '../../domain/installed_meter.dart';
 import '../../domain/meter_photo.dart';
 import '../../domain/meter_reading.dart';
-import '../../domain/meter_reading_entry.dart';
+import '../../domain/meter_reading_input.dart';
+import '../../domain/meter_record_action.dart';
 import '../../domain/meter_value_format.dart';
 import '../widgets/meter_entry_card.dart';
 import '../widgets/meter_photo_source_sheet.dart';
 import '../widgets/meter_save_bar.dart';
-import '../widgets/meter_section_title.dart';
 
-/// Form Record New Data: petugas mengisi angka meter periode ini.
+/// Form catat / edit / bacaan baru untuk SATU meter. Mana yang berlaku
+/// ditentukan `reading.action` dari server:
+///
+/// - `record`: catat bacaan pertama periode ini.
+/// - `edit`: ubah bacaan yang sudah dicatat (angka dan catatan terisi).
+/// - `new_reading`: bacaan baru di periode aktif dari baris yang sudah
+///   approved (angka awal = `next_previous_value`). Kolom catatan
+///   disembunyikan karena belum jelas apakah endpoint ini menerimanya.
 ///
 /// State form (controller, foto, galat, `_submitting`) hidup di layar ini,
-/// bukan di bloc — pola sama dengan `AddItRequestScreen`: aksi sekali-jalan
-/// yang terikat ke satu layar. Bila berhasil, layar menutup dan
-/// mengembalikan [MeterReading] TERBARU dari server lewat `Navigator.pop`;
-/// layar detail yang memberi tahu blocnya. Bila dibatalkan, mengembalikan null.
+/// bukan di bloc. Bila berhasil, layar menutup dan mengembalikan
+/// `(reading, message)` lewat `Navigator.pop` — `reading.id` adalah id baris
+/// BARU setelah `new_reading`; layar detail yang memberi tahu blocnya. Bila
+/// dibatalkan, mengembalikan null.
 class RecordMeterReadingScreen extends StatefulWidget {
   const RecordMeterReadingScreen({
     super.key,
@@ -34,7 +40,7 @@ class RecordMeterReadingScreen extends StatefulWidget {
     this.pickPhoto,
   });
 
-  /// Rincian lengkap — dari sinilah daftar meter yang harus diisi diketahui.
+  /// Rincian lengkap (`next_previous_value`, `action`, dan seterusnya).
   final MeterReading reading;
 
   /// Diisi test; di aplikasi diambil dari [RepositoryProvider].
@@ -47,25 +53,16 @@ class RecordMeterReadingScreen extends StatefulWidget {
   State<RecordMeterReadingScreen> createState() => _RecordMeterReadingScreenState();
 }
 
-/// Isian satu meter.
-class _Draft {
-  final value = TextEditingController();
-  final remark = TextEditingController();
-  MeterPhoto? photo;
-  String? photoError;
-
-  bool get isEmpty =>
-      value.text.trim().isEmpty && remark.text.trim().isEmpty && photo == null;
-
-  void dispose() {
-    value.dispose();
-    remark.dispose();
-  }
-}
-
 class _RecordMeterReadingScreenState extends State<RecordMeterReadingScreen> {
   late final MeterReadingRepository _repository;
-  late final Map<int, _Draft> _drafts;
+  final _value = TextEditingController();
+  final _remark = TextEditingController();
+
+  late final String _initialValue;
+  late final String _initialRemark;
+
+  MeterPhoto? _photo;
+  String? _photoError;
 
   /// Galat "wajib diisi" baru ditampilkan setelah petugas menekan Save —
   /// kolom kosong sejak awal tidak langsung dimerahkan.
@@ -74,37 +71,56 @@ class _RecordMeterReadingScreenState extends State<RecordMeterReadingScreen> {
   bool _submitting = false;
   String? _submitError;
 
+  MeterReading get _reading => widget.reading;
+  MeterRecordAction get _action => _reading.action;
+  bool get _isNewReading => _action == MeterRecordAction.newReading;
+
   @override
   void initState() {
     super.initState();
     _repository = widget.repository ?? context.read<MeterReadingRepository>();
-    _drafts = {for (final meter in widget.reading.meters) meter.id: _Draft()};
+
+    // Edit: angka dan catatan lama terisi supaya tinggal diubah.
+    if (_action == MeterRecordAction.edit) {
+      _value.text = _inputText(_reading.currentValue);
+      _remark.text = _reading.notes ?? '';
+    }
+    _initialValue = _value.text.trim();
+    _initialRemark = _remark.text.trim();
   }
 
   @override
   void dispose() {
-    for (final draft in _drafts.values) {
-      draft.dispose();
-    }
+    _value.dispose();
+    _remark.dispose();
     super.dispose();
   }
 
-  /// Meter yang angkanya sudah terisi (sah atau belum).
-  int get _filledCount =>
-      _drafts.values.where((d) => d.value.text.trim().isNotEmpty).length;
-
-  bool get _isDirty => _drafts.values.any((draft) => !draft.isEmpty);
-
-  /// Galat yang pantas ditampilkan di kolom angka sekarang.
-  String? _errorFor(InstalledMeter meter) {
-    final text = _drafts[meter.id]!.value.text;
-    if (text.trim().isEmpty && !_submitAttempted) return null;
-    return validateMeterInput(text, previous: meter.baselineForNextReading);
+  /// Angka dari server untuk kolom isian: titik desimal, tanpa ".0" yang
+  /// tidak perlu.
+  String _inputText(num? value) {
+    if (value == null) return '';
+    return value == value.truncate() ? value.truncate().toString() : value.toString();
   }
 
-  num? _usageFor(InstalledMeter meter) {
-    final value = parseMeterInput(_drafts[meter.id]!.value.text);
-    final previous = meter.baselineForNextReading;
+  bool get _isDirty =>
+      _value.text.trim() != _initialValue ||
+      (!_isNewReading && _remark.text.trim() != _initialRemark) ||
+      _photo != null;
+
+  num? get _baseline => _reading.formBaseline;
+
+  String? get _errorText {
+    if (_value.text.trim().isEmpty && !_submitAttempted) return null;
+    return validateMeterInput(_value.text);
+  }
+
+  String? get _warningText =>
+      lowerThanPreviousWarning(_value.text, previous: _baseline);
+
+  num? get _usage {
+    final value = parseMeterInput(_value.text);
+    final previous = _baseline;
     if (value == null || previous == null || value < previous) return null;
     return value - previous;
   }
@@ -114,7 +130,8 @@ class _RecordMeterReadingScreenState extends State<RecordMeterReadingScreen> {
       source: source == MeterPhotoSource.camera
           ? picker.ImageSource.camera
           : picker.ImageSource.gallery,
-      // Foto dikecilkan: kerja lapangan sering di sinyal lemah.
+      // Foto dikecilkan: kerja lapangan sering di sinyal lemah, dan server
+      // membatasi 5 MB.
       imageQuality: 85,
       maxWidth: 1920,
     );
@@ -127,21 +144,20 @@ class _RecordMeterReadingScreenState extends State<RecordMeterReadingScreen> {
     );
   }
 
-  Future<void> _pickPhoto(InstalledMeter meter) async {
+  Future<void> _pickPhoto() async {
     if (_submitting) return;
 
     final source = await showMeterPhotoSourceSheet(context);
     if (source == null || !mounted) return;
 
     final pick = widget.pickPhoto ?? _pickFromDevice;
-    final draft = _drafts[meter.id]!;
 
     final MeterPhoto? picked;
     try {
       picked = await pick(source);
     } catch (e) {
       if (mounted) {
-        setState(() => draft.photoError = 'Unable to open the camera or gallery.');
+        setState(() => _photoError = 'Unable to open the camera or gallery.');
       }
       return;
     }
@@ -150,9 +166,40 @@ class _RecordMeterReadingScreenState extends State<RecordMeterReadingScreen> {
 
     final error = picked.validationError;
     setState(() {
-      if (error == null) draft.photo = picked;
-      draft.photoError = error;
+      if (error == null) _photo = picked;
+      _photoError = error;
     });
+  }
+
+  /// Angka lebih kecil dari pembanding hanya diperingatkan: meter yang
+  /// diganti atau di-reset bisa sah. Petugas diminta memastikan sebelum lanjut.
+  Future<bool> _confirmLowerValue() async {
+    final previous = _baseline;
+    final value = parseMeterInput(_value.text);
+    if (previous == null || value == null) return true;
+
+    final proceed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Value is lower than previous'),
+        content: Text(
+          'You entered ${formatMeterValue(value)}, which is lower than the '
+          'previous value (${formatMeterValue(previous)}). Continue only if '
+          'the meter was replaced or reset.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Check again'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Save anyway'),
+          ),
+        ],
+      ),
+    );
+    return proceed ?? false;
   }
 
   Future<void> _submit() async {
@@ -164,38 +211,30 @@ class _RecordMeterReadingScreenState extends State<RecordMeterReadingScreen> {
       _submitError = null;
     });
 
-    final hasInvalid = widget.reading.meters.any(
-      (meter) =>
-          validateMeterInput(
-            _drafts[meter.id]!.value.text,
-            previous: meter.baselineForNextReading,
-          ) !=
-          null,
-    );
-    if (hasInvalid) {
-      setState(() => _submitError = 'Please check the highlighted values.');
+    if (validateMeterInput(_value.text) != null) {
+      setState(() => _submitError = 'Please check the highlighted value.');
       return;
     }
+
+    if (_warningText != null && !await _confirmLowerValue()) return;
+    if (!mounted) return;
 
     setState(() => _submitting = true);
 
     try {
-      final updated = await _repository.record(
-        widget.reading.id,
-        entries: [
-          for (final meter in widget.reading.meters)
-            MeterReadingEntry(
-              meterId: meter.id,
-              currentValue: parseMeterInput(_drafts[meter.id]!.value.text)!,
-              remark: _drafts[meter.id]!.remark.text,
-              photoPath: _drafts[meter.id]!.photo?.path,
-            ),
-        ],
+      final result = await _repository.save(
+        _reading,
+        MeterReadingInput(
+          currentValue: parseMeterInput(_value.text)!,
+          notes: _isNewReading ? null : _remark.text,
+          photoPath: _photo?.path,
+        ),
       );
       if (!mounted) return;
-      Navigator.of(context).pop(updated);
+      Navigator.of(context).pop(result);
     } on ApiException catch (e) {
       if (!mounted) return;
+      // Pesan 422 dari server ditampilkan apa adanya.
       setState(() {
         _submitting = false;
         _submitError = e.message;
@@ -232,10 +271,37 @@ class _RecordMeterReadingScreenState extends State<RecordMeterReadingScreen> {
     return discard ?? false;
   }
 
+  String get _title =>
+      _action.buttonLabel.isEmpty ? 'Record New Data' : _action.buttonLabel;
+
+  String get _saveLabel => switch (_action) {
+        MeterRecordAction.edit => 'Save Changes',
+        MeterRecordAction.newReading => 'Save New Reading',
+        _ => 'Save Data',
+      };
+
+  String get _hint => switch (_action) {
+        MeterRecordAction.edit =>
+          'Update the reading recorded for this period. Leave the photo as '
+              'is to keep the current one.',
+        MeterRecordAction.newReading =>
+          'New reading for the active period. The previous approved value is '
+              'carried forward and usage is calculated for you.',
+        _ => 'Enter the current reading. The previous value is carried '
+            'forward and usage is calculated for you.',
+      };
+
+  /// Periode bacaan yang sedang dibuat: untuk bacaan baru itu periode AKTIF,
+  /// bukan periode baris lama yang jadi asalnya.
+  String get _periodLabel =>
+      _isNewReading && _reading.activePeriod != null
+          ? _reading.activePeriod!.label
+          : _reading.period.label;
+
+  String get _previousLabel => _isNewReading ? 'PREVIOUS (APPROVED)' : 'PREVIOUS';
+
   @override
   Widget build(BuildContext context) {
-    final reading = widget.reading;
-
     return PopScope(
       // Mundur tanpa perubahan langsung boleh; kalau sudah ada isian, tanya
       // dulu. Selama menyimpan, mundur ditahan sama sekali.
@@ -252,7 +318,7 @@ class _RecordMeterReadingScreenState extends State<RecordMeterReadingScreen> {
           child: Column(
             children: [
               BackHeader(
-                title: 'Record New Data',
+                title: _title,
                 onBack: () => Navigator.of(context).maybePop(),
               ),
               Expanded(
@@ -260,24 +326,41 @@ class _RecordMeterReadingScreenState extends State<RecordMeterReadingScreen> {
                   keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
                   children: [
-                    _ContextCard(reading: reading),
+                    _ContextCard(
+                      reading: _reading,
+                      periodLabel: _periodLabel,
+                      hint: _hint,
+                    ),
                     if (_submitError != null) ...[
                       const SizedBox(height: 12),
                       _ErrorBanner(message: _submitError!),
                     ],
-                    const SizedBox(height: 22),
-                    MeterSectionTitle(
-                      title: 'METER READINGS',
-                      icon: Icons.speed_rounded,
-                      trailing: MeterCountChip(
-                        label: '${reading.meters.length} '
-                            '${reading.meters.length == 1 ? 'meter' : 'meters'}',
-                      ),
+                    const SizedBox(height: 16),
+                    MeterEntryCard(
+                      type: _reading.type,
+                      serialNumber: _reading.serialNumber,
+                      previous: _baseline,
+                      previousLabel: _previousLabel,
+                      valueController: _value,
+                      remarkController: _isNewReading ? null : _remark,
+                      photo: _photo,
+                      // Foto lama hanya relevan saat edit; bacaan baru dimulai
+                      // tanpa foto.
+                      existingPhotoUrl:
+                          _action == MeterRecordAction.edit ? _reading.imageProofUrl : null,
+                      errorText: _errorText,
+                      warningText: _warningText,
+                      photoError: _photoError,
+                      usage: _usage,
+                      enabled: !_submitting,
+                      // Pemakaian, galat, dan peringatan dihitung ulang tiap ketikan.
+                      onChanged: () => setState(() {}),
+                      onPickPhoto: _pickPhoto,
+                      onRemovePhoto: () => setState(() {
+                        _photo = null;
+                        _photoError = null;
+                      }),
                     ),
-                    for (var i = 0; i < reading.meters.length; i++) ...[
-                      if (i > 0) const SizedBox(height: 12),
-                      _buildEntry(reading.meters[i]),
-                    ],
                   ],
                 ),
               ),
@@ -287,46 +370,27 @@ class _RecordMeterReadingScreenState extends State<RecordMeterReadingScreen> {
         bottomNavigationBar: MeterSaveBar(
           submitting: _submitting,
           onSave: _submit,
-          filled: _filledCount,
-          total: reading.meters.length,
+          label: _saveLabel,
         ),
       ),
     );
   }
-
-  Widget _buildEntry(InstalledMeter meter) {
-    final draft = _drafts[meter.id]!;
-
-    return MeterEntryCard(
-      meter: meter,
-      valueController: draft.value,
-      remarkController: draft.remark,
-      photo: draft.photo,
-      errorText: _errorFor(meter),
-      photoError: draft.photoError,
-      usage: _usageFor(meter),
-      enabled: !_submitting,
-      // Pemakaian dan galat dihitung ulang tiap ketikan.
-      onChanged: () => setState(() {}),
-      onPickPhoto: () => _pickPhoto(meter),
-      onRemovePhoto: () => setState(() {
-        draft.photo = null;
-        draft.photoError = null;
-      }),
-    );
-  }
 }
 
-/// Ringkasan "untuk apa form ini": siapa, di mana, kontrak mana.
+/// Ringkasan "untuk apa form ini": siapa, di mana, periode mana.
 class _ContextCard extends StatelessWidget {
-  const _ContextCard({required this.reading});
+  const _ContextCard({
+    required this.reading,
+    required this.periodLabel,
+    required this.hint,
+  });
 
   final MeterReading reading;
+  final String periodLabel;
+  final String hint;
 
   @override
   Widget build(BuildContext context) {
-    final representative = reading.biieRepresentative;
-
     return AppCard(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -368,11 +432,7 @@ class _ContextCard extends StatelessWidget {
           const SizedBox(height: 14),
           Divider(height: 1, thickness: 1, color: AppColors.border),
           const SizedBox(height: 12),
-          _InfoLine(icon: Icons.description_outlined, text: reading.contractNumber),
-          if (representative != null) ...[
-            const SizedBox(height: 8),
-            _InfoLine(icon: Icons.person_outline_rounded, text: 'BIIE · $representative'),
-          ],
+          _InfoLine(icon: Icons.event_outlined, text: periodLabel),
           const SizedBox(height: 12),
           Container(
             width: double.infinity,
@@ -386,13 +446,7 @@ class _ContextCard extends StatelessWidget {
               children: [
                 Icon(Icons.info_outline_rounded, size: 16, color: AppColors.textMid),
                 const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Enter today\'s reading for each meter. The previous value is '
-                    'carried forward and usage is calculated for you.',
-                    style: AppTextStyles.caption,
-                  ),
-                ),
+                Expanded(child: Text(hint, style: AppTextStyles.caption)),
               ],
             ),
           ),

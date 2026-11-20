@@ -7,25 +7,30 @@ import 'package:flutter/services.dart';
 import '../../../../../../core/theme/app_colors.dart';
 import '../../../../../../core/theme/app_text_styles.dart';
 import '../../../../../../core/widgets/app_card.dart';
-import '../../domain/installed_meter.dart';
 import '../../domain/meter_photo.dart';
+import '../../domain/meter_type.dart';
 import '../../domain/meter_value_format.dart';
 import 'meter_type_avatar.dart';
 
-/// Isian satu meter di form Record New Data: angka sebelumnya (terkunci),
-/// angka sekarang (besar, fokus), pemakaian yang dihitung langsung, lalu
-/// remark dan foto yang opsional.
+/// Isian satu meter di form catat / edit / bacaan baru: angka sebelumnya
+/// (terkunci), angka sekarang (besar, fokus), pemakaian yang dihitung
+/// langsung, lalu catatan dan foto yang opsional.
 ///
 /// Tidak menyimpan state apa pun — controller, foto, dan galatnya dimiliki
 /// layar form, sama seperti `AddItRequestScreen`.
 class MeterEntryCard extends StatelessWidget {
   const MeterEntryCard({
     super.key,
-    required this.meter,
+    required this.type,
+    required this.serialNumber,
+    required this.previous,
+    required this.previousLabel,
     required this.valueController,
     required this.remarkController,
     required this.photo,
+    required this.existingPhotoUrl,
     required this.errorText,
+    required this.warningText,
     required this.photoError,
     required this.usage,
     required this.enabled,
@@ -34,13 +39,33 @@ class MeterEntryCard extends StatelessWidget {
     required this.onRemovePhoto,
   });
 
-  final InstalledMeter meter;
+  final MeterType type;
+  final String serialNumber;
+
+  /// Angka pembanding (`previous_value` atau `next_previous_value`).
+  final num? previous;
+
+  /// Label baris angka pembanding, mis. "PREVIOUS".
+  final String previousLabel;
+
   final TextEditingController valueController;
-  final TextEditingController remarkController;
+
+  /// Null = kolom catatan disembunyikan (server belum menjamin `new_reading`
+  /// menerima `notes`, jadi catatan petugas tidak boleh hilang diam-diam).
+  final TextEditingController? remarkController;
+
+  /// Foto yang baru dipilih; menggantikan foto lama bila disimpan.
   final MeterPhoto? photo;
+
+  /// URL foto yang sudah tersimpan di server (saat edit). Tetap dipakai
+  /// selama petugas tidak memilih foto baru.
+  final String? existingPhotoUrl;
 
   /// Galat isian angka. Null bila belum ada yang perlu ditegur.
   final String? errorText;
+
+  /// Peringatan (bukan galat) bila angka lebih kecil dari pembanding.
+  final String? warningText;
   final String? photoError;
 
   /// Pemakaian bila isiannya sah dan angka sebelumnya diketahui.
@@ -53,8 +78,7 @@ class MeterEntryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final unit = meter.type.unit;
-    final previous = meter.baselineForNextReading;
+    final unit = type.unit;
 
     return AppCard(
       padding: const EdgeInsets.all(16),
@@ -63,14 +87,17 @@ class MeterEntryCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              MeterTypeAvatar(type: meter.type, size: 36, soft: true),
+              MeterTypeAvatar(type: type, size: 36, soft: true),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Nomor seri bisa berupa teks panjang.
                     Text(
-                      'S/N ${meter.serialNumber}',
+                      'S/N $serialNumber',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                       style: AppTextStyles.body.copyWith(
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
@@ -84,18 +111,14 @@ class MeterEntryCard extends StatelessWidget {
                   ],
                 ),
               ),
-              _FillStatus(
-                filled: valueController.text.trim().isNotEmpty && errorText == null,
-                hasError: errorText != null,
-              ),
             ],
           ),
           const SizedBox(height: 16),
           _LockedValue(
-            label: 'PREVIOUS',
+            label: previousLabel,
             value: previous == null
                 ? '—'
-                : '${formatMeterValue(previous)}${unit.isEmpty ? '' : ' $unit'}',
+                : '${formatMeterValue(previous!)}${unit.isEmpty ? '' : ' $unit'}',
           ),
           const SizedBox(height: 14),
           _FieldLabel('CURRENT VALUE', required: true),
@@ -123,27 +146,36 @@ class MeterEntryCard extends StatelessWidget {
           AnimatedSize(
             duration: const Duration(milliseconds: 160),
             alignment: Alignment.topLeft,
-            child: _Feedback(errorText: errorText, usage: usage, unit: unit),
+            child: _Feedback(
+              errorText: errorText,
+              warningText: warningText,
+              usage: usage,
+              unit: unit,
+            ),
           ),
           const SizedBox(height: 16),
           Divider(height: 1, thickness: 1, color: AppColors.border),
           const SizedBox(height: 16),
-          _FieldLabel('REMARK'),
-          const SizedBox(height: 6),
-          TextField(
-            controller: remarkController,
-            enabled: enabled,
-            onChanged: (_) => onChanged(),
-            textInputAction: TextInputAction.done,
-            style: AppTextStyles.body.copyWith(color: AppColors.text),
-            decoration: _decoration(
-              hint: 'Optional, e.g. A, MSB-1',
-              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          if (remarkController != null) ...[
+            _FieldLabel('NOTES'),
+            const SizedBox(height: 6),
+            TextField(
+              controller: remarkController,
+              enabled: enabled,
+              maxLength: 1000,
+              onChanged: (_) => onChanged(),
+              textInputAction: TextInputAction.done,
+              style: AppTextStyles.body.copyWith(color: AppColors.text),
+              decoration: _decoration(
+                hint: 'Optional, e.g. meter clean',
+                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              ).copyWith(counterText: ''),
             ),
-          ),
-          const SizedBox(height: 14),
+            const SizedBox(height: 14),
+          ],
           _PhotoRow(
             photo: photo,
+            existingPhotoUrl: existingPhotoUrl,
             enabled: enabled,
             onPick: onPickPhoto,
             onRemove: onRemovePhoto,
@@ -256,9 +288,15 @@ class _LockedValue extends StatelessWidget {
 /// Satu baris di bawah kolom angka: galat bila isiannya salah, pemakaian
 /// bila sah, atau kosong.
 class _Feedback extends StatelessWidget {
-  const _Feedback({required this.errorText, required this.usage, required this.unit});
+  const _Feedback({
+    required this.errorText,
+    required this.warningText,
+    required this.usage,
+    required this.unit,
+  });
 
   final String? errorText;
+  final String? warningText;
   final num? usage;
   final String unit;
 
@@ -285,6 +323,36 @@ class _Feedback extends StatelessWidget {
                   style: AppTextStyles.caption.copyWith(
                     fontWeight: FontWeight.w600,
                     color: AppColors.rejected,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (warningText != null) {
+      return Padding(
+        padding: const EdgeInsets.only(top: 10),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          decoration: BoxDecoration(
+            color: AppColors.accentBg,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(Icons.warning_amber_rounded, size: 16, color: AppColors.accent),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  warningText!,
+                  style: AppTextStyles.caption.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.accent,
                   ),
                 ),
               ),
@@ -335,12 +403,14 @@ class _Feedback extends StatelessWidget {
 class _PhotoRow extends StatelessWidget {
   const _PhotoRow({
     required this.photo,
+    required this.existingPhotoUrl,
     required this.enabled,
     required this.onPick,
     required this.onRemove,
   });
 
   final MeterPhoto? photo;
+  final String? existingPhotoUrl;
   final bool enabled;
   final VoidCallback onPick;
   final VoidCallback onRemove;
@@ -353,15 +423,55 @@ class _PhotoRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final current = photo;
+    final existing = existingPhotoUrl;
 
     if (current == null) {
-      return SizedBox(
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (existing != null) ...[
+            Row(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: SizedBox(
+                    width: 52,
+                    height: 52,
+                    child: Image.network(
+                      existing,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => _brokenImage(),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Current photo is kept unless you add a new one.',
+                    style: AppTextStyles.caption,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+          ],
+          _photoButton(),
+        ],
+      );
+    }
+
+    return _selectedPhoto(current);
+  }
+
+  Widget _photoButton() {
+    final replacing = existingPhotoUrl != null;
+    return SizedBox(
         height: 50,
         width: double.infinity,
         child: OutlinedButton.icon(
           onPressed: enabled ? onPick : null,
           icon: const Icon(Icons.add_a_photo_outlined, size: 18),
-          label: const Text('Add meter photo (optional)'),
+          label: Text(replacing ? 'Replace meter photo' : 'Add meter photo (optional)'),
           style: OutlinedButton.styleFrom(
             foregroundColor: AppColors.primaryText,
             backgroundColor: AppColors.primary.withValues(alpha: 0.05),
@@ -375,8 +485,9 @@ class _PhotoRow extends StatelessWidget {
           ),
         ),
       );
-    }
+  }
 
+  Widget _selectedPhoto(MeterPhoto current) {
     return Row(
       children: [
         ClipRRect(
@@ -412,52 +523,6 @@ class _PhotoRow extends StatelessWidget {
           onPressed: enabled ? onRemove : null,
           tooltip: 'Remove photo',
           icon: Icon(Icons.close_rounded, color: AppColors.textMid),
-        ),
-      ],
-    );
-  }
-}
-
-/// Penanda kecil di kepala kartu: sudah terisi / ada galat / belum diisi.
-class _FillStatus extends StatelessWidget {
-  const _FillStatus({required this.filled, required this.hasError});
-
-  final bool filled;
-  final bool hasError;
-
-  @override
-  Widget build(BuildContext context) {
-    final IconData icon;
-    final Color color;
-    final String label;
-
-    if (hasError) {
-      icon = Icons.error_rounded;
-      color = AppColors.rejected;
-      label = 'Check value';
-    } else if (filled) {
-      icon = Icons.check_circle_rounded;
-      color = AppColors.present;
-      label = 'Ready';
-    } else {
-      icon = Icons.radio_button_unchecked_rounded;
-      color = AppColors.textMuted;
-      label = 'To fill';
-    }
-
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 16, color: color),
-        const SizedBox(width: 4),
-        Text(
-          label,
-          style: TextStyle(
-            fontFamily: AppTextStyles.fontFamily,
-            fontSize: 11.5,
-            fontWeight: FontWeight.w700,
-            color: color,
-          ),
         ),
       ],
     );

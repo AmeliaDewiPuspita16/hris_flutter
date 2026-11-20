@@ -2,31 +2,27 @@ import 'package:flutter/material.dart';
 
 import '../../../../../../core/theme/app_colors.dart';
 import '../../../../../../core/theme/app_text_styles.dart';
-import '../../../../../../core/utils/date_formatter.dart';
-import '../../domain/meter_reading.dart';
 import '../../domain/meter_reading_summary.dart';
 import '../../domain/meter_value_format.dart';
-import 'meter_reading_state_badge.dart';
+import 'meter_approval_badge.dart';
 
 /// Kepala layar detail: siapa, di mana, angka terakhir, dan pemakaian
 /// periode ini — di atas kartu hijau bergradasi.
 ///
 /// [reading] bisa berupa ringkasan dari daftar (langsung tergambar selagi
-/// rincian diambil); [detail] baru ada setelah rincian datang, dan hanya
-/// dari situ pemakaian bisa dihitung.
+/// rincian diambil) atau rincian lengkap; pemakaian dihitung dari
+/// `previous_value` dan `current_value` yang sudah ada di keduanya.
 class MeterDetailHero extends StatelessWidget {
-  const MeterDetailHero({super.key, required this.reading, this.detail});
+  const MeterDetailHero({super.key, required this.reading});
 
   final MeterReadingSummary reading;
-  final MeterReading? detail;
 
   @override
   Widget build(BuildContext context) {
     final value = reading.lastValue;
     final unit = reading.type.unit;
-    final usage = detail?.totalConsumption;
-    final period = '${DateFormatter.shortDate(reading.period.start)} – '
-        '${DateFormatter.shortDate(reading.period.end)}';
+    final usage = reading.consumption;
+    final period = reading.period.label;
 
     final onDark = AppTextStyles.caption.copyWith(color: Colors.white.withValues(alpha: 0.78));
 
@@ -75,11 +71,17 @@ class MeterDetailHero extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: onDark,
                     ),
+                    Text(
+                      'S/N ${reading.serialNumber}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: onDark,
+                    ),
                   ],
                 ),
               ),
               const SizedBox(width: 8),
-              MeterReadingStateBadge(state: reading.state),
+              MeterStatusBadge(reading: reading),
             ],
           ),
           const SizedBox(height: 14),
