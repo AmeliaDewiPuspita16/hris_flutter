@@ -31,6 +31,7 @@ class MeterReadingListBloc
     on<MeterReadingListStateSelected>(_onStateSelected);
     on<MeterReadingListTypeSelected>(_onTypeSelected);
     on<MeterReadingListCategorySelected>(_onCategorySelected);
+    on<MeterReadingListFiltersApplied>(_onFiltersApplied);
     on<MeterReadingListSearched>(_onSearched);
     on<MeterReadingListFiltersCleared>(_onFiltersCleared);
     on<MeterReadingListNextPageRequested>(_onNextPage);
@@ -80,6 +81,19 @@ class MeterReadingListBloc
     Emitter<MeterReadingListState> emit,
   ) {
     emit(state.copyWith(category: event.category));
+    return _loadFirstPage(emit);
+  }
+
+  Future<void> _onFiltersApplied(
+    MeterReadingListFiltersApplied event,
+    Emitter<MeterReadingListState> emit,
+  ) {
+    // Tanpa perubahan, tidak ada yang perlu dimuat ulang.
+    if (event.typeCode == state.typeCode && event.category == state.category) {
+      return Future.value();
+    }
+
+    emit(state.copyWith(typeCode: event.typeCode, category: event.category));
     return _loadFirstPage(emit);
   }
 

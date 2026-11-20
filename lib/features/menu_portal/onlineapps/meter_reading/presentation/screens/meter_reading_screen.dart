@@ -16,14 +16,11 @@ import '../bloc/list/meter_reading_list_bloc.dart';
 import '../bloc/list/meter_reading_list_event.dart';
 import '../bloc/list/meter_reading_list_state.dart';
 import 'meter_reading_detail_screen.dart';
-import '../widgets/meter_category_filter.dart';
+import '../widgets/meter_filter.dart';
 import '../widgets/meter_load_more_retry.dart';
-import '../widgets/meter_period_banner.dart';
-import '../widgets/meter_progress_summary.dart';
 import '../widgets/meter_reading_card.dart';
 import '../widgets/meter_reading_empty_view.dart';
 import '../widgets/meter_state_filter_bar.dart';
-import '../widgets/meter_type_filter.dart';
 
 /// Halaman Meter Reading — daftar meter yang harus dicatat petugas.
 ///
@@ -111,29 +108,21 @@ class _MeterReadingViewState extends State<_MeterReadingView> {
     });
   }
 
-  Future<void> _pickType(MeterReadingListState state) async {
-    final picked = await showMeterTypeSheet(
-      context,
-      selectedCode: state.typeCode,
-    );
-    if (picked == null || !mounted) return;
-
-    context
-        .read<MeterReadingListBloc>()
-        .add(MeterReadingListTypeSelected(picked.code));
-  }
-
-  Future<void> _pickCategory(MeterReadingListState state) async {
-    final picked = await showMeterCategorySheet(
+  Future<void> _openFilters(MeterReadingListState state) async {
+    final picked = await showMeterFilterSheet(
       context,
       categories: state.categories,
-      selectedLabel: state.category,
+      typeCode: state.typeCode,
+      category: state.category,
     );
     if (picked == null || !mounted) return;
 
-    context
-        .read<MeterReadingListBloc>()
-        .add(MeterReadingListCategorySelected(picked.label));
+    context.read<MeterReadingListBloc>().add(
+          MeterReadingListFiltersApplied(
+            typeCode: picked.typeCode,
+            category: picked.category,
+          ),
+        );
   }
 
   void _resetFilters() {
@@ -195,18 +184,9 @@ class _MeterReadingViewState extends State<_MeterReadingView> {
               : MeterType.fromCode(state.typeCode);
           final showResultCount = state.hasActiveFilter &&
               state.status == MeterReadingListStatus.success;
-          final showPeriod =
-              state.status == MeterReadingListStatus.success ||
-                  state.items.isNotEmpty;
 
           return Column(
             children: [
-              MeterProgressSummary(counts: state.counts),
-              if (showPeriod)
-                MeterPeriodBanner(
-                  activePeriod: state.activePeriod,
-                  canWrite: state.canWrite,
-                ),
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
                 child: Row(
@@ -220,19 +200,10 @@ class _MeterReadingViewState extends State<_MeterReadingView> {
                       ),
                     ),
                     const SizedBox(width: 10),
-                    MeterTypeButton(
-                      active: state.typeCode != null,
-                      onTap: () => _pickType(state),
+                    MeterFilterButton(
+                      active: state.typeCode != null || state.category != null,
+                      onTap: () => _openFilters(state),
                     ),
-                    // Pilihan kategori datang dari server; tanpa daftar,
-                    // tombolnya disembunyikan.
-                    if (state.categories.isNotEmpty) ...[
-                      const SizedBox(width: 10),
-                      MeterCategoryButton(
-                        active: state.category != null,
-                        onTap: () => _pickCategory(state),
-                      ),
-                    ],
                   ],
                 ),
               ),

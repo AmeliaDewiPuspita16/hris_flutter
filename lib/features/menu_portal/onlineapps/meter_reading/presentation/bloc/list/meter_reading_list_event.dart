@@ -38,6 +38,15 @@ class MeterReadingListCategorySelected extends MeterReadingListEvent {
   final String? category;
 }
 
+/// Sheet filter diterapkan: jenis meter dan kategori berubah SEKALIGUS,
+/// jadi cukup satu permintaan ke server.
+class MeterReadingListFiltersApplied extends MeterReadingListEvent {
+  const MeterReadingListFiltersApplied({this.typeCode, this.category});
+
+  final String? typeCode;
+  final String? category;
+}
+
 /// Kata kunci pencarian berubah.
 ///
 /// Sudah melewati jeda ketik di layar — bloc langsung meminta ke server
