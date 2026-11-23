@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../../../core/network/api_exception.dart';
@@ -54,7 +54,7 @@ class _ObservationDeptScreenState extends State<ObservationDeptScreen> {
     // Close.
     _repository = context.read<ObservationRepository>();
     _cubit = ObservationListCubit(repository: _repository);
-    _cubit.load().then((_) => _resolveHighlightTab());
+    _cubit.load(ensureId: widget.highlightId).then((_) => _resolveHighlightTab());
   }
 
   /// Setelah data termuat: kalau temuan dari notifikasi tidak ada di tab
@@ -65,8 +65,8 @@ class _ObservationDeptScreenState extends State<ObservationDeptScreen> {
 
     final state = _cubit.state;
     bool has(List<ObservationItem> list) => list.any((i) => i.id == id);
-    final inMyOpen = has(state.myOpen);
-    final inAll = has(state.all);
+    final inMyOpen = has(state.myOpen.items);
+    final inAll = has(state.all.items);
 
     final current = _tabIndex == _myOpenTab ? inMyOpen : inAll;
     if (current) return;
@@ -177,8 +177,7 @@ class _ObservationDeptScreenState extends State<ObservationDeptScreen> {
     final result = await ObservationFilterSheet.show(
       context,
       initial: state.filter,
-      months: state.monthOptions,
-      departments: state.departmentOptions,
+      departments: state.departments,
     );
     if (result != null) _cubit.setFilter(result);
   }
@@ -217,7 +216,7 @@ class _ObservationDeptScreenState extends State<ObservationDeptScreen> {
                     ObservationTabBar(
                       labels: const ['To Close', 'All Observations'],
                       activeIndex: _tabIndex,
-                      badgeCounts: {_myOpenTab: state.myOpen.length},
+                      badgeCounts: {_myOpenTab: state.waitingCount ?? 0},
                       onChanged: (i) => setState(() => _tabIndex = i),
                     ),
                   ],
@@ -233,10 +232,11 @@ class _ObservationDeptScreenState extends State<ObservationDeptScreen> {
                     PortalTabScrollScope(
                       active: _tabIndex == _myOpenTab,
                       child: ObservationListTab(
-                        state: state,
-                        items: state.visibleMyOpen,
+                        tab: state.myOpen,
+                        searching: state.searchingMyOpen,
                         highlightId: _highlightFor(_myOpenTab),
                         onRefresh: _cubit.load,
+                        onLoadMore: _cubit.loadMoreMyOpen,
                         onOpen: _openDetail,
                         onClose: _closeItem,
                         showOwnership: true,
@@ -251,10 +251,11 @@ class _ObservationDeptScreenState extends State<ObservationDeptScreen> {
                     PortalTabScrollScope(
                       active: _tabIndex == _allTab,
                       child: ObservationListTab(
-                        state: state,
-                        items: state.visibleAll,
+                        tab: state.all,
+                        searching: state.searchingAll,
                         highlightId: _highlightFor(_allTab),
                         onRefresh: _cubit.load,
+                        onLoadMore: _cubit.loadMoreAll,
                         onOpen: _openDetail,
                         // Di sini observasi open pun bisa dilihat detailnya,
                         // dan milik sendiri bisa di-edit / dihapus.
