@@ -10,6 +10,7 @@ import '../../../../../../core/widgets/app_card.dart';
 import '../../../../../../core/widgets/app_shimmer.dart';
 import '../../../../../../core/widgets/back_header.dart';
 import '../../../../../../core/widgets/detail_field_tile.dart';
+import '../../../../../auth/presentation/bloc/auth/auth_bloc.dart';
 import '../../data/procurement_repository.dart';
 import '../../domain/pr_action.dart';
 import '../../domain/pr_attachment.dart';
@@ -33,12 +34,9 @@ import '../../../../../../core/widgets/app_error_view.dart';
 /// Membuka URL lampiran. Diambil alih test supaya tidak menyentuh plugin.
 typedef UrlOpener = Future<bool> Function(Uri url);
 
-/// Tahap approval yang tombol aksinya sudah boleh tampil.
-///
-/// Untuk sementara hanya HOD, karena baru tahap itu yang sudah diuji ke
-/// server. Tahap lain ditambahkan di sini kalau sudah siap, mis.
-/// 'peding_review', 'pending_dgm', dll.
-const _actionableStatusCodes = {'pending_hod'};
+/// Tahap yang tombolnya sudah dinyalakan. Role-nya ada di AuthUser.prApproverRoles.
+/// Tambahkan kode tahap di sini begitu API-nya siap dan sudah diuji.
+const _enabledApprovalStages = {'pending_hod'};
 
 /// Layar detail satu Purchase Requisition — padanan modal "PR Detail" di web.
 ///
@@ -191,6 +189,7 @@ class _PrDetailViewState extends State<_PrDetailView> {
 
   @override
   Widget build(BuildContext context) {
+    final user = context.watch<AuthBloc>().state.session?.user;
     return BlocListener<PrDetailBloc, PrDetailState>(
       listenWhen: (previous, current) =>
           current.feedback != null &&
@@ -250,14 +249,11 @@ class _PrDetailViewState extends State<_PrDetailView> {
           builder: (context, state) {
             final pr = state.requisition;
 
-            /// Tombol hanya untuk PR yang masih berjalan di rantai approval
-            /// (pending_*). Siapa yang berhak memutuskan tetap ditentukan server
-            // if (pr == null) return const SizedBox.shrink();
-            // if (pr == null || !pr.status.isPending) { //(PERUBAHAN 2)
-            //   return const SizedBox.shrink();  //(PERUBAHAN 2)
-            // }  // (PERUBAHAN 2)
-
-            if (pr == null || !_actionableStatusCodes.contains(pr.status.code)) {
+            // sesudah: status harus aktif DAN role user berhak
+            if (pr == null ||
+                user == null ||
+                !_enabledApprovalStages.contains(pr.status.code) ||
+                !user.canDecidePr(pr.status.code)) {
               return const SizedBox.shrink();
             }
 

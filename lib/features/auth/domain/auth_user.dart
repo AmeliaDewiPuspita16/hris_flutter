@@ -196,6 +196,23 @@ class AuthUser {
   bool get canAccessMeterReading =>
       hasRole('admin') || hasRole('meter reading roster');
 
+  /// Role yang boleh memutuskan PR pada tiap tahap approval.
+  /// Hanya untuk menampilkan/menyembunyikan tombol; server tetap penentu terakhir.
+  static const prApproverRoles = {
+    'pending_hod': ['epro-approver-hod'],
+    'pending_review': ['epro-secretary'],
+    'pending_dgm': ['epro-approver-dgm'],
+    'pending_finance': ['epro-approver-finance'],
+    'pending_gm': ['epro-approver-gm'],
+  };
+
+  /// Boleh memutuskan PR yang sedang berstatus [statusCode].
+  bool canDecidePr(String statusCode) {
+    final allowed = prApproverRoles[statusCode];
+    if (allowed == null) return false;
+    return hasRole('admin') || allowed.any(hasRole);
+  }
+
   /// Boleh membuka menu EST Project Monitoring — role `admin` atau
   /// `est building`.
   ///
