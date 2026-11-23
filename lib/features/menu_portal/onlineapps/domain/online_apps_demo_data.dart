@@ -22,6 +22,9 @@ class OnlineAppsDemoData {
     // false = menu Procurement Monitoring disembunyikan (user tidak punya
     // role epro-*, lihat AuthUser.canAccessProcurement)
     bool showProcurement = true,
+    // false = menu Meter Reading disembunyikan (user tidak punya role
+    // 'meter reading roster', lihat AuthUser.canAccessMeterReading)
+    bool showMeterReading = false,
   }) =>
       [
         OnlineAppItem(
@@ -32,14 +35,15 @@ class OnlineAppsDemoData {
           background: AppColors.primaryLight,
           onTap: onInventory,
         ),
-        OnlineAppItem(
-          icon: Icons.speed_outlined,
-          label: 'Meter Reading',
-          department: 'EST Dept',
-          color: AppColors.itRequest,
-          background: AppColors.itRequestBg,
-          onTap: onMeterReading,
-        ),
+          if (showMeterReading)
+          OnlineAppItem(
+            icon: Icons.speed_outlined,
+            label: 'Meter Reading',
+            department: 'EST Dept',
+            color: AppColors.itRequest,
+            background: AppColors.itRequestBg,
+            onTap: onMeterReading,
+          ),
         // OnlineAppItem(
         //   icon: Icons.event_available_outlined,
         //   label: 'Reservation',

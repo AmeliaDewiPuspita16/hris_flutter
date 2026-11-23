@@ -193,6 +193,9 @@ class AuthUser {
   /// menu, server tetap penentu terakhir.
   bool get canAccessProcurement => eprocurementRoles.any(hasRole);
 
+  bool get canAccessMeterReading =>
+      hasRole('admin') || hasRole('meter reading roster');
+
   /// Boleh membuka menu EST Project Monitoring — role `admin` atau
   /// `est building`.
   ///
