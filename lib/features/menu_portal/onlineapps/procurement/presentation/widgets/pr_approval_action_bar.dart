@@ -16,6 +16,9 @@ class PrApprovalActionBar extends StatelessWidget {
     required this.onApprove,
     required this.onRevision,
     required this.onReject,
+    this.canApprove = true,
+    this.canRevision = true,
+    this.canReject = true,
     this.isLoading = false,
     this.enabled = true,
     this.onLockedTap,
@@ -24,6 +27,12 @@ class PrApprovalActionBar extends StatelessWidget {
   final VoidCallback onApprove;
   final VoidCallback onRevision;
   final VoidCallback onReject;
+
+  /// Tombol mana yang boleh tampil. Diisi dari izin yang dikirim server;
+  /// tombol yang tidak diizinkan disembunyikan, bukan dimatikan.
+  final bool canApprove;
+  final bool canRevision;
+  final bool canReject;
   final bool isLoading;
   final bool enabled;
   final VoidCallback? onLockedTap;
@@ -93,6 +102,7 @@ class PrApprovalActionBar extends StatelessWidget {
               ),
               Row(
                 children: [
+                  if (canReject)
                   Expanded(
                     child: OutlinedButton(
                       onPressed: active ? onReject : null,
@@ -118,7 +128,9 @@ class PrApprovalActionBar extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  if (canReject && (canRevision || canApprove))
+                    const SizedBox(width: 8),
+                  if (canRevision)
                   Expanded(
                     child: OutlinedButton(
                       onPressed: active ? onRevision : null,
@@ -144,7 +156,9 @@ class PrApprovalActionBar extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  if (canRevision && canApprove)
+                    const SizedBox(width: 8),
+                  if (canApprove)
                   Expanded(
                     flex: 2,
                     child: FilledButton(

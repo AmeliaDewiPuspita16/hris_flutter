@@ -10,7 +10,6 @@ import '../../../../../../core/widgets/app_card.dart';
 import '../../../../../../core/widgets/app_shimmer.dart';
 import '../../../../../../core/widgets/back_header.dart';
 import '../../../../../../core/widgets/detail_field_tile.dart';
-import '../../../../../auth/presentation/bloc/auth/auth_bloc.dart';
 import '../../data/procurement_repository.dart';
 import '../../domain/pr_action.dart';
 import '../../domain/pr_attachment.dart';
@@ -34,9 +33,15 @@ import '../../../../../../core/widgets/app_error_view.dart';
 /// Membuka URL lampiran. Diambil alih test supaya tidak menyentuh plugin.
 typedef UrlOpener = Future<bool> Function(Uri url);
 
-/// Tahap yang tombolnya sudah dinyalakan. Role-nya ada di AuthUser.prApproverRoles.
-/// Tambahkan kode tahap di sini begitu API-nya siap dan sudah diuji.
-const _enabledApprovalStages = {'pending_hod'};
+/// Tahap yang tombolnya sudah dinyalakan di aplikasi.
+///
+/// Siapa yang boleh bertindak dan tombol mana yang tampil ditentukan server
+/// lewat objek `approval` di detail PR (lihat `PrApprovalPermission`). Daftar
+/// ini hanya pengaman rilis bertahap: tambahkan kode tahap di sini setelah
+/// API aksi untuk tahap itu terkonfirmasi dan sudah diuji.
+const _enabledApprovalStages = {
+  'pending_hod',
+};
 
 /// Layar detail satu Purchase Requisition — padanan modal "PR Detail" di web.
 ///
@@ -189,7 +194,6 @@ class _PrDetailViewState extends State<_PrDetailView> {
 
   @override
   Widget build(BuildContext context) {
-    final user = context.watch<AuthBloc>().state.session?.user;
     return BlocListener<PrDetailBloc, PrDetailState>(
       listenWhen: (previous, current) =>
           current.feedback != null &&
@@ -249,11 +253,13 @@ class _PrDetailViewState extends State<_PrDetailView> {
           builder: (context, state) {
             final pr = state.requisition;
 
-            // sesudah: status harus aktif DAN role user berhak
+            // Tombol tampil bila tahapnya sudah dinyalakan DAN server
+            // mengizinkan akun ini bertindak pada PR ini. Server tetap
+            // penentu terakhir saat aksi dikirim.
             if (pr == null ||
-                user == null ||
                 !_enabledApprovalStages.contains(pr.status.code) ||
-                !user.canDecidePr(pr.status.code)) {
+                !pr.approval.canAct ||
+                !pr.approval.hasAnyAction) {
               return const SizedBox.shrink();
             }
 
@@ -261,6 +267,9 @@ class _PrDetailViewState extends State<_PrDetailView> {
               enabled: _reachedBottom,
               onLockedTap: _scrollToBottom,
               isLoading: state.isSubmitting,
+              canApprove: pr.approval.canApprove,
+              canRevision: pr.approval.canRequestRevision,
+              canReject: pr.approval.canReject,
               onApprove: () => _onApprove(context, pr),
               onRevision: () => _onRevision(context, pr),
               onReject: () => _onReject(context, pr),
