@@ -24,14 +24,20 @@ class AppTimeField extends StatelessWidget {
     return '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
   }
 
-  Future<void> _open(BuildContext context) async {
-    final result = await showModalBottomSheet<TimeOfDay>(
+  /// Buka wheel picker jam. Null bila dibatalkan.
+  static Future<TimeOfDay?> pick(BuildContext context, {TimeOfDay? initial}) {
+    return showModalBottomSheet<TimeOfDay>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => _TimeWheelSheet(initial: value ?? const TimeOfDay(hour: 9, minute: 0)),
+      builder: (_) => _TimeWheelSheet(
+        initial: initial ?? const TimeOfDay(hour: 9, minute: 0),
+      ),
     );
+  }
 
+  Future<void> _open(BuildContext context) async {
+    final result = await pick(context, initial: value);
     if (result != null) onChanged(result);
   }
 
