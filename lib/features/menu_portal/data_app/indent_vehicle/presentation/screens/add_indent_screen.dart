@@ -5,11 +5,10 @@ import '../../../../../../core/logging/app_logger.dart';
 import '../../../../../../core/network/api_exception.dart';
 import '../../../../../../core/theme/app_colors.dart';
 import '../../../../../../core/theme/app_text_styles.dart';
-import '../../../../../../core/widgets/app_card.dart';
+import '../../../../../../core/utils/date_formatter.dart';
 import '../../../../../../core/widgets/app_date_field.dart';
 import '../../../../../../core/widgets/app_time_field.dart';
 import '../../../../../../core/widgets/back_header.dart';
-import '../../../../../../core/widgets/field_label_row.dart';
 import '../../data/indent_vehicle_repository.dart';
 import '../../domain/indent_request_item.dart';
 import '../widgets/indent_driver_choice.dart';
@@ -22,6 +21,10 @@ import '../widgets/indent_driver_choice.dart';
 ///
 /// Hasilnya lewat Navigator.pop: `true` bila tersimpan di server, null bila
 /// ditutup tanpa menyimpan. Layar pemanggil lalu memuat ulang daftar.
+///
+/// Tampilan mengikuti form Project (EST): kartu putih bersudut besar,
+/// header section + garis pemisah, kolom isian berlatar krem tanpa border,
+/// dan ikon di sisi kiri tiap kolom.
 class AddIndentScreen extends StatefulWidget {
   const AddIndentScreen({super.key, this.initialItem});
 
@@ -40,6 +43,7 @@ class _AddIndentScreenState extends State<AddIndentScreen> {
   TimeOfDay? _until;
   final _destinationController = TextEditingController();
   final _remarkController = TextEditingController();
+  final _remarkFocus = FocusNode();
 
   /// Default "dengan driver" karena mayoritas request memakai driver; user
   /// tinggal ganti kalau tidak perlu.
@@ -54,6 +58,7 @@ class _AddIndentScreenState extends State<AddIndentScreen> {
   @override
   void initState() {
     super.initState();
+    _remarkFocus.addListener(() => setState(() {}));
     final item = widget.initialItem;
     if (item == null) return;
 
@@ -70,6 +75,7 @@ class _AddIndentScreenState extends State<AddIndentScreen> {
   void dispose() {
     _destinationController.dispose();
     _remarkController.dispose();
+    _remarkFocus.dispose();
     super.dispose();
   }
 
@@ -79,6 +85,9 @@ class _AddIndentScreenState extends State<AddIndentScreen> {
 
   /// 'HH:mm' — format jam yang diminta API.
   String _formatTime(TimeOfDay t) => '${_two(t.hour)}:${_two(t.minute)}';
+
+  /// Format tampilan tanggal di kolom — sama dengan AppDateField lama.
+  String _formatDate(DateTime d) => DateFormatter.shortDateID(d);
 
   /// 'dd-MM-yyyy' -> DateTime. Null kalau formatnya tidak dikenali.
   DateTime? _parseDate(String s) {
@@ -105,6 +114,30 @@ class _AddIndentScreenState extends State<AddIndentScreen> {
     final m = int.tryParse(p[1]);
     if (h == null || m == null) return null;
     return TimeOfDay(hour: h, minute: m);
+  }
+
+  // --- pickers --------------------------------------------------------------
+  // Memakai dialog yang sama dengan AppDateField / AppTimeField (bottom sheet
+  // kalender dan wheel jam), hanya tampilan kolomnya yang mengikuti form
+  // Project.
+
+  Future<void> _pickDate() async {
+    final picked = await AppDateField.pick(context, initial: _date);
+    if (picked != null && mounted) setState(() => _date = picked);
+  }
+
+  Future<void> _pickTime({required bool isFrom}) async {
+    final picked =
+        await AppTimeField.pick(context, initial: isFrom ? _from : _until);
+    if (picked != null && mounted) {
+      setState(() {
+        if (isFrom) {
+          _from = picked;
+        } else {
+          _until = picked;
+        }
+      });
+    }
   }
 
   // --- submit ---------------------------------------------------------------
@@ -160,32 +193,97 @@ class _AddIndentScreenState extends State<AddIndentScreen> {
       AppLogger.error('Simpan indent gagal karena galat tak terduga', e, stack);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('An unexpected error occurred. Please try again.')),
+        const SnackBar(
+          content: Text('An unexpected error occurred. Please try again.'),
+        ),
       );
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
   }
 
-  InputDecoration _fieldDecoration(String hint) => InputDecoration(
-        hintText: hint,
-        hintStyle: AppTextStyles.body.copyWith(color: AppColors.textMuted),
-        filled: true,
-        fillColor: AppColors.card,
-        contentPadding: const EdgeInsets.all(12),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: AppColors.border, width: 1.5),
+  // --- field style ----------------------------------------------------------
+
+  /// Kolom isian krem tanpa border + ikon kiri, sama dengan form Project.
+  InputDecoration _fieldDecoration(String hint, IconData icon) {
+    return InputDecoration(
+      hintText: hint,
+      hintStyle: AppTextStyles.body.copyWith(color: AppColors.textMuted),
+      filled: true,
+      fillColor: AppColors.bg,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      prefixIcon: Icon(icon, size: 20, color: AppColors.textMuted),
+      prefixIconConstraints: const BoxConstraints(minWidth: 48),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide.none,
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide.none,
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide(color: AppColors.primaryMidText, width: 1.5),
+      ),
+    );
+  }
+
+  /// Kolom remark: mulai setinggi kolom lain (1 baris) lalu memanjang
+  /// mengikuti isi. Ikonnya tetap di baris pertama, makanya digambar
+  /// sendiri di samping TextField (prefixIcon akan ikut ke tengah saat
+  /// kolom memanjang).
+  Widget _buildRemarkField() {
+    final focused = _remarkFocus.hasFocus;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        color: AppColors.bg,
+        borderRadius: BorderRadius.circular(14),
+        // Lebar border selalu 1.5 (transparan saat tidak fokus) supaya
+        // tinggi kolom tidak bergeser.
+        border: Border.all(
+          color: focused ? AppColors.primaryMidText : Colors.transparent,
+          width: 1.5,
         ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: AppColors.border, width: 1.5),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide(color: AppColors.primaryMidText, width: 1.5),
-        ),
-      );
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 13),
+            child:
+                Icon(Icons.edit_note_outlined, size: 20, color: AppColors.textMuted),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: TextField(
+              controller: _remarkController,
+              focusNode: _remarkFocus,
+              minLines: 1,
+              maxLines: null,
+              keyboardType: TextInputType.multiline,
+              textCapitalization: TextCapitalization.sentences,
+              style: AppTextStyles.body,
+              decoration: InputDecoration(
+                hintText: 'Purpose of the trip',
+                hintStyle:
+                    AppTextStyles.body.copyWith(color: AppColors.textMuted),
+                isDense: true,
+                filled: false,
+                border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                contentPadding: const EdgeInsets.symmetric(vertical: 12.5),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // --- build ----------------------------------------------------------------
 
   @override
   Widget build(BuildContext context) {
@@ -204,97 +302,88 @@ class _AddIndentScreenState extends State<AddIndentScreen> {
         onTap: () => FocusScope.of(context).unfocus(),
         child: ListView(
           keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
           children: [
-            // Field dikelompokkan jadi 3 kartu (jadwal, perjalanan, driver)
-            // supaya form tidak terbaca sebagai satu daftar panjang.
             _FormSection(
               icon: Icons.event_outlined,
               title: 'Schedule',
               children: [
-                // Tanggal & jam memakai AppDateField / AppTimeField dari
-                // core — sama dengan form Pengajuan cuti & izin, label
-                // sudah ada di dalam widget-nya.
-                AppDateField(
+                _LabeledField(
                   label: 'Date Indent',
-                  value: _date,
-                  required: true,
-                  onChanged: (date) => setState(() => _date = date),
+                  child: _PickerField(
+                    icon: Icons.calendar_today_outlined,
+                    hint: 'Select date',
+                    text: _date == null ? null : _formatDate(_date!),
+                    onTap: _pickDate,
+                  ),
                 ),
                 // From & Until berdampingan: terbaca sebagai satu rentang
                 // waktu.
                 Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Expanded(
-                      child: AppTimeField(
+                      child: _LabeledField(
                         label: 'From',
-                        value: _from,
-                        required: true,
-                        onChanged: (time) => setState(() => _from = time),
+                        child: _PickerField(
+                          icon: Icons.schedule_outlined,
+                          hint: 'Select time',
+                          text: _from == null ? null : _formatTime(_from!),
+                          onTap: () => _pickTime(isFrom: true),
+                        ),
                       ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: AppTimeField(
+                      child: _LabeledField(
                         label: 'Until',
-                        value: _until,
-                        required: true,
-                        onChanged: (time) => setState(() => _until = time),
+                        child: _PickerField(
+                          icon: Icons.schedule_outlined,
+                          hint: 'Select time',
+                          text: _until == null ? null : _formatTime(_until!),
+                          onTap: () => _pickTime(isFrom: false),
+                        ),
                       ),
                     ),
                   ],
                 ),
               ],
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 20),
             _FormSection(
               icon: Icons.place_outlined,
               title: 'Trip',
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const FieldLabelRow(label: 'Destination', required: true),
-                    TextField(
-                      controller: _destinationController,
-                      textCapitalization: TextCapitalization.words,
-                      textInputAction: TextInputAction.next,
-                      style: AppTextStyles.body,
-                      decoration: _fieldDecoration(
-                          'e.g. Tanjung Uban Speed Port'),
+                _LabeledField(
+                  label: 'Destination',
+                  child: TextField(
+                    controller: _destinationController,
+                    textCapitalization: TextCapitalization.words,
+                    textInputAction: TextInputAction.next,
+                    style: AppTextStyles.body,
+                    decoration: _fieldDecoration(
+                      'e.g. Tanjung Uban Speed Port',
+                      Icons.location_on_outlined,
                     ),
-                  ],
+                  ),
                 ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const FieldLabelRow(label: 'Remark to go', required: true),
-                    TextField(
-                      controller: _remarkController,
-                      minLines: 3,
-                      maxLines: null,
-                      textCapitalization: TextCapitalization.sentences,
-                      style: AppTextStyles.body,
-                      decoration: _fieldDecoration('Purpose of the trip'),
-                    ),
-                  ],
+                _LabeledField(
+                  label: 'Remark to go',
+                  child: _buildRemarkField(),
                 ),
               ],
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 20),
             _FormSection(
               icon: Icons.directions_car_outlined,
               title: 'Driver',
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const FieldLabelRow(label: 'With driver', required: true),
-                    IndentDriverChoice(
-                      withDriver: _withDriver,
-                      onChanged: (v) => setState(() => _withDriver = v),
-                    ),
-                  ],
+                _LabeledField(
+                  label: 'With driver',
+                  child: IndentDriverChoice(
+                    withDriver: _withDriver,
+                    onChanged: (v) => setState(() => _withDriver = v),
+                  ),
                 ),
               ],
             ),
@@ -313,10 +402,10 @@ class _AddIndentScreenState extends State<AddIndentScreen> {
       child: SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
           child: SizedBox(
             width: double.infinity,
-            height: 48,
+            height: 52,
             child: ElevatedButton(
               onPressed: _submitting ? null : _submit,
               style: ElevatedButton.styleFrom(
@@ -327,7 +416,8 @@ class _AddIndentScreenState extends State<AddIndentScreen> {
                 disabledForegroundColor: Colors.white,
                 elevation: 0,
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10)),
+                  borderRadius: BorderRadius.circular(14),
+                ),
               ),
               child: _submitting
                   ? const SizedBox(
@@ -340,8 +430,8 @@ class _AddIndentScreenState extends State<AddIndentScreen> {
                     )
                   : Text(
                       _isEdit ? 'Save changes' : 'Submit request',
-                      style:
-                          AppTextStyles.buttonText.copyWith(color: Colors.white),
+                      style: AppTextStyles.buttonText
+                          .copyWith(color: Colors.white),
                     ),
             ),
           ),
@@ -351,7 +441,7 @@ class _AddIndentScreenState extends State<AddIndentScreen> {
   }
 }
 
-/// Kartu putih berisi satu kelompok field: ikon + judul di atas, lalu
+/// Kartu putih berisi satu kelompok field: ikon + judul, garis pemisah, lalu
 /// field-nya dengan jarak seragam antar field.
 class _FormSection extends StatelessWidget {
   const _FormSection({
@@ -366,32 +456,136 @@ class _FormSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AppCard(
-      padding: const EdgeInsets.fromLTRB(14, 14, 14, 16),
+    return Container(
+      padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(
             children: [
               Container(
-                width: 28,
-                height: 28,
+                width: 36,
+                height: 36,
                 decoration: BoxDecoration(
                   color: AppColors.primaryLight,
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                child: Icon(icon, size: 16, color: AppColors.primaryText),
+                child: Icon(icon, size: 20, color: AppColors.primaryText),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 12),
               Text(title, style: AppTextStyles.sectionTitle),
             ],
           ),
           const SizedBox(height: 14),
+          Divider(height: 1, thickness: 1, color: AppColors.border),
+          const SizedBox(height: 16),
           for (var i = 0; i < children.length; i++) ...[
             if (i > 0) const SizedBox(height: 16),
             children[i],
           ],
         ],
+      ),
+    );
+  }
+}
+
+/// Label tebal di atas field, dengan tanda * merah untuk field wajib.
+class _LabeledField extends StatelessWidget {
+  const _LabeledField({
+    required this.label,
+    required this.child,
+    this.required = true,
+  });
+
+  final String label;
+  final Widget child;
+  final bool required;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text.rich(
+          TextSpan(
+            text: label,
+            children: [
+              if (required)
+                TextSpan(
+                  text: ' *',
+                  style: TextStyle(color: AppColors.solid(AppColors.rejected)),
+                ),
+            ],
+          ),
+          style: AppTextStyles.body.copyWith(
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 8),
+        child,
+      ],
+    );
+  }
+}
+
+/// Kolom krem yang bisa diketuk (tanggal / jam), tampilannya sama dengan
+/// TextField di form ini: ikon kiri, hint muted saat kosong.
+class _PickerField extends StatelessWidget {
+  const _PickerField({
+    required this.icon,
+    required this.hint,
+    required this.onTap,
+    this.text,
+  });
+
+  final IconData icon;
+  final String hint;
+  final String? text;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final hasValue = text != null;
+    return Material(
+      color: AppColors.bg,
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: onTap,
+        child: Container(
+          height: 50,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Row(
+            children: [
+              Icon(icon, size: 20, color: AppColors.textMuted),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  hasValue ? text! : hint,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: hasValue
+                      ? AppTextStyles.body
+                      : AppTextStyles.body.copyWith(
+                          color: AppColors.textMuted,
+                        ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

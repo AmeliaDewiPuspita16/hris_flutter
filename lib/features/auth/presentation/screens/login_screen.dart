@@ -15,6 +15,7 @@ import '../widgets/keep_signed_in_row.dart';
 // import '../widgets/login_alt_button.dart';
 import '../widgets/login_field.dart';
 import '../widgets/login_footer.dart';
+import '../widgets/login_entrance.dart';
 import '../widgets/login_header.dart';
 import '../widgets/login_light_backdrop.dart';
 import '../widgets/star_field.dart';
@@ -126,7 +127,9 @@ class _LoginViewState extends State<_LoginView> {
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
                             const LoginHeader(),
-                            Padding(
+                            LoginEntrance(
+                              delay: const Duration(milliseconds: 150),
+                              child: Padding(
                               // 24 = sama dengan padding kiri-kanan teks di
                               // LoginHeader, jadi tepi kotak form sejajar
                               // dengan logo dan kalimat pengantar.
@@ -143,13 +146,17 @@ class _LoginViewState extends State<_LoginView> {
                                 ),
                               ),
                             ),
+                            ),
                           ],
                         ),
                         // Tanpa padding samping/bawah: ilustrasinya menempel
                         // ke tepi layar.
-                        const Padding(
-                          padding: EdgeInsets.only(top: 16),
-                          child: LoginFooter(),
+                        const LoginEntrance(
+                          delay: Duration(milliseconds: 300),
+                          child: Padding(
+                            padding: EdgeInsets.only(top: 16),
+                            child: LoginFooter(),
+                          ),
                         ),
                       ],
                     ),

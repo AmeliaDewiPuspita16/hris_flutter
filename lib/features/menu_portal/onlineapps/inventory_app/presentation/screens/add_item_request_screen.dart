@@ -48,7 +48,6 @@ class AddItemRequestScreen extends StatefulWidget {
 
 /// Satu baris isian: barang + jumlah + alasan.
 class _LineForm {
-  _LineForm({this.item});
 
   ItemRequestStockOption? item;
   final quantity = TextEditingController();

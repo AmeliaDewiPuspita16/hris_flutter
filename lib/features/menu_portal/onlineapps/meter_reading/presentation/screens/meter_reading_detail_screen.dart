@@ -135,17 +135,21 @@ class _ViewState extends State<_View> {
 
           return Scaffold(
             backgroundColor: AppColors.bg,
-            body: SafeArea(
-              bottom: false,
-              child: Column(
-                children: [
-                  BackHeader(
-                    title: widget.summary.company,
-                    onBack: () => Navigator.of(context).pop(),
+            body: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                ColoredBox(
+                  color: AppColors.card,
+                  child: SafeArea(
+                    bottom: false,
+                    child: BackHeader(
+                      title: widget.summary.company,
+                      onBack: () => Navigator.of(context).pop(),
+                    ),
                   ),
-                  Expanded(child: _buildBody(context, state, reading, detail)),
-                ],
-              ),
+                ),
+                Expanded(child: _buildBody(context, state, reading, detail)),
+              ],
             ),
             bottomNavigationBar: detail == null
                 ? null

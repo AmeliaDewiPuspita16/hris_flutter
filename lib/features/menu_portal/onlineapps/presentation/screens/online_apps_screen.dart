@@ -84,12 +84,14 @@ class OnlineAppsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Procurement Monitoring hanya untuk user ber-role epro-*. Tanpa sesi
-    // (user null) menu disembunyikan.
+    // Procurement Monitoring hanya untuk user ber-role epro-*, dan Meter
+    // Reading hanya untuk 'meter reading roster'. Tanpa sesi
+    // (user null) kedua menu disembunyikan.
     final user = context.read<AuthBloc>().state.session?.user;
 
     final items = OnlineAppsDemoData.items(
       showProcurement: user?.canAccessProcurement ?? false,
+      showMeterReading: user?.canAccessMeterReading ?? false,
       // null = belum siap: tile tampil redup & tidak bisa diketuk.
       onInventory: () => _openInventory(context),
       onMeterReading: () => Navigator.of(context).push(

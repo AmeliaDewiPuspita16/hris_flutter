@@ -1,6 +1,7 @@
 import 'approval_step.dart';
 import 'document_stage.dart';
 import '../../../../../core/utils/json_value.dart';
+import 'pr_approval_permission.dart';
 import 'pr_attachment.dart';
 import 'pr_line_item.dart';
 import 'purchase_requisition_summary.dart';
@@ -36,6 +37,7 @@ class PurchaseRequisition extends PurchaseRequisitionSummary {
     this.attachments = const [],
     this.approvalProgress = const [],
     this.documentProgress = const [],
+    this.approval = PrApprovalPermission.none,
   });
 
   final String department;
@@ -62,6 +64,9 @@ class PurchaseRequisition extends PurchaseRequisitionSummary {
   final List<PrAttachment> attachments;
   final List<ApprovalStep> approvalProgress;
   final List<DocumentStage> documentProgress;
+
+  /// Apa yang boleh dilakukan user yang login pada PR ini. Dihitung server.
+  final PrApprovalPermission approval;
 
   factory PurchaseRequisition.fromJson(Map<String, dynamic> json) {
     // Field yang sama dengan daftar diurai sekali saja, di satu tempat.
@@ -91,6 +96,7 @@ class PurchaseRequisition extends PurchaseRequisitionSummary {
       attachments: _mapList(json['attachments'], PrAttachment.fromJson),
       approvalProgress: _mapList(json['approval_progress'], ApprovalStep.fromJson),
       documentProgress: _mapList(json['document_progress'], DocumentStage.fromJson),
+      approval: PrApprovalPermission.fromJson(json['approval']),
     );
   }
 }

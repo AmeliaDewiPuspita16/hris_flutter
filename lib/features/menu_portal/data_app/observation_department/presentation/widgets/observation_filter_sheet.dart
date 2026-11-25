@@ -5,6 +5,7 @@ import '../../../../../../core/theme/app_text_styles.dart';
 import '../../../../../../core/widgets/app_dropdown.dart';
 import '../../domain/observation_category.dart';
 import '../../domain/observation_filter.dart';
+import '../../domain/observation_options.dart';
 
 /// Bottom sheet "Filter" untuk tab All Observations: Month, Relevant Dept.,
 /// Category — tiga filter yang sama dengan tabel di web. Mengembalikan
@@ -15,23 +16,19 @@ class ObservationFilterSheet extends StatefulWidget {
   const ObservationFilterSheet({
     super.key,
     required this.initial,
-    required this.months,
     required this.departments,
   });
 
   final ObservationFilter initial;
 
-  /// Bulan yang ada di data (pilihan "Month").
-  final List<DateTime> months;
-
-  /// Departemen tujuan yang ada di data (pilihan "Relevant Dept.").
-  final List<String> departments;
+  /// Departemen tujuan dari server (pilihan "Relevant Dept."); kosong bila
+  /// `/options` gagal dimuat.
+  final List<ObservationDepartment> departments;
 
   static Future<ObservationFilter?> show(
     BuildContext context, {
     required ObservationFilter initial,
-    required List<DateTime> months,
-    required List<String> departments,
+    required List<ObservationDepartment> departments,
   }) {
     return showModalBottomSheet<ObservationFilter>(
       context: context,
@@ -39,7 +36,6 @@ class ObservationFilterSheet extends StatefulWidget {
       backgroundColor: Colors.transparent,
       builder: (_) => ObservationFilterSheet(
         initial: initial,
-        months: months,
         departments: departments,
       ),
     );
@@ -61,15 +57,30 @@ class _ObservationFilterSheetState extends State<ObservationFilterSheet> {
   late String _month = widget.initial.month == null
       ? _all
       : _monthKey(widget.initial.month!);
-  late String _dept = widget.initial.relevantDept ?? _all;
+  late String _dept = _initialDept();
   late String _category = widget.initial.category?.name ?? _all;
 
-  /// Daftar dept dari data, ditambah dept filter aktif bila sudah tidak ada
-  /// di data (dropdown tidak boleh memuat nilai yang tak ada di pilihan).
-  List<String> get _departmentChoices => {
-        ...widget.departments,
-        if (_dept != _all) _dept,
-      }.toList();
+  /// Berapa bulan terakhir yang ditawarkan di pilihan "Month".
+  static const _monthCount = 24;
+
+  /// Bulan ini mundur ke belakang (terbaru dulu). Bulan lebih lama tetap
+  /// terjangkau lewat "All Months" dan pencarian.
+  late final List<DateTime> _months = _recentMonths();
+
+  static List<DateTime> _recentMonths() {
+    final now = DateTime.now();
+    return [
+      for (var i = 0; i < _monthCount; i++) DateTime(now.year, now.month - i),
+    ];
+  }
+
+  /// Dropdown tidak boleh memuat nilai yang tak ada di pilihannya, jadi
+  /// departemen filter aktif yang tidak ada di daftar dianggap "All".
+  String _initialDept() {
+    final id = widget.initial.idDept;
+    if (id == null) return _all;
+    return widget.departments.any((d) => d.id == id) ? '$id' : _all;
+  }
 
   static String _monthKey(DateTime d) => '${d.year}-${d.month}';
 
@@ -77,7 +88,7 @@ class _ObservationFilterSheetState extends State<ObservationFilterSheet> {
 
   ObservationFilter _build() {
     DateTime? month;
-    for (final m in widget.months) {
+    for (final m in _months) {
       if (_monthKey(m) == _month) month = m;
     }
     ObservationCategory? category;
@@ -86,7 +97,7 @@ class _ObservationFilterSheetState extends State<ObservationFilterSheet> {
     }
     return ObservationFilter(
       month: month,
-      relevantDept: _dept == _all ? null : _dept,
+      idDept: _dept == _all ? null : int.parse(_dept),
       category: category,
     );
   }
@@ -146,7 +157,7 @@ class _ObservationFilterSheetState extends State<ObservationFilterSheet> {
                 value: _month,
                 items: [
                   (value: _all, label: 'All Months'),
-                  for (final m in widget.months)
+                  for (final m in _months)
                     (value: _monthKey(m), label: _monthLabel(m)),
                 ],
                 onChanged: (v) => setState(() => _month = v),
@@ -157,8 +168,8 @@ class _ObservationFilterSheetState extends State<ObservationFilterSheet> {
                 value: _dept,
                 items: [
                   (value: _all, label: 'All Departments'),
-                  for (final d in _departmentChoices)
-                    (value: d, label: d),
+                  for (final d in widget.departments)
+                    (value: '${d.id}', label: d.name),
                 ],
                 onChanged: (v) => setState(() => _dept = v),
               ),

@@ -2,28 +2,32 @@ import '../../../../../core/logging/app_logger.dart';
 import '../../../../../core/network/api_client.dart';
 import '../../../../../core/network/api_config.dart';
 import '../../../../../core/network/api_exception.dart';
+import '../../../../../core/network/page_meta.dart';
 import '../domain/observation_item.dart';
 import '../domain/observation_options.dart';
+import '../domain/observation_page.dart';
 
-/// Pintu ke API Observation Department. Disambungkan bertahap, satu
-/// endpoint per langkah:
+/// Pintu ke API Observation Department:
 ///
-/// - [fetchAll] — SUDAH dari API (`GET /api/data/observation`).
-/// - [fetchOpenFromMyDept] — SUDAH juga (`GET /api/data/observation/requests`)
-/// - [add] — SUDAH (`POST /api/data/observation`)
-/// - [update] — SUDAH dari API (`POST /api/data/observation/{id}`)
-/// - [delete] — SUDAH dari API (`DELETE /api/data/observation/{id}`).
-/// - [close] — SUDAH dari API (`POST /api/data/observation/{id}/close`).
+/// - [fetchAll] — `GET /api/data/observation` (per halaman, dengan filter).
+/// - [fetchOpenFromMyDept] — `GET /api/data/observation/requests`.
+/// - [fetchDetail] — `GET /api/data/observation/{id}`.
+/// - [fetchOptions] — `GET /api/data/observation/options`.
+/// - [add] — `POST /api/data/observation`.
+/// - [update] — `POST /api/data/observation/{id}`.
+/// - [delete] — `DELETE /api/data/observation/{id}`.
+/// - [close] — `POST /api/data/observation/{id}/close`.
+///
+/// Pencarian, filter, dan paginasi daftar dikerjakan server; aplikasi hanya
+/// meminta satu halaman setiap kali.
 class ObservationRepository {
   ObservationRepository({required ApiClient apiClient})
       : _apiClient = apiClient;
 
   final ApiClient _apiClient;
 
-  /// Jumlah baris per request dan batas pengaman jumlah halaman yang
-  /// diambil, supaya loop tidak berputar tanpa akhir bila `meta` aneh.
-  static const _perPage = 100;
-  static const _maxPages = 50;
+  /// Jumlah baris per halaman (server menerima 1-100).
+  static const pageSize = 20;
 
   /// Pilihan form (kategori, sub-kategori, department, aturan foto) dari
   /// `GET /api/data/observation/options`. Dipanggil tiap form dibuka, tanpa
@@ -39,74 +43,109 @@ class ObservationRepository {
     }
   }
 
-  /// Tabel "All Observations": semua observasi, terbaru di atas.
+  /// Tabel "All Observations": satu halaman observasi, terbaru di atas.
   ///
-  /// Semua halaman diambil sekaligus (mengikuti `meta.last_page`) karena
-  /// pencarian dan filter di layar masih dilakukan lokal atas seluruh data.
-  /// Melempar [ApiException] bila request gagal.
-  Future<List<ObservationItem>> fetchAll() =>
-      _fetchAllPages(ApiConfig.observation);
+  /// Semua parameter opsional dan dikirim ke server: [search] (lokasi,
+  /// kategori, deskripsi, pelapor, departemen), [month] (hanya tahun dan
+  /// bulan yang dipakai), [idDept] (departemen tujuan, dari `/options`), dan
+  /// [category]. Melempar [ApiException] bila request gagal.
+  Future<ObservationPage> fetchAll({
+    int page = 1,
+    String? search,
+    DateTime? month,
+    int? idDept,
+    String? category,
+  }) {
+    return _fetchPage(
+      ApiConfig.observation,
+      page: page,
+      search: search,
+      filters: {
+        if (month != null) 'month': _apiMonth(month),
+        if (idDept != null) 'id_dept': '$idDept',
+        if (category != null) 'category': category,
+      },
+    );
+  }
 
-  /// Tab "To Close": temuan berstatus open yang ditujukan ke department
-  /// user atau dibuat oleh user sendiri. Hanya yang 'can_close = true' yang
-  /// mendapat tombol close.
-  Future<List<ObservationItem>> fetchOpenFromMyDept() =>
-      _fetchAllPages(ApiConfig.observationRequests);
+  /// Tab "To Close": satu halaman temuan berstatus open yang ditujukan ke
+  /// departemen user atau dibuat oleh user sendiri. Hanya yang
+  /// `can_close = true` yang mendapat tombol Close. `ObservationPage.meta.total`
+  /// adalah angka untuk badge tab.
+  Future<ObservationPage> fetchOpenFromMyDept({
+    int page = 1,
+    String? search,
+  }) {
+    return _fetchPage(ApiConfig.observationRequests, page: page, search: search);
+  }
 
-  /// Mengambil semua halaman dari [path] (mengikuti `meta.last_page`).
-  Future<List<ObservationItem>> _fetchAllPages(String path) async {
-    final items = <ObservationItem>[];
-    var page = 1;
-    var lastPage = 1;
-
-    do {
-      final envelope = await _apiClient.getEnvelope(
-        Uri(
-          path: path,
-          queryParameters: {'per_page': '$_perPage', 'page': '$page'},
-        ).toString(),
+  /// Satu temuan lewat `GET /api/data/observation/{id}` — dipakai untuk
+  /// temuan dari notifikasi yang belum ikut termuat di daftar.
+  Future<ObservationItem> fetchDetail(String id) async {
+    final numericId = int.tryParse(id);
+    if (numericId == null) {
+      throw const ApiException.server('Invalid observation id.');
+    }
+    final data = await _apiClient.get(ApiConfig.observationDetail(numericId));
+    try {
+      return ObservationItem.fromJson(data);
+    } on FormatException catch (e) {
+      AppLogger.info('Detail observation tidak terbaca: ${e.message}');
+      throw const ApiException.server(
+        'The observation was received, but its format was not recognized.',
       );
+    }
+  }
 
-      final rows = envelope['data'];
-      if (rows is! List) {
-        throw const ApiException.server(
-          'The observation list was received, but its format was not recognized.',
-        );
+  Future<ObservationPage> _fetchPage(
+    String path, {
+    required int page,
+    String? search,
+    Map<String, String> filters = const {},
+  }) async {
+    final keyword = search?.trim() ?? '';
+    final envelope = await _apiClient.getEnvelope(
+      Uri(
+        path: path,
+        queryParameters: {
+          ...filters,
+          if (keyword.isNotEmpty) 'search': keyword,
+          'per_page': '$pageSize',
+          'page': '$page',
+        },
+      ).toString(),
+    );
+
+    final rows = envelope['data'];
+    if (rows is! List) {
+      throw const ApiException.server(
+        'The observation list was received, but its format was not recognized.',
+      );
+    }
+
+    final items = <ObservationItem>[];
+    for (final row in rows.whereType<Map<String, dynamic>>()) {
+      try {
+        items.add(ObservationItem.fromJson(row));
+      } on FormatException catch (e) {
+        // Satu baris rusak tidak boleh menggagalkan seluruh halaman.
+        AppLogger.info('Observation dilewati: ${e.message}');
       }
+    }
 
-      for (final row in rows.whereType<Map<String, dynamic>>()) {
-        try {
-          items.add(ObservationItem.fromJson(row));
-        } on FormatException catch (e) {
-          // Satu baris rusak tidak boleh menggagalkan seluruh daftar.
-          AppLogger.info('Observation dilewati: ${e.message}');
-        }
-      }
-
-      lastPage = _lastPage(envelope['meta']);
-      page++;
-    } while (page <= lastPage && page <= _maxPages);
-
-    return _sorted(items);
+    // Amplop tanpa `meta` dibaca sebagai satu halaman penuh (lihat PageMeta).
+    final meta = envelope['meta'];
+    return ObservationPage(
+      items: items,
+      meta: PageMeta.fromJson(
+        meta is Map<String, dynamic> ? meta : const <String, dynamic>{},
+      ),
+    );
   }
 
-  /// `meta.last_page` bisa datang sebagai angka atau teks; 1 bila tak ada.
-  int _lastPage(dynamic meta) {
-    if (meta is! Map) return 1;
-    final value = meta['last_page'];
-    final parsed = value is num ? value.toInt() : int.tryParse('$value');
-    return (parsed == null || parsed < 1) ? 1 : parsed;
-  }
-
-  List<ObservationItem> _sorted(Iterable<ObservationItem> items) {
-    final list = items.toList()
-      ..sort((a, b) {
-        final byDate = b.createdDate.compareTo(a.createdDate);
-        if (byDate != 0) return byDate;
-        return (int.tryParse(b.id) ?? 0).compareTo(int.tryParse(a.id) ?? 0);
-      });
-    return list;
-  }
+  /// `YYYY-MM` seperti yang diminta server untuk filter `month`.
+  String _apiMonth(DateTime date) =>
+      '${date.year}-${date.month.toString().padLeft(2, '0')}';
 
   /// Form "Add Observation": `POST /api/data/observation` (multipart).
   ///

@@ -8,7 +8,7 @@ import 'meter_reading_list_event.dart';
 import 'meter_reading_list_state.dart';
 
 /// Mengurus daftar Meter Reading: memuat halaman, mengganti filter jenis
-/// meter dan status pencatatan, mencari, dan menambah halaman berikutnya.
+/// meter, kategori, dan status pencatatan, mencari, dan menambah halaman berikutnya.
 ///
 /// Filter, pencarian, dan paginasi semuanya dikerjakan sisi server. Chip dan
 /// progress bar memakai `summary` dari respons, jadi angkanya benar untuk
@@ -30,6 +30,8 @@ class MeterReadingListBloc
     on<MeterReadingListRefreshed>(_onRefreshed);
     on<MeterReadingListStateSelected>(_onStateSelected);
     on<MeterReadingListTypeSelected>(_onTypeSelected);
+    on<MeterReadingListCategorySelected>(_onCategorySelected);
+    on<MeterReadingListFiltersApplied>(_onFiltersApplied);
     on<MeterReadingListSearched>(_onSearched);
     on<MeterReadingListFiltersCleared>(_onFiltersCleared);
     on<MeterReadingListNextPageRequested>(_onNextPage);
@@ -74,6 +76,27 @@ class MeterReadingListBloc
     return _loadFirstPage(emit);
   }
 
+  Future<void> _onCategorySelected(
+    MeterReadingListCategorySelected event,
+    Emitter<MeterReadingListState> emit,
+  ) {
+    emit(state.copyWith(category: event.category));
+    return _loadFirstPage(emit);
+  }
+
+  Future<void> _onFiltersApplied(
+    MeterReadingListFiltersApplied event,
+    Emitter<MeterReadingListState> emit,
+  ) {
+    // Tanpa perubahan, tidak ada yang perlu dimuat ulang.
+    if (event.typeCode == state.typeCode && event.category == state.category) {
+      return Future.value();
+    }
+
+    emit(state.copyWith(typeCode: event.typeCode, category: event.category));
+    return _loadFirstPage(emit);
+  }
+
   Future<void> _onSearched(
     MeterReadingListSearched event,
     Emitter<MeterReadingListState> emit,
@@ -86,7 +109,12 @@ class MeterReadingListBloc
     MeterReadingListFiltersCleared event,
     Emitter<MeterReadingListState> emit,
   ) {
-    emit(state.copyWith(typeCode: null, stateCode: null, query: ''));
+    emit(state.copyWith(
+      typeCode: null,
+      category: null,
+      stateCode: null,
+      query: '',
+    ));
     return _loadFirstPage(emit);
   }
 
@@ -106,6 +134,7 @@ class MeterReadingListBloc
       final page = await _repository.fetchList(
         page: 1,
         typeCode: state.typeCode,
+        category: state.category,
         stateCode: state.stateCode,
         search: state.query,
       );
@@ -119,6 +148,11 @@ class MeterReadingListBloc
         meta: page.meta,
         activePeriod: page.activePeriod,
         canWrite: page.canWrite,
+        // Daftar kategori ikut di tiap respons; hanya diperbarui saat tidak
+        // ada filter kategori, supaya pilihannya tidak ikut menyempit.
+        categories: state.category == null && page.categories.isNotEmpty
+            ? page.categories
+            : state.categories,
         loadingMore: false,
       ));
     } on ApiException catch (e) {
@@ -180,6 +214,7 @@ class MeterReadingListBloc
       final page = await _repository.fetchList(
         page: state.meta.currentPage + 1,
         typeCode: state.typeCode,
+        category: state.category,
         stateCode: state.stateCode,
         search: state.query,
       );

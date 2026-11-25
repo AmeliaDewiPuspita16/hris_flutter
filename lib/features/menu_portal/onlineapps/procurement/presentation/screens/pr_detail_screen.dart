@@ -33,12 +33,15 @@ import '../../../../../../core/widgets/app_error_view.dart';
 /// Membuka URL lampiran. Diambil alih test supaya tidak menyentuh plugin.
 typedef UrlOpener = Future<bool> Function(Uri url);
 
-/// Tahap approval yang tombol aksinya sudah boleh tampil.
+/// Tahap yang tombolnya sudah dinyalakan di aplikasi.
 ///
-/// Untuk sementara hanya HOD, karena baru tahap itu yang sudah diuji ke
-/// server. Tahap lain ditambahkan di sini kalau sudah siap, mis.
-/// 'peding_review', 'pending_dgm', dll.
-const _actionableStatusCodes = {'pending_hod'};
+/// Siapa yang boleh bertindak dan tombol mana yang tampil ditentukan server
+/// lewat objek `approval` di detail PR (lihat `PrApprovalPermission`). Daftar
+/// ini hanya pengaman rilis bertahap: tambahkan kode tahap di sini setelah
+/// API aksi untuk tahap itu terkonfirmasi dan sudah diuji.
+const _enabledApprovalStages = {
+  'pending_hod',
+};
 
 /// Layar detail satu Purchase Requisition — padanan modal "PR Detail" di web.
 ///
@@ -250,14 +253,13 @@ class _PrDetailViewState extends State<_PrDetailView> {
           builder: (context, state) {
             final pr = state.requisition;
 
-            /// Tombol hanya untuk PR yang masih berjalan di rantai approval
-            /// (pending_*). Siapa yang berhak memutuskan tetap ditentukan server
-            // if (pr == null) return const SizedBox.shrink();
-            // if (pr == null || !pr.status.isPending) { //(PERUBAHAN 2)
-            //   return const SizedBox.shrink();  //(PERUBAHAN 2)
-            // }  // (PERUBAHAN 2)
-
-            if (pr == null || !_actionableStatusCodes.contains(pr.status.code)) {
+            // Tombol tampil bila tahapnya sudah dinyalakan DAN server
+            // mengizinkan akun ini bertindak pada PR ini. Server tetap
+            // penentu terakhir saat aksi dikirim.
+            if (pr == null ||
+                !_enabledApprovalStages.contains(pr.status.code) ||
+                !pr.approval.canAct ||
+                !pr.approval.hasAnyAction) {
               return const SizedBox.shrink();
             }
 
@@ -265,6 +267,9 @@ class _PrDetailViewState extends State<_PrDetailView> {
               enabled: _reachedBottom,
               onLockedTap: _scrollToBottom,
               isLoading: state.isSubmitting,
+              canApprove: pr.approval.canApprove,
+              canRevision: pr.approval.canRequestRevision,
+              canReject: pr.approval.canReject,
               onApprove: () => _onApprove(context, pr),
               onRevision: () => _onRevision(context, pr),
               onReject: () => _onReject(context, pr),

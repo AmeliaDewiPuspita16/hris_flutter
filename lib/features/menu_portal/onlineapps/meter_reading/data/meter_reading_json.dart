@@ -51,6 +51,16 @@ bool _bool(Object? v) {
 
 Map<String, dynamic>? _map(Object? v) => v is Map<String, dynamic> ? v : null;
 
+List<String> _stringList(Object? v) {
+  if (v is! List) return const [];
+  final result = <String>[];
+  for (final element in v) {
+    final text = _str(element);
+    if (text != null) result.add(text);
+  }
+  return result;
+}
+
 /// Foto dari server bisa berupa URL penuh atau path relatif (`/storage/...`).
 /// `MeterPhotoGrid` hanya memuat alamat berawalan `http` dari jaringan.
 String? _absoluteUrl(String? url) {
@@ -94,6 +104,7 @@ MeterReadingSummary meterSummaryFromJson(Map<String, dynamic> json) {
     recordedInActivePeriod: _bool(json['recorded_in_active_period']),
     approval: MeterApprovalStatus.fromCode(_str(json['status'])),
     action: MeterRecordAction.fromCode(_str(json['action'])),
+    categoryLabel: _str(json['category']),
     previousValue: _num(json['previous_value']),
     currentValue: _num(json['current_value']),
     lastValue: _num(json['last_value']),
@@ -131,7 +142,7 @@ MeterReading meterDetailFromEnvelope(Map<String, dynamic> envelope) {
     imageProofUrl: s.imageProofUrl,
     recordedBy: s.recordedBy,
     recordedAt: s.recordedAt,
-    categoryLabel: _str(data['category']),
+    categoryLabel: s.categoryLabel,
     meterTypeLabel: _str(data['meter_type']),
     buildingType: _str(data['building_type']),
     typeWater: _str(data['type_water']),
@@ -157,7 +168,7 @@ MeterReadingCounts _countsFrom(Map<String, dynamic>? summary) {
   );
 }
 
-/// Amplop `GET /records`: `data` (list), `summary`, `meta`, `active_period`,
+/// Amplop `GET /records`: `data` (list), `summary`, `categories`, `meta`, `active_period`,
 /// `can_write`. Baris yang rusak dilewati; satu baris jelek tidak boleh
 /// menggagalkan seluruh daftar.
 ///
@@ -186,6 +197,7 @@ MeterReadingPage meterPageFromEnvelope(
   return MeterReadingPage(
     items: items,
     counts: _countsFrom(_map(envelope['summary'])),
+    categories: _stringList(envelope['categories']),
     meta: meta != null
         ? PageMeta.fromJson(meta)
         : PageMeta(

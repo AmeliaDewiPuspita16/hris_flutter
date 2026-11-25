@@ -4,7 +4,13 @@ import 'package:flutter/services.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 
-/// Layar pembuka: logo muncul dengan fade + scale.
+/// Layar pembuka, animasi bertahap (total ±2,4 detik):
+///
+///  1. ornamen latar memudar masuk
+///  2. cahaya (glow) di belakang logo menyala
+///  3. logo muncul: zoom + fade, lalu "disapu" terungkap dari kiri ke kanan
+///  4. tagline naik dari bawah
+///  5. indikator loading memudar masuk
 ///
 /// Murni tampilan — layar ini tidak menavigasi ke mana pun. AuthGate yang
 /// menggantinya begitu status sesi diketahui dan [displayDuration] terlewati.
@@ -12,7 +18,8 @@ class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
   /// Lama splash ditahan sebelum AuthGate boleh berpindah halaman.
-  static const displayDuration = Duration(seconds: 2);
+  /// Dinaikkan dari 2 detik supaya seluruh animasi sempat selesai.
+  static const displayDuration = Duration(milliseconds: 2600);
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
@@ -21,8 +28,22 @@ class SplashScreen extends StatefulWidget {
 class _SplashScreenState extends State<SplashScreen>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
-  late final Animation<double> _fade;
-  late final Animation<double> _scale;
+
+  late final Animation<double> _ornament;
+  late final Animation<double> _glow;
+  late final Animation<double> _logoFade;
+  late final Animation<double> _logoScale;
+  late final Animation<double> _logoReveal;
+  late final Animation<double> _tagline;
+  late final Animation<double> _loading;
+
+  /// Animasi yang berjalan di rentang [begin, end] dari total durasi.
+  Animation<double> _stage(double begin, double end, Curve curve) {
+    return CurvedAnimation(
+      parent: _controller,
+      curve: Interval(begin, end, curve: curve),
+    );
+  }
 
   @override
   void initState() {
@@ -39,22 +60,16 @@ class _SplashScreenState extends State<SplashScreen>
 
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1200),
+      duration: const Duration(milliseconds: 2400),
     );
 
-    _fade = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: const Interval(0, 0.6, curve: Curves.easeOut),
-      ),
-    );
-
-    _scale = Tween<double>(begin: 0.8, end: 1).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: const Interval(0, 0.6, curve: Curves.easeOutBack),
-      ),
-    );
+    _ornament = _stage(0.00, 0.30, Curves.easeOut);
+    _glow = _stage(0.05, 0.45, Curves.easeOut);
+    _logoFade = _stage(0.08, 0.38, Curves.easeOut);
+    _logoScale = _stage(0.08, 0.45, Curves.easeOutBack);
+    _logoReveal = _stage(0.20, 0.62, Curves.easeInOutCubic);
+    _tagline = _stage(0.55, 0.80, Curves.easeOutCubic);
+    _loading = _stage(0.70, 0.95, Curves.easeOut);
 
     _controller.forward();
   }
@@ -77,19 +92,25 @@ class _SplashScreenState extends State<SplashScreen>
             Positioned(
               top: 0,
               left: 0,
-              child: Image.asset(
-                'assets/images/ornament_top_left.png',
-                width: 160,
-                fit: BoxFit.contain,
+              child: FadeTransition(
+                opacity: _ornament,
+                child: Image.asset(
+                  'assets/images/ornament_top_left.png',
+                  width: 160,
+                  fit: BoxFit.contain,
+                ),
               ),
             ),
             Positioned(
               bottom: 0,
               left: 0,
-              child: Image.asset(
-                'assets/images/ornament_bottom_left.png',
-                width: 200,
-                fit: BoxFit.contain,
+              child: FadeTransition(
+                opacity: _ornament,
+                child: Image.asset(
+                  'assets/images/ornament_bottom_left.png',
+                  width: 200,
+                  fit: BoxFit.contain,
+                ),
               ),
             ),
             Positioned.fill(
@@ -101,25 +122,28 @@ class _SplashScreenState extends State<SplashScreen>
                 child: Column(
                   children: [
                     const Spacer(flex: 2),
-                    FadeTransition(
-                      opacity: _fade,
-                      child: ScaleTransition(
-                        scale: _scale,
-                        child: const _Brand(),
-                      ),
+                    _AnimatedBrand(
+                      glow: _glow,
+                      fade: _logoFade,
+                      scale: _logoScale,
+                      reveal: _logoReveal,
+                      tagline: _tagline,
                     ),
                     const Spacer(flex: 2),
                     FadeTransition(
-                      opacity: _fade,
+                      opacity: _loading,
                       child: const _LoadingIndicator(),
                     ),
                     const SizedBox(height: 48),
-                    Text(
-                      'v1.0.0',
-                      style: TextStyle(
-                        fontFamily: AppTextStyles.fontFamily,
-                        fontSize: 12,
-                        color: Colors.white.withValues(alpha: 0.5),
+                    FadeTransition(
+                      opacity: _loading,
+                      child: Text(
+                        'v1.0.0',
+                        style: TextStyle(
+                          fontFamily: AppTextStyles.fontFamily,
+                          fontSize: 12,
+                          color: Colors.white.withValues(alpha: 0.5),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 24),
@@ -134,40 +158,115 @@ class _SplashScreenState extends State<SplashScreen>
   }
 }
 
-/// Logo dan nama aplikasi di tengah layar.
-class _Brand extends StatelessWidget {
-  const _Brand();
+/// Logo + cahaya di belakangnya + tagline.
+class _AnimatedBrand extends StatelessWidget {
+  const _AnimatedBrand({
+    required this.glow,
+    required this.fade,
+    required this.scale,
+    required this.reveal,
+    required this.tagline,
+  });
+
+  final Animation<double> glow;
+  final Animation<double> fade;
+  final Animation<double> scale;
+  final Animation<double> reveal;
+  final Animation<double> tagline;
+
+  /// Lebar tepi lembut penyapu, sebagai pecahan lebar logo.
+  static const double _softEdge = 0.35;
 
   @override
   Widget build(BuildContext context) {
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Image.asset(
-          'assets/images/logo_white.png',
-          width: 200,
-          fit: BoxFit.contain,
-          semanticLabel: 'Logo Bintan Industrial Estate',
+        Stack(
+          alignment: Alignment.center,
+          children: [
+            // Cahaya lembut di belakang logo.
+            AnimatedBuilder(
+              animation: glow,
+              builder: (context, _) => Opacity(
+                opacity: glow.value,
+                child: Container(
+                  width: 300,
+                  height: 300,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: RadialGradient(
+                      colors: [
+                        Colors.white.withValues(alpha: 0.20),
+                        Colors.white.withValues(alpha: 0.0),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            FadeTransition(
+              opacity: fade,
+              child: ScaleTransition(
+                scale: scale,
+                // Logo "disapu" terungkap dari kiri ke kanan. dstIn: bagian
+                // logo hanya terlihat di mana gradien masknya masih putih.
+                child: AnimatedBuilder(
+                  animation: reveal,
+                  builder: (context, child) => ShaderMask(
+                    blendMode: BlendMode.dstIn,
+                    shaderCallback: (bounds) {
+                      final t = reveal.value * (1 + _softEdge);
+                      final solidUntil = (t - _softEdge).clamp(0.0, 1.0);
+                      final fadeUntil = t.clamp(0.0, 1.0);
+                      return LinearGradient(
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
+                        colors: const [
+                          Colors.white,
+                          Colors.white,
+                          Color(0x00FFFFFF),
+                          Color(0x00FFFFFF),
+                        ],
+                        stops: [0, solidUntil, fadeUntil, 1],
+                      ).createShader(bounds);
+                    },
+                    child: child,
+                  ),
+                  child: Image.asset(
+                    'assets/images/logo_white.png',
+                    width: 200,
+                    fit: BoxFit.contain,
+                    // Logo sumbernya kecil (142 px); tanpa ini tepinya pecah
+                    // saat diperbesar ke 200 dp.
+                    filterQuality: FilterQuality.high,
+                    semanticLabel: 'Logo Bintan Industrial Estate',
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
-        const SizedBox(height: 24),
-        // const Text(
-        //   'BIIE Portal',
-        //   style: TextStyle(
-        //     fontFamily: AppTextStyles.fontFamily,
-        //     fontSize: 32,
-        //     fontWeight: FontWeight.w700,
-        //     color: Colors.white,
-        //     letterSpacing: -0.5,
-        //   ),
-        // ),R
-        // const SizedBox(height: 8),
-        // Text(
-        //   'PT Bintan Inti Industrial Estate',
-        //   style: TextStyle(
-        //     fontFamily: AppTextStyles.fontFamily,
-        //     fontSize: 14,
-        //     color: Colors.white.withValues(alpha: 0.8),
-        //   ),
-        // ),
+        const SizedBox(height: 16),
+        AnimatedBuilder(
+          animation: tagline,
+          builder: (context, child) => Opacity(
+            opacity: tagline.value,
+            child: Transform.translate(
+              offset: Offset(0, (1 - tagline.value) * 16),
+              child: child,
+            ),
+          ),
+          child: Text(
+            'At The Forefront, From The Seafront',
+            style: TextStyle(
+              fontFamily: AppTextStyles.fontFamily,
+              fontSize: 13,
+              letterSpacing: 0.4,
+              color: Colors.white.withValues(alpha: 0.75),
+            ),
+          ),
+        ),
       ],
     );
   }

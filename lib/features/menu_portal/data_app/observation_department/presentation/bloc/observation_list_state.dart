@@ -1,96 +1,118 @@
+import '../../../../../../core/network/page_meta.dart';
 import '../../domain/observation_filter.dart';
 import '../../domain/observation_item.dart';
+import '../../domain/observation_options.dart';
+import '../../domain/observation_page.dart';
 
-enum ObservationListStatus { initial, loading, success, failure }
-
-/// Penanda "tidak diisi" untuk [ObservationListState.copyWith], supaya
-/// `errorMessage: null` berarti "hapus pesan galat" — pola sama dengan
-/// `IndentRequestListState`.
+/// Penanda "tidak diisi" untuk copyWith, supaya `error: null` berarti
+/// "hapus pesan galat" — pola sama dengan `IndentRequestListState`.
 const _unset = Object();
 
-/// Keadaan layar Observation: dua daftar dari server (milik dept sendiri
-/// yang masih open, dan semua observasi) plus pencarian & filter lokal.
-class ObservationListState {
-  const ObservationListState({
-    this.status = ObservationListStatus.initial,
-    this.myOpen = const [],
-    this.all = const [],
-    this.query = '',
-    this.filter = ObservationFilter.none,
-    this.errorMessage,
+/// Keadaan satu tab: baris yang sudah dimuat, posisi paginasi, dan status
+/// muat. Tiap tab punya halaman dan galatnya sendiri.
+class ObservationTabData {
+  const ObservationTabData({
+    this.items = const [],
+    this.meta = const PageMeta(currentPage: 1, lastPage: 1, perPage: 20, total: 0),
+    this.loading = false,
+    this.loadingMore = false,
+    this.error,
   });
 
-  final ObservationListStatus status;
+  factory ObservationTabData.fromPage(ObservationPage page) {
+    return ObservationTabData(items: page.items, meta: page.meta);
+  }
 
-  /// Tab "My Dept Open".
-  final List<ObservationItem> myOpen;
+  final List<ObservationItem> items;
 
-  /// Tab "All Observations" (belum disaring).
-  final List<ObservationItem> all;
+  /// Paginasi halaman terakhir yang dimuat; `meta.total` adalah jumlah
+  /// seluruh baris di server untuk pencarian/filter yang sedang berlaku.
+  final PageMeta meta;
+
+  /// Memuat halaman pertama (muat awal, refresh, atau ganti pencarian/filter).
+  final bool loading;
+
+  /// Memuat halaman berikutnya (gulir ke bawah).
+  final bool loadingMore;
+  final String? error;
+
+  bool get hasMore => meta.hasMore;
+
+  /// Belum ada yang bisa ditampilkan: layar menampilkan skeleton.
+  bool get isInitialLoading => loading && items.isEmpty;
+
+  ObservationTabData copyWith({
+    List<ObservationItem>? items,
+    PageMeta? meta,
+    bool? loading,
+    bool? loadingMore,
+    Object? error = _unset,
+  }) {
+    return ObservationTabData(
+      items: items ?? this.items,
+      meta: meta ?? this.meta,
+      loading: loading ?? this.loading,
+      loadingMore: loadingMore ?? this.loadingMore,
+      error: error == _unset ? this.error : error as String?,
+    );
+  }
+
+  /// Menaruh [item] di paling atas bila belum ada (dipakai untuk temuan
+  /// dari notifikasi yang tidak ikut di halaman yang sudah dimuat).
+  ObservationTabData withPinned(ObservationItem item) => copyWith(
+        items: [item, ...items.where((i) => i.id != item.id)],
+      );
+}
+
+/// Keadaan layar Observation: dua tab (masing-masing berpaginasi dari
+/// server), pencarian, filter, dan daftar departemen untuk filter.
+class ObservationListState {
+  const ObservationListState({
+    this.myOpen = const ObservationTabData(loading: true),
+    this.all = const ObservationTabData(loading: true),
+    this.waitingCount,
+    this.query = '',
+    this.filter = ObservationFilter.none,
+    this.departments = const [],
+  });
+
+  /// Tab "To Close" (`/requests`).
+  final ObservationTabData myOpen;
+
+  /// Tab "All Observations".
+  final ObservationTabData all;
+
+  /// Angka badge tab To Close: `meta.total` dari `/requests` TANPA
+  /// pencarian, supaya tidak berubah-ubah saat mengetik di kolom search.
+  final int? waitingCount;
 
   final String query;
   final ObservationFilter filter;
-  final String? errorMessage;
 
-  /// Muat pertama kali: belum ada yang bisa ditampilkan, jadi layar
-  /// menampilkan skeleton. Saat refresh, daftar lama tetap tampil.
-  bool get isFirstLoad =>
-      status == ObservationListStatus.loading && all.isEmpty && myOpen.isEmpty;
+  /// Pilihan "Relevant Dept." untuk filter, dari `/options`.
+  final List<ObservationDepartment> departments;
+
+  bool get searchingMyOpen => query.trim().isNotEmpty;
 
   /// Pencarian berlaku di kedua tab; filter hanya di "All Observations"
   /// (sama dengan web).
-  List<ObservationItem> get visibleMyOpen => _search(myOpen);
-  List<ObservationItem> get visibleAll =>
-      _search(all).where(filter.matches).toList();
-
-  /// Bulan-bulan yang ada di data (terbaru dulu) untuk pilihan filter Month.
-  List<DateTime> get monthOptions {
-    final months = {
-      for (final i in all) DateTime(i.createdDate.year, i.createdDate.month),
-    }.toList()
-      ..sort((a, b) => b.compareTo(a));
-    return months;
-  }
-
-  /// Departemen tujuan yang ada di data (urut abjad) untuk pilihan filter
-  /// Relevant Dept. — diambil dari data server, bukan daftar hardcode.
-  List<String> get departmentOptions {
-    final depts = {
-      for (final i in all)
-        if (i.relevantDept != '-') i.relevantDept,
-    }.toList()
-      ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
-    return depts;
-  }
-
-  List<ObservationItem> _search(List<ObservationItem> source) {
-    final q = query.trim().toLowerCase();
-    if (q.isEmpty) return source;
-    return source.where((i) {
-      return i.location.toLowerCase().contains(q) ||
-          i.description.toLowerCase().contains(q) ||
-          i.reporter.toLowerCase().contains(q) ||
-          i.categoryLabel.toLowerCase().contains(q) ||
-          i.relevantDept.toLowerCase().contains(q);
-    }).toList();
-  }
+  bool get searchingAll => searchingMyOpen || filter.isActive;
 
   ObservationListState copyWith({
-    ObservationListStatus? status,
-    List<ObservationItem>? myOpen,
-    List<ObservationItem>? all,
+    ObservationTabData? myOpen,
+    ObservationTabData? all,
+    int? waitingCount,
     String? query,
     ObservationFilter? filter,
-    Object? errorMessage = _unset,
+    List<ObservationDepartment>? departments,
   }) {
     return ObservationListState(
-      status: status ?? this.status,
       myOpen: myOpen ?? this.myOpen,
       all: all ?? this.all,
+      waitingCount: waitingCount ?? this.waitingCount,
       query: query ?? this.query,
       filter: filter ?? this.filter,
-      errorMessage:
-          errorMessage == _unset ? this.errorMessage : errorMessage as String?,
+      departments: departments ?? this.departments,
     );
   }
 }
