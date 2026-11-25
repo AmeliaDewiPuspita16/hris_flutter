@@ -1,5 +1,5 @@
-import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:material_ui/material_ui.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../../../core/theme/app_colors.dart';
@@ -7,6 +7,7 @@ import '../../../../../../core/theme/app_text_styles.dart';
 import '../../../../../../core/utils/currency_formatter.dart';
 import '../../../../../../core/utils/date_formatter.dart';
 import '../../../../../../core/widgets/app_card.dart';
+import '../../../../../../core/widgets/app_error_view.dart';
 import '../../../../../../core/widgets/app_shimmer.dart';
 import '../../../../../../core/widgets/back_header.dart';
 import '../../../../../../core/widgets/detail_field_tile.dart';
@@ -28,7 +29,6 @@ import '../widgets/pr_item_count_chip.dart';
 import '../widgets/pr_item_tile.dart';
 import '../widgets/pr_notes_banner.dart';
 import '../widgets/pr_section_title.dart';
-import '../../../../../../core/widgets/app_error_view.dart';
 
 /// Membuka URL lampiran. Diambil alih test supaya tidak menyentuh plugin.
 typedef UrlOpener = Future<bool> Function(Uri url);
@@ -41,6 +41,10 @@ typedef UrlOpener = Future<bool> Function(Uri url);
 /// API aksi untuk tahap itu terkonfirmasi dan sudah diuji.
 const _enabledApprovalStages = {
   'pending_hod',
+  'pending_review',
+  'pending_dgm',
+  'pending_finance',
+  'pending_gm',
 };
 
 /// Layar detail satu Purchase Requisition — padanan modal "PR Detail" di web.
@@ -205,8 +209,9 @@ class _PrDetailViewState extends State<_PrDetailView> {
           ..showSnackBar(
             SnackBar(
               content: Text(feedback.message),
-              backgroundColor:
-                  feedback.isError ? AppColors.solid(AppColors.rejected) : AppColors.primary,
+              backgroundColor: feedback.isError
+                  ? AppColors.solid(AppColors.rejected)
+                  : AppColors.primary,
               behavior: SnackBarBehavior.floating,
             ),
           );
