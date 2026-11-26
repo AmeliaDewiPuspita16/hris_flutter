@@ -22,6 +22,7 @@ class LeaveRequestDraft {
     this.endTime,
     this.reason,
     this.attachmentFileName,
+    this.isUrgent = false,
   });
 
   final LeaveType leaveType;
@@ -34,4 +35,7 @@ class LeaveRequestDraft {
   final TimeOfDay? endTime;
   final String? reason;
   final String? attachmentFileName;
+
+  /// Penanda pengajuan mendesak (`is_urgent`). Dipakai Annual Leave & OIL.
+  final bool isUrgent;
 }

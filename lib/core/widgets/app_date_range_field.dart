@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart' as fm;
 import 'package:material_ui/material_ui.dart';
 import 'package:table_calendar/table_calendar.dart';
 
@@ -29,7 +30,8 @@ class AppDateRangeField extends StatelessWidget {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => _RangeCalendarSheet(initialStart: startDate, initialEnd: endDate),
+      builder: (_) =>
+          _RangeCalendarSheet(initialStart: startDate, initialEnd: endDate),
     );
 
     if (result != null) onChanged(result.start, result.end);
@@ -38,7 +40,8 @@ class AppDateRangeField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasValue = startDate != null && endDate != null;
-    final dayCount = hasValue ? endDate!.difference(startDate!).inDays + 1 : null;
+    final dayCount =
+        hasValue ? endDate!.difference(startDate!).inDays + 1 : null;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -62,7 +65,8 @@ class AppDateRangeField extends StatelessWidget {
                 Icon(
                   Icons.calendar_month_outlined,
                   size: 18,
-                  color: hasValue ? AppColors.primaryMidText : AppColors.textMuted,
+                  color:
+                      hasValue ? AppColors.primaryMidText : AppColors.textMuted,
                 ),
                 const SizedBox(width: 10),
                 Expanded(
@@ -71,25 +75,30 @@ class AppDateRangeField extends StatelessWidget {
                           children: [
                             Text(
                               DateFormatter.shortDateID(startDate!),
-                              style: AppTextStyles.body.copyWith(fontWeight: FontWeight.w600),
+                              style: AppTextStyles.body
+                                  .copyWith(fontWeight: FontWeight.w600),
                             ),
                             const SizedBox(width: 6),
-                            Icon(Icons.arrow_forward, size: 13, color: AppColors.textMuted),
+                            Icon(Icons.arrow_forward,
+                                size: 13, color: AppColors.textMuted),
                             const SizedBox(width: 6),
                             Text(
                               DateFormatter.shortDateID(endDate!),
-                              style: AppTextStyles.body.copyWith(fontWeight: FontWeight.w600),
+                              style: AppTextStyles.body
+                                  .copyWith(fontWeight: FontWeight.w600),
                             ),
                           ],
                         )
                       : Text(
                           'Select Date Range',
-                          style: AppTextStyles.body.copyWith(color: AppColors.textMuted),
+                          style: AppTextStyles.body
+                              .copyWith(color: AppColors.textMuted),
                         ),
                 ),
                 if (dayCount != null)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
                       color: AppColors.presentBg,
                       borderRadius: BorderRadius.circular(20),
@@ -136,8 +145,9 @@ class _RangeCalendarSheetState extends State<_RangeCalendarSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final dayCount =
-        (_rangeStart != null && _rangeEnd != null) ? _rangeEnd!.difference(_rangeStart!).inDays + 1 : null;
+    final dayCount = (_rangeStart != null && _rangeEnd != null)
+        ? _rangeEnd!.difference(_rangeStart!).inDays + 1
+        : null;
 
     return SafeArea(
       child: Container(
@@ -156,7 +166,8 @@ class _RangeCalendarSheetState extends State<_RangeCalendarSheet> {
                 const Spacer(),
                 if (dayCount != null)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
                       color: AppColors.presentBg,
                       borderRadius: BorderRadius.circular(20),
@@ -173,61 +184,77 @@ class _RangeCalendarSheetState extends State<_RangeCalendarSheet> {
               ],
             ),
             const SizedBox(height: 8),
-            TableCalendar(
-              firstDay: DateTime.now().subtract(const Duration(days: 365)),
-              lastDay: DateTime.now().add(const Duration(days: 365)),
-              focusedDay: _focusedDay,
-              rangeStartDay: _rangeStart,
-              rangeEndDay: _rangeEnd,
-              rangeSelectionMode: RangeSelectionMode.toggledOn,
-              headerStyle: HeaderStyle(
-                formatButtonVisible: false,
-                titleCentered: true,
-                titleTextStyle: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.text,
+            fm.Material(
+              type: fm.MaterialType.transparency,
+              child: TableCalendar(
+                firstDay: DateTime.now().subtract(const Duration(days: 365)),
+                lastDay: DateTime.now().add(const Duration(days: 365)),
+                focusedDay: _focusedDay,
+                rangeStartDay: _rangeStart,
+                rangeEndDay: _rangeEnd,
+                rangeSelectionMode: RangeSelectionMode.toggledOn,
+                headerStyle: HeaderStyle(
+                  formatButtonVisible: false,
+                  titleCentered: true,
+                  titleTextStyle: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.text,
+                  ),
+                  titleTextFormatter: (date, _) =>
+                      DateFormatter.monthYearID(date),
+                  leftChevronIcon: Icon(Icons.chevron_left,
+                      color: AppColors.textMuted, size: 20),
+                  rightChevronIcon: Icon(Icons.chevron_right,
+                      color: AppColors.textMuted, size: 20),
                 ),
-                titleTextFormatter: (date, _) => DateFormatter.monthYearID(date),
-                leftChevronIcon: Icon(Icons.chevron_left, color: AppColors.textMuted, size: 20),
-                rightChevronIcon: Icon(Icons.chevron_right, color: AppColors.textMuted, size: 20),
-              ),
-              daysOfWeekStyle: DaysOfWeekStyle(
-                dowTextFormatter: (date, _) => DateFormatter.shortDayID(date),
-                weekdayStyle: TextStyle(fontSize: 11, color: AppColors.textMuted),
-                weekendStyle: TextStyle(fontSize: 11, color: AppColors.textMuted),
-              ),
-              calendarStyle: CalendarStyle(
-                outsideDaysVisible: false,
-                defaultTextStyle: TextStyle(fontSize: 13),
-                weekendTextStyle: TextStyle(fontSize: 13),
-                todayDecoration: BoxDecoration(
-                  border: Border.fromBorderSide(BorderSide(color: AppColors.primaryMidText, width: 1.5)),
-                  shape: BoxShape.circle,
+                daysOfWeekStyle: DaysOfWeekStyle(
+                  dowTextFormatter: (date, _) => DateFormatter.shortDayID(date),
+                  weekdayStyle:
+                      TextStyle(fontSize: 11, color: AppColors.textMuted),
+                  weekendStyle:
+                      TextStyle(fontSize: 11, color: AppColors.textMuted),
                 ),
-                todayTextStyle: TextStyle(color: AppColors.primaryText, fontSize: 13),
-                rangeStartDecoration: BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
-                rangeEndDecoration: BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
-                rangeStartTextStyle: TextStyle(color: Colors.white, fontSize: 13),
-                rangeEndTextStyle: TextStyle(color: Colors.white, fontSize: 13),
-                // Pita rentang: default table_calendar berwarna biru
-                // (0xFFBBDDFF), jadi diganti hijau muda. Lingkaran hari di
-                // dalam rentang dibuat transparan supaya menyatu dengan
-                // pita, bukan lingkaran sewarna yang "hilang" di dalamnya.
-                rangeHighlightColor: AppColors.primaryLight,
-                withinRangeDecoration: BoxDecoration(color: Colors.transparent, shape: BoxShape.circle),
-                withinRangeTextStyle: TextStyle(color: AppColors.primaryText, fontSize: 13),
-              ),
-              onRangeSelected: (start, end, focused) {
-                setState(() {
-                  _rangeStart = start;
-                  _rangeEnd = end ?? start;
+                calendarStyle: CalendarStyle(
+                  outsideDaysVisible: false,
+                  defaultTextStyle: TextStyle(fontSize: 13),
+                  weekendTextStyle: TextStyle(fontSize: 13),
+                  todayDecoration: BoxDecoration(
+                    border: Border.fromBorderSide(BorderSide(
+                        color: AppColors.primaryMidText, width: 1.5)),
+                    shape: BoxShape.circle,
+                  ),
+                  todayTextStyle:
+                      TextStyle(color: AppColors.primaryText, fontSize: 13),
+                  rangeStartDecoration: BoxDecoration(
+                      color: AppColors.primary, shape: BoxShape.circle),
+                  rangeEndDecoration: BoxDecoration(
+                      color: AppColors.primary, shape: BoxShape.circle),
+                  rangeStartTextStyle:
+                      TextStyle(color: Colors.white, fontSize: 13),
+                  rangeEndTextStyle:
+                      TextStyle(color: Colors.white, fontSize: 13),
+                  // Pita rentang: default table_calendar berwarna biru
+                  // (0xFFBBDDFF), jadi diganti hijau muda. Lingkaran hari di
+                  // dalam rentang dibuat transparan supaya menyatu dengan
+                  // pita, bukan lingkaran sewarna yang "hilang" di dalamnya.
+                  rangeHighlightColor: AppColors.primaryLight,
+                  withinRangeDecoration: BoxDecoration(
+                      color: Colors.transparent, shape: BoxShape.circle),
+                  withinRangeTextStyle:
+                      TextStyle(color: AppColors.primaryText, fontSize: 13),
+                ),
+                onRangeSelected: (start, end, focused) {
+                  setState(() {
+                    _rangeStart = start;
+                    _rangeEnd = end ?? start;
+                    _focusedDay = focused;
+                  });
+                },
+                onPageChanged: (focused) {
                   _focusedDay = focused;
-                });
-              },
-              onPageChanged: (focused) {
-                _focusedDay = focused;
-              },
+                },
+              ),
             ),
             const SizedBox(height: 12),
             Row(
@@ -246,7 +273,8 @@ class _RangeCalendarSheetState extends State<_RangeCalendarSheet> {
                       foregroundColor: Colors.white,
                     ),
                     onPressed: (_rangeStart != null && _rangeEnd != null)
-                        ? () => Navigator.pop(context, (start: _rangeStart!, end: _rangeEnd!))
+                        ? () => Navigator.pop(
+                            context, (start: _rangeStart!, end: _rangeEnd!))
                         : null,
                     child: const Text('Confirm'),
                   ),

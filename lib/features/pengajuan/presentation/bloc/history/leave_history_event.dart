@@ -26,3 +26,13 @@ class LeaveHistoryLocalItemAdded extends LeaveHistoryEvent {
 
   final LeaveHistoryEntry entry;
 }
+
+/// Sebuah entri (mis. draft) diganti hasil terbarunya: diedit, atau dirilis
+/// jadi pengajuan. Posisinya di daftar tidak berubah.
+class LeaveHistoryLocalItemReplaced extends LeaveHistoryEvent {
+  const LeaveHistoryLocalItemReplaced(this.id, this.entry);
+
+  /// ID entri lama yang diganti.
+  final String id;
+  final LeaveHistoryEntry entry;
+}

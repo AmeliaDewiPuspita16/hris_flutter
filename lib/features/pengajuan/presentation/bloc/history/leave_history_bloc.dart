@@ -13,6 +13,7 @@ class LeaveHistoryBloc extends Bloc<LeaveHistoryEvent, LeaveHistoryState> {
     on<LeaveHistoryStarted>(_onLoad);
     on<LeaveHistoryRefreshed>(_onLoad);
     on<LeaveHistoryLocalItemAdded>(_onLocalItemAdded);
+    on<LeaveHistoryLocalItemReplaced>(_onLocalItemReplaced);
   }
 
   final PengajuanRepository _repository;
@@ -48,5 +49,17 @@ class LeaveHistoryBloc extends Bloc<LeaveHistoryEvent, LeaveHistoryState> {
     Emitter<LeaveHistoryState> emit,
   ) {
     emit(state.copyWith(items: [event.entry, ...state.items]));
+  }
+
+  void _onLocalItemReplaced(
+    LeaveHistoryLocalItemReplaced event,
+    Emitter<LeaveHistoryState> emit,
+  ) {
+    emit(state.copyWith(
+      items: [
+        for (final item in state.items)
+          if (item.id == event.id) event.entry else item,
+      ],
+    ));
   }
 }

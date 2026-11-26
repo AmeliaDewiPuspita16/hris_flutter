@@ -1,18 +1,23 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/config/feature_flags.dart';
+import '../../../../core/network/api_exception.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_card.dart';
 import '../../../../core/widgets/app_shimmer.dart';
 import '../../../../core/widgets/status_badge.dart';
 import '../../../shared/domain/role.dart';
+import '../../data/pengajuan_repository.dart';
 import '../../domain/leave_history_entry.dart';
 import '../../domain/leave_type.dart';
 import '../bloc/history/leave_history_bloc.dart';
+import '../bloc/history/leave_history_event.dart';
 import '../bloc/history/leave_history_state.dart';
+import '../screens/edit_draft_screen.dart';
 import 'leave_detail_sheet.dart';
 
-enum _StatusFilter { all, pending, approved, rejected }
+enum _StatusFilter { all, pending, approved, rejected, draft }
 
 /// Tab "Status" — riwayat pengajuan dengan pencarian & filter (status dan/atau
 /// jenis cuti).
@@ -56,6 +61,9 @@ class _StatusTabState extends State<StatusTab> {
       if (_statusFilter == _StatusFilter.rejected && history.status != AppStatus.rejected) {
         return false;
       }
+      if (_statusFilter == _StatusFilter.draft && !history.isDraft) {
+        return false;
+      }
       if (_typeFilter != 'all' && history.type != _typeFilter) {
         return false;
       }
@@ -66,6 +74,65 @@ class _StatusTabState extends State<StatusTab> {
       }
       return true;
     }).toList();
+  }
+
+  void _openDetail(LeaveHistoryEntry entry) {
+    showLeaveDetailSheet(
+      context,
+      entry,
+      onEditDraft: () => _editDraft(entry),
+      onSubmitDraft: () => _releaseDraft(entry),
+    );
+  }
+
+  void _editDraft(LeaveHistoryEntry entry) {
+    // Route baru tidak mewarisi provider layar ini, jadi diteruskan manual.
+    final bloc = context.read<LeaveHistoryBloc>();
+    final repository = context.read<PengajuanRepository>();
+
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => RepositoryProvider.value(
+          value: repository,
+          child: BlocProvider.value(
+            value: bloc,
+            child: EditDraftScreen(role: widget.role, entry: entry),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _releaseDraft(LeaveHistoryEntry entry) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final bloc = context.read<LeaveHistoryBloc>();
+    final repository = context.read<PengajuanRepository>();
+
+    // Pengaman: API pengajuan belum ada (FeatureFlags.leaveSubmit).
+    if (!FeatureFlags.leaveSubmit) {
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Submitting is not available yet.')),
+      );
+      return;
+    }
+
+    final draft = entry.draft;
+    if (draft == null || (draft.startDate == null && draft.date == null)) {
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('Please edit the draft and fill in the required fields first.'),
+        ),
+      );
+      return;
+    }
+
+    try {
+      final released = await repository.releaseDraft(entry);
+      bloc.add(LeaveHistoryLocalItemReplaced(entry.id, released));
+      messenger.showSnackBar(const SnackBar(content: Text('Request submitted.')));
+    } on ApiException catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text(e.message)));
+    }
   }
 
   @override
@@ -291,7 +358,7 @@ class _StatusTabState extends State<StatusTab> {
         return AppCard(
           padding: const EdgeInsets.all(14),
           // Tap kartu = lihat detail, sama seperti baris di tab Ringkasan.
-          onTap: () => showLeaveDetailSheet(context, history),
+          onTap: () => _openDetail(history),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

@@ -104,6 +104,29 @@ class ApiClient {
     ).then((envelope) => _expectMap(envelope['data'], 'PUT', uri));
   }
 
+  /// Mengirim PATCH dan mengembalikan isi `data` dari amplop respons.
+  /// Pola sama dengan [put]; dipakai mialnya untuk mengedit draft cuti
+  /// (`PATCH .../leave/request/{id}`).
+  Future<Map<String, dynamic>> patch(
+    String path, {
+    Map<String, dynamic>? body,
+    bool authenticated = true,
+  }) {
+    final uri = _uriFor(path);
+    AppLogger.info('PATCH $uri ${_redactedBody(body)}');
+
+    return _send(
+      'PATCH',
+      uri,
+      authenticated: authenticated,
+      () => _httpClient.patch(
+        uri,
+        headers: _headers(authenticated: authenticated),
+        body: jsonEncode(body ?? const <String, dynamic>{}),
+      ),
+    ).then((envelope) => _expectMap(envelope['data'], 'PATCH', uri));
+  }
+
   /// Mengirim `multipart/form-data` — dipakai endpoint yang menerima berkas,
   /// mis. `POST /api/portal/hr_announcement` dengan `photos[]`.
   ///

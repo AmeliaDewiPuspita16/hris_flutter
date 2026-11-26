@@ -50,6 +50,36 @@ extension LeaveTypeX on LeaveType {
     }
   }
 
+  /// Jenis yang punya penanda `is_urgent` (Annual Leave dan OIL). Draft semua
+  /// jenis leave bisa dibuat, diedit, dan dirilis lewat `leave/request`
+  /// selama statusnya masih draft.
+  bool get isLeaveRequest =>
+      this == LeaveType.cutiTahunan || this == LeaveType.cutiPengganti;
+
+  /// Nilai `leave_type` untuk `POST /api/portal/apps/hris/leave/request`.
+  ///
+  /// Hanya `annual` yang sudah dikonfirmasi backend. Sisanya PERKIRAAN —
+  /// samakan dengan nilai yang diterima backend. Lembur null karena
+  /// pengajuannya lewat endpoint `overtime/request`, bukan `leave/request`.
+  String? get apiValue {
+    switch (this) {
+      case LeaveType.cutiTahunan:
+        return 'annual';
+
+      case LeaveType.izin:
+        return 'permission';
+
+      case LeaveType.cutiPengganti:
+        return 'oil';
+
+      case LeaveType.cekKesehatan:
+        return 'medical_check';
+
+      case LeaveType.lembur:
+        return null;
+    }
+  }
+
   /// Warna khas tiap jenis. Sengaja menghindari hijau/oranye/merah supaya
   /// tidak bentrok dengan warna badge status (Approved/Pending/Rejected)
   /// yang tampil bersebelahan di daftar riwayat.

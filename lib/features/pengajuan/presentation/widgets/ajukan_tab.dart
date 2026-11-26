@@ -15,6 +15,7 @@ import '../../../../core/widgets/app_time_field.dart';
 import '../../../shared/domain/role.dart';
 import '../../data/pengajuan_repository.dart';
 import '../../domain/duration_type.dart';
+import '../../domain/leave_history_entry.dart';
 import '../../domain/leave_request_draft.dart';
 import '../../domain/leave_type.dart';
 import '../bloc/history/leave_history_bloc.dart';
@@ -39,9 +40,18 @@ class AjukanTab extends StatefulWidget {
     super.key,
     required this.role,
     required this.onSubmitted,
+    this.initialDraft,
+    this.editingEntry,
   });
 
   final Role role;
+
+  /// Isian awal form, dipakai saat mengedit draft. Null = form kosong.
+  final LeaveRequestDraft? initialDraft;
+
+  /// Draft yang sedang diedit. Bila terisi, simpan/submit memperbarui entri
+  /// ini (ID sama), bukan membuat pengajuan baru.
+  final LeaveHistoryEntry? editingEntry;
 
   /// Dipanggil sesaat setelah pengajuan berhasil terkirim, supaya
   /// `PengajuanScreen` bisa memindahkan tab aktif ke Status.
@@ -67,7 +77,30 @@ class _AjukanTabState extends State<AjukanTab> {
 
   bool _submitting = false;
   bool _submitted = false;
+  bool _savedAsDraft = false;
+  bool _isUrgent = false;
   String? _submitError;
+
+  @override
+  void initState() {
+    super.initState();
+
+    final draft = widget.initialDraft;
+    if (draft == null) return;
+
+    final options = LeaveTypeX.optionsFor(widget.role);
+    _leaveType = options.contains(draft.leaveType) ? draft.leaveType : options.first;
+    _izinCategory = draft.izinCategory ?? _izinCategory;
+    _durationType = draft.durationType;
+    _startDate = draft.startDate;
+    _endDate = draft.endDate;
+    _date = draft.date;
+    _startTime = draft.startTime ?? _startTime;
+    _endTime = draft.endTime ?? _endTime;
+    _reasonCtrl.text = draft.reason ?? '';
+    _fileName = draft.attachmentFileName;
+    _isUrgent = draft.isUrgent;
+  }
 
   @override
   void dispose() {
@@ -78,9 +111,49 @@ class _AjukanTabState extends State<AjukanTab> {
   bool get _needsTimeRange =>
       _leaveType == LeaveType.lembur || _durationType != DurationType.full;
 
-  Future<void> _handleSubmit() async {
+  /// Ganti durasi (Full/Half Day). Half Day hanya satu tanggal, jadi
+  /// tanggal akhir disamakan dengan tanggal mulai.
+  void _onDurationChanged(DurationType type) {
+    setState(() {
+      _durationType = type;
+      if (type == DurationType.half && _startDate != null) {
+        _endDate = _startDate;
+      }
+    });
+  }
+
+  /// Validasi sebelum Submit (draft tidak divalidasi). Sementara baru untuk
+  /// Annual Leave dan OIL; jenis lain belum divalidasi di sini.
+  String? _validateForSubmit() {
+    if (!_leaveType.isLeaveRequest) return null;
+
+    if (_startDate == null || _endDate == null) {
+      return 'Please select the leave date.';
+    }
+    if (_durationType == DurationType.half) {
+      final start = _startTime;
+      final end = _endTime;
+      if (start == null || end == null) return 'Please select start and end time.';
+      final startMinutes = start.hour * 60 + start.minute;
+      final endMinutes = end.hour * 60 + end.minute;
+      if (endMinutes <= startMinutes) return 'End time must be after start time.';
+    }
+    return null;
+  }
+
+  /// [asDraft] true = simpan sebagai draft (belum dirilis, masih bisa diedit
+  /// dari tab Status); false = submit/release.
+  Future<void> _handleSubmit({required bool asDraft}) async {
     // Pengaman: API pengajuan belum ada (FeatureFlags.leaveSubmit).
     if (!FeatureFlags.leaveSubmit) return;
+
+    if (!asDraft) {
+      final error = _validateForSubmit();
+      if (error != null) {
+        setState(() => _submitError = error);
+        return;
+      }
+    }
 
     setState(() {
       _submitting = true;
@@ -98,18 +171,28 @@ class _AjukanTabState extends State<AjukanTab> {
       endTime: _needsTimeRange ? _endTime : null,
       reason: _reasonCtrl.text.trim().isEmpty ? null : _reasonCtrl.text.trim(),
       attachmentFileName: _fileName,
+      isUrgent: _leaveType.isLeaveRequest && _isUrgent,
     );
 
     try {
       final repository = context.read<PengajuanRepository>();
-      final entry = await repository.submitLeaveRequest(draft);
+      final editing = widget.editingEntry;
+      final entry = editing == null
+          ? await repository.submitLeaveRequest(draft, asDraft: asDraft)
+          : await repository.updateLeaveRequest(editing, draft, asDraft: asDraft);
 
       if (!mounted) return;
-      context.read<LeaveHistoryBloc>().add(LeaveHistoryLocalItemAdded(entry));
+      final historyBloc = context.read<LeaveHistoryBloc>();
+      historyBloc.add(
+        editing == null
+            ? LeaveHistoryLocalItemAdded(entry)
+            : LeaveHistoryLocalItemReplaced(editing.id, entry),
+      );
 
       setState(() {
         _submitting = false;
         _submitted = true;
+        _savedAsDraft = asDraft;
       });
 
       await Future.delayed(const Duration(milliseconds: 1500));
@@ -143,7 +226,13 @@ class _AjukanTabState extends State<AjukanTab> {
     final options = LeaveTypeX.optionsFor(widget.role);
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+      // Ruang bawah: jarak napas + area aman (home indicator / sudut layar).
+      padding: EdgeInsets.fromLTRB(
+        20,
+        16,
+        20,
+        8 + MediaQuery.of(context).padding.bottom,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -168,8 +257,18 @@ class _AjukanTabState extends State<AjukanTab> {
                   label: 'Request Type',
                   value: _leaveType,
                   required: true,
-                  items: options.map((o) => (value: o, label: o.label)).toList(),
-                  onChanged: (value) => setState(() => _leaveType = value),
+                  // Mengedit draft tidak boleh mengganti jenis: ID jenis cuti
+                  // tidak dikirim lewat PATCH.
+                  items: (widget.editingEntry == null ? options : [_leaveType])
+                      .map((o) => (value: o, label: o.label))
+                      .toList(),
+                  onChanged: (value) => setState(() {
+                    _leaveType = value;
+                    // Durasi dipakai Annual Leave & Permission; jangan
+                    // terbawa dari jenis sebelumnya.
+                    _durationType = DurationType.full;
+                    _submitError = null;
+                  }),
                 ),
                 const SizedBox(height: 16),
                 ..._buildDynamicFields(),
@@ -191,7 +290,13 @@ class _AjukanTabState extends State<AjukanTab> {
             variant: AppButtonVariant.green,
             enabled: FeatureFlags.leaveSubmit,
             isLoading: _submitting,
-            onPressed: _handleSubmit,
+            onPressed: () => _handleSubmit(asDraft: false),
+          ),
+          const SizedBox(height: 10),
+          _SaveDraftButton(
+            label: widget.editingEntry == null ? 'Save as Draft' : 'Update Draft',
+            enabled: FeatureFlags.leaveSubmit && !_submitting,
+            onTap: () => _handleSubmit(asDraft: true),
           ),
         ],
       ),
@@ -218,7 +323,9 @@ class _AjukanTabState extends State<AjukanTab> {
             ),
             const SizedBox(height: 16),
             Text(
-              'Request Submitted!',
+              _savedAsDraft
+                  ? (widget.editingEntry == null ? 'Draft Saved!' : 'Draft Updated!')
+                  : 'Request Submitted!',
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w800,
@@ -240,16 +347,36 @@ class _AjukanTabState extends State<AjukanTab> {
     switch (_leaveType) {
       case LeaveType.cutiTahunan:
         return [
-          AppDateRangeField(
-            label: 'Date Range',
-            startDate: _startDate,
-            endDate: _endDate,
-            required: true,
-            onChanged: (start, end) => setState(() {
-              _startDate = start;
-              _endDate = end;
-            }),
+          DurationTypeSelector(
+            value: _durationType,
+            onChanged: _onDurationChanged,
           ),
+          const SizedBox(height: 16),
+          if (_durationType == DurationType.full)
+            AppDateRangeField(
+              label: 'Date Range',
+              startDate: _startDate,
+              endDate: _endDate,
+              required: true,
+              onChanged: (start, end) => setState(() {
+                _startDate = start;
+                _endDate = end;
+              }),
+            )
+          else ...[
+            // Half Day: satu tanggal (start_date == end_date) + rentang jam.
+            AppDateField(
+              label: 'Leave Date',
+              value: _startDate,
+              required: true,
+              onChanged: (date) => setState(() {
+                _startDate = date;
+                _endDate = date;
+              }),
+            ),
+            const SizedBox(height: 16),
+            _timeRangeRow(startLabel: 'Start', endLabel: 'End'),
+          ],
           // const SizedBox(height: 8),
           // const Text(
           //   'Ideally submitted at least H-3. Last-minute requests are still '
@@ -258,6 +385,8 @@ class _AjukanTabState extends State<AjukanTab> {
           // ),
           const SizedBox(height: 16),
           ReasonField(controller: _reasonCtrl, hint: 'Example: Family vacation...'),
+          const SizedBox(height: 16),
+          _urgentToggle(),
           const SizedBox(height: 16),
           AttachmentField(
             fileName: _fileName,
@@ -280,6 +409,8 @@ class _AjukanTabState extends State<AjukanTab> {
           ),
           const SizedBox(height: 16),
           ReasonField(controller: _reasonCtrl, hint: 'Example: Family vacation...'),
+          const SizedBox(height: 16),
+          _urgentToggle(),
         ];
 
       case LeaveType.izin:
@@ -301,7 +432,7 @@ class _AjukanTabState extends State<AjukanTab> {
           const SizedBox(height: 16),
           DurationTypeSelector(
             value: _durationType,
-            onChanged: (type) => setState(() => _durationType = type),
+            onChanged: _onDurationChanged,
           ),
           if (_durationType != DurationType.full) ...[
             const SizedBox(height: 16),
@@ -363,6 +494,39 @@ class _AjukanTabState extends State<AjukanTab> {
     }
   }
 
+  /// Saklar "Urgent Request" (`is_urgent`) untuk Annual Leave dan OIL.
+  Widget _urgentToggle() {
+    return Row(
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Urgent Request',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.text,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                'Turn on if this leave is requested at short notice.',
+                style: TextStyle(fontSize: 11, color: AppColors.textMuted),
+              ),
+            ],
+          ),
+        ),
+        Switch(
+          value: _isUrgent,
+          activeTrackColor: AppColors.primary,
+          onChanged: (value) => setState(() => _isUrgent = value),
+        ),
+      ],
+    );
+  }
+
   Widget _timeRangeRow({required String startLabel, required String endLabel}) {
     return Row(
       children: [
@@ -382,6 +546,47 @@ class _AjukanTabState extends State<AjukanTab> {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Tombol sekunder "Save as Draft" (outline), di bawah tombol Submit.
+class _SaveDraftButton extends StatelessWidget {
+  const _SaveDraftButton({
+    required this.label,
+    required this.enabled,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool enabled;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Opacity(
+      opacity: enabled ? 1 : 0.5,
+      child: InkWell(
+        onTap: enabled ? onTap : null,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: AppColors.card,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppColors.primaryText, width: 1.5),
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: AppColors.primaryText,
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

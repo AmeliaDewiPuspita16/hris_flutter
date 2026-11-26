@@ -264,6 +264,23 @@ class ApiConfig {
   /// Pengajuan). `data` berupa list, jadi diambil lewat [ApiClient.getList].
   static const String leaveStatus = '/api/portal/apps/hris/leave/status';
 
+  /// Pengajuan cuti milik user. `POST` membuat pengajuan baru (body:
+  /// `leave_type`, `start_date`, `end_date`, `description`, `is_urgent`,
+  /// `status` = `draft` | `release`; untuk cuti per jam tambah `is_hour`,
+  /// `start_time`, `end_time` format H:i WIB, tanggal mulai harus sama dengan
+  /// tanggal akhir). Membalas 201 `{message, data}`.
+  /// `PATCH {leaveRequest}/{id}` mengedit draft (body: field yang berubah),
+  /// `POST .../{id}/release` merilis draft jadi pengajuan (tanpa body).
+  /// Semuanya membalas `{message, data}` dengan `data` berbentuk sama seperti
+  /// satu item [leaveStatus].
+  static const String leaveRequest = '/api/portal/apps/hris/leave/request';
+
+  static String leaveRequestDetail(String id) =>
+      '$leaveRequest/${Uri.encodeComponent(id)}';
+
+  static String leaveRequestRelease(String id) =>
+      '${leaveRequestDetail(id)}/release';
+
   /// Leave requests of the HOD's department (pending + last 2 years),
   /// with `meta.pending_count`. Role `hod` only.
   static const String leaveApprovals = '/api/portal/apps/hris/leave/approvals';
