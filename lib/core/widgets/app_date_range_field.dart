@@ -149,6 +149,15 @@ class _RangeCalendarSheetState extends State<_RangeCalendarSheet> {
         ? _rangeEnd!.difference(_rangeStart!).inDays + 1
         : null;
 
+    // Warna teks SELALU diberikan eksplisit: tanpa warna, table_calendar
+    // memakai warna bawaan Material yang gelap, sehingga angka tanggal
+    // tidak terbaca di mode dark.
+    final dayStyle = TextStyle(fontSize: 13, color: AppColors.text);
+    final mutedStyle = TextStyle(
+      fontSize: 13,
+      color: AppColors.textMuted.withValues(alpha: 0.4),
+    );
+
     return SafeArea(
       child: Container(
         margin: const EdgeInsets.all(12),
@@ -217,8 +226,11 @@ class _RangeCalendarSheetState extends State<_RangeCalendarSheet> {
                 ),
                 calendarStyle: CalendarStyle(
                   outsideDaysVisible: false,
-                  defaultTextStyle: TextStyle(fontSize: 13),
-                  weekendTextStyle: TextStyle(fontSize: 13),
+                  defaultTextStyle: dayStyle,
+                  weekendTextStyle: dayStyle,
+                  holidayTextStyle: dayStyle,
+                  outsideTextStyle: mutedStyle,
+                  disabledTextStyle: mutedStyle,
                   todayDecoration: BoxDecoration(
                     border: Border.fromBorderSide(BorderSide(
                         color: AppColors.primaryMidText, width: 1.5)),

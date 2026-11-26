@@ -27,14 +27,13 @@ class FeatureFlags {
   /// "Soon" (pola sama dengan [recentActivity]). Daftar riwayat bulanan di
   /// bawahnya tidak terpengaruh (sudah dari API).
   /// Ubah ke `true` setelah `fetchBalances` memakai endpoint sungguhan.
-  static const leaveBalance = true;
+  static const leaveBalance = false;
 
-  /// Tombol "Submit Request" di Leave Request. Biarkan `false` sampai API
-  /// pengajuan tersedia: [PengajuanRepository.submitLeaveRequest] masih dummy
-  /// (hanya menyisipkan baris palsu ke daftar Status). Selama `false`, form
-  /// tetap bisa diisi tapi tombol Submit nonaktif.
-  /// Ubah ke `true` setelah `submitLeaveRequest` memakai endpoint sungguhan.
-  static const leaveSubmit = false;
+  /// Tombol "Submit Request" dan "Save as Draft" di Leave Request. Sudah
+  /// `true` karena pengajuan terhubung ke API
+  /// (`POST /api/portal/apps/hris/leave/request`, status draft/release),
+  /// begitu juga edit dan rilis draft.
+  static const leaveSubmit = true;
 
   /// PRATINJAU SAJA: tampilkan tab "My Assignments" (Indent Vehicle) di akun
   /// apa pun dengan data contoh, tanpa memeriksa role `driver` dan tanpa
