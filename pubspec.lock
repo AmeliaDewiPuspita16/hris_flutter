@@ -170,7 +170,7 @@ packages:
     source: hosted
     version: "0.7.15"
   equatable:
-    dependency: "direct dev"
+    dependency: "direct main"
     description:
       name: equatable
       sha256: ea36e500cbf0ec18361deabca755434f73e42fe53c5130021c7e2d6b5ebe1702
@@ -878,7 +878,7 @@ packages:
     source: hosted
     version: "2.1.0"
   mobile_scanner:
-    dependency: "direct dev"
+    dependency: "direct main"
     description:
       name: mobile_scanner
       sha256: "175c62fc813c2bd762757359a2088f8cbdb72020cf85d4cd27fc4d3fe59be058"
